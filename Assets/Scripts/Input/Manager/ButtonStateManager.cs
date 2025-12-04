@@ -72,6 +72,12 @@ namespace InputSystem.Manager
         /// <summary>右トリガーの状態</summary>
         public ButtonState RightTrigger => _buttonStates[GamepadInputType.RightTrigger];
 
+        /// <summary>左スティックボタンの状態</summary>
+        public ButtonState LeftStickButton => _buttonStates[GamepadInputType.LeftStickButton];
+
+        /// <summary>右スティックボタンの状態</summary>
+        public ButtonState RightStickButton => _buttonStates[GamepadInputType.RightStickButton];
+
         /// <summary>Startボタンの状態</summary>
         public ButtonState StartButton => _buttonStates[GamepadInputType.Start];
 
@@ -106,6 +112,8 @@ namespace InputSystem.Manager
                     GamepadInputType.RightShoulder => controller.RightShoulder,
                     GamepadInputType.LeftTrigger => controller.LeftTrigger,
                     GamepadInputType.RightTrigger => controller.RightTrigger,
+                    GamepadInputType.LeftStickButton => controller.LeftStickButton,
+                    GamepadInputType.RightStickButton => controller.RightStickButton,
                     GamepadInputType.Start => controller.StartButton,
                     GamepadInputType.Select => controller.SelectButton,
                     _ => false

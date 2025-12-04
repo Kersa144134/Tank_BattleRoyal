@@ -153,6 +153,12 @@ MonoBehaviour:
   - TargetTransform: {fileID: 435110471}
     PositionOffset: {x: 0, y: 10, z: -10}
     RotationOffset: {x: 30, y: 0, z: 0}
+  - TargetTransform: {fileID: 435110471}
+    PositionOffset: {x: 0, y: 40, z: -15}
+    RotationOffset: {x: 60, y: 0, z: 0}
+  - TargetTransform: {fileID: 1363193130}
+    PositionOffset: {x: 0, y: 50, z: 0}
+    RotationOffset: {x: 90, y: 0, z: 0}
 --- !u!4 &76211784
 Transform:
   m_ObjectHideFlags: 0
@@ -362,7 +368,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.2588191, y: -0, z: -0, w: 0.9659258}
+  m_LocalRotation: {x: 0.2588191, y: 0, z: 0, w: 0.9659258}
   m_LocalPosition: {x: 0, y: 10, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -866,6 +872,37 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1206687426}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &1363193129
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1363193130}
+  m_Layer: 0
+  m_Name: ToVPosition
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1363193130
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1363193129}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1395024981
 GameObject:
   m_ObjectHideFlags: 0
@@ -3583,3 +3620,4 @@ SceneRoots:
   - {fileID: 435110471}
   - {fileID: 1832899783}
   - {fileID: 2029526541}
+  - {fileID: 1363193130}

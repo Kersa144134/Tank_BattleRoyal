@@ -38,10 +38,10 @@ MonoBehaviour:
     keyCode: 0
     mouseInput: 0
   - gamepadInput: 8
-    keyCode: 0
+    keyCode: 306
     mouseInput: 0
   - gamepadInput: 9
-    keyCode: 0
+    keyCode: 305
     mouseInput: 0
   - gamepadInput: 10
     keyCode: 97

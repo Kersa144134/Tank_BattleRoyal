@@ -39,16 +39,16 @@ namespace InputSystem.Controller
         // プロパティ
         // ======================================================
 
-        /// <summary>ボタンAの入力状態</summary>
+        /// <summary>ボタンAが押されているか</summary>
         public bool ButtonA { get; private set; }
 
-        /// <summary>ボタンBの入力状態</summary>
+        /// <summary>ボタンBが押されているか</summary>
         public bool ButtonB { get; private set; }
 
-        /// <summary>ボタンXの入力状態</summary>
+        /// <summary>ボタンXが押されているか</summary>
         public bool ButtonX { get; private set; }
 
-        /// <summary>ボタンYの入力状態</summary>
+        /// <summary>ボタンYが押されているか</summary>
         public bool ButtonY { get; private set; }
 
         /// <summary>左ショルダーボタンが押されているか</summary>
@@ -62,6 +62,12 @@ namespace InputSystem.Controller
 
         /// <summary>右トリガーがデッドゾーン以上押されているか</summary>
         public bool RightTrigger { get; private set; }
+
+        /// <summary>左スティックボタンが押されているか</summary>
+        public bool LeftStickButton { get; private set; }
+
+        /// <summary>右スティックボタンが押されているか</summary>
+        public bool RightStickButton { get; private set; }
 
         /// <summary>左スティックの入力ベクトル</summary>
         public Vector2 LeftStick { get; private set; } = Vector2.zero;
@@ -107,12 +113,14 @@ namespace InputSystem.Controller
             ButtonY = pad.buttonNorth.isPressed;
 
             // --------------------------------------------------
-            // ショルダー＆トリガー入力取得
+            // ショルダー / トリガー / スティックボタン入力取得
             // --------------------------------------------------
             LeftShoulder = pad.leftShoulder.isPressed;
             RightShoulder = pad.rightShoulder.isPressed;
             LeftTrigger = pad.leftTrigger.ReadValue() >= LEFT_TRIGGER_DEAD_ZONE;
             RightTrigger = pad.rightTrigger.ReadValue() >= RIGHT_TRIGGER_DEAD_ZONE;
+            LeftStickButton = pad.leftStickButton.isPressed;
+            RightStickButton = pad.rightStickButton.isPressed;
 
             // --------------------------------------------------
             // スティック入力取得＆デッドゾーン適用

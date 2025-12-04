@@ -4,7 +4,7 @@
 // 作成日時 : 2025-12-04
 // 更新日時 : 2025-12-04
 // 概要     : ターゲット追従ロジッククラス
-//            CameraTarget 配列に対応し、オフセットを適用
+//            CameraTarget 配列を参照し、オフセットの適用、ターゲット切替に対応
 // ======================================================
 
 using UnityEngine;
@@ -25,6 +25,9 @@ namespace CameraSystem.Controller
 
         /// <summary>カメラ Transform</summary>
         private Transform _cameraTransform;
+
+        /// <summary>現在追従中のターゲットインデックス</summary>
+        private int _currentTargetIndex = 0;
 
         // ======================================================
         // 定数
@@ -62,23 +65,46 @@ namespace CameraSystem.Controller
                 return;
             }
 
-            CameraTarget target = _targets[0];
+            CameraTarget target = _targets[_currentTargetIndex];
 
-            // ターゲットの Transform からローカル基準でオフセットを加える
-            Vector3 targetPos = target.TargetTransform.position +
-                                target.TargetTransform.TransformVector(target.PositionOffset);
+            // ターゲットの座標を取得
+            Vector3 targetPos = target.TargetTransform.position;
 
-            // カメラ位置を補間して追従
+            // オフセットを追加
+            targetPos += target.TargetTransform.TransformVector(target.PositionOffset);
+
+            // 補間してカメラに適用
             _cameraTransform.position = Vector3.Lerp(_cameraTransform.position, targetPos, FOLLOW_SPEED * Time.deltaTime);
 
-            // ターゲットの回転をそのまま取得
+            // ターゲットの回転を取得
             Quaternion targetRotation = target.TargetTransform.rotation;
 
-            // オフセットを追加（X/Y/Z）
+            // オフセットを追加
             targetRotation *= Quaternion.Euler(target.RotationOffset);
 
             // 補間してカメラに適用
             _cameraTransform.rotation = Quaternion.Slerp(_cameraTransform.rotation, targetRotation, FOLLOW_SPEED * Time.deltaTime);
+        }
+
+        /// <summary>
+        /// 現在追従中のターゲットを指定インデックスに変更
+        /// </summary>
+        /// <param name="index">配列インデックス</param>
+        public void SetTarget(int index)
+        {
+            if (_targets == null || index < 0 || index >= _targets.Length) return;
+            _currentTargetIndex = index;
+        }
+
+        /// <summary>
+        /// 現在追従中のターゲットインデックスを取得
+        /// </summary>
+        /// <returns>有効なターゲットインデックス、無効な場合は -1</returns>
+        public int GetCurrentTargetIndex()
+        {
+            if (_targets == null || _targets.Length == 0) return -1;
+            if (_targets[_currentTargetIndex] == null || _targets[_currentTargetIndex].TargetTransform == null) return -1;
+            return _currentTargetIndex;
         }
     }
 }

@@ -35,7 +35,7 @@ namespace InputSystem.Data
         bool ButtonY { get; }
 
         // ======================================================
-        // ショルダー／トリガー入力
+        // ショルダー／トリガー／スティックボタン入力
         // ======================================================
 
         /// <summary>左ショルダーボタンが押下されているかを返す</summary>
@@ -49,6 +49,12 @@ namespace InputSystem.Data
 
         /// <summary>右トリガーがデッドゾーン以上押されているかを返す</summary>
         bool RightTrigger { get; }
+
+        /// <summary>左スティックボタンが押下されているかを返す</summary>
+        bool LeftStickButton { get; }
+
+        /// <summary>右スティックボタンが押下されているかを返す</summary>
+        bool RightStickButton { get; }
 
         // ======================================================
         // スティック／D-Pad入力

@@ -73,6 +73,12 @@ namespace InputSystem.Manager
         /// <summary>右トリガーの状態</summary>
         public ButtonState RightTrigger => _buttonStateManager.RightTrigger;
 
+        /// <summary>左スティックボタンの状態</summary>
+        public ButtonState LeftStickButton => _buttonStateManager.LeftStickButton;
+
+        /// <summary>右スティックボタンの状態</summary>
+        public ButtonState RightStickButton => _buttonStateManager.RightStickButton;
+
         /// <summary>左スティックの入力ベクトル</summary>
         public Vector2 LeftStick => _stickStateManager.LeftStick;
 
