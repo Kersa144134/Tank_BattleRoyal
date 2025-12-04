@@ -24,16 +24,16 @@ namespace InputSystem.Controller
         // ======================================================
 
         /// <summary>左トリガーのデッドゾーン値</summary>
-        private const float LEFT_TRIGGER_DEAD_ZONE = 0.2f;
+        private const float LEFT_TRIGGER_DEAD_ZONE = 0.1f;
 
         /// <summary>右トリガーのデッドゾーン値</summary>
-        private const float RIGHT_TRIGGER_DEAD_ZONE = 0.2f;
+        private const float RIGHT_TRIGGER_DEAD_ZONE = 0.1f;
 
         /// <summary>左スティックのデッドゾーン値</summary>
-        private const float LEFT_STICK_DEAD_ZONE = 0.2f;
+        private const float LEFT_STICK_DEAD_ZONE = 0.1f;
 
         /// <summary>右スティックのデッドゾーン値</summary>
-        private const float RIGHT_STICK_DEAD_ZONE = 0.2f;
+        private const float RIGHT_STICK_DEAD_ZONE = 0.1f;
 
         // ======================================================
         // プロパティ

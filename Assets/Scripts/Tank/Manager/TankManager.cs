@@ -30,6 +30,13 @@ namespace TankSystem.Manager
         private TankTrackController trackController;
 
         // ======================================================
+        // 定数
+        // ======================================================
+
+        /// <summary>戦車の機動力倍率</summary>
+        private const float MOBILITY = 7f;
+        
+        // ======================================================
         // Unityイベント
         // ======================================================
 
@@ -41,19 +48,16 @@ namespace TankSystem.Manager
 
         private void Update()
         {
-            // 左キャタピラ入力値（左スティックの上下）
+            // 左右スティック入力取得
             float leftInput = InputManager.Instance.LeftStick.y;
-
-            // 右キャタピラ入力値（右スティックの上下）
             float rightInput = InputManager.Instance.RightStick.y;
 
+            // キャタピラ入力から前進量・旋回量を計算
             trackController.UpdateTrack(leftInput, rightInput, out float forward, out float turn);
-            
-            // 本体移動
-            transform.Translate(Vector3.forward * forward * Time.deltaTime, Space.Self);
 
-            // 回転
-            transform.Rotate(0f, turn * Time.deltaTime, 0f, Space.Self);
+            // 機動力倍率を掛けて移動・回転
+            transform.Translate(Vector3.forward * forward * MOBILITY * Time.deltaTime, Space.Self);
+            transform.Rotate(0f, turn * MOBILITY * Time.deltaTime, 0f, Space.Self);
         }
     }
 }

@@ -21,16 +21,16 @@ namespace TankSystem.Controller
         // ==============================================================================
 
         /// <summary>基準前後移動速度定数</summary>
-        private const float MOVE_SPEED = 2f;
+        private const float MOVE_SPEED = 1f;
 
         /// <summary>基準前進量の指数補正値</summary>
         private const float FORWARD_EXPONENT = 1.5f;
 
         /// <summary>基準旋回速度定数</summary>
-        private const float TURN_SPEED = 60f;
+        private const float TURN_SPEED = 10f;
 
         /// <summary>基準旋回量の指数補正値</summary>
-        private const float TURN_EXPONENT = 3.0f;
+        private const float TURN_EXPONENT = 1.5f;
 
         // ==============================================================================
         // パブリックメソッド
@@ -46,12 +46,30 @@ namespace TankSystem.Controller
             out float turnAmount
         )
         {
-            forwardAmount = CalculateForwardAmount(leftInput, rightInput);
-            turnAmount = CalculateTurnAmount(leftInput, rightInput);
+            // 入力を四捨五入しスナップする
+            float processedLeft = RoundValue(leftInput);
+            float processedRight = RoundValue(rightInput);
 
-            Debug.Log($"Forward: {forwardAmount:F3}, Turn: {turnAmount:F3}");
+            // 計算
+            forwardAmount = CalculateForwardAmount(processedLeft, processedRight);
+            turnAmount = CalculateTurnAmount(processedLeft, processedRight);
+
+            Debug.Log($"L:{processedLeft}, R:{processedRight} | Forward: {forwardAmount:F3}, Turn: {turnAmount:F3}");
         }
 
+        // ==============================================================================
+        // プライベートメソッド
+        // ==============================================================================
+
+        /// <summary>
+        /// 入力値を小数第1位に四捨五入する処理を行う
+        /// </summary>
+        private float RoundValue(float value)
+        {
+            // 小数第1位に四捨五入
+            return Mathf.Round(value * 10f) * 0.1f;
+        }
+        
         // --------------------------------------------------
         // 前進 / 後退
         // --------------------------------------------------
