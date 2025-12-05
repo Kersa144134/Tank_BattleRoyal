@@ -34,7 +34,7 @@ namespace CameraSystem.Controller
         // ======================================================
 
         /// <summary>í«è]ë¨ìx</summary>
-        private const float FOLLOW_SPEED = 5f;
+        private const float FOLLOW_SPEED = 10f;
 
         // ======================================================
         // èâä˙âª
