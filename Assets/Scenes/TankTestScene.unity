@@ -763,7 +763,6 @@ MonoBehaviour:
   - {fileID: 2029526539}
   - {fileID: 76211782}
   - {fileID: 435110467}
-  _phaseData: {fileID: 11400000, guid: f52f455c2b0301440a8ec8e6539c3772, type: 2}
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0
@@ -931,7 +930,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1363193130}
   m_Layer: 0
-  m_Name: ToVPosition
+  m_Name: ToVCameraPosition
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

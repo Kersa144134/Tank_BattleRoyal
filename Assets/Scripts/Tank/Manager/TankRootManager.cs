@@ -48,6 +48,10 @@ namespace TankSystem.Manager
         /// <summary>左右キャタピラ入力から前進量・旋回量を算出するコントローラ</summary>
         private TankTrackController _trackController = new TankTrackController();
 
+        // ======================================================
+        // IUpdatableイベント
+        // ======================================================
+
         public void OnEnter()
         {
             // TankMobilityManager の生成

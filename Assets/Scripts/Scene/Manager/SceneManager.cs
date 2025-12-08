@@ -40,9 +40,15 @@ public class SceneManager : MonoBehaviour
     /// <summary>現在ロードされているシーン名</summary>
     private string _currentScene = "";
 
+    /// <summary>遷移先ターゲットシーン名</summary>
+    private string _targetScene = "";
+    
     /// <summary>現在適用されているフェーズ</summary>
     private PhaseType _currentPhase = PhaseType.None;
-    
+
+    /// <summary>遷移先ターゲットフェーズ</summary>
+    private PhaseType _targetPhase = PhaseType.None;
+
     // ======================================================
     // Unityイベント
     // ======================================================
@@ -66,7 +72,8 @@ public class SceneManager : MonoBehaviour
         _phaseController = new PhaseController(_phaseRuntimeData, _updateController);
 
         // 初期フェーズ設定
-        ChangePhase(PhaseType.Play);
+        _targetPhase = PhaseType.Play;
+        ChangePhase(_targetPhase);
 
         // 現在シーンの Enter を呼ぶ
         _updateController.OnEnter();
@@ -74,7 +81,31 @@ public class SceneManager : MonoBehaviour
 
     private void Update()
     {
-        // UpdateController 実行
+        // --------------------------------------------------
+        // シーン判定
+        // --------------------------------------------------
+        if (_currentScene != _targetScene)
+        {
+            Debug.Log($"[SceneManager] シーン切替: {_currentScene} → {_targetScene}");
+            ChangeScene(_targetScene);
+
+            // シーン切替中は以降処理をスキップ
+            return;
+        }
+
+        // --------------------------------------------------
+        // フェーズ判定
+        // --------------------------------------------------
+        if (_currentPhase != _targetPhase)
+        {
+            Debug.Log($"[SceneManager] フェーズ切替: {_currentPhase} → {_targetPhase}");
+            ChangePhase(_targetPhase);
+        }
+
+        // --------------------------------------------------
+        // 更新処理
+        // --------------------------------------------------
+        Debug.Log($"[SceneManager] Update 実行 (シーン: {_currentScene}, フェーズ: {_currentPhase})");
         _updateController.OnUpdate();
     }
 
@@ -107,19 +138,13 @@ public class SceneManager : MonoBehaviour
         if (activeScene != sceneName)
         {
             // 直前のシーンの Exit を呼ぶ
-            if (!string.IsNullOrEmpty(_currentScene))
-            {
-                _updateController.OnExit();
-            }
-
-            // シーン遷移を実行
-            UnityEngine.SceneManagement.SceneManager.LoadScene(sceneName);
-
-            // 遷移後のシーンの Enter を呼ぶ
-            _updateController.OnEnter();
+            _updateController.OnExit();
 
             // 現在シーン情報を更新
             _currentScene = sceneName;
+
+            // シーン遷移を実行
+            UnityEngine.SceneManagement.SceneManager.LoadScene(sceneName);
         }
     }
 

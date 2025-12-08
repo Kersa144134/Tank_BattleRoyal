@@ -56,16 +56,7 @@ namespace SceneSystem.Controller
                 return;
             }
 
-            bool added = _updateSet.Add(updatable);
-
-            if (added)
-            {
-                UnityEngine.Debug.Log($"[UpdateController] í«â¡ÇµÇ‹ÇµÇΩ: {updatable.GetType().Name}");
-            }
-            else
-            {
-                UnityEngine.Debug.Log($"[UpdateController] ä˘Ç…ìoò^çœÇ›Ç≈Ç∑: {updatable.GetType().Name}");
-            }
+            _updateSet.Add(updatable);
         }
 
         /// <summary>
