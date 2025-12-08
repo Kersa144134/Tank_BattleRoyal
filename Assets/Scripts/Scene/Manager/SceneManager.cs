@@ -86,7 +86,6 @@ public class SceneManager : MonoBehaviour
         // --------------------------------------------------
         if (_currentScene != _targetScene)
         {
-            Debug.Log($"[SceneManager] シーン切替: {_currentScene} → {_targetScene}");
             ChangeScene(_targetScene);
 
             // シーン切替中は以降処理をスキップ
@@ -98,14 +97,12 @@ public class SceneManager : MonoBehaviour
         // --------------------------------------------------
         if (_currentPhase != _targetPhase)
         {
-            Debug.Log($"[SceneManager] フェーズ切替: {_currentPhase} → {_targetPhase}");
             ChangePhase(_targetPhase);
         }
 
         // --------------------------------------------------
         // 更新処理
         // --------------------------------------------------
-        Debug.Log($"[SceneManager] Update 実行 (シーン: {_currentScene}, フェーズ: {_currentPhase})");
         _updateController.OnUpdate();
     }
 

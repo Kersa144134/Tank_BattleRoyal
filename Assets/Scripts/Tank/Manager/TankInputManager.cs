@@ -26,8 +26,11 @@ namespace TankSystem.Manager
         /// <summary>右スティック入力 (前後)</summary>
         public Vector2 RightStick { get; private set; }
 
-        /// <summary>攻撃ボタン入力</summary>
-        public bool FireButton { get; private set; }
+        /// <summary>榴弾攻撃ボタン入力 (Rトリガー)</summary>
+        public bool HEFireButton { get; private set; }
+
+        /// <summary>徹甲弾攻撃ボタン入力 (Lトリガー)</summary>
+        public bool APFireButton { get; private set; }
 
         // ======================================================
         // パブリックメソッド
@@ -38,9 +41,13 @@ namespace TankSystem.Manager
         /// </summary>
         public void UpdateInput()
         {
+            // スティック入力取得
             LeftStick = InputManager.Instance.LeftStick;
             RightStick = InputManager.Instance.RightStick;
-            FireButton = InputManager.Instance.ButtonA.Down;
+
+            // 攻撃ボタン取得
+            HEFireButton = InputManager.Instance.RightTrigger.Down;
+            APFireButton = InputManager.Instance.LeftTrigger.Down;
         }
     }
 }

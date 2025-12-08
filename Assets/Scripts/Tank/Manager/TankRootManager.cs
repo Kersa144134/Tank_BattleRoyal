@@ -83,7 +83,7 @@ namespace TankSystem.Manager
             // UŒ‚
             // --------------------------------------------------
             // UŒ‚ˆ—
-            _attackManager.UpdateAttack(_inputManager.FireButton);
+            _attackManager.UpdateAttack(_inputManager.HEFireButton, _inputManager.APFireButton);
 
             // --------------------------------------------------
             // ‹@“®
