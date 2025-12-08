@@ -6,8 +6,10 @@
 // 概要     : 物理ゲームパッドおよびキーボード・マウス入力を統合管理
 // ======================================================
 
-using UnityEngine;
+using CameraSystem.Controller;
 using InputSystem.Data;
+using SceneSystem.Interface;
+using UnityEngine;
 
 namespace InputSystem.Manager
 {
@@ -15,7 +17,7 @@ namespace InputSystem.Manager
     /// 入力管理クラス
     /// 物理ゲームパッドとキーボード・マウス入力を統合
     /// </summary>
-    public class InputManager : MonoBehaviour
+    public class InputManager : MonoBehaviour, IUpdatable
     {
         // ======================================================
         // シングルトンインスタンス
@@ -29,8 +31,8 @@ namespace InputSystem.Manager
         // ======================================================
 
         [Header("入力マッピング設定")]
-        /// <summary>入力マッピング設定（InputMappingConfig）</summary>
-        [SerializeField] private InputMappingConfig inputMappingConfig;
+        /// <summary>入力マッピング設定</summary>
+        [SerializeField] private InputMappingConfig _inputMappingConfig;
 
         // ======================================================
         // コンポーネント参照
@@ -95,10 +97,10 @@ namespace InputSystem.Manager
         public ButtonState SelectButton => _buttonStateManager.SelectButton;
 
         // ======================================================
-        // Unityイベント関数
+        // IUpdatableイベント
         // ======================================================
 
-        private void Awake()
+        public void OnEnter()
         {
             // シングルトン制御
             if (Instance != null && Instance != this)
@@ -108,9 +110,9 @@ namespace InputSystem.Manager
             }
             Instance = this;
             DontDestroyOnLoad(gameObject);
-
+            
             // 入力マッピング設定のチェック
-            if (inputMappingConfig == null)
+            if (_inputMappingConfig == null)
             {
                 // エラーログを出力してゲームを終了
                 Debug.LogError("[InputManager] InputMappingConfig が設定されていません。アプリケーションを終了します。");
@@ -124,12 +126,12 @@ namespace InputSystem.Manager
             }
 
             // サブマネージャ初期化
-            _deviceManager = new DeviceManager(inputMappingConfig);
+            _deviceManager = new DeviceManager(_inputMappingConfig);
             _buttonStateManager = new ButtonStateManager();
             _stickStateManager = new StickStateManager();
         }
 
-        private void Update()
+        public void OnUpdate()
         {
             // デバイス入力更新
             _deviceManager.UpdateDevices();
@@ -139,6 +141,26 @@ namespace InputSystem.Manager
 
             // スティック状態更新
             _stickStateManager.UpdateStickStates(_deviceManager.ActiveController);
+        }
+
+        public void OnLateUpdate()
+        {
+            
+        }
+
+        public void OnExit()
+        {
+
+        }
+
+        public void OnPhaseEnter()
+        {
+
+        }
+
+        public void OnPhaseExit()
+        {
+
         }
     }
 }

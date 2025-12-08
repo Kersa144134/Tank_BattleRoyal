@@ -1,0 +1,102 @@
+// ======================================================
+// PhaseController.cs
+// 作成者   : 高橋一翔
+// 作成日時 : 2025-12-05
+// 更新日時 : 2025-12-08
+// 概要     : フェーズ遷移を制御し、UpdateController に更新対象を指示するコントローラ
+// ======================================================
+
+using System;
+using System.Collections.Generic;
+using SceneSystem.Data;
+using SceneSystem.Interface;
+
+namespace SceneSystem.Controller
+{
+    /// <summary>
+    /// フェーズ切替と UpdateController の操作を担当するコントローラ
+    /// </summary>
+    public class PhaseController
+    {
+        // ======================================================
+        // フィールド
+        // ======================================================
+
+        /// <summary>実行時フェーズ情報を保持するランタイムデータ</summary>
+        private readonly PhaseRuntimeData _runtimeData;
+
+        /// <summary>OnUpdate 実行を担う UpdateController</summary>
+        private readonly UpdateController _updateController;
+
+        // ======================================================
+        // イベント
+        // ======================================================
+
+        /// <summary>フェーズ変更時に通知するイベント</summary>
+        public Action<PhaseType> OnPhaseChanged;
+
+        // ======================================================
+        // コンストラクタ
+        // ======================================================
+
+        public PhaseController(PhaseRuntimeData runtimeData, UpdateController updateController)
+        {
+            _runtimeData = runtimeData ?? throw new ArgumentNullException(nameof(runtimeData));
+            _updateController = updateController ?? throw new ArgumentNullException(nameof(updateController));
+        }
+
+        // ======================================================
+        // パブリックメソッド
+        // ======================================================
+
+        /// <summary>
+        /// フェーズを変更し、対応する IUpdatable を UpdateController にセットする
+        /// </summary>
+        public void ChangePhase(PhaseType nextPhase)
+        {
+            // 同じフェーズなら何もしない
+            if (_runtimeData.CurrentPhase == nextPhase)
+            {
+                return;
+            }
+
+            // フェーズ更新
+            _runtimeData.SetPhase(nextPhase);
+
+            // UpdateController を完全リセット
+            ClearUpdateControllerTargets();
+
+            // 新フェーズの Updatable を追加
+            AssignPhaseTargets(nextPhase);
+
+            // イベント通知
+            OnPhaseChanged?.Invoke(nextPhase);
+        }
+
+        // ======================================================
+        // プライベートメソッド
+        // ======================================================
+
+        /// <summary>
+        /// UpdateController に登録されている Updatable をすべて削除する
+        /// </summary>
+        private void ClearUpdateControllerTargets()
+        {
+            _updateController.Clear();
+        }
+
+        /// <summary>
+        /// 指定フェーズの Updatable を UpdateController に追加する
+        /// </summary>
+        private void AssignPhaseTargets(PhaseType phase)
+        {
+            // フェーズに紐づく Updatable 集合を取得する
+            IReadOnlyCollection<IUpdatable> updatables = _runtimeData.GetUpdatables(phase);
+
+            foreach (IUpdatable updatable in updatables)
+            {
+                _updateController.Add(updatable);
+            }
+        }
+    }
+}

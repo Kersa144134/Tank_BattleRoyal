@@ -6,16 +6,18 @@
 // 概要     : 戦車の各種制御を統合管理する
 // ======================================================
 
-using UnityEngine;
+using InputSystem.Data;
 using InputSystem.Manager;
+using SceneSystem.Interface;
 using TankSystem.Controller;
+using UnityEngine;
 
 namespace TankSystem.Manager
 {
     /// <summary>
     /// 戦車の各種制御を統括するクラス
     /// </summary>
-    public class TankRootManager : MonoBehaviour
+    public class TankRootManager : MonoBehaviour, IUpdatable
     {
         // ======================================================
         // インスペクタ設定
@@ -46,17 +48,13 @@ namespace TankSystem.Manager
         /// <summary>左右キャタピラ入力から前進量・旋回量を算出するコントローラ</summary>
         private TankTrackController _trackController = new TankTrackController();
 
-        // ======================================================
-        // Unityイベント
-        // ======================================================
-
-        private void Start()
+        public void OnEnter()
         {
             // TankMobilityManager の生成
             _mobilityManager = new TankMobilityManager(_trackController, transform);
         }
 
-        private void Update()
+        public void OnUpdate()
         {
             // 左右スティック入力取得
             float leftInput = InputManager.Instance.LeftStick.y;
@@ -64,6 +62,26 @@ namespace TankSystem.Manager
 
             // 前進・旋回処理
             _mobilityManager.ApplyMobility(leftInput, rightInput);
+        }
+
+        public void OnLateUpdate()
+        {
+
+        }
+
+        public void OnExit()
+        {
+
+        }
+
+        public void OnPhaseEnter()
+        {
+
+        }
+
+        public void OnPhaseExit()
+        {
+
         }
     }
 }

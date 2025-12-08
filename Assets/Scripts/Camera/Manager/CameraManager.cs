@@ -8,16 +8,17 @@
 //            入力で追従ターゲットを切り替え可能
 // ======================================================
 
-using UnityEngine;
 using CameraSystem.Controller;
 using InputSystem.Manager;
+using SceneSystem.Interface;
+using UnityEngine;
 
 namespace CameraSystem.Manager
 {
     /// <summary>
     /// 複数ターゲットを管理し、CameraFollow に渡す役割を持つ
     /// </summary>
-    public class CameraManager : MonoBehaviour
+    public class CameraManager : MonoBehaviour, IUpdatable
     {
         // ======================================================
         // インスペクタ設定
@@ -38,10 +39,10 @@ namespace CameraSystem.Manager
         private CameraFollowController _followController;
 
         // ======================================================
-        // Unityイベント
+        // IUpdatableイベント
         // ======================================================
 
-        private void Awake()
+        public void OnEnter()
         {
             // CameraFollowController クラスを生成
             _followController = new CameraFollowController();
@@ -50,15 +51,31 @@ namespace CameraSystem.Manager
             _followController.Initialize(cameraTransform, cameraTargets);
         }
 
-        private void Update()
+        public void OnUpdate()
         {
+            // ターゲット切替
             CheckTargetSwitchInput();
         }
 
-        private void LateUpdate()
+        public void OnLateUpdate()
         {
             // ターゲット追従
             _followController.UpdateFollow();
+        }
+
+        public void OnExit()
+        {
+            
+        }
+
+        public void OnPhaseEnter()
+        {
+            
+        }
+
+        public void OnPhaseExit()
+        {
+
         }
 
         // ======================================================
