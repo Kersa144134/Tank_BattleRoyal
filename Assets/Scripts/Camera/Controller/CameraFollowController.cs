@@ -90,7 +90,7 @@ namespace CameraSystem.Controller
         /// 現在追従中のターゲットを指定インデックスに変更
         /// </summary>
         /// <param name="index">配列インデックス</param>
-        public void SetTarget(int index)
+        public void SetTarget(in int index)
         {
             if (_targets == null || index < 0 || index >= _targets.Length) return;
             _currentTargetIndex = index;

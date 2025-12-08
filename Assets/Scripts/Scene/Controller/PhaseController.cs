@@ -32,7 +32,7 @@ namespace SceneSystem.Controller
         // コンストラクタ
         // ======================================================
 
-        public PhaseController(PhaseRuntimeData runtimeData, UpdateController updateController)
+        public PhaseController(in PhaseRuntimeData runtimeData, in UpdateController updateController)
         {
             _runtimeData = runtimeData ?? throw new ArgumentNullException(nameof(runtimeData));
             _updateController = updateController ?? throw new ArgumentNullException(nameof(updateController));
@@ -45,7 +45,7 @@ namespace SceneSystem.Controller
         /// <summary>
         /// フェーズを変更し、対応する IUpdatable を UpdateController にセットする
         /// </summary>
-        public void ChangePhase(PhaseType nextPhase)
+        public void ChangePhase(in PhaseType nextPhase)
         {
             // 同じフェーズなら何もしない
             if (_runtimeData.CurrentPhase == nextPhase)
@@ -78,7 +78,7 @@ namespace SceneSystem.Controller
         /// <summary>
         /// 指定フェーズの Updatable を UpdateController に追加する
         /// </summary>
-        private void AssignPhaseTargets(PhaseType phase)
+        private void AssignPhaseTargets(in PhaseType phase)
         {
             // フェーズに紐づく Updatable 集合を取得する
             IReadOnlyCollection<IUpdatable> updatables = _runtimeData.GetUpdatables(phase);

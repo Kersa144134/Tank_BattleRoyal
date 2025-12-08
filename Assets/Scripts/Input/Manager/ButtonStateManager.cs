@@ -2,7 +2,7 @@
 // ButtonStateManager.cs
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-11-11
-// 更新日時 : 2025-11-11
+// 更新日時 : 2025-12-08
 // 概要     : ボタン入力状態の管理クラス
 //            InputManager.ButtonState を内部で保持し、ボタン押下状態を更新する
 // ======================================================
@@ -92,7 +92,7 @@ namespace InputSystem.Manager
         /// コントローラ入力からボタン状態を更新する（列挙中例外を回避）
         /// </summary>
         /// <param name="controller">IGamepadInputSource を実装した入力コントローラ</param>
-        public void UpdateButtonStates(IGamepadInputSource controller)
+        public void UpdateButtonStates(in IGamepadInputSource controller)
         {
             // 辞書のキーを配列化して列挙中変更エラーを防止
             GamepadInputType[] keys = _buttonStates.Keys.ToArray();

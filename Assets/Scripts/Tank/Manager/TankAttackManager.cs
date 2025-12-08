@@ -3,17 +3,17 @@
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-08
 // 更新日時 : 2025-12-08
-// 概要     : 戦車の攻撃処理を管理する
-//            MonoBehaviour 非継承
+// 概要     : 戦車の攻撃処理を管理するクラス
 //            榴弾・徹甲弾・同時押し特殊攻撃をサポート
 // ======================================================
 
 using UnityEngine;
+using InputSystem.Data;
 
 namespace TankSystem.Manager
 {
     /// <summary>
-    /// 戦車の攻撃処理を管理する純粋クラス
+    /// 戦車の攻撃処理を管理するクラス
     /// </summary>
     public class TankAttackManager
     {
@@ -66,8 +66,14 @@ namespace TankSystem.Manager
         /// </summary>
         /// <param name="heInput">榴弾ボタン入力</param>
         /// <param name="apInput">徹甲弾ボタン入力</param>
-        public void UpdateAttack(bool heInput, bool apInput)
+        public void UpdateAttack(in ButtonState heInput, in ButtonState apInput)
         {
+            // 引数が null の場合は処理をスキップ
+            if (heInput == null || apInput == null)
+            {
+                return;
+            }
+            
             // クールタイム中は何もしない
             if (_cooldownTime > 0f)
             {
@@ -76,12 +82,24 @@ namespace TankSystem.Manager
             }
 
             // 新規入力があればタイマー開始
-            if (heInput && _heInputTimer < 0f) _heInputTimer = 0f;
-            if (apInput && _apInputTimer < 0f) _apInputTimer = 0f;
+            if (heInput.Down && _heInputTimer < 0f)
+            {
+                _heInputTimer = 0f;
+            }
+            if (apInput.Down && _apInputTimer < 0f)
+            {
+                _apInputTimer = 0f;
+            }
 
             // タイマーを進める
-            if (_heInputTimer >= 0f) _heInputTimer += Time.deltaTime;
-            if (_apInputTimer >= 0f) _apInputTimer += Time.deltaTime;
+            if (_heInputTimer >= 0f)
+            {
+                _heInputTimer += Time.deltaTime;
+            }
+            if (_apInputTimer >= 0f)
+            {
+                _apInputTimer += Time.deltaTime;
+            }
 
             // 両方押されていれば特殊攻撃判定
             if (_heInputTimer >= 0f && _apInputTimer >= 0f)

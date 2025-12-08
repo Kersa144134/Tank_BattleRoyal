@@ -39,8 +39,8 @@ namespace TankSystem.Controller
         /// 入力値から前進/後退量と旋回量を計算して返す
         /// </summary>
         public void UpdateTrack(
-            float leftInput,
-            float rightInput,
+            in float leftInput,
+            in float rightInput,
             out float forwardAmount,
             out float turnAmount
         )
@@ -64,7 +64,7 @@ namespace TankSystem.Controller
         /// <summary>
         /// 入力値を小数第1位に四捨五入する処理を行う
         /// </summary>
-        private float RoundValue(float value)
+        private float RoundValue(in float value)
         {
             return Mathf.Round(value * 10f) * 0.1f;
         }
@@ -75,7 +75,7 @@ namespace TankSystem.Controller
         /// <summary>
         /// 左右スティック入力の平均値から前進／後退の移動量を算出する
         /// </summary>
-        private float CalculateForwardAmount(float leftInput, float rightInput)
+        private float CalculateForwardAmount(in float leftInput, in float rightInput)
         {
             // 左右スティックの平均値を算出
             float average = (leftInput + rightInput) * 0.5f;
@@ -101,7 +101,7 @@ namespace TankSystem.Controller
         /// <summary>
         /// 左右の差から旋回量を計算
         /// </summary>
-        private float CalculateTurnAmount(float leftInput, float rightInput)
+        private float CalculateTurnAmount(in float leftInput, in float rightInput)
         {
             // 差分を取得
             float diff = leftInput - rightInput;

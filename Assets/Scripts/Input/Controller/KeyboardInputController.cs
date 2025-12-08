@@ -33,7 +33,7 @@ namespace InputSystem.Controller
         /// InputMapping 配列を受け取り初期化
         /// </summary>
         /// <param name="mappings">InputMappingConfig などから取得したマッピング配列</param>
-        public KeyboardInputController(InputMapping[] mappings)
+        public KeyboardInputController(in InputMapping[] mappings)
         {
             _mappings = mappings ?? new InputMapping[0];
         }
@@ -45,11 +45,26 @@ namespace InputSystem.Controller
         /// <summary>
         /// 指定されたゲームパッド入力に対応するキーが押下されているかを返す
         /// </summary>
-        public bool GetButton(GamepadInputType inputType)
+        public bool GetButton(in GamepadInputType inputType)
         {
-            InputMapping map = _mappings.FirstOrDefault(m => m.gamepadInput == inputType);
+            InputMapping map = default;
 
-            if (map.keyCode == KeyCode.None)
+            // 見つかったかどうかのフラグ
+            bool found = false;
+
+            // ループで対応するマッピングを検索
+            foreach (InputMapping m in _mappings)
+            {
+                if (m.gamepadInput == inputType)
+                {
+                    map = m;
+                    found = true;
+                    break;
+                }
+            }
+
+            // 見つからなければ false
+            if (!found || map.keyCode == KeyCode.None)
             {
                 return false;
             }

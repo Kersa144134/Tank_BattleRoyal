@@ -52,7 +52,7 @@ namespace InputSystem.Manager
         /// 入力マッピング設定をもとに仮想コントローラを初期化
         /// </summary>
         /// <param name="mappingConfigs">入力マッピング設定配列</param>
-        public DeviceManager(InputMappingConfig[] mappingConfigs)
+        public DeviceManager(in InputMappingConfig[] mappingConfigs)
         {
             if (mappingConfigs == null || mappingConfigs.Length == 0)
             {
@@ -74,7 +74,7 @@ namespace InputSystem.Manager
         /// 配列の指定インデックスのマッピング設定でコントローラを再初期化
         /// </summary>
         /// <param name="index">マッピング配列のインデックス</param>
-        public void SetMapping(InputMappingConfig mappingConfig)
+        public void SetMapping(in InputMappingConfig mappingConfig)
         {
             if (mappingConfig == null)
             {
@@ -113,7 +113,7 @@ namespace InputSystem.Manager
         /// 指定マッピングでコントローラを初期化
         /// </summary>
         /// <param name="mappingConfig">入力マッピング設定</param>
-        private void InitializeControllers(InputMappingConfig mappingConfig)
+        private void InitializeControllers(in InputMappingConfig mappingConfig)
         {
             // 物理ゲームパッドコントローラ初期化
             _gamepadController = new GamepadInputController();

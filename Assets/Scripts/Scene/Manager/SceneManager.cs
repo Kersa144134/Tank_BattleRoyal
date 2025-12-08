@@ -6,9 +6,13 @@
 // 概要     : シーン遷移、フェーズ管理、Update 管理を統括する
 // ======================================================
 
+using System;
 using UnityEngine;
+using InputSystem.Manager;
 using SceneSystem.Controller;
 using SceneSystem.Data;
+using SceneSystem.Interface;
+using TankSystem.Manager;
 
 public class SceneManager : MonoBehaviour
 {
@@ -17,7 +21,7 @@ public class SceneManager : MonoBehaviour
     // ======================================================
 
     [Header("コンポーネント参照")]
-    /// <summary>InputManager</summary>
+    /// <summary>IUpdatable インターフェースを実装しているコンポーネントを取得するためのシーン上の GameObject 配列</summary>
     [SerializeField] private GameObject[] _components;
 
     // ======================================================
@@ -32,6 +36,12 @@ public class SceneManager : MonoBehaviour
 
     /// <summary>フェーズデータを実行時形式で保持するランタイムデータ</summary>
     private PhaseRuntimeData _phaseRuntimeData;
+
+    /// <summary>入力管理クラス</summary>
+    private InputManager _inputManager;
+
+    /// <summary>戦車の各種制御を統括するクラス</summary>
+    private TankRootManager _tankRootManager;
 
     // ======================================================
     // フィールド
@@ -49,6 +59,8 @@ public class SceneManager : MonoBehaviour
     /// <summary>遷移先ターゲットフェーズ</summary>
     private PhaseType _targetPhase = PhaseType.None;
 
+    private IUpdatable[] _updatables;
+
     // ======================================================
     // Unityイベント
     // ======================================================
@@ -65,8 +77,19 @@ public class SceneManager : MonoBehaviour
             Debug.LogWarning("[SceneManager] PhaseData が Resources/Phase に存在しません");
         }
 
-        // PhaseRuntimeData の生成（複数フェーズ対応版）
-        _phaseRuntimeData = new PhaseRuntimeData(phaseDataList, _components);
+        // PhaseRuntimeData の生成
+        _phaseRuntimeData = new PhaseRuntimeData();
+
+        // シーン上すべての IUpdatable を取得して登録
+        _updatables = UpdatableCollector.Collect(_components);
+
+        // フェーズごとに IUpdatable を取得して登録
+        foreach (PhaseData phaseData in phaseDataList)
+        {
+            Type[] types = phaseData.GetUpdatableTypes();
+            IUpdatable[] updatables = UpdatableCollector.Collect(_components, types);
+            _phaseRuntimeData.RegisterPhase(phaseData.Phase, updatables);
+        }
 
         // PhaseController の生成
         _phaseController = new PhaseController(_phaseRuntimeData, _updateController);
@@ -75,8 +98,21 @@ public class SceneManager : MonoBehaviour
         _targetPhase = PhaseType.Play;
         ChangePhase(_targetPhase);
 
-        // 現在シーンの Enter を呼ぶ
-        _updateController.OnEnter();
+        // 現在シーンの OnEnter を実行
+        foreach (IUpdatable updatable in _updatables)
+        {
+            updatable.OnEnter();
+
+            // コンポーネントのキャッシュ登録
+            if (updatable is InputManager inputManager)
+            {
+                _inputManager = inputManager;
+            }
+            if (updatable is TankRootManager tankRootManager)
+            {
+                _tankRootManager = tankRootManager;
+            }
+        }
     }
 
     private void Update()
@@ -112,6 +148,18 @@ public class SceneManager : MonoBehaviour
         _updateController.OnLateUpdate();
     }
 
+    private void OnEnable()
+    {
+        // イベント購読
+        _tankRootManager.OnOptionButtonPressed += HandleOptionButtonPressed;
+    }
+
+    private void OnDisable()
+    {
+        // イベント購読解除
+        _tankRootManager.OnOptionButtonPressed -= HandleOptionButtonPressed;
+    }
+
     // ======================================================
     // プライベートメソッド
     // ======================================================
@@ -120,7 +168,7 @@ public class SceneManager : MonoBehaviour
     /// シーン遷移を実行する
     /// </summary>
     /// <param name="sceneName">遷移先のシーン名</param>
-    private void ChangeScene(string sceneName)
+    private void ChangeScene(in string sceneName)
     {
         // 空文字なら何もしない
         if (string.IsNullOrEmpty(sceneName))
@@ -134,8 +182,11 @@ public class SceneManager : MonoBehaviour
         // 遷移先が現在のシーンと異なる場合のみ処理
         if (activeScene != sceneName)
         {
-            // 直前のシーンの Exit を呼ぶ
-            _updateController.OnExit();
+            // 現在シーンの OnExit を実行
+            foreach (IUpdatable updatable in _updatables)
+            {
+                updatable.OnExit();
+            }
 
             // 現在シーン情報を更新
             _currentScene = sceneName;
@@ -148,7 +199,7 @@ public class SceneManager : MonoBehaviour
     /// <summary>
     /// フェーズ切替を実行する
     /// </summary>
-    private void ChangePhase(PhaseType nextPhase)
+    private void ChangePhase(in PhaseType nextPhase)
     {
         // 直前フェーズがあれば Exit を呼ぶ
         if (_currentPhase != PhaseType.None)
@@ -164,5 +215,34 @@ public class SceneManager : MonoBehaviour
 
         // 新しいフェーズの Enter を呼ぶ
         _updateController.OnPhaseEnter();
+    }
+
+    /// <summary>
+    /// オプションボタン押下時の処理
+    /// 現在のフェーズに応じて入力マッピングとターゲットフェーズを切り替える
+    /// </summary>
+    private void HandleOptionButtonPressed()
+    {
+        switch (_currentPhase)
+        {
+            case PhaseType.Play:
+                // Play フェーズなら Pause に切替
+                _targetPhase = PhaseType.Pause;
+
+                // UI用入力マッピング
+                _inputManager.SwitchInputMapping(1);
+                break;
+
+            case PhaseType.Pause:
+                // Pause フェーズなら Play に切替
+                _targetPhase = PhaseType.Play;
+
+                // インゲーム用入力マッピング
+                _inputManager.SwitchInputMapping(0);
+                break;
+
+            default:
+                break;
+        }
     }
 }

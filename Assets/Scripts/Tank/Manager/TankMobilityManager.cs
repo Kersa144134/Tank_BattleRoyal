@@ -59,7 +59,7 @@ namespace TankSystem.Manager
         /// </summary>
         /// <param name="left">左キャタピラ入力</param>
         /// <param name="right">右キャタピラ入力</param>
-        public void ApplyMobility(float left, float right)
+        public void ApplyMobility(in float left, in float right)
         {
             // キャタピラ入力から前進量と旋回量を計算
             _trackController.UpdateTrack(left, right, out float forward, out float turn);

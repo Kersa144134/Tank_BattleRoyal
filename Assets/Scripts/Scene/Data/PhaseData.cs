@@ -30,17 +30,26 @@ namespace SceneSystem.Data
         /// <summary>実行対象として使用するコンポーネントの型情報</summary>
         [SerializeField] private MonoScript[] _updatableScripts;
 
+        /// <summary>
+        /// この PhaseData が対象とするフェーズタイプを取得する
+        /// </summary>
         public PhaseType Phase => _phaseType;
 
-        // 実行時に Type を返す
+        /// <summary>
+        /// このフェーズに紐づく IUpdatable スクリプトの型情報を取得する
+        /// </summary>
         public Type[] GetUpdatableTypes()
         {
             Type[] types = new Type[_updatableScripts.Length];
+
             for (int i = 0; i < _updatableScripts.Length; i++)
             {
+                // ScriptableObject から型情報を取得
                 types[i] = _updatableScripts[i].GetClass();
             }
+
             return types;
         }
+
     }
 }

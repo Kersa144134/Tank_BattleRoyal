@@ -57,7 +57,7 @@ namespace InputSystem.Controller
         /// InputMapping 配列を受け取り初期化
         /// </summary>
         /// <param name="mappings">InputMappingConfig などから取得したマッピング配列</param>
-        public MouseInputController(InputMapping[] mappings)
+        public MouseInputController(in InputMapping[] mappings)
         {
             // null安全のため空配列を補填
             _mappings = mappings ?? new InputMapping[0];
@@ -73,14 +73,31 @@ namespace InputSystem.Controller
         // --------------------------------------------------
         // ボタン入力
         // --------------------------------------------------
-        /// <summary>
-        /// 指定されたゲームパッド入力に対応するマウスボタンが押下されているか
-        /// </summary>
-        public bool GetButton(GamepadInputType inputType)
+        public bool GetButton(in GamepadInputType inputType)
         {
-            InputMapping map = _mappings.FirstOrDefault(m => m.gamepadInput == inputType);
-            if (!map.IsMouseBinding) return false;
+            InputMapping map = default;
 
+            // 見つかったかどうかのフラグ
+            bool found = false;
+
+            // ループで対応するマッピングを検索
+            foreach (InputMapping m in _mappings)
+            {
+                if (m.gamepadInput == inputType)
+                {
+                    map = m;
+                    found = true;
+                    break;
+                }
+            }
+
+            // 見つからなければ false
+            if (!found || !map.IsMouseBinding)
+            {
+                return false;
+            }
+
+            // マウス入力判定
             switch (map.mouseInput)
             {
                 case MouseInputType.LeftButton: return Input.GetMouseButton(0);

@@ -146,7 +146,7 @@ namespace InputSystem.Controller
         /// <param name="input">入力ベクトル</param>
         /// <param name="deadZone">デッドゾーン値</param>
         /// <returns>デッドゾーン未満なら Vector2.zero、そうでなければ元の入力ベクトル</returns>
-        private Vector2 ApplyDeadZone(Vector2 input, float deadZone)
+        private Vector2 ApplyDeadZone(in Vector2 input, in float deadZone)
         {
             // ベクトルの長さがデッドゾーン未満ならゼロにする
             return input.magnitude < deadZone ? Vector2.zero : input;

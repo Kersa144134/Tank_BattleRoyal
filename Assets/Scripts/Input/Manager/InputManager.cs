@@ -7,10 +7,9 @@
 //            配列取得した InputMappingConfig による入力マッピングを切り替え
 // ======================================================
 
-using CameraSystem.Controller;
+using UnityEngine;
 using InputSystem.Data;
 using SceneSystem.Interface;
-using UnityEngine;
 
 namespace InputSystem.Manager
 {
@@ -52,6 +51,12 @@ namespace InputSystem.Manager
         // プロパティ
         // ======================================================
 
+        /// <summary>
+        /// 現在適用中の入力マッピング配列のインデックス
+        /// 0 = インゲーム, 1 = UI
+        /// </summary>
+        public int CurrentMappingIndex { get; private set; } = 0;
+        
         /// <summary>ボタンAの状態</summary>
         public ButtonState ButtonA => _buttonStateManager.ButtonA;
 
@@ -168,10 +173,9 @@ namespace InputSystem.Manager
 
         /// <summary>
         /// 現在の入力マッピングを切り替える
-        /// 0 = インゲーム, 1 = UI
         /// </summary>
         /// <param name="index">マッピング配列のインデックス</param>
-        public void SwitchInputMapping(int index)
+        public void SwitchInputMapping(in int index)
         {
             if (_inputMappingConfigs == null || index < 0 || index >= _inputMappingConfigs.Length)
             {
@@ -180,6 +184,9 @@ namespace InputSystem.Manager
             }
 
             _deviceManager.SetMapping(_inputMappingConfigs[index]);
+
+            // 適用中のインデックスを更新
+            CurrentMappingIndex = index;
         }
     }
 }

@@ -6,11 +6,12 @@
 // 概要     : 戦車の各種制御を統合管理する
 // ======================================================
 
-using InputSystem.Data;
-using InputSystem.Manager;
+using System;
+using UnityEngine;
 using SceneSystem.Interface;
 using TankSystem.Controller;
-using UnityEngine;
+using InputSystem.Data;
+using TankSystem.Data;
 
 namespace TankSystem.Manager
 {
@@ -56,6 +57,21 @@ namespace TankSystem.Manager
         /// <summary>戦車の入力管理クラス</summary>
         private TankInputManager _inputManager = new TankInputManager();
 
+        // --------------------------------------------------
+        // オプション
+        // --------------------------------------------------
+
+
+        // ======================================================
+        // イベント
+        // ======================================================
+
+        /// <summary>
+        /// オプションボタン押下時に発火するイベント
+        /// 外部から登録してUIやサウンド処理などを接続可能
+        /// </summary>
+        public event Action OnOptionButtonPressed;
+        
         // ======================================================
         // IUpdatableイベント
         // ======================================================
@@ -80,16 +96,31 @@ namespace TankSystem.Manager
             float rightMobility = _inputManager.RightStick.y;
 
             // --------------------------------------------------
+            // オプション
+            // --------------------------------------------------
+            if (_inputManager.GetButton(TankInputKeys.INPUT_OPTION)?.Down == true)
+            {
+                // オプションイベントを発火
+                OnOptionButtonPressed?.Invoke();
+            }
+
+            // --------------------------------------------------
             // 攻撃
             // --------------------------------------------------
+            // 辞書から攻撃ボタンを取得して更新
+            ButtonState heButton = _inputManager.GetButton(TankInputKeys.INPUT_HE_FIRE);
+            ButtonState apButton = _inputManager.GetButton(TankInputKeys.INPUT_AP_FIRE);
+
             // 攻撃処理
-            _attackManager.UpdateAttack(_inputManager.HEFireButton, _inputManager.APFireButton);
+            _attackManager.UpdateAttack(heButton, apButton);
 
             // --------------------------------------------------
             // 機動
             // --------------------------------------------------
             // 前進・旋回処理
             _mobilityManager.ApplyMobility(leftMobility, rightMobility);
+
+            
         }
 
         public void OnLateUpdate()

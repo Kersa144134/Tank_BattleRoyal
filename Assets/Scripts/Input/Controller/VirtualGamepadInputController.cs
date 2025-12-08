@@ -88,7 +88,10 @@ namespace InputSystem.Controller
         /// <param name="keyboard">キーボード入力コントローラ</param>
         /// <param name="mouse">マウス入力コントローラ</param>
         /// <param name="mappings">InputMappingConfig から取得したマッピング配列</param>
-        public VirtualGamepadInputController(KeyboardInputController keyboard, MouseInputController mouse, InputMapping[] mappings)
+        public VirtualGamepadInputController(
+            in KeyboardInputController keyboard,
+            in MouseInputController mouse,
+            in InputMapping[] mappings)
         {
             _keyboard = keyboard;
             _mouse = mouse;
@@ -342,7 +345,7 @@ namespace InputSystem.Controller
             ref bool leftStickButton, ref bool rightStickButton,
             ref Vector2 leftStick, ref Vector2 rightStick, ref Vector2 dpad,
             ref bool startButton, ref bool selectButton,
-            GamepadInputType type, float value)
+            in GamepadInputType type, in float value)
         {
             // 値が 0 以下なら何も反映せずに終了
             if (value <= 0f)

@@ -48,7 +48,7 @@ namespace SceneSystem.Controller
         /// <summary>
         /// XV‘ÎÛ‚ğ’Ç‰Á‚·‚é
         /// </summary>
-        public void Add(IUpdatable updatable)
+        public void Add(in IUpdatable updatable)
         {
             // null ‚Ìê‡‚Í–³‹
             if (updatable == null)
