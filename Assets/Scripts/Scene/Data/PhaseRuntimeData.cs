@@ -40,32 +40,28 @@ namespace SceneSystem.Data
 
         /// <summary>
         /// ScriptableObject の PhaseData 配列からランタイム辞書を作成する
-        /// Scene 上のコンポーネント参照を取得するため sceneRoot を追加
+        /// 複数のシーンルートオブジェクトからコンポーネント参照を取得
         /// </summary>
-        /// <param name="phaseDataList">登録されているフェーズデータ一覧</param>
-        /// <param name="sceneRoot">シーン上の参照取得用ルート GameObject</param>
-        public PhaseRuntimeData(PhaseData phaseData, GameObject sceneRoot)
+        /// <param name="phaseDataList">対象のフェーズデータ配列</param>
+        /// <param name="sceneRoots">シーン上の参照取得用ルート GameObject 配列</param>
+        public PhaseRuntimeData(PhaseData[] phaseDataList, GameObject[] sceneRoots)
         {
-            HashSet<IUpdatable> set = new HashSet<IUpdatable>();
-
-            // SO から型情報を取得
-            Type[] types = phaseData.GetUpdatableTypes();
-
-            // Scene 上のコンポーネントを型情報から取得
-            foreach (Type t in types)
+            if (phaseDataList == null || phaseDataList.Length == 0)
             {
-                IUpdatable[] foundComponents = sceneRoot.GetComponentsInChildren(t, true) as IUpdatable[];
-                if (foundComponents != null)
-                {
-                    foreach (IUpdatable u in foundComponents)
-                    {
-                        if (u != null)
-                            set.Add(u);
-                    }
-                }
+                Debug.LogWarning("[PhaseRuntimeData] PhaseDataList が空です");
+                return;
             }
 
-            _phaseUpdateMap[phaseData.Phase] = set;
+            foreach (PhaseData phaseData in phaseDataList)
+            {
+                if (phaseData == null)
+                {
+                    Debug.LogWarning("[PhaseRuntimeData] PhaseData が null のためスキップ");
+                    continue;
+                }
+
+                RegisterPhaseComponents(phaseData, sceneRoots);
+            }
         }
 
         // ======================================================
@@ -114,6 +110,69 @@ namespace SceneSystem.Data
 
             // 未登録フェーズの場合は空集合を返す
             return new HashSet<IUpdatable>();
+        }
+
+        // ======================================================
+        // プライベートメソッド
+        // ======================================================
+
+        /// <summary>
+        /// 指定フェーズの IUpdatable をシーンルートから取得して登録する
+        /// </summary>
+        private void RegisterPhaseComponents(PhaseData phaseData, GameObject[] sceneRoots)
+        {
+            HashSet<IUpdatable> set = new HashSet<IUpdatable>();
+            Type[] types = phaseData.GetUpdatableTypes();
+
+            Debug.Log($"[PhaseRuntimeData] フェーズ {phaseData.Phase} のコンポーネント登録を開始 ({types.Length} 型)");
+
+            foreach (GameObject root in sceneRoots)
+            {
+                if (root == null)
+                {
+                    Debug.LogWarning("[PhaseRuntimeData] sceneRoot が null のためスキップ");
+                    continue;
+                }
+
+                GetComponentsFromRoots(root, types, set);
+            }
+
+            _phaseUpdateMap[phaseData.Phase] = set;
+            Debug.Log($"[PhaseRuntimeData] フェーズ {phaseData.Phase} の登録完了 ({set.Count} 件)");
+        }
+
+        /// <summary>
+        /// 指定のルートから型情報に従い IUpdatable コンポーネントを取得して登録する
+        /// </summary>
+        private void GetComponentsFromRoots(GameObject root, Type[] types, HashSet<IUpdatable> set)
+        {
+            foreach (Type t in types)
+            {
+                Component component = root.GetComponent(t);
+
+                if (component != null)
+                {
+                    if (component is IUpdatable u)
+                    {
+                        if (set.Add(u))
+                        {
+                            Debug.Log($"[PhaseRuntimeData] 登録: {u.GetType().Name} ({component.gameObject.name})");
+                        }
+                        else
+                        {
+                            Debug.Log($"[PhaseRuntimeData] 既に登録済み: {u.GetType().Name} ({component.gameObject.name})");
+                        }
+                    }
+                    else
+                    {
+                        Debug.Log($"[PhaseRuntimeData] IUpdatable ではない: {component.GetType().Name} ({component.gameObject.name})");
+                    }
+                }
+                else
+                {
+                    Debug.Log($"[PhaseRuntimeData] ルート {root.name} に型 {t.Name} のコンポーネントはなし");
+                }
+            }
         }
     }
 }

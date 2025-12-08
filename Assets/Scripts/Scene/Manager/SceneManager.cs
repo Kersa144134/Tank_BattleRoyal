@@ -7,12 +7,8 @@
 // ======================================================
 
 using UnityEngine;
-using CameraSystem.Manager;
-using InputSystem.Manager;
 using SceneSystem.Controller;
 using SceneSystem.Data;
-using SceneSystem.Interface;
-using TankSystem.Manager;
 
 public class SceneManager : MonoBehaviour
 {
@@ -22,17 +18,7 @@ public class SceneManager : MonoBehaviour
 
     [Header("コンポーネント参照")]
     /// <summary>InputManager</summary>
-    [SerializeField] private InputManager _inputManager;
-
-    /// <summary>CameraManager</summary>
-    [SerializeField] private CameraManager _cameraManager;
-
-    /// <summary>TankRootManager</summary>
-    [SerializeField] private TankRootManager _tankManager;
-
-    [Header("フェーズ設定")]
-    /// <summary>ScriptableObject で設定されたフェーズ情報</summary>
-    [SerializeField] private PhaseData _phaseData;
+    [SerializeField] private GameObject[] _components;
 
     // ======================================================
     // コンポーネント参照
@@ -66,24 +52,28 @@ public class SceneManager : MonoBehaviour
         // UpdateController の生成
         _updateController = new UpdateController();
 
-        // PhaseRuntimeData を生成（シーン上のコンポーネントを参照して IUpdatable を取得）
-        _phaseRuntimeData = new PhaseRuntimeData(_phaseData, this.gameObject);
+        // Resources/Phase フォルダ内のすべての PhaseData を取得
+        PhaseData[] phaseDataList = Resources.LoadAll<PhaseData>("Phase");
+        if (phaseDataList == null || phaseDataList.Length == 0)
+        {
+            Debug.LogWarning("[SceneManager] PhaseData が Resources/Phase に存在しません");
+        }
+
+        // PhaseRuntimeData の生成（複数フェーズ対応版）
+        _phaseRuntimeData = new PhaseRuntimeData(phaseDataList, _components);
 
         // PhaseController の生成
         _phaseController = new PhaseController(_phaseRuntimeData, _updateController);
 
-        // 初期シーン設定
-        ChangeScene(_currentScene);
-        
         // 初期フェーズ設定
-        ChangePhase(_currentPhase);
+        ChangePhase(PhaseType.Play);
+
+        // 現在シーンの Enter を呼ぶ
+        _updateController.OnEnter();
     }
 
     private void Update()
     {
-        // 各コンポーネントを UpdateController に登録
-        RegisterSceneUpdatables();
-
         // UpdateController 実行
         _updateController.OnUpdate();
     }
@@ -99,56 +89,42 @@ public class SceneManager : MonoBehaviour
     // ======================================================
 
     /// <summary>
-    /// シーン上の IUpdatable を UpdateController に登録
-    /// </summary>
-    private void RegisterSceneUpdatables()
-    {
-        // InputManager
-        if (_inputManager is IUpdatable inputUpdatable)
-        {
-            _updateController.Add(inputUpdatable);
-        }
-
-        // CameraManager
-        if (_cameraManager is IUpdatable cameraUpdatable)
-        {
-            _updateController.Add(cameraUpdatable);
-        }
-
-        // TankManager
-        if (_tankManager is IUpdatable tankUpdatable)
-        {
-            _updateController.Add(tankUpdatable);
-        }
-    }
-
-    // ======================================================
-    // プライベートメソッド
-    // ======================================================
-
-    /// <summary>
     /// シーン遷移を実行する
     /// </summary>
+    /// <param name="sceneName">遷移先のシーン名</param>
     private void ChangeScene(string sceneName)
     {
-        // 直前のシーンがあれば Exit を呼ぶ
-        if (!string.IsNullOrEmpty(_currentScene))
+        // 空文字なら何もしない
+        if (string.IsNullOrEmpty(sceneName))
         {
-            _updateController.OnExit();
+            return;
         }
 
-        // 現在シーンを更新
-        _currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+        // 現在アクティブなシーン名を取得
+        string activeScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
 
-        // シーン遷移
-        UnityEngine.SceneManagement.SceneManager.LoadScene(sceneName);
+        // 遷移先が現在のシーンと異なる場合のみ処理
+        if (activeScene != sceneName)
+        {
+            // 直前のシーンの Exit を呼ぶ
+            if (!string.IsNullOrEmpty(_currentScene))
+            {
+                _updateController.OnExit();
+            }
 
-        // 新しいシーンの Enter を呼ぶ
-        _updateController.OnEnter();
+            // シーン遷移を実行
+            UnityEngine.SceneManagement.SceneManager.LoadScene(sceneName);
+
+            // 遷移後のシーンの Enter を呼ぶ
+            _updateController.OnEnter();
+
+            // 現在シーン情報を更新
+            _currentScene = sceneName;
+        }
     }
 
     /// <summary>
-    /// フェーズ切替を外部から実行
+    /// フェーズ切替を実行する
     /// </summary>
     private void ChangePhase(PhaseType nextPhase)
     {

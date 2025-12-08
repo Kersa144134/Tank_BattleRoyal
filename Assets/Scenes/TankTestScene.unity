@@ -759,9 +759,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 513ace15bda16cc4385abf12d0d05e2c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _inputManager: {fileID: 2029526540}
-  _cameraManager: {fileID: 76211783}
-  _tankManager: {fileID: 435110472}
+  _components:
+  - {fileID: 2029526539}
+  - {fileID: 76211782}
+  - {fileID: 435110467}
   _phaseData: {fileID: 11400000, guid: f52f455c2b0301440a8ec8e6539c3772, type: 2}
 --- !u!1 &832575517
 GameObject:
@@ -1156,7 +1157,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6d0c2d0a83717d740bf578904191d9f9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  inputMappingConfig: {fileID: 11400000, guid: 74b29fcef8a2cf44488fb105542481e0, type: 2}
+  _inputMappingConfig: {fileID: 11400000, guid: 74b29fcef8a2cf44488fb105542481e0, type: 2}
 --- !u!4 &2029526541
 Transform:
   m_ObjectHideFlags: 0
