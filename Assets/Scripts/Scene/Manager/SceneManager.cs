@@ -137,11 +137,11 @@ public class SceneManager : MonoBehaviour
             _updateController.OnExit();
         }
 
-        // 実際のシーン遷移
-        UnityEngine.SceneManagement.SceneManager.LoadScene(sceneName);
-
         // 現在シーンを更新
-        _currentScene = sceneName;
+        _currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+
+        // シーン遷移
+        UnityEngine.SceneManagement.SceneManager.LoadScene(sceneName);
 
         // 新しいシーンの Enter を呼ぶ
         _updateController.OnEnter();
