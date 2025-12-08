@@ -13,6 +13,9 @@ namespace SceneSystem.Data
     /// </summary>
     public enum PhaseType
     {
+        /// <summary>初期値用</summary>
+        None,
+
         /// <summary>ゲーム開始準備や読み込み中を示すフェーズ</summary>
         Initialize,
 

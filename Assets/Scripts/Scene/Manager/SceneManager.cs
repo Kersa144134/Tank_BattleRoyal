@@ -55,7 +55,7 @@ public class SceneManager : MonoBehaviour
     private string _currentScene = "";
 
     /// <summary>現在適用されているフェーズ</summary>
-    private PhaseType? _currentPhase;
+    private PhaseType _currentPhase = PhaseType.None;
     
     // ======================================================
     // Unityイベント
@@ -73,10 +73,10 @@ public class SceneManager : MonoBehaviour
         _phaseController = new PhaseController(_phaseRuntimeData, _updateController);
 
         // 初期シーン設定
-        ChangeScene("TankTestScene");
+        ChangeScene(_currentScene);
         
         // 初期フェーズ設定
-        ChangePhase(PhaseType.Play);
+        ChangePhase(_currentPhase);
     }
 
     private void Update()
@@ -153,16 +153,16 @@ public class SceneManager : MonoBehaviour
     private void ChangePhase(PhaseType nextPhase)
     {
         // 直前フェーズがあれば Exit を呼ぶ
-        if (_currentPhase.HasValue)
+        if (_currentPhase != PhaseType.None)
         {
             _updateController.OnPhaseExit();
         }
 
-        // フェーズ変更
-        _phaseController.ChangePhase(nextPhase);
-
         // 現在フェーズを更新
         _currentPhase = nextPhase;
+
+        // フェーズ変更
+        _phaseController.ChangePhase(nextPhase);
 
         // 新しいフェーズの Enter を呼ぶ
         _updateController.OnPhaseEnter();

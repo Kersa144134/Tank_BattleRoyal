@@ -29,13 +29,6 @@ namespace SceneSystem.Controller
         private readonly UpdateController _updateController;
 
         // ======================================================
-        // イベント
-        // ======================================================
-
-        /// <summary>フェーズ変更時に通知するイベント</summary>
-        public Action<PhaseType> OnPhaseChanged;
-
-        // ======================================================
         // コンストラクタ
         // ======================================================
 
@@ -63,14 +56,11 @@ namespace SceneSystem.Controller
             // フェーズ更新
             _runtimeData.SetPhase(nextPhase);
 
-            // UpdateController を完全リセット
+            // UpdateController をリセット
             ClearUpdateControllerTargets();
 
             // 新フェーズの Updatable を追加
             AssignPhaseTargets(nextPhase);
-
-            // イベント通知
-            OnPhaseChanged?.Invoke(nextPhase);
         }
 
         // ======================================================
