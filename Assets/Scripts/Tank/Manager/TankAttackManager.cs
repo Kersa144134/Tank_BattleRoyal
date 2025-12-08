@@ -21,11 +21,11 @@ namespace TankSystem.Manager
         // 定数
         // ======================================================
 
-        /// <summary>同時押し猶予時間（秒）</summary>
-        private const float SIMULTANEOUS_INPUT_WINDOW = 0.2f;
+        /// <summary>入力を受けて攻撃を決定するまでの待機時間（秒）</summary>
+        private const float INPUT_DECISION_DELAY = 0.1f;
 
         /// <summary>攻撃クールタイム（秒）</summary>
-        private const float ATTACK_COOLDOWN = 0.5f;
+        private const float ATTACK_COOLDOWN = 1.0f;
 
         // ======================================================
         // フィールド
@@ -38,10 +38,10 @@ namespace TankSystem.Manager
         private float _cooldownTime = 0f;
 
         /// <summary>榴弾ボタンが押されてからの経過時間（同時押し判定用、未押下時は -1）</summary>
-        private float _heInputTime = -1f;
+        private float _heInputTimer = -1f;
 
         /// <summary>徹甲弾ボタンが押されてからの経過時間（同時押し判定用、未押下時は -1）</summary>
-        private float _apInputTime = -1f;
+        private float _apInputTimer = -1f;
 
         // ======================================================
         // コンストラクタ
@@ -68,68 +68,46 @@ namespace TankSystem.Manager
         /// <param name="apInput">徹甲弾ボタン入力</param>
         public void UpdateAttack(bool heInput, bool apInput)
         {
-            float time = Time.time;
-
-            // クールタイム経過
+            // クールタイム中は何もしない
             if (_cooldownTime > 0f)
             {
                 _cooldownTime -= Time.deltaTime;
                 return;
             }
 
-            // 榴弾入力を記録
-            if (heInput)
-            {
-                _heInputTime = time;
-            }
+            // 新規入力があればタイマー開始
+            if (heInput && _heInputTimer < 0f) _heInputTimer = 0f;
+            if (apInput && _apInputTimer < 0f) _apInputTimer = 0f;
 
-            // 徹甲弾入力を記録
-            if (apInput)
-            {
-                _apInputTime = time;
-            }
+            // タイマーを進める
+            if (_heInputTimer >= 0f) _heInputTimer += Time.deltaTime;
+            if (_apInputTimer >= 0f) _apInputTimer += Time.deltaTime;
 
-            // 同時押し判定処理
-            if (_heInputTime > 0f && _apInputTime > 0f)
+            // 両方押されていれば特殊攻撃判定
+            if (_heInputTimer >= 0f && _apInputTimer >= 0f)
             {
-                // 両方押されていて猶予時間内なら特殊攻撃
-                if (Mathf.Abs(_heInputTime - _apInputTime) <= SIMULTANEOUS_INPUT_WINDOW)
+                if (Mathf.Abs(_heInputTimer - _apInputTimer) <= INPUT_DECISION_DELAY)
                 {
                     FireSpecial();
-                    ResetInputTimes();
+                    ResetInputTimers();
                     _cooldownTime = ATTACK_COOLDOWN;
                     return;
                 }
-                else
-                {
-                    // 猶予時間を過ぎた場合、それぞれの個別攻撃を実行
-                    if (_heInputTime > SIMULTANEOUS_INPUT_WINDOW)
-                    {
-                        FireHE();
-                        _heInputTime = -1f;
-                        _cooldownTime = ATTACK_COOLDOWN;
-                    }
-
-                    if (_apInputTime > SIMULTANEOUS_INPUT_WINDOW)
-                    {
-                        FireAP();
-                        _apInputTime = -1f;
-                        _cooldownTime = ATTACK_COOLDOWN;
-                    }
-                }
             }
 
-            // 個別攻撃判定
-            if (heInput)
+            // 個別攻撃はタイマーが入力受付遅延を超えた場合に実行
+            if (_heInputTimer >= 0f && _heInputTimer > INPUT_DECISION_DELAY)
             {
-                // 押下時刻をリセット
-                _heInputTime = 0f;
+                FireHE();
+                _heInputTimer = -1f;
+                _cooldownTime = ATTACK_COOLDOWN;
             }
 
-            if (apInput)
+            if (_apInputTimer >= 0f && _apInputTimer > INPUT_DECISION_DELAY)
             {
-                // 押下時刻をリセット
-                _apInputTime = 0f;
+                FireAP();
+                _apInputTimer = -1f;
+                _cooldownTime = ATTACK_COOLDOWN;
             }
         }
 
@@ -137,25 +115,37 @@ namespace TankSystem.Manager
         // プライベートメソッド
         // ======================================================
 
+        /// <summary>
+        /// 榴弾攻撃を実行する
+        /// </summary>
         private void FireHE()
         {
             Debug.Log("Fire High-Explosive");
         }
 
+        /// <summary>
+        /// 徹甲弾攻撃を実行する
+        /// </summary>
         private void FireAP()
         {
             Debug.Log("Fire Armor-Piercing");
         }
 
+        /// <summary>
+        /// 同時押しによる特殊攻撃を実行する
+        /// </summary>
         private void FireSpecial()
         {
             Debug.Log("Fire Special Attack");
         }
 
-        private void ResetInputTimes()
+        /// <summary>
+        /// 入力タイマーをリセットし、次の入力受付を初期化する
+        /// </summary>
+        private void ResetInputTimers()
         {
-            _heInputTime = -1f;
-            _apInputTime = -1f;
+            _heInputTimer = -1f;
+            _apInputTimer = -1f;
         }
     }
 }

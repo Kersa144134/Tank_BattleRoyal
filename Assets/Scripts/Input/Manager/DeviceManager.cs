@@ -2,11 +2,12 @@
 // DeviceManager.cs
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-11-11
-// 更新日時 : 2025-11-11
+// 更新日時 : 2025-12-08
 // 概要     : 入力デバイスの更新・切替を管理するクラス
 //            物理ゲームパッドと仮想ゲームパッドの切替を統一的に提供
 // ======================================================
 
+using UnityEngine;
 using UnityEngine.InputSystem;
 using InputSystem.Controller;
 using InputSystem.Data;
@@ -24,10 +25,13 @@ namespace InputSystem.Manager
         // ======================================================
 
         /// <summary>物理ゲームパッド用コントローラ</summary>
-        private readonly GamepadInputController _gamepadController;
+        private GamepadInputController _gamepadController;
 
         /// <summary>仮想ゲームパッド用コントローラ（キーボード＋マウス統合）</summary>
-        private readonly VirtualGamepadInputController _virtualController;
+        private VirtualGamepadInputController _virtualController;
+
+        /// <summary>入力マッピング設定配列</summary>
+        private InputMappingConfig[] _mappingConfigs;
 
         // ======================================================
         // プロパティ
@@ -47,23 +51,39 @@ namespace InputSystem.Manager
         /// DeviceManager コンストラクタ
         /// 入力マッピング設定をもとに仮想コントローラを初期化
         /// </summary>
-        /// <param name="mappingConfig">入力マッピング設定</param>
-        public DeviceManager(InputMappingConfig mappingConfig)
+        /// <param name="mappingConfigs">入力マッピング設定配列</param>
+        public DeviceManager(InputMappingConfig[] mappingConfigs)
         {
-            // 物理ゲームパッドコントローラ初期化
-            _gamepadController = new GamepadInputController();
+            if (mappingConfigs == null || mappingConfigs.Length == 0)
+            {
+                Debug.LogError("[DeviceManager] InputMappingConfig 配列が空です");
+                return;
+            }
 
-            // キーボード・マウスコントローラ初期化
-            KeyboardInputController keyboard = new KeyboardInputController(mappingConfig.Mappings);
-            MouseInputController mouse = new MouseInputController(mappingConfig.Mappings);
+            _mappingConfigs = mappingConfigs;
 
-            // 仮想ゲームパッドコントローラ初期化
-            _virtualController = new VirtualGamepadInputController(keyboard, mouse, mappingConfig.Mappings);
+            // デフォルトは要素0のインゲーム用マッピング
+            InitializeControllers(_mappingConfigs[0]);
         }
 
         // ======================================================
         // パブリックメソッド
         // ======================================================
+
+        /// <summary>
+        /// 配列の指定インデックスのマッピング設定でコントローラを再初期化
+        /// </summary>
+        /// <param name="index">マッピング配列のインデックス</param>
+        public void SetMapping(InputMappingConfig mappingConfig)
+        {
+            if (mappingConfig == null)
+            {
+                Debug.LogWarning("[DeviceManager] 無効なマッピング設定です");
+                return;
+            }
+
+            InitializeControllers(mappingConfig);
+        }
 
         /// <summary>
         /// 接続状況に応じて入力デバイスを更新し、ActiveController を切替
@@ -75,20 +95,38 @@ namespace InputSystem.Manager
 
             if (UseGamepad)
             {
-                // 物理ゲームパッド入力を更新
                 _gamepadController.UpdateInputs();
-
-                // アクティブコントローラを物理ゲームパッドに設定
                 ActiveController = _gamepadController;
             }
             else
             {
-                // 仮想ゲームパッド入力を更新
                 _virtualController.UpdateInputs();
-
-                // アクティブコントローラを仮想ゲームパッドに設定
                 ActiveController = _virtualController;
             }
+        }
+
+        // ======================================================
+        // プライベートメソッド
+        // ======================================================
+
+        /// <summary>
+        /// 指定マッピングでコントローラを初期化
+        /// </summary>
+        /// <param name="mappingConfig">入力マッピング設定</param>
+        private void InitializeControllers(InputMappingConfig mappingConfig)
+        {
+            // 物理ゲームパッドコントローラ初期化
+            _gamepadController = new GamepadInputController();
+
+            // キーボード・マウスコントローラ初期化
+            KeyboardInputController keyboard = new KeyboardInputController(mappingConfig.Mappings);
+            MouseInputController mouse = new MouseInputController(mappingConfig.Mappings);
+
+            // 仮想ゲームパッドコントローラ初期化
+            _virtualController = new VirtualGamepadInputController(keyboard, mouse, mappingConfig.Mappings);
+
+            // デフォルトでアクティブを設定
+            ActiveController = UseGamepad ? _gamepadController : _virtualController;
         }
     }
 }

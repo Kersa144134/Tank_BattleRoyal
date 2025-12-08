@@ -1156,7 +1156,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6d0c2d0a83717d740bf578904191d9f9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _inputMappingConfig: {fileID: 11400000, guid: 74b29fcef8a2cf44488fb105542481e0, type: 2}
+  _inputMappingConfigs:
+  - {fileID: 11400000, guid: 74b29fcef8a2cf44488fb105542481e0, type: 2}
+  - {fileID: 11400000, guid: b063c567b89e7074c8faf7a0c37718c1, type: 2}
 --- !u!4 &2029526541
 Transform:
   m_ObjectHideFlags: 0

@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4e1f0c7760324aa49ad60036502383f0, type: 3}
-  m_Name: DefaultInputMapping
+  m_Name: UIInputMapping
   m_EditorClassIdentifier: 
   Mappings:
   - gamepadInput: 0
@@ -32,10 +32,10 @@ MonoBehaviour:
     keyCode: 0
     mouseInput: 0
   - gamepadInput: 6
-    keyCode: 0
+    keyCode: 304
     mouseInput: 0
   - gamepadInput: 7
-    keyCode: 0
+    keyCode: 303
     mouseInput: 0
   - gamepadInput: 8
     keyCode: 306

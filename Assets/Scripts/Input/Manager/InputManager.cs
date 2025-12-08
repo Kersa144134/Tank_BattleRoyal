@@ -2,8 +2,9 @@
 // InputManager.cs
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-09-24
-// 更新日時 : 2025-11-11
+// 更新日時 : 2025-12-08
 // 概要     : 物理ゲームパッドおよびキーボード・マウス入力を統合管理
+//            配列取得した InputMappingConfig による入力マッピングを切り替え
 // ======================================================
 
 using CameraSystem.Controller;
@@ -23,7 +24,7 @@ namespace InputSystem.Manager
         // シングルトンインスタンス
         // ======================================================
 
-        /// <summary>InputManagerのグローバルインスタンス</summary>
+        /// <summary>InputManager のグローバルインスタンス</summary>
         public static InputManager Instance { get; private set; }
 
         // ======================================================
@@ -31,8 +32,8 @@ namespace InputSystem.Manager
         // ======================================================
 
         [Header("入力マッピング設定")]
-        /// <summary>入力マッピング設定</summary>
-        [SerializeField] private InputMappingConfig _inputMappingConfig;
+        /// <summary>配列で取得。要素0はインゲーム用、要素1はUI用</summary>
+        [SerializeField] private InputMappingConfig[] _inputMappingConfigs;
 
         // ======================================================
         // コンポーネント参照
@@ -110,13 +111,11 @@ namespace InputSystem.Manager
             }
             Instance = this;
             DontDestroyOnLoad(gameObject);
-            
-            // 入力マッピング設定のチェック
-            if (_inputMappingConfig == null)
-            {
-                // エラーログを出力してゲームを終了
-                Debug.LogError("[InputManager] InputMappingConfig が設定されていません。アプリケーションを終了します。");
 
+            // 配列取得チェック
+            if (_inputMappingConfigs == null || _inputMappingConfigs.Length == 0)
+            {
+                Debug.LogError("[InputManager] InputMappingConfigs が設定されていません。");
 #if UNITY_EDITOR
                 UnityEditor.EditorApplication.isPlaying = false;
 #else
@@ -126,7 +125,7 @@ namespace InputSystem.Manager
             }
 
             // サブマネージャ初期化
-            _deviceManager = new DeviceManager(_inputMappingConfig);
+            _deviceManager = new DeviceManager(_inputMappingConfigs);
             _buttonStateManager = new ButtonStateManager();
             _stickStateManager = new StickStateManager();
         }
@@ -145,7 +144,7 @@ namespace InputSystem.Manager
 
         public void OnLateUpdate()
         {
-            
+
         }
 
         public void OnExit()
@@ -161,6 +160,26 @@ namespace InputSystem.Manager
         public void OnPhaseExit()
         {
 
+        }
+
+        // ======================================================
+        // パブリックメソッド
+        // ======================================================
+
+        /// <summary>
+        /// 現在の入力マッピングを切り替える
+        /// 0 = インゲーム, 1 = UI
+        /// </summary>
+        /// <param name="index">マッピング配列のインデックス</param>
+        public void SwitchInputMapping(int index)
+        {
+            if (_inputMappingConfigs == null || index < 0 || index >= _inputMappingConfigs.Length)
+            {
+                Debug.LogWarning("[InputManager] 無効なマッピング切替インデックス");
+                return;
+            }
+
+            _deviceManager.SetMapping(_inputMappingConfigs[index]);
         }
     }
 }
