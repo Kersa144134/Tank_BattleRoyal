@@ -34,6 +34,8 @@ namespace TankSystem.Manager
         // --------------------------------------------------
         // 攻撃力
         // --------------------------------------------------
+        /// <summary>戦車の攻撃管理クラス</summary>
+        private TankAttackManager _attackManager;
 
         // --------------------------------------------------
         // 防御力
@@ -42,11 +44,17 @@ namespace TankSystem.Manager
         // --------------------------------------------------
         // 機動力
         // --------------------------------------------------
-        /// <summary>戦車の機動力管理クラス</summary>
+        /// <summary>戦車の機動管理クラス</summary>
         private TankMobilityManager _mobilityManager;
 
         /// <summary>左右キャタピラ入力から前進量・旋回量を算出するコントローラ</summary>
         private TankTrackController _trackController = new TankTrackController();
+
+        // --------------------------------------------------
+        // 入力
+        // --------------------------------------------------
+        /// <summary>戦車の入力管理クラス</summary>
+        private TankInputManager _inputManager = new TankInputManager();
 
         // ======================================================
         // IUpdatableイベント
@@ -55,17 +63,33 @@ namespace TankSystem.Manager
         public void OnEnter()
         {
             // TankMobilityManager の生成
+            _attackManager = new TankAttackManager(transform);
             _mobilityManager = new TankMobilityManager(_trackController, transform);
         }
 
         public void OnUpdate()
         {
-            // 左右スティック入力取得
-            float leftInput = InputManager.Instance.LeftStick.y;
-            float rightInput = InputManager.Instance.RightStick.y;
+            // --------------------------------------------------
+            // 入力
+            // --------------------------------------------------
+            // 入力取得
+            _inputManager.UpdateInput();
 
+            // 入力変換
+            float leftMobility = _inputManager.LeftStick.y;
+            float rightMobility = _inputManager.RightStick.y;
+
+            // --------------------------------------------------
+            // 攻撃
+            // --------------------------------------------------
+            // 攻撃処理
+            _attackManager.UpdateAttack(_inputManager.FireButton);
+
+            // --------------------------------------------------
+            // 機動
+            // --------------------------------------------------
             // 前進・旋回処理
-            _mobilityManager.ApplyMobility(leftInput, rightInput);
+            _mobilityManager.ApplyMobility(leftMobility, rightMobility);
         }
 
         public void OnLateUpdate()
