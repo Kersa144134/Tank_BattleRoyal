@@ -36,7 +36,13 @@ namespace TankSystem.Manager
         /// <summary>戦車本体の Collider</summary>
         private Collider _tankCollider;
 
+        private Vector3 _previousPosition;
+
         private Vector3[] _localColliderPoints;
+
+        private Vector3 _lastInvalidMoveDir;
+
+        private bool _isOutOfNavMesh = false; // 範囲外フラグ
 
         // ======================================================
         // 定数
@@ -46,10 +52,12 @@ namespace TankSystem.Manager
         private const float MOBILITY = 5.5f;
 
         /// <summary>NavMesh 判定時の基準 Y 座標</summary>
-        private const float NAVMESH_BASE_Y = -0f;
-        
+        private const float NAVMESH_BASE_Y = 0.08333f;
+
         /// <summary>NavMesh上に有効位置をサンプルする距離</summary>
         private const float NAVMESH_SAMPLE_DISTANCE = 0.01f;
+        // 許容角度
+        private const float ALLOWED_ANGLE = 120f;
 
         // ======================================================
         // コンストラクタ
@@ -88,8 +96,8 @@ namespace TankSystem.Manager
         public void ApplyMobility(in float left, in float right)
         {
             // 現在位置を退避
-            Vector3 previousPosition = _tankTransform.position;
-            
+            _previousPosition = _tankTransform.position;
+
             // キャタピラ入力から前進量と旋回量を計算
             _trackController.UpdateTrack(left, right, out float forward, out float turn);
 
@@ -107,13 +115,51 @@ namespace TankSystem.Manager
                 Space.Self
             );
 
-            // --------------------------------------------------
+            // ---------------------
             // NavMesh範囲外チェック
-            // --------------------------------------------------
-            if(!IsPositionOnNavMesh(_tankTransform))
+            // ---------------------
+            bool isOnNavMesh = IsPositionOnNavMesh(_tankTransform);
+
+            if (!isOnNavMesh)
             {
-                // 範囲外なら移動前の座標に戻す
-                _tankTransform.position = previousPosition;
+                if (!_isOutOfNavMesh)
+                {
+                    // 範囲外になった瞬間のみキャッシュ
+                    Vector3 moveVector = _tankTransform.position - _previousPosition;
+
+                    // XZ平面で正規化してベクトルを保存
+                    _lastInvalidMoveDir = new Vector3(moveVector.x, 0, moveVector.z).normalized;
+
+                    // もしベクトルがゼロになってしまった場合は、前向きに補正
+                    if (_lastInvalidMoveDir.sqrMagnitude < 0.001f)
+                    {
+                        _lastInvalidMoveDir = _tankTransform.forward;
+                        _lastInvalidMoveDir.y = 0f;
+                        _lastInvalidMoveDir.Normalize();
+                    }
+
+                    _isOutOfNavMesh = true;
+                }
+
+                // ---------------------
+                // 角度判定用ベクトル（入力方向代わり）
+                // ---------------------
+                Vector3 attemptedMoveDir = _tankTransform.position - _previousPosition;
+
+                // XZ平面のみで正規化
+                attemptedMoveDir = new Vector3(attemptedMoveDir.x, 0, attemptedMoveDir.z);
+                attemptedMoveDir.Normalize();
+
+                // 角度判定
+                if (ShouldRevertPosition(_lastInvalidMoveDir, attemptedMoveDir, ALLOWED_ANGLE))
+                {
+                    _tankTransform.position = _previousPosition;
+                }
+            }
+            else
+            {
+                // 範囲内に戻ったらフラグをリセット
+                _isOutOfNavMesh = false;
             }
         }
 
@@ -122,7 +168,7 @@ namespace TankSystem.Manager
         // ======================================================
 
         /// <summary>
-        /// BoxCollider の四隅をローカル座標でキャッシュ（回転対応用）
+        /// BoxCollider の四隅をローカル座標でキャッシュ
         /// </summary>
         private void CacheColliderPoints()
         {
@@ -158,7 +204,7 @@ namespace TankSystem.Manager
 
             foreach (Vector3 localPoint in _localColliderPoints)
             {
-                // ローカル座標をワールド座標に変換（回転・スケール反映）
+                // ローカル座標をワールド座標に変換
                 Vector3 worldPoint = transform.TransformPoint(localPoint);
 
                 // Yは無視してNavMesh基準でサンプル
@@ -166,12 +212,43 @@ namespace TankSystem.Manager
 
                 if (!NavMesh.SamplePosition(samplePoint, out NavMeshHit hit, sampleDistance, NavMesh.AllAreas))
                 {
-                    Debug.Log($"[IsPositionOnNavMesh] Out of NavMesh: {samplePoint}, Sampled Hit: {hit.position}");
                     return false;
                 }
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// 範囲外になった方向と移動ベクトルの角度を判定し、戻す処理を行うか決定
+        /// </summary>
+        /// <param name="invalidDir">NavMesh外になった方向</param>
+        /// <param name="inputDir">移動方向</param>
+        /// <param name="allowAngle">許容角度（度数法、0～180）</param>
+        /// <returns>trueなら戻す処理を行う</returns>
+        private bool ShouldRevertPosition(Vector3 invalidDir, Vector3 inputDir, float allowAngle)
+        {
+            // 移動ベクトルがほぼゼロなら元に戻す
+            if (inputDir.sqrMagnitude < 0.001f)
+            {
+                return true;
+            }
+
+            // XZ平面のみで計算
+            Vector3 invalidDirXZ = new Vector3(invalidDir.x, 0, invalidDir.z).normalized;
+            Vector3 inputDirXZ = new Vector3(inputDir.x, 0, inputDir.z).normalized;
+
+            // 内積から角度を取得
+            float angle = Vector3.Angle(invalidDirXZ, inputDirXZ);
+
+            // ログ出力
+            Debug.Log($"[NavMeshCheck] 範囲外方向: {invalidDirXZ}, 移動方向: {inputDirXZ}, 角度差: {angle}, 許容角度: {allowAngle}");
+
+            // 角度が許容範囲より小さい場合は戻す処理を実行
+            bool shouldRevert = angle < allowAngle;
+            Debug.Log($"[NavMeshCheck] 戻す処理判定: {shouldRevert}");
+
+            return shouldRevert;
         }
     }
 }

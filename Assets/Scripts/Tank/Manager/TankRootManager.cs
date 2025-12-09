@@ -8,6 +8,7 @@
 
 using System;
 using UnityEngine;
+using UnityEngine.AI;
 using SceneSystem.Interface;
 using TankSystem.Controller;
 using InputSystem.Data;
@@ -61,7 +62,10 @@ namespace TankSystem.Manager
         // オプション
         // --------------------------------------------------
 
-
+        // ======================================================
+        // フィールド
+        // ======================================================
+        
         // ======================================================
         // イベント
         // ======================================================
@@ -125,7 +129,7 @@ namespace TankSystem.Manager
 
         public void OnLateUpdate()
         {
-
+            
         }
 
         public void OnExit()
