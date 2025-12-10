@@ -22,7 +22,7 @@ namespace TankSystem.Utility
         /// <param name="targetTransform">対象の Transform</param>
         /// <param name="localCenter">ローカル座標での中心点</param>
         /// <param name="localSize">ローカル座標でのサイズ</param>
-        public AABBData CreateAABB(Transform targetTransform, Vector3 localCenter, Vector3 localSize)
+        public AABBData CreateAABB(in Transform targetTransform, in Vector3 localCenter, in Vector3 localSize)
         {
             // AABB の中心をワールド座標に変換
             Vector3 worldCenter = targetTransform.TransformPoint(localCenter);

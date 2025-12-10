@@ -38,7 +38,7 @@ namespace TankSystem.Data
         /// </summary>
         /// <param name="center">AABB の中心座標</param>
         /// <param name="halfSize">AABB の半サイズ</param>
-        public AABBData(Vector3 center, Vector3 halfSize)
+        public AABBData(in Vector3 center, in Vector3 halfSize)
         {
             Center = center;
             HalfSize = halfSize;

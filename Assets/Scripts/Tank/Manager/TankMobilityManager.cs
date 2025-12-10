@@ -61,12 +61,12 @@ namespace TankSystem.Manager
         /// 移動処理および衝突判定に必要な外部参照を受け取って初期化する
         /// </summary>
         public TankMobilityManager(
-            TankTrackController trackController,
-            TankCollisionService collisionService,
-            Transform transform,
-            Vector3 hitboxCenter,
-            Vector3 hitboxSize,
-            Transform[] obstacles
+            in TankTrackController trackController,
+            in TankCollisionService collisionService,
+            in Transform transform,
+            in Vector3 hitboxCenter,
+            in Vector3 hitboxSize,
+            in Transform[] obstacles
         )
         {
             _trackController = trackController;
@@ -144,7 +144,7 @@ namespace TankSystem.Manager
             Vector3 hitPos;
 
             // 衝突した場合
-            if (_collisionService.TryGetCollision(out hitPos))
+            if (_collisionService.TryGetObstacleCollision(out hitPos))
             {
                 // 現在位置と障害物の距離を算出
                 float distance = Vector3.Distance(_tankTransform.position, hitPos);
@@ -190,31 +190,23 @@ namespace TankSystem.Manager
             // 現在位置との差分
             Vector3 delta = _tankTransform.position - previousPosition;
 
-            // --------------------------------------------------
             // X方向のみキャンセル
-            // --------------------------------------------------
             Vector3 testPosX = new Vector3(previousPosition.x, _tankTransform.position.y, _tankTransform.position.z);
             _tankTransform.position = testPosX;
-            if (!_collisionService.TryGetCollision(out _))
+            if (!_collisionService.TryGetObstacleCollision(out _))
             {
-                // X方向のみキャンセルで衝突回避成功
                 return;
             }
 
-            // --------------------------------------------------
             // Z方向のみキャンセル
-            // --------------------------------------------------
             Vector3 testPosZ = new Vector3(_tankTransform.position.x, _tankTransform.position.y, previousPosition.z);
             _tankTransform.position = testPosZ;
-            if (!_collisionService.TryGetCollision(out _))
+            if (!_collisionService.TryGetObstacleCollision(out _))
             {
-                // Z方向のみキャンセルで衝突回避成功
                 return;
             }
 
-            // --------------------------------------------------
             // 全体キャンセル
-            // --------------------------------------------------
             _tankTransform.position = previousPosition;
         }
     }

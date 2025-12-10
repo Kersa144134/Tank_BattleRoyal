@@ -26,7 +26,7 @@ namespace TankSystem.Controller
         /// <param name="a">”äŠr‘ÎÛ A ‚Ì AABB î•ñ</param>
         /// <param name="b">”äŠr‘ÎÛ B ‚Ì AABB î•ñ</param>
         /// <returns>Õ“Ë‚µ‚Ä‚¢‚ê‚Î trueA‚µ‚Ä‚¢‚È‚¯‚ê‚Î false ‚ğ•Ô‚·</returns>
-        public bool IsColliding(AABBData a, AABBData b)
+        public bool IsColliding(in AABBData a, in AABBData b)
         {
             // X •ûŒü
             bool hitX = Mathf.Abs(a.Center.x - b.Center.x) <= (a.HalfSize.x + b.HalfSize.x);

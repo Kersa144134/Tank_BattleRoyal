@@ -6,14 +6,15 @@
 // 概要     : 戦車の各種制御を統合管理する
 // ======================================================
 
-using System;
-using UnityEngine;
 using InputSystem.Data;
 using SceneSystem.Interface;
+using System;
+using System.Collections.Generic;
 using TankSystem.Controller;
 using TankSystem.Data;
 using TankSystem.Service;
 using TankSystem.Utility;
+using UnityEngine;
 
 namespace TankSystem.Manager
 {
@@ -40,6 +41,10 @@ namespace TankSystem.Manager
         [Header("障害物設定")]
         /// <summary>障害物オブジェクトの Transform 配列</summary>
         [SerializeField] private Transform[] _obstacles;
+
+        [Header("アイテム設定")]
+        /// <summary>アイテムの Transform リスト</summary>
+        [SerializeField] private List<Transform> _items;
 
         // ======================================================
         // コンポーネント参照
@@ -105,12 +110,12 @@ namespace TankSystem.Manager
             _attackManager = new TankAttackManager(transform);
 
             _collisionService = new TankCollisionService(
+                _aabbFactory,
+                _aabbCollisionController,
                 transform,
                 _hitboxCenter,
                 _hitboxSize,
-                _obstacles,
-                _aabbFactory,
-                _aabbCollisionController
+                _obstacles
             );
 
             _mobilityManager = new TankMobilityManager(
@@ -121,6 +126,8 @@ namespace TankSystem.Manager
                 _hitboxSize,
                 _obstacles
             );
+
+            _collisionService.SetItemAABBs(_items);
         }
 
         public void OnUpdate()
@@ -159,6 +166,15 @@ namespace TankSystem.Manager
             // --------------------------------------------------
             // 前進・旋回処理
             _mobilityManager.ApplyMobility(_tankStatus.HorsePower, leftMobility, rightMobility);
+
+            // 衝突対象の Transform を受け取る変数
+            Transform hitTransform;
+
+            // アイテム取得判定
+            if (_collisionService.TryGetItemCollision(out hitTransform))
+            {
+                Debug.Log(hitTransform.gameObject.name);
+            }
         }
 
         public void OnLateUpdate()

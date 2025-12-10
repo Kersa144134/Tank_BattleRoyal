@@ -192,7 +192,7 @@ namespace TankSystem.Data
         /// </summary>
         /// <param name="param">増加させるパラメーター</param>
         /// <param name="amount">増加量</param>
-        public void IncreaseParameter(TankParam param, int amount)
+        public void IncreaseParameter(in TankParam param, in int amount)
         {
             switch (param)
             {
