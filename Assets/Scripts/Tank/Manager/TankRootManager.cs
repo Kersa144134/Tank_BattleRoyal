@@ -6,13 +6,14 @@
 // 概要     : 戦車の各種制御を統合管理する
 // ======================================================
 
-using System;
-using UnityEngine;
-using UnityEngine.AI;
-using SceneSystem.Interface;
-using TankSystem.Controller;
 using InputSystem.Data;
+using SceneSystem.Interface;
+using System;
+using TankSystem.Controller;
 using TankSystem.Data;
+using TankSystem.Service;
+using TankSystem.Utility;
+using UnityEngine;
 
 namespace TankSystem.Manager
 {
@@ -24,6 +25,15 @@ namespace TankSystem.Manager
         // ======================================================
         // インスペクタ設定
         // ======================================================
+
+        /// <summary>戦車本体の当たり判定中心位置</summary>
+        [SerializeField] private Vector3 _hitboxCenter;
+
+        /// <summary>戦車本体の当たり判定スケール</summary>
+        [SerializeField] private Vector3 _hitboxSize;
+
+        /// <summary>障害物オブジェクトの Transform 配列</summary>
+        [SerializeField] private Transform[] _obstacles;
 
         // ======================================================
         // コンポーネント参照
@@ -52,6 +62,12 @@ namespace TankSystem.Manager
         /// <summary>左右キャタピラ入力から前進量・旋回量を算出するコントローラ</summary>
         private TankTrackController _trackController = new TankTrackController();
 
+        /// <summary>AABB の距離判定による衝突チェックを行うコントローラ</summary>
+        private AABBCollisionController _aabbCollisionController = new AABBCollisionController();
+
+        /// <summary>OBB から AABBを計算して生成するためのファクトリー</summary>
+        private AABBFactory _aabbFactory = new AABBFactory();
+
         // --------------------------------------------------
         // 入力
         // --------------------------------------------------
@@ -59,13 +75,15 @@ namespace TankSystem.Manager
         private TankInputManager _inputManager = new TankInputManager();
 
         // --------------------------------------------------
-        // オプション
+        // サービス
         // --------------------------------------------------
+        /// <summary>戦車当たり判定サービス</summary>
+        private TankCollisionService _collisionService;
 
         // ======================================================
         // フィールド
         // ======================================================
-        
+
         // ======================================================
         // イベント
         // ======================================================
@@ -82,9 +100,25 @@ namespace TankSystem.Manager
 
         public void OnEnter()
         {
-            // TankMobilityManager の生成
             _attackManager = new TankAttackManager(transform);
-            _mobilityManager = new TankMobilityManager(_trackController, transform);
+
+            _collisionService = new TankCollisionService(
+                transform,
+                _hitboxCenter,
+                _hitboxSize,
+                _obstacles,
+                _aabbFactory,
+                _aabbCollisionController
+            );
+
+            _mobilityManager = new TankMobilityManager(
+                _trackController,
+                _collisionService,
+                transform,
+                _hitboxCenter,
+                _hitboxSize,
+                _obstacles
+            );
         }
 
         public void OnUpdate()
