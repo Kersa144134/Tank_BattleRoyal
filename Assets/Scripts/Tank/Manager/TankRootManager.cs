@@ -159,8 +159,6 @@ namespace TankSystem.Manager
             // --------------------------------------------------
             // ‘OiEù‰ñˆ—
             _mobilityManager.ApplyMobility(_tankStatus.HorsePower, leftMobility, rightMobility);
-
-            
         }
 
         public void OnLateUpdate()
