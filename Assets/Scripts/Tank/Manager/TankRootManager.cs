@@ -6,14 +6,14 @@
 // 概要     : 戦車の各種制御を統合管理する
 // ======================================================
 
+using System;
+using UnityEngine;
 using InputSystem.Data;
 using SceneSystem.Interface;
-using System;
 using TankSystem.Controller;
 using TankSystem.Data;
 using TankSystem.Service;
 using TankSystem.Utility;
-using UnityEngine;
 
 namespace TankSystem.Manager
 {
@@ -26,22 +26,24 @@ namespace TankSystem.Manager
         // インスペクタ設定
         // ======================================================
 
+        [Header("戦車ステータス")]
+        /// <summary>ゲーム中に変動する戦車のパラメーター</summary>
+        [SerializeField] private TankStatus _tankStatus;
+
+        [Header("戦車当たり判定設定")]
         /// <summary>戦車本体の当たり判定中心位置</summary>
         [SerializeField] private Vector3 _hitboxCenter;
 
         /// <summary>戦車本体の当たり判定スケール</summary>
         [SerializeField] private Vector3 _hitboxSize;
 
+        [Header("障害物設定")]
         /// <summary>障害物オブジェクトの Transform 配列</summary>
         [SerializeField] private Transform[] _obstacles;
 
         // ======================================================
         // コンポーネント参照
         // ======================================================
-
-        // --------------------------------------------------
-        // パラメーター
-        // --------------------------------------------------
 
         // --------------------------------------------------
         // 攻撃力
@@ -156,7 +158,7 @@ namespace TankSystem.Manager
             // 機動
             // --------------------------------------------------
             // 前進・旋回処理
-            _mobilityManager.ApplyMobility(leftMobility, rightMobility);
+            _mobilityManager.ApplyMobility(_tankStatus.HorsePower, leftMobility, rightMobility);
 
             
         }

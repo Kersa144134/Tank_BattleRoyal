@@ -580,6 +580,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1cd6590539a9e604e8c2d02a2e1f37e4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _tankStatus:
+    _fuel: 0
+    _ammo: 0
+    _durability: 0
+    _armor: 0
+    _horsePower: 0
+    _acceleration: 0
+    _barrelScale: 0
+    _projectileMass: 0
+    _reloadTime: 0
   _hitboxCenter: {x: 0, y: 1.4, z: 1.25}
   _hitboxSize: {x: 3.75, y: 2.8, z: 9.25}
   _obstacles:

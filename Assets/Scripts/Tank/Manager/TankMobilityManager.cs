@@ -37,6 +37,9 @@ namespace TankSystem.Manager
         /// <summary>戦車本体の Transform</summary>
         private readonly Transform _tankTransform;
 
+        /// <summary>現在の機動力倍率（前進・旋回に適用）</summary>
+        private float _mobilityMultiplier = BASE_MOBILITY;
+
         /// <summary>接触した戦車と障害物の距離</summary>
         private float _lastHitDistance = -1f;
 
@@ -44,8 +47,11 @@ namespace TankSystem.Manager
         // 定数
         // ======================================================
 
-        /// <summary>機動力倍率（前進・旋回の両方に適用）</summary>
-        private const float MOBILITY = 5.5f;
+        /// <summary>基準機動力倍率</summary>
+        private const float BASE_MOBILITY = 5.0f;
+
+        /// <summary>馬力1あたりの倍率加算値</summary>
+        private const float HORSEPOWER_MULTIPLIER = 1.5f;
 
         // ======================================================
         // コンストラクタ
@@ -77,24 +83,26 @@ namespace TankSystem.Manager
         /// <summary>
         /// 前進・旋回処理を適用し、移動後に衝突判定を行う
         /// </summary>
-        public void ApplyMobility(in float left, in float right)
+        public void ApplyMobility(in int horsePower, in float left, in float right)
         {
-            // 移動前の座標を保存する
+            // 馬力に応じた倍率を更新
+            UpdateMobilityMultiplier(horsePower);
+
+            // 移動前の座標を保存
             Vector3 previousPosition = _tankTransform.position;
 
-            // キャタピラ入力から前進量と旋回量を取得する
+            // キャタピラ入力から前進量と旋回量を取得
             _trackController.UpdateTrack(left, right, out float forward, out float turn);
 
-            // 前方向への移動量を計算し Transform に適用する
+            // 前進量・旋回量に倍率を掛けて適用
             _tankTransform.Translate(
-                Vector3.forward * forward * MOBILITY * Time.deltaTime,
+                Vector3.forward * forward * _mobilityMultiplier * Time.deltaTime,
                 Space.Self
             );
 
-            // Y 軸周りの旋回量を Transform に適用する
             _tankTransform.Rotate(
                 0f,
-                turn * MOBILITY * Time.deltaTime,
+                turn * _mobilityMultiplier * Time.deltaTime,
                 0f,
                 Space.Self
             );
@@ -142,6 +150,26 @@ namespace TankSystem.Manager
             {
                 // 基準距離をリセット
                 _lastHitDistance = -1f;
+            }
+        }
+
+        // ======================================================
+        // プライベートメソッド
+        // ======================================================
+
+        /// <summary>
+        /// 現在の馬力パラメーターに応じて機動力倍率を計算し更新する
+        /// </summary>
+        /// <param name="horsePower">戦車の馬力（0～30）</param>
+        private void UpdateMobilityMultiplier(in int horsePower)
+        {
+            // 馬力を反映した倍率計算
+            _mobilityMultiplier = BASE_MOBILITY + horsePower * HORSEPOWER_MULTIPLIER;
+
+            // 最大値を50に制限
+            if (_mobilityMultiplier > 50f)
+            {
+                _mobilityMultiplier = 50f;
             }
         }
     }
