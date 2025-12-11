@@ -66,14 +66,14 @@ namespace TankSystem.Manager
         /// <summary>戦車の機動管理クラス</summary>
         private TankMobilityManager _mobilityManager;
 
-        /// <summary>左右キャタピラ入力から前進量・旋回量を算出するコントローラ</summary>
+        /// <summary>左右キャタピラ入力から前進量・旋回量を算出するコントローラー</summary>
         private TankTrackController _trackController = new TankTrackController();
 
-        /// <summary>AABB の距離判定による衝突チェックを行うコントローラ</summary>
-        private AABBCollisionController _aabbCollisionController = new AABBCollisionController();
+        /// <summary>AABB / OBB の距離計算および衝突判定を行うコントローラー</summary>
+        private BoundingBoxCollisionController _boxCollisionController = new BoundingBoxCollisionController();
 
-        /// <summary>OBB から AABBを計算して生成するためのファクトリー</summary>
-        private AABBFactory _aabbFactory = new AABBFactory();
+        /// <summary>OBB を生成するためのファクトリー</summary>
+        private OBBFactory _obbFactory = new OBBFactory();
 
         // --------------------------------------------------
         // 入力
@@ -110,8 +110,8 @@ namespace TankSystem.Manager
             _attackManager = new TankAttackManager(transform);
 
             _collisionService = new TankCollisionService(
-                _aabbFactory,
-                _aabbCollisionController,
+                _obbFactory,
+                _boxCollisionController,
                 transform,
                 _hitboxCenter,
                 _hitboxSize,
@@ -195,6 +195,11 @@ namespace TankSystem.Manager
         public void OnPhaseExit()
         {
 
+        }
+
+        private void OnDrawGizmos()
+        {
+            _obbFactory.DrawDebugOBB(transform, _hitboxCenter, _hitboxSize, Color.green);
         }
     }
 }

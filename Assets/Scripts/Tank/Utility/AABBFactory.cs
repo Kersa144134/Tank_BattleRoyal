@@ -1,9 +1,9 @@
 // ======================================================
-// AABBFactory.cs
+// OBBFactory.cs
 // 作成者   : 高橋一翔
-// 作成日時 : 2025-12-10
-// 更新日時 : 2025-12-10
-// 概要     : Transform の回転を考慮した AABB を生成するユーティリティクラス
+// 作成日時 : 2025-12-11
+// 更新日時 : 2025-12-11
+// 概要     : Transform の回転を考慮した OBB を生成するユーティリティクラス
 // ======================================================
 
 using UnityEngine;
@@ -12,49 +12,63 @@ using TankSystem.Data;
 namespace TankSystem.Utility
 {
     /// <summary>
-    /// OBB から AABBを計算して生成するためのファクトリークラス
+    /// OBB を生成するファクトリー
     /// </summary>
-    public class AABBFactory
+    public class OBBFactory
     {
+        // ======================================================
+        // OBB生成メソッド
+        // ======================================================
         /// <summary>
-        /// Transform とローカルサイズ情報から回転込みの AABB を計算して返す
+        /// Transform とローカルサイズ情報から OBB を生成
         /// </summary>
-        /// <param name="targetTransform">対象の Transform</param>
-        /// <param name="localCenter">ローカル座標での中心点</param>
+        /// <param name="targetTransform">対象 Transform</param>
+        /// <param name="localCenter">ローカル座標での中心</param>
         /// <param name="localSize">ローカル座標でのサイズ</param>
-        public AABBData CreateAABB(in Transform targetTransform, in Vector3 localCenter, in Vector3 localSize)
+        public OBBData CreateOBB(in Transform targetTransform, in Vector3 localCenter, in Vector3 localSize)
         {
-            // AABB の中心をワールド座標に変換
+            // ワールド座標での中心
             Vector3 worldCenter = targetTransform.TransformPoint(localCenter);
 
-            // ローカル半サイズを計算
-            Vector3 half = localSize * 0.5f;
+            // 半サイズにスケールを反映
+            Vector3 halfSize = Vector3.Scale(localSize * 0.5f, targetTransform.lossyScale);
 
-            // 回転情報を取得
+            // 回転をそのまま取得（全軸対応）
             Quaternion rotation = targetTransform.rotation;
 
-            // 右・上・前方向の回転済みベクトルを取得
-            Vector3 right = rotation * Vector3.right;
-            Vector3 up = rotation * Vector3.up;
-            Vector3 forward = rotation * Vector3.forward;
+            return new OBBData(worldCenter, halfSize, rotation);
+        }
 
-            // 各ローカル軸をワールド軸に投影して絶対値を合算
-            Vector3 worldHalf = new Vector3(
-                Mathf.Abs(Vector3.Dot(right, Vector3.right)) * half.x +
-                Mathf.Abs(Vector3.Dot(up, Vector3.right)) * half.y +
-                Mathf.Abs(Vector3.Dot(forward, Vector3.right)) * half.z,
+        // ======================================================
+        // デバッグ用描画
+        // ======================================================
+        /// <summary>
+        /// Gizmos にワイヤーフレームで OBB を描画
+        /// </summary>
+        /// <param name="targetTransform">対象 Transform</param>
+        /// <param name="localCenter">ローカル中心</param>
+        /// <param name="localSize">ローカルサイズ</param>
+        /// <param name="color">描画色</param>
+        public void DrawDebugOBB(Transform targetTransform, Vector3 localCenter, Vector3 localSize, Color color)
+        {
+            // OBB生成
+            OBBData obb = CreateOBB(targetTransform, localCenter, localSize);
 
-                Mathf.Abs(Vector3.Dot(right, Vector3.up)) * half.x +
-                Mathf.Abs(Vector3.Dot(up, Vector3.up)) * half.y +
-                Mathf.Abs(Vector3.Dot(forward, Vector3.up)) * half.z,
+            // Gizmos色設定
+            Gizmos.color = color;
 
-                Mathf.Abs(Vector3.Dot(right, Vector3.forward)) * half.x +
-                Mathf.Abs(Vector3.Dot(up, Vector3.forward)) * half.y +
-                Mathf.Abs(Vector3.Dot(forward, Vector3.forward)) * half.z
-            );
+            // 現在のGizmos行列を保存
+            Matrix4x4 oldMatrix = Gizmos.matrix;
 
-            // AABB データを生成して返す
-            return new AABBData(worldCenter, worldHalf);
+            // OBBの回転と位置を行列に反映
+            Gizmos.matrix = Matrix4x4.TRS(obb.Center, obb.Rotation, Vector3.one);
+
+            // ワイヤーフレーム描画（ローカルサイズにスケールを反映）
+            Vector3 size = obb.HalfSize * 2f;
+            Gizmos.DrawWireCube(Vector3.zero, size);
+
+            // 行列を元に戻す
+            Gizmos.matrix = oldMatrix;
         }
     }
 }

@@ -8,12 +8,10 @@
 // ======================================================
 
 using System.Collections.Generic;
+using UnityEngine;
 using TankSystem.Controller;
 using TankSystem.Data;
 using TankSystem.Utility;
-using Unity.Mathematics;
-using UnityEngine;
-using static UnityEditor.Progress;
 
 namespace TankSystem.Service
 {
@@ -26,11 +24,11 @@ namespace TankSystem.Service
         // コンポーネント参照
         // ======================================================
 
-        /// <summary>AABB を生成するためのファクトリークラス</summary>
-        private readonly AABBFactory _aabbFactory;
+        /// <summary>OBB を生成するためのファクトリークラス</summary>
+        private readonly OBBFactory _obbFactory;
 
-        /// <summary>AABB 同士の衝突判定を行うコントローラ</summary>
-        private readonly AABBCollisionController _collisionController;
+        /// <summary>AABB / OBB の距離計算および衝突判定を行うコントローラー</summary>
+        private readonly BoundingBoxCollisionController _boxCollisionController;
 
         // ======================================================
         // フィールド
@@ -65,16 +63,16 @@ namespace TankSystem.Service
         /// 衝突判定サービスを初期化し、障害物 AABB のキャッシュを作成する
         /// </summary>
         public TankCollisionService(
-            in AABBFactory aabbFactory,
-            in AABBCollisionController collisionController,
+            in OBBFactory obbFactory,
+            in BoundingBoxCollisionController boxCollisionController,
             in Transform tankTransform,
             in Vector3 hitboxCenter,
             in Vector3 hitboxSize,
             in Transform[] obstacles
         )
         {
-            _aabbFactory = aabbFactory;
-            _collisionController = collisionController;
+            _obbFactory = obbFactory;
+            _boxCollisionController = boxCollisionController;
             _tankTransform = tankTransform;
             _hitboxCenter = hitboxCenter;
             _hitboxSize = hitboxSize;
@@ -170,14 +168,14 @@ namespace TankSystem.Service
                 return false;
             }
 
-            // 戦車の AABB を現在の位置・回転から生成する
-            AABBData tankAABB = _aabbFactory.CreateAABB(
+            // 戦車の OBB を現在の位置・回転から生成する
+            OBBData tankOBB = _obbFactory.CreateOBB(
                 _tankTransform,
                 _hitboxCenter,
                 _hitboxSize
             );
 
-            // 障害物 AABB と戦車 AABB を順に比較して衝突判定する
+            // 障害物 AABB と戦車 OBB を順に比較して衝突判定する
             for (int i = 0; i < _obstacles.Length; i++)
             {
                 if (_obstacles[i] == null)
@@ -186,7 +184,7 @@ namespace TankSystem.Service
                 }
 
                 // 衝突していれば障害物の AABB のワールド座標を返す
-                if (_collisionController.IsColliding(tankAABB, _obstacleAABBs[i]))
+                if (_boxCollisionController.IsColliding(tankOBB, _obstacleAABBs[i]))
                 {
                     hitPosition = _obstacleAABBs[i].Center;
                     return true;
@@ -216,14 +214,14 @@ namespace TankSystem.Service
                 return false;
             }
 
-            // 戦車の AABB を現在の位置・回転から生成する
-            AABBData tankAABB = _aabbFactory.CreateAABB(
+            // 戦車の OBB を現在の位置・回転から生成する
+            OBBData tankOBB = _obbFactory.CreateOBB(
                 _tankTransform,
                 _hitboxCenter,
                 _hitboxSize
             );
 
-            // アイテム AABB と戦車 AABB を順に比較して衝突判定する
+            // アイテム AABB と戦車 OBB を順に比較して衝突判定する
             for (int i = 0; i < _items.Count; i++)
             {
                 if (_obstacles[i] == null)
@@ -231,10 +229,10 @@ namespace TankSystem.Service
                     continue;
                 }
 
-                bool isColliding = _collisionController.IsColliding(tankAABB, _itemAABBs[i]);
+                bool isColliding = _boxCollisionController.IsColliding(tankOBB, _itemAABBs[i]);
                 
-                // 衝突していればアイテムの AABB Transformを返す
-                if (_collisionController.IsColliding(tankAABB, _itemAABBs[i]))
+                // 衝突していればアイテムの OBB Transformを返す
+                if (_boxCollisionController.IsColliding(tankOBB, _itemAABBs[i]))
                 {
                     hitTransform = _items[i];
                     return true;
