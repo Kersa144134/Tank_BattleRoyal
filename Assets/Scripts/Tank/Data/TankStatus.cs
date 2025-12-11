@@ -6,6 +6,8 @@
 // 概要     : 戦車のゲーム中に変動する各種パラメーターを管理するクラス
 // ======================================================
 
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace TankSystem.Data
@@ -151,7 +153,13 @@ namespace TankSystem.Data
             get => _reloadTime;
             private set => _reloadTime = Mathf.Clamp(value, 0, 30);
         }
-        
+
+        // ======================================================
+        // 辞書
+        // ======================================================
+        /// <summary>TankParam 列挙型の値をキーに、対応する TankStatus のプロパティ更新アクションを格納する辞書</summary>
+        private readonly Dictionary<TankParam, Action<int>> _paramMap;
+
         // ======================================================
         // コンストラクタ
         // ======================================================
@@ -161,15 +169,22 @@ namespace TankSystem.Data
         /// </summary>
         public TankStatus()
         {
-            _fuel = 0;
-            _ammo = 0;
-            _durability = 0;
-            _armor = 0;
-            _horsePower = 0;
-            _acceleration = 0;
-            _barrelScale = 0;
-            _projectileMass = 0;
-            _reloadTime = 0;
+            _fuel = 0; _ammo = 0; _durability = 0; _armor = 0;
+            _horsePower = 0; _acceleration = 0; _barrelScale = 0; _projectileMass = 0; _reloadTime = 0;
+
+            // TankParam とプロパティ更新アクションを紐付け
+            _paramMap = new Dictionary<TankParam, Action<int>>
+            {
+                { TankParam.Fuel,           amount => Fuel += amount },
+                { TankParam.Ammo,           amount => Ammo += amount },
+                { TankParam.Durability,     amount => Durability += amount },
+                { TankParam.Armor,          amount => Armor += amount },
+                { TankParam.HorsePower,     amount => HorsePower += amount },
+                { TankParam.Acceleration,   amount => Acceleration += amount },
+                { TankParam.BarrelScale,    amount => BarrelScale += amount },
+                { TankParam.ProjectileMass, amount => ProjectileMass += amount },
+                { TankParam.ReloadTime,     amount => ReloadTime += amount },
+            };
         }
 
         // ======================================================
@@ -177,34 +192,15 @@ namespace TankSystem.Data
         // ======================================================
 
         /// <summary>
-        /// 戦車のパラメーター種別
-        /// </summary>
-        public enum TankParam
-        {
-            Fuel, Ammo, Durability, Armor,
-            HorsePower, Acceleration,
-            BarrelScale, ProjectileMass, ReloadTime
-        }
-
-        /// <summary>
         /// 任意のパラメーターを指定量だけ増加
-        /// アイテム取得時などに使用
         /// </summary>
         /// <param name="param">増加させるパラメーター</param>
         /// <param name="amount">増加量</param>
         public void IncreaseParameter(in TankParam param, in int amount)
         {
-            switch (param)
+            if (_paramMap.TryGetValue(param, out Action<int> setter))
             {
-                case TankParam.Fuel: _fuel += amount; break;
-                case TankParam.Ammo: _ammo += amount; break;
-                case TankParam.Durability: _durability += amount; break;
-                case TankParam.Armor: _armor += amount; break;
-                case TankParam.HorsePower: _horsePower += amount; break;
-                case TankParam.Acceleration: _acceleration += amount; break;
-                case TankParam.BarrelScale: _barrelScale += amount; break;
-                case TankParam.ProjectileMass: _projectileMass += amount; break;
-                case TankParam.ReloadTime: _reloadTime += amount; break;
+                setter(amount);
             }
         }
     }

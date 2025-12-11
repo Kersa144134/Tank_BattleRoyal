@@ -47,8 +47,8 @@ namespace TankSystem.Service
         /// <summary>障害物の Transform 配列</summary>
         private readonly Transform[] _obstacles;
 
-        /// <summary>アイテムの Transform リスト</summary>
-        private List<Transform> _items;
+        /// <summary>アイテムの構造体リスト</summary>
+        private List<ItemSlot> _items;
 
         /// <summary>戦車 OBB</summary>
         private OBBData _tankOBB;
@@ -67,7 +67,7 @@ namespace TankSystem.Service
         public event Action<Transform> OnObstacleHit;
 
         /// <summary>アイテム取得時</summary>
-        public event Action<Transform> OnItemHit;
+        public event Action<ItemSlot> OnItemHit;
 
         // ======================================================
         // コンストラクタ
@@ -128,7 +128,7 @@ namespace TankSystem.Service
         /// <summary>
         /// アイテム AABB 配列を生成する
         /// </summary>
-        public void SetItemAABBs(in List<Transform> items)
+        public void SetItemAABBs(in List<ItemSlot> items)
         {
             if (items == null || items.Count == 0)
             {
@@ -143,18 +143,18 @@ namespace TankSystem.Service
             
             for (int i = 0; i < items.Count; i++)
             {
-                Transform item = items[i];
-                if (item == null)
+                Transform itemTransform = items[i].ItemTransform;
+                if (itemTransform == null)
                 {
                     _itemAABBs[i] = new AABBData(Vector3.zero, Vector3.zero);
                     continue;
                 }
 
                 // 障害物中心座標を取得する
-                Vector3 center = item.position;
+                Vector3 center = itemTransform.position;
 
                 // 障害物のワールドサイズを lossyScale から取得する
-                Vector3 worldSize = item.lossyScale;
+                Vector3 worldSize = itemTransform.lossyScale;
 
                 // 半径（半サイズ）を計算する
                 Vector3 half = worldSize * 0.5f;
@@ -195,7 +195,10 @@ namespace TankSystem.Service
             // アイテムチェック
             for (int i = 0; i < _items.Count; i++)
             {
-                if (_items[i] == null) continue;
+                if (!_items[i].IsEnabled || _items[i].ItemTransform == null)
+                {
+                    continue;
+                }
 
                 if (_boxCollisionController.IsColliding(_tankOBB, _itemAABBs[i]))
                 {

@@ -6,15 +6,16 @@
 // 概要     : 戦車の各種制御を統合管理する
 // ======================================================
 
-using InputSystem.Data;
-using SceneSystem.Interface;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
+using InputSystem.Data;
+using ItemSystem.Data;
+using SceneSystem.Interface;
 using TankSystem.Controller;
 using TankSystem.Data;
 using TankSystem.Service;
 using TankSystem.Utility;
-using UnityEngine;
 
 namespace TankSystem.Manager
 {
@@ -44,7 +45,7 @@ namespace TankSystem.Manager
 
         [Header("アイテム設定")]
         /// <summary>アイテムの Transform リスト</summary>
-        [SerializeField] private List<Transform> _items;
+        [SerializeField] private List<ItemSlot> _items;
 
         // ======================================================
         // コンポーネント参照
@@ -199,17 +200,41 @@ namespace TankSystem.Manager
 
         }
 
+        // ======================================================
+        // プライベートメソッド
+        // ======================================================
+
+        // --------------------------------------------------
+        // イベントハンドラ
+        // --------------------------------------------------
+        /// <summary>
+        /// 障害物に衝突したときの処理を行うハンドラ
+        /// </summary>
+        /// <param name="obstacle">衝突した障害物の Transform</param>
         private void HandleObstacleHit(Transform obstacle)
         {
-            // 衝突時の処理例
-            Debug.Log($"Obstacle hit: {obstacle.name}");
             _mobilityManager.CheckObstaclesCollision(obstacle);
         }
 
-        private void HandleItemHit(Transform item)
+        /// <summary>
+        /// アイテムに衝突したときの処理を行うハンドラ
+        /// </summary>
+        /// <param name="itemSlot">衝突したアイテムの Slot</param>
+        private void HandleItemHit(ItemSlot itemSlot)
         {
-            // アイテム取得処理
-            Debug.Log($"Item acquired: {item.name}");
+            ItemData data = itemSlot.ItemData;
+            Debug.Log($"Item acquired: {data.Name}");
+
+            // 型判定で ParamItemData か WeaponItemData を判別
+            if (data is ParamItemData param)
+            {
+                // 戦車パラメーターを増加
+                _tankStatus.IncreaseParameter(param.Type, param.Value);
+            }
+            else if (data is WeaponItemData weapon)
+            {
+                // 武装アイテム取得処理
+            }
         }
     }
 }
