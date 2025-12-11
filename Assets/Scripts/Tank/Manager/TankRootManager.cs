@@ -128,6 +128,10 @@ namespace TankSystem.Manager
             );
 
             _collisionService.SetItemAABBs(_items);
+
+            // イベント購読
+            _collisionService.OnObstacleHit += HandleObstacleHit;
+            _collisionService.OnItemHit += HandleItemHit;
         }
 
         public void OnUpdate()
@@ -167,14 +171,10 @@ namespace TankSystem.Manager
             // 前進・旋回処理
             _mobilityManager.ApplyMobility(_tankStatus.HorsePower, leftMobility, rightMobility);
 
-            // 衝突対象の Transform を受け取る変数
-            Transform hitTransform;
-
-            // アイテム取得判定
-            if (_collisionService.TryGetItemCollision(out hitTransform))
-            {
-                Debug.Log(hitTransform.gameObject.name);
-            }
+            // --------------------------------------------------
+            // 衝突判定
+            // --------------------------------------------------
+            _collisionService.UpdateCollisionChecks();
         }
 
         public void OnLateUpdate()
@@ -184,7 +184,9 @@ namespace TankSystem.Manager
 
         public void OnExit()
         {
-
+            // イベント購読の解除
+            _collisionService.OnObstacleHit -= HandleObstacleHit;
+            _collisionService.OnItemHit -= HandleItemHit;
         }
 
         public void OnPhaseEnter()
@@ -197,9 +199,17 @@ namespace TankSystem.Manager
 
         }
 
-        private void OnDrawGizmos()
+        private void HandleObstacleHit(Transform obstacle)
         {
-            _obbFactory.DrawDebugOBB(transform, _hitboxCenter, _hitboxSize, Color.green);
+            // 衝突時の処理例
+            Debug.Log($"Obstacle hit: {obstacle.name}");
+            _mobilityManager.CheckObstaclesCollision(obstacle);
+        }
+
+        private void HandleItemHit(Transform item)
+        {
+            // アイテム取得処理
+            Debug.Log($"Item acquired: {item.name}");
         }
     }
 }

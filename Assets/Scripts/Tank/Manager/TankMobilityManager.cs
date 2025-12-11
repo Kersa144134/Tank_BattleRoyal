@@ -11,7 +11,6 @@
 using UnityEngine;
 using TankSystem.Controller;
 using TankSystem.Service;
-using TankSystem.Utility;
 
 namespace TankSystem.Manager
 {
@@ -53,6 +52,12 @@ namespace TankSystem.Manager
         /// <summary>馬力1あたりの倍率加算値</summary>
         private const float HORSEPOWER_MULTIPLIER = 1.5f;
 
+        /// <summary>衝突回避時のXZ平面での移動ステップ量</summary>
+        private const float COLLISION_RETREAT_STEP = 0.05f;
+
+        /// <summary>衝突回避時の最大ステップ回数</summary>
+        private const int COLLISION_MAX_STEPS = 100;
+
         // ======================================================
         // コンストラクタ
         // ======================================================
@@ -91,9 +96,6 @@ namespace TankSystem.Manager
             // 馬力に応じた倍率を更新
             UpdateMobilityMultiplier(horsePower);
 
-            // 移動前の座標を保存
-            Vector3 previousPosition = _tankTransform.position;
-
             // キャタピラ入力から前進量と旋回量を取得
             _trackController.UpdateTrack(left, right, out float forward, out float turn);
 
@@ -109,9 +111,35 @@ namespace TankSystem.Manager
                 0f,
                 Space.Self
             );
+        }
 
-            // 移動後の衝突判定
-            CheckCollision(previousPosition);
+        /// <summary>
+        /// 移動後の衝突をチェックし、必要に応じて位置を戻す
+        /// </summary>
+        public void CheckObstaclesCollision(Transform obstacle)
+        {
+            // 現在位置と障害物の距離を算出
+            float distance = Vector3.Distance(_tankTransform.position, obstacle.position);
+
+            // 初回判定
+            if (_lastHitDistance < 0f)
+            {
+                _lastHitDistance = distance;
+                return;
+            }
+
+            if (distance < _lastHitDistance)
+            {
+                // 障害物に近づく方向
+                ResolveCollision(obstacle.position);
+                return;
+            }
+            else
+            {
+                // 障害物から離れる方向
+                _lastHitDistance = distance;
+                return;
+            }
         }
 
         // ======================================================
@@ -135,79 +163,36 @@ namespace TankSystem.Manager
         }
 
         /// <summary>
-        /// 移動後の衝突をチェックし、必要に応じて位置を戻す
+        /// 衝突した場合に、障害物との方向に沿ってXZ平面のみで戦車を少しずつ後退させ、
+        /// 衝突が解消されるまで移動を調整する
         /// </summary>
-        /// <param name="previousPosition">移動前の座標</param>
-        private void CheckCollision(in Vector3 previousPosition)
+        /// <param name="hitPos">接触対象の座標</param>
+        private void ResolveCollision(Vector3 hitPos)
         {
-            // 衝突対象のワールド位置を受け取る変数
-            Vector3 hitPos;
+            // 戦車から障害物への方向ベクトルを計算
+            Vector3 toObstacle = hitPos - _tankTransform.position;
 
-            // 衝突した場合
-            if (_collisionService.TryGetObstacleCollision(out hitPos))
-            {
-                // 現在位置と障害物の距離を算出
-                float distance = Vector3.Distance(_tankTransform.position, hitPos);
+            // Y成分を無視
+            toObstacle.y = 0f;
 
-                // 初回判定
-                if (_lastHitDistance < 0f)
-                {
-                    _lastHitDistance = distance;
-                    _tankTransform.position = previousPosition;
-                    return;
-                }
-
-                if (distance < _lastHitDistance)
-                {
-                    // 障害物に近づく方向
-                    // 部分的に移動をキャンセルして衝突回避を検証
-                    ResolveCollision(previousPosition, hitPos);
-                    return;
-                }
-                else
-                {
-                    // 障害物から離れる方向
-                    // 基準距離を更新して移動を実行
-                    _lastHitDistance = distance;
-                    return;
-                }
-            }
-            else
-            {
-                // 基準距離をリセット
-                _lastHitDistance = -1f;
-            }
-        }
-
-        /// <summary>
-        /// 衝突した場合にX方向・Z方向のみの移動調整を検証し、
-        /// 衝突が回避可能であれば部分的に移動を許可する
-        /// </summary>
-        /// <param name="previousPosition">移動前の座標</param>
-        /// <param name="hitPos">衝突対象の座標</param>
-        private void ResolveCollision(Vector3 previousPosition, Vector3 hitPos)
-        {
-            // 現在位置との差分
-            Vector3 delta = _tankTransform.position - previousPosition;
-
-            // X方向のみキャンセル
-            Vector3 testPosX = new Vector3(previousPosition.x, _tankTransform.position.y, _tankTransform.position.z);
-            _tankTransform.position = testPosX;
-            if (!_collisionService.TryGetObstacleCollision(out _))
+            // 長さ0ベクトルは処理不要
+            if (toObstacle.sqrMagnitude < 1e-6f)
             {
                 return;
             }
 
-            // Z方向のみキャンセル
-            Vector3 testPosZ = new Vector3(_tankTransform.position.x, _tankTransform.position.y, previousPosition.z);
-            _tankTransform.position = testPosZ;
-            if (!_collisionService.TryGetObstacleCollision(out _))
-            {
-                return;
-            }
+            // 衝突回避用の後退ベクトル
+            Vector3 retreatDirection = -toObstacle.normalized;
 
-            // 全体キャンセル
-            _tankTransform.position = previousPosition;
+            int stepCount = 0;
+
+            // 衝突が解消されるまでループ
+            while (_collisionService.IsCollidingWithObstacleAtPosition(_tankTransform.position) && stepCount < COLLISION_MAX_STEPS)
+            {
+                // XZ平面方向に少しずつ退避
+                _tankTransform.position += retreatDirection * COLLISION_RETREAT_STEP;
+                stepCount++;
+            }
         }
     }
 }

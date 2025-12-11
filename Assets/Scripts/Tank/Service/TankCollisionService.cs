@@ -7,6 +7,7 @@
 //            障害物 AABB をキャッシュし、戦車の AABB を動的生成して判定を行う
 // ======================================================
 
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using TankSystem.Controller;
@@ -49,11 +50,24 @@ namespace TankSystem.Service
         /// <summary>アイテムの Transform リスト</summary>
         private List<Transform> _items;
 
+        /// <summary>戦車 OBB</summary>
+        private OBBData _tankOBB;
+        
         /// <summary>障害物の AABB をキャッシュして保持する構造体配列</summary>
         private readonly AABBData[] _obstacleAABBs;
 
         /// <summary>アイテムの AABB をキャッシュして保持する構造体配列</summary>
         private AABBData[] _itemAABBs;
+
+        // ======================================================
+        // イベント
+        // ======================================================
+
+        /// <summary>障害物衝突時</summary>
+        public event Action<Transform> OnObstacleHit;
+
+        /// <summary>アイテム取得時</summary>
+        public event Action<Transform> OnItemHit;
 
         // ======================================================
         // コンストラクタ
@@ -155,91 +169,71 @@ namespace TankSystem.Service
         // ======================================================
 
         /// <summary>
-        /// 戦車と障害物の衝突判定
+        /// 毎フレーム呼び出すことで戦車と障害物／アイテムの衝突をチェックし、
+        /// ヒットした対象に応じてイベントを発火する
         /// </summary>
-        /// <param name="hitPosition">衝突した障害物の中心座標</param>
-        /// <returns>衝突していれば true</returns>
-        public bool TryGetObstacleCollision(out Vector3 hitPosition)
+        public void UpdateCollisionChecks()
         {
-            hitPosition = Vector3.zero;
-
-            if (_obstacles == null || _obstacles.Length == 0)
-            {
-                return false;
-            }
-
-            // 戦車の OBB を現在の位置・回転から生成する
-            OBBData tankOBB = _obbFactory.CreateOBB(
+            // 戦車 OBB を生成
+            _tankOBB = _obbFactory.CreateOBB(
                 _tankTransform,
                 _hitboxCenter,
                 _hitboxSize
             );
 
-            // 障害物 AABB と戦車 OBB を順に比較して衝突判定する
+            // 障害物チェック
             for (int i = 0; i < _obstacles.Length; i++)
             {
-                if (_obstacles[i] == null)
-                {
-                    continue;
-                }
+                if (_obstacles[i] == null) continue;
 
-                // 衝突していれば障害物の AABB のワールド座標を返す
-                if (_boxCollisionController.IsColliding(tankOBB, _obstacleAABBs[i]))
+                if (_boxCollisionController.IsColliding(_tankOBB, _obstacleAABBs[i]))
                 {
-                    hitPosition = _obstacleAABBs[i].Center;
-                    return true;
+                    OnObstacleHit?.Invoke(_obstacles[i]);
                 }
             }
 
-            // 衝突が無ければ false を返す
-            return false;
+            // アイテムチェック
+            for (int i = 0; i < _items.Count; i++)
+            {
+                if (_items[i] == null) continue;
+
+                if (_boxCollisionController.IsColliding(_tankOBB, _itemAABBs[i]))
+                {
+                    OnItemHit?.Invoke(_items[i]);
+                }
+            }
         }
 
         /// <summary>
-        /// 戦車とアイテムの衝突判定
+        /// 指定した座標に戦車を移動させた場合、障害物と衝突するか判定する
         /// </summary>
-        /// <param name="hitTransform">衝突したアイテムの Transform</param>
-        public bool TryGetItemCollision(out Transform hitTransform)
+        /// <param name="tankPos">判定対象となる戦車の座標</param>
+        /// <returns>
+        /// 衝突していれば <c>true</c>、衝突していなければ <c>false</c> を返す
+        /// </returns>
+        public bool IsCollidingWithObstacleAtPosition(Vector3 tankPos)
         {
-            hitTransform = null;
-
-            if (_items == null || _items.Count == 0)
-            {
-                return false;
-            }
-
-            // AABB 配列が未生成または長さ不一致の場合
-            if (_itemAABBs == null || _itemAABBs.Length != _items.Count)
-            {
-                return false;
-            }
-
-            // 戦車の OBB を現在の位置・回転から生成する
-            OBBData tankOBB = _obbFactory.CreateOBB(
+            // 戦車 OBB を生成
+            _tankOBB = _obbFactory.CreateOBB(
                 _tankTransform,
                 _hitboxCenter,
                 _hitboxSize
             );
 
-            // アイテム AABB と戦車 OBB を順に比較して衝突判定する
-            for (int i = 0; i < _items.Count; i++)
+            // 障害物チェック
+            for (int i = 0; i < _obstacleAABBs.Length; i++)
             {
                 if (_obstacles[i] == null)
                 {
                     continue;
                 }
 
-                bool isColliding = _boxCollisionController.IsColliding(tankOBB, _itemAABBs[i]);
-                
-                // 衝突していればアイテムの OBB Transformを返す
-                if (_boxCollisionController.IsColliding(tankOBB, _itemAABBs[i]))
+                if (_boxCollisionController.IsColliding(_tankOBB, _obstacleAABBs[i]))
                 {
-                    hitTransform = _items[i];
                     return true;
                 }
             }
 
-            // 衝突が無ければ false を返す
             return false;
         }
     }
