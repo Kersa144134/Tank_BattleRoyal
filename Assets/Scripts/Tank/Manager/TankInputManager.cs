@@ -2,15 +2,16 @@
 // TankInputManager.cs
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-08
-// 更新日時 : 2025-12-08
+// 更新日時 : 2025-12-12
 // 概要     : 戦車操作用の入力を管理するクラス
+//            基本は単一ボタンを辞書で管理し、複数ボタン対応は必要時のみ処理
 // ======================================================
 
 using System.Collections.Generic;
 using UnityEngine;
 using InputSystem.Data;
 using InputSystem.Manager;
-using TankSystem.Data;
+using static TankSystem.Data.TankInputKeys;
 
 namespace TankSystem.Manager
 {
@@ -24,14 +25,14 @@ namespace TankSystem.Manager
         // プロパティ
         // ======================================================
 
-        /// <summary>左スティック入力 (前後)</summary>
+        /// <summary>左スティック入力</summary>
         public Vector2 LeftStick { get; private set; }
 
-        /// <summary>右スティック入力 (前後)</summary>
+        /// <summary>右スティック入力</summary>
         public Vector2 RightStick { get; private set; }
 
         /// <summary>ボタン名と ButtonState の辞書</summary>
-        public Dictionary<string, ButtonState> ButtonMap { get; private set; } = new Dictionary<string, ButtonState>();
+        public Dictionary<string, List<ButtonState>> ButtonMap { get; private set; } = new Dictionary<string, List<ButtonState>>();
 
         // ======================================================
         // パブリックメソッド
@@ -42,51 +43,58 @@ namespace TankSystem.Manager
         /// </summary>
         public void UpdateInput()
         {
-            // 現在の入力マッピングインデックスを取得
             int currentMapping = InputManager.Instance.CurrentMappingIndex;
 
             // --------------------------------------------------
             // 常時有効ボタン
             // --------------------------------------------------
-            ButtonMap[TankInputKeys.INPUT_OPTION] = InputManager.Instance.StartButton;
+            ButtonMap[INPUT_OPTION] = new List<ButtonState>() { InputManager.Instance.StartButton };
 
             if (currentMapping == 0)
             {
                 // --------------------------------------------------
-                // インゲーム
+                // インゲームマッピング
                 // --------------------------------------------------
                 LeftStick = InputManager.Instance.LeftStick;
                 RightStick = InputManager.Instance.RightStick;
 
                 // 攻撃ボタン
-                ButtonMap[TankInputKeys.INPUT_HE_FIRE] = InputManager.Instance.RightTrigger;
-                ButtonMap[TankInputKeys.INPUT_AP_FIRE] = InputManager.Instance.LeftTrigger;
+                // 榴弾発射は L/R トリガー両方に対応
+                ButtonMap[INPUT_EXPLOSIVE_FIRE] = new List<ButtonState>()
+                {
+                    InputManager.Instance.LeftTrigger,
+                    InputManager.Instance.RightTrigger
+                };
+
+                // 従来通り単一ボタンはリスト化して登録
+                ButtonMap[INPUT_PENETRATION_FIRE] = new List<ButtonState>() { null };
+                ButtonMap[INPUT_HOMING_FIRE] = new List<ButtonState>() { null };
             }
             else
             {
                 // --------------------------------------------------
-                // UI マッピング時は攻撃ボタン無効化
+                // UIマッピング時は攻撃ボタン無効化
                 // --------------------------------------------------
                 LeftStick = Vector2.zero;
                 RightStick = Vector2.zero;
 
-                ButtonMap[TankInputKeys.INPUT_HE_FIRE] = null;
-                ButtonMap[TankInputKeys.INPUT_AP_FIRE] = null;
+                ButtonMap[INPUT_EXPLOSIVE_FIRE] = null;
+                ButtonMap[INPUT_PENETRATION_FIRE] = null;
+                ButtonMap[INPUT_HOMING_FIRE] = null;
             }
         }
 
         /// <summary>
-        /// 指定の文字列キーでボタン状態を取得
-        /// 存在しない場合は null を返す
+        /// 指定キーに対応するボタンリストを取得
+        /// 存在しない場合は空リストを返す
         /// </summary>
-        public ButtonState GetButton(in string key)
+        public List<ButtonState> GetButtonStates(in string key)
         {
-            if (ButtonMap.TryGetValue(key, out ButtonState state))
+            if (ButtonMap.TryGetValue(key, out List<ButtonState> states))
             {
-                return state;
+                return states;
             }
-
-            return null;
+            return new List<ButtonState>();
         }
     }
 }

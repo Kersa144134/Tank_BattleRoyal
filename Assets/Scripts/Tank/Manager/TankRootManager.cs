@@ -6,16 +6,17 @@
 // 概要     : 戦車の各種制御を統合管理する
 // ======================================================
 
-using System;
-using System.Collections.Generic;
-using UnityEngine;
 using InputSystem.Data;
 using ItemSystem.Data;
 using SceneSystem.Interface;
+using System;
+using System.Collections.Generic;
 using TankSystem.Controller;
 using TankSystem.Data;
 using TankSystem.Service;
 using TankSystem.Utility;
+using UnityEngine;
+using static TankSystem.Data.TankInputKeys;
 
 namespace TankSystem.Manager
 {
@@ -28,25 +29,25 @@ namespace TankSystem.Manager
         // インスペクタ設定
         // ======================================================
 
-        [Header("戦車ステータス")]
+        [Header("コンポーネント参照")]
+        /// <summary>障害物・アイテム・戦車などを保持する SceneObjectRegistry</summary>
+        [SerializeField] private SceneObjectRegistry _sceneRegistry;
+
+        [Header("ステータス")]
         /// <summary>ゲーム中に変動する戦車のパラメーター</summary>
         [SerializeField] private TankStatus _tankStatus;
 
-        [Header("戦車当たり判定設定")]
+        [Header("攻撃設定")]
+        /// <summary>弾丸発射ローカル位置</summary>
+        [SerializeField] private Transform _firePoint;
+
+        [Header("当たり判定設定")]
         /// <summary>戦車本体の当たり判定中心位置</summary>
         [SerializeField] private Vector3 _hitboxCenter;
 
         /// <summary>戦車本体の当たり判定スケール</summary>
         [SerializeField] private Vector3 _hitboxSize;
-
-        [Header("障害物設定")]
-        /// <summary>障害物オブジェクトの Transform 配列</summary>
-        [SerializeField] private Transform[] _obstacles;
-
-        [Header("アイテム設定")]
-        /// <summary>アイテムの Transform リスト</summary>
-        [SerializeField] private List<ItemSlot> _items;
-
+        
         // ======================================================
         // コンポーネント参照
         // ======================================================
@@ -85,6 +86,9 @@ namespace TankSystem.Manager
         // --------------------------------------------------
         // サービス
         // --------------------------------------------------
+        /// <summary>戦車移動範囲制限サービス</summary>
+        private TankMovementBoundaryService _boundaryService;
+
         /// <summary>戦車当たり判定サービス</summary>
         private TankCollisionService _collisionService;
 
@@ -92,6 +96,13 @@ namespace TankSystem.Manager
         // フィールド
         // ======================================================
 
+        // ======================================================
+        // 定数
+        // ======================================================
+
+        /// <summary>戦車の移動許容距離半径</summary>
+        private const float MOVEMENT_ALLOWED_RADIUS = 200f;
+        
         // ======================================================
         // イベント
         // ======================================================
@@ -103,12 +114,16 @@ namespace TankSystem.Manager
         public event Action OnOptionButtonPressed;
         
         // ======================================================
-        // IUpdatableイベント
+        // IUpdatable イベント
         // ======================================================
 
         public void OnEnter()
         {
-            _attackManager = new TankAttackManager(transform);
+            // SceneObjectRegistry から必要なシーン情報を取得
+            Transform[] obstacles = _sceneRegistry.Obstacles;
+            List<ItemSlot> items = _sceneRegistry.ItemSlots;
+
+            _attackManager = new TankAttackManager(_firePoint);
 
             _collisionService = new TankCollisionService(
                 _obbFactory,
@@ -116,23 +131,27 @@ namespace TankSystem.Manager
                 transform,
                 _hitboxCenter,
                 _hitboxSize,
-                _obstacles
+                obstacles
             );
+
+            _boundaryService = new TankMovementBoundaryService(MOVEMENT_ALLOWED_RADIUS);
 
             _mobilityManager = new TankMobilityManager(
                 _trackController,
                 _collisionService,
+                _boundaryService,
                 transform,
                 _hitboxCenter,
                 _hitboxSize,
-                _obstacles
+                obstacles
             );
 
-            _collisionService.SetItemAABBs(_items);
+            _collisionService.SetItemOBBs(items);
 
             // イベント購読
             _collisionService.OnObstacleHit += HandleObstacleHit;
             _collisionService.OnItemHit += HandleItemHit;
+            _sceneRegistry.OnItemListChanged += HandleItemListChanged;
         }
 
         public void OnUpdate()
@@ -150,21 +169,24 @@ namespace TankSystem.Manager
             // --------------------------------------------------
             // オプション
             // --------------------------------------------------
-            if (_inputManager.GetButton(TankInputKeys.INPUT_OPTION)?.Down == true)
+            foreach (ButtonState state in _inputManager.GetButtonStates(TankInputKeys.INPUT_OPTION))
             {
-                // オプションイベントを発火
-                OnOptionButtonPressed?.Invoke();
+                if (state != null && state.Down)
+                {
+                    OnOptionButtonPressed?.Invoke();
+                    break;
+                }
             }
 
             // --------------------------------------------------
             // 攻撃
             // --------------------------------------------------
             // 辞書から攻撃ボタンを取得して更新
-            ButtonState heButton = _inputManager.GetButton(TankInputKeys.INPUT_HE_FIRE);
-            ButtonState apButton = _inputManager.GetButton(TankInputKeys.INPUT_AP_FIRE);
+            // ButtonState leftAttackButton = _inputManager.GetButton(TankInputKeys.INPUT_EXPLOSIVE_FIRE);
+            // ButtonState rightAttack = _inputManager.GetButton(TankInputKeys.INPUT_EXPLOSIVE_FIRE);
 
             // 攻撃処理
-            _attackManager.UpdateAttack(heButton, apButton);
+            // _attackManager.UpdateAttack(leftAttackButton, rightAttack);
 
             // --------------------------------------------------
             // 機動
@@ -188,6 +210,7 @@ namespace TankSystem.Manager
             // イベント購読の解除
             _collisionService.OnObstacleHit -= HandleObstacleHit;
             _collisionService.OnItemHit -= HandleItemHit;
+            _sceneRegistry.OnItemListChanged -= HandleItemListChanged;
         }
 
         public void OnPhaseEnter()
@@ -223,7 +246,6 @@ namespace TankSystem.Manager
         private void HandleItemHit(ItemSlot itemSlot)
         {
             ItemData data = itemSlot.ItemData;
-            Debug.Log($"Item acquired: {data.Name}");
 
             // 型判定で ParamItemData か WeaponItemData を判別
             if (data is ParamItemData param)
@@ -235,6 +257,22 @@ namespace TankSystem.Manager
             {
                 // 武装アイテム取得処理
             }
+            else
+            {
+                return;
+            }
+
+            // アイテム削除
+            _sceneRegistry.RemoveItem(itemSlot);
+        }
+
+        /// <summary>
+        /// SceneObjectRegistry のアイテム更新イベント受信時に
+        /// OBB 情報を再生成する
+        /// </summary>
+        private void HandleItemListChanged(List<ItemSlot> newList)
+        {
+            _collisionService.SetItemOBBs(newList);
         }
     }
 }

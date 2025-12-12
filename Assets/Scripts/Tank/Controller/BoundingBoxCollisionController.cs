@@ -3,7 +3,7 @@
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-11
 // 更新日時 : 2025-12-11
-// 概要     : AABB / OBB 間の衝突判定と距離計算を担当するコントローラクラス
+// 概要     : OBB 間の衝突判定と距離計算を担当するコントローラクラス
 // ======================================================
 
 using UnityEngine;
@@ -12,34 +12,13 @@ using TankSystem.Data;
 namespace TankSystem.Controller
 {
     /// <summary>
-    /// AABB / OBB の距離計算および衝突判定を行うクラス
+    /// OBB の距離計算および衝突判定を行うクラス
     /// </summary>
     public class BoundingBoxCollisionController
     {
         // ======================================================
         // パブリックメソッド
         // ======================================================
-
-        /// <summary>
-        /// 2つのAABBが衝突しているか判定する
-        /// </summary>
-        /// <param name="a">AABB A</param>
-        /// <param name="b">AABB B</param>
-        /// <returns>衝突していれば true、していなければ false</returns>
-        public bool IsColliding(in AABBData a, in AABBData b)
-        {
-            // X方向の重なり判定
-            bool hitX = Mathf.Abs(a.Center.x - b.Center.x) <= (a.HalfSize.x + b.HalfSize.x);
-
-            // Y方向の重なり判定
-            bool hitY = Mathf.Abs(a.Center.y - b.Center.y) <= (a.HalfSize.y + b.HalfSize.y);
-
-            // Z方向の重なり判定
-            bool hitZ = Mathf.Abs(a.Center.z - b.Center.z) <= (a.HalfSize.z + b.HalfSize.z);
-
-            // 全方向で重なりがあれば衝突
-            return hitX && hitY && hitZ;
-        }
 
         /// <summary>
         /// 2つのOBBが衝突しているか判定する
@@ -84,20 +63,6 @@ namespace TankSystem.Controller
 
             // 全ての軸で重なりがあれば衝突
             return true;
-        }
-
-        /// <summary>
-        /// OBBとAABBが衝突しているか判定する
-        /// </summary>
-        /// <param name="obb">OBB</param>
-        /// <param name="aabb">AABB</param>
-        /// <returns>衝突していれば true、していなければ false</returns>
-        public bool IsColliding(in OBBData obb, in AABBData aabb)
-        {
-            // AABBを回転なしOBBとして扱うことでOBB判定に統一
-            OBBData aAsOBB = new OBBData(aabb.Center, aabb.HalfSize, Quaternion.identity);
-
-            return IsColliding(aAsOBB, obb);
         }
 
         // ======================================================

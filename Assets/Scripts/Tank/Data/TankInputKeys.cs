@@ -6,6 +6,8 @@
 // 概要     : ゲーム内で使用する入力キー名を一元管理する定数クラス
 // ======================================================
 
+using WeaponSystem.Data;
+
 namespace TankSystem.Data
 {
     /// <summary>
@@ -16,10 +18,13 @@ namespace TankSystem.Data
         /// <summary>オプションボタンキー</summary>
         public const string INPUT_OPTION = "Option";
 
-        /// <summary>榴弾攻撃ボタンキー</summary>
-        public const string INPUT_HE_FIRE = "HEFire";
+        // 榴弾（Explosive）用ボタンキー
+        public const string INPUT_EXPLOSIVE_FIRE = nameof(BulletType.Explosive) + "Fire";
 
-        /// <summary>徹甲弾攻撃ボタンキー</summary>
-        public const string INPUT_AP_FIRE = "APFire";
+        // 徹甲弾（Penetration）用ボタンキー
+        public const string INPUT_PENETRATION_FIRE = nameof(BulletType.Penetration) + "Fire";
+
+        // 誘導弾（Homing）用ボタンキー
+        public const string INPUT_HOMING_FIRE = nameof(BulletType.Homing) + "Fire";
     }
 }

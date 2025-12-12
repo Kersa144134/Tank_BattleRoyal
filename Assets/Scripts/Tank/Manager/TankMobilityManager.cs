@@ -29,6 +29,9 @@ namespace TankSystem.Manager
         /// <summary>衝突判定サービス</summary>
         private readonly TankCollisionService _collisionService;
 
+        /// <summary>戦車移動範囲制限サービス</summary>
+        private readonly TankMovementBoundaryService _boundaryService;
+
         // ======================================================
         // フィールド
         // ======================================================
@@ -68,6 +71,7 @@ namespace TankSystem.Manager
         public TankMobilityManager(
             in TankTrackController trackController,
             in TankCollisionService collisionService,
+            in TankMovementBoundaryService boundaryService,
             in Transform transform,
             in Vector3 hitboxCenter,
             in Vector3 hitboxSize,
@@ -76,6 +80,7 @@ namespace TankSystem.Manager
         {
             _trackController = trackController;
             _collisionService = collisionService;
+            _boundaryService = boundaryService;
 
             // 操作対象の戦車 Transform を保持する
             _tankTransform = transform;
@@ -111,6 +116,9 @@ namespace TankSystem.Manager
                 0f,
                 Space.Self
             );
+
+            // 移動範囲チェック
+            _boundaryService.ClampPosition(_tankTransform);
         }
 
         /// <summary>

@@ -3,8 +3,8 @@
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-10
 // 更新日時 : 2025-12-10
-// 概要     : 戦車と障害物の AABB 衝突判定を専任で担当するサービスクラス
-//            障害物 AABB をキャッシュし、戦車の AABB を動的生成して判定を行う
+// 概要     : 戦車と障害物の OBB 衝突判定を専任で担当するサービスクラス
+//            障害物 OBB をキャッシュし、戦車の OBB を動的生成して判定を行う
 // ======================================================
 
 using System;
@@ -17,7 +17,7 @@ using TankSystem.Utility;
 namespace TankSystem.Service
 {
     /// <summary>
-    /// 戦車の AABB と障害物 AABB の衝突判定を行うサービスクラス
+    /// 戦車の OBB と障害物 OBB の衝突判定を行うサービスクラス
     /// </summary>
     public class TankCollisionService
     {
@@ -28,7 +28,7 @@ namespace TankSystem.Service
         /// <summary>OBB を生成するためのファクトリークラス</summary>
         private readonly OBBFactory _obbFactory;
 
-        /// <summary>AABB / OBB の距離計算および衝突判定を行うコントローラー</summary>
+        /// <summary>OBB / OBB の距離計算および衝突判定を行うコントローラー</summary>
         private readonly BoundingBoxCollisionController _boxCollisionController;
 
         // ======================================================
@@ -52,12 +52,12 @@ namespace TankSystem.Service
 
         /// <summary>戦車 OBB</summary>
         private OBBData _tankOBB;
-        
-        /// <summary>障害物の AABB をキャッシュして保持する構造体配列</summary>
-        private readonly AABBData[] _obstacleAABBs;
 
-        /// <summary>アイテムの AABB をキャッシュして保持する構造体配列</summary>
-        private AABBData[] _itemAABBs;
+        /// <summary>障害物の OBB をキャッシュして保持する構造体配列</summary>
+        private readonly OBBData[] _obstacleOBBs;
+
+        /// <summary>アイテムの OBB をキャッシュして保持する構造体配列</summary>
+        private OBBData[] _itemOBBs;
 
         // ======================================================
         // イベント
@@ -74,7 +74,7 @@ namespace TankSystem.Service
         // ======================================================
 
         /// <summary>
-        /// 衝突判定サービスを初期化し、障害物 AABB のキャッシュを作成する
+        /// 衝突判定サービスを初期化し、障害物 OBB のキャッシュを作成する
         /// </summary>
         public TankCollisionService(
             in OBBFactory obbFactory,
@@ -92,32 +92,13 @@ namespace TankSystem.Service
             _hitboxSize = hitboxSize;
             _obstacles = obstacles;
 
-            // 障害物 AABB のキャッシュ配列を初期化する
-            _obstacleAABBs = new AABBData[_obstacles.Length];
+            // 障害物 OBB のキャッシュ配列を初期化する
+            _obstacleOBBs = new OBBData[_obstacles.Length];
 
-            // --------------------------------------------------
-            // 障害物 AABB を生成
-            // --------------------------------------------------
+            // 障害物 OBB を生成
             for (int i = 0; i < _obstacles.Length; i++)
             {
-                Transform obs = _obstacles[i];
-                if (obs == null)
-                {
-                    _obstacleAABBs[i] = new AABBData(Vector3.zero, Vector3.zero);
-                    continue;
-                }
-
-                // 障害物中心座標を取得する
-                Vector3 center = obs.position;
-
-                // 障害物のワールドサイズを lossyScale から取得する
-                Vector3 worldSize = obs.lossyScale;
-
-                // 半径（半サイズ）を計算する
-                Vector3 half = worldSize * 0.5f;
-
-                // キャッシュ用 AABB を生成し配列に格納する
-                _obstacleAABBs[i] = new AABBData(center, half);
+                _obstacleOBBs[i] = CreateOBBFromTransform(_obstacles[i]);
             }
         }
 
@@ -126,41 +107,25 @@ namespace TankSystem.Service
         // ======================================================
 
         /// <summary>
-        /// アイテム AABB 配列を生成する
+        /// アイテム OBB 配列を生成する
         /// </summary>
-        public void SetItemAABBs(in List<ItemSlot> items)
+        public void SetItemOBBs(in List<ItemSlot> items)
         {
             if (items == null || items.Count == 0)
             {
-                _itemAABBs = new AABBData[0];
+                _itemOBBs = new OBBData[0];
                 return;
             }
 
             _items = items;
 
-            // アイテム AABB のキャッシュ配列を初期化する
-            _itemAABBs = new AABBData[items.Count];
-            
+            // アイテム OBB のキャッシュ配列を初期化する
+            _itemOBBs = new OBBData[items.Count];
+
+            // アイテム OBB を生成
             for (int i = 0; i < items.Count; i++)
             {
-                Transform itemTransform = items[i].ItemTransform;
-                if (itemTransform == null)
-                {
-                    _itemAABBs[i] = new AABBData(Vector3.zero, Vector3.zero);
-                    continue;
-                }
-
-                // 障害物中心座標を取得する
-                Vector3 center = itemTransform.position;
-
-                // 障害物のワールドサイズを lossyScale から取得する
-                Vector3 worldSize = itemTransform.lossyScale;
-
-                // 半径（半サイズ）を計算する
-                Vector3 half = worldSize * 0.5f;
-
-                // キャッシュ用 AABB を生成し配列に格納する
-                _itemAABBs[i] = new AABBData(center, half);
+                _itemOBBs[i] = CreateOBBFromTransform(items[i].ItemTransform);
             }
         }
 
@@ -186,7 +151,7 @@ namespace TankSystem.Service
             {
                 if (_obstacles[i] == null) continue;
 
-                if (_boxCollisionController.IsColliding(_tankOBB, _obstacleAABBs[i]))
+                if (_boxCollisionController.IsColliding(_tankOBB, _obstacleOBBs[i]))
                 {
                     OnObstacleHit?.Invoke(_obstacles[i]);
                 }
@@ -200,7 +165,7 @@ namespace TankSystem.Service
                     continue;
                 }
 
-                if (_boxCollisionController.IsColliding(_tankOBB, _itemAABBs[i]))
+                if (_boxCollisionController.IsColliding(_tankOBB, _itemOBBs[i]))
                 {
                     OnItemHit?.Invoke(_items[i]);
                 }
@@ -224,20 +189,49 @@ namespace TankSystem.Service
             );
 
             // 障害物チェック
-            for (int i = 0; i < _obstacleAABBs.Length; i++)
+            for (int i = 0; i < _obstacleOBBs.Length; i++)
             {
                 if (_obstacles[i] == null)
                 {
                     continue;
                 }
 
-                if (_boxCollisionController.IsColliding(_tankOBB, _obstacleAABBs[i]))
+                if (_boxCollisionController.IsColliding(_tankOBB, _obstacleOBBs[i]))
                 {
                     return true;
                 }
             }
 
             return false;
+        }
+
+        // ======================================================
+        // プライベートメソッド
+        // ======================================================
+
+        /// <summary>
+        /// Transform から中心・半サイズ・回転を取得して OBBData を生成する
+        /// null の場合は空 OBB を返す
+        /// </summary>
+        /// <param name="tf">対象 Transform</param>
+        /// <returns>生成された OBBData</returns>
+        private OBBData CreateOBBFromTransform(Transform tf)
+        {
+            if (tf == null)
+            {
+                return new OBBData(Vector3.zero, Vector3.zero, Quaternion.identity);
+            }
+
+            // 中心座標を取得
+            Vector3 center = tf.position;
+
+            // 半サイズ（lossyScaleの半分）
+            Vector3 half = tf.lossyScale * 0.5f;
+
+            // 回転（ワールド回転）
+            Quaternion rotation = tf.rotation;
+
+            return new OBBData(center, half, rotation);
         }
     }
 }
