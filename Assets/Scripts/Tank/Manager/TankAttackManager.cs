@@ -134,7 +134,7 @@ namespace TankSystem.Manager
 
             if (_rightInputTimer >= 0f && _rightInputTimer > INPUT_DECISION_DELAY)
             {
-                FirePenetration();
+                FireExplosive();
                 _rightInputTimer = -1f;
                 _cooldownTime = ATTACK_COOLDOWN;
             }
@@ -149,8 +149,6 @@ namespace TankSystem.Manager
         /// </summary>
         private void FireExplosive()
         {
-            Debug.Log("Fire High-Explosive");
-
             // イベントを発火し、弾丸タイプを通知
             OnFireBullet?.Invoke(BulletType.Explosive);
         }
@@ -160,8 +158,6 @@ namespace TankSystem.Manager
         /// </summary>
         private void FirePenetration()
         {
-            Debug.Log("Fire Armor-Piercing");
-
             // イベントを発火し、弾丸タイプを通知
             OnFireBullet?.Invoke(BulletType.Penetration);
         }
@@ -171,8 +167,6 @@ namespace TankSystem.Manager
         /// </summary>
         private void FireHoming()
         {
-            Debug.Log("Fire Homing");
-
             // イベントを発火し、弾丸タイプを通知
             OnFireBullet?.Invoke(BulletType.Homing);
         }

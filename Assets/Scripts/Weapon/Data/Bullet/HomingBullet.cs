@@ -7,6 +7,13 @@ namespace WeaponSystem.Data
     /// </summary>
     public class HomingBullet : BulletBase
     {
+        // ======================================================
+        // フィールド
+        // ======================================================
+
+        /// <summary>弾丸飛行方向ベクトル</summary>
+        private Vector3 _shootDirection;
+
         private Transform target;
         private float rotateSpeed;
         private float hitDistance;
@@ -18,6 +25,15 @@ namespace WeaponSystem.Data
             target = tgt;
             rotateSpeed = rotSpeed;
             hitDistance = hitDist;
+        }
+
+        /// <summary>
+        /// 弾丸の飛行方向を設定する
+        /// </summary>
+        /// <param name="direction">弾丸の飛行方向ベクトル</param>
+        protected override void SetDirection(Vector3 direction)
+        {
+            _shootDirection = direction.normalized;
         }
 
         protected override void Tick(float deltaTime)

@@ -11,7 +11,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using InputSystem.Data;
 using InputSystem.Manager;
-using static TankSystem.Data.TankInputKeys;
+using TankSystem.Data;
 
 namespace TankSystem.Manager
 {
@@ -32,7 +32,7 @@ namespace TankSystem.Manager
         public Vector2 RightStick { get; private set; }
 
         /// <summary>ボタン名と ButtonState の辞書</summary>
-        public Dictionary<string, List<ButtonState>> ButtonMap { get; private set; } = new Dictionary<string, List<ButtonState>>();
+        public Dictionary<string, ButtonState> ButtonMap { get; private set; } = new Dictionary<string, ButtonState>();
 
         // ======================================================
         // パブリックメソッド
@@ -48,7 +48,7 @@ namespace TankSystem.Manager
             // --------------------------------------------------
             // 常時有効ボタン
             // --------------------------------------------------
-            ButtonMap[INPUT_OPTION] = new List<ButtonState>() { InputManager.Instance.StartButton };
+            ButtonMap[TankInputKeys.INPUT_OPTION] = InputManager.Instance.StartButton;
 
             if (currentMapping == 0)
             {
@@ -59,16 +59,8 @@ namespace TankSystem.Manager
                 RightStick = InputManager.Instance.RightStick;
 
                 // 攻撃ボタン
-                // 榴弾発射は L/R トリガー両方に対応
-                ButtonMap[INPUT_EXPLOSIVE_FIRE] = new List<ButtonState>()
-                {
-                    InputManager.Instance.LeftTrigger,
-                    InputManager.Instance.RightTrigger
-                };
-
-                // 従来通り単一ボタンはリスト化して登録
-                ButtonMap[INPUT_PENETRATION_FIRE] = new List<ButtonState>() { null };
-                ButtonMap[INPUT_HOMING_FIRE] = new List<ButtonState>() { null };
+                ButtonMap[TankInputKeys.INPUT_LEFT_FIRE] = InputManager.Instance.LeftTrigger;
+                ButtonMap[TankInputKeys.INPUT_RIGHT_FIRE] = InputManager.Instance.RightTrigger;
             }
             else
             {
@@ -78,23 +70,23 @@ namespace TankSystem.Manager
                 LeftStick = Vector2.zero;
                 RightStick = Vector2.zero;
 
-                ButtonMap[INPUT_EXPLOSIVE_FIRE] = null;
-                ButtonMap[INPUT_PENETRATION_FIRE] = null;
-                ButtonMap[INPUT_HOMING_FIRE] = null;
+                ButtonMap[TankInputKeys.INPUT_LEFT_FIRE] = null;
+                ButtonMap[TankInputKeys.INPUT_RIGHT_FIRE] = null;
             }
         }
 
         /// <summary>
-        /// 指定キーに対応するボタンリストを取得
-        /// 存在しない場合は空リストを返す
+        /// 指定の文字列キーでボタン状態を取得
+        /// 存在しない場合は null を返す
         /// </summary>
-        public List<ButtonState> GetButtonStates(in string key)
+        public ButtonState GetButtonState(in string key)
         {
-            if (ButtonMap.TryGetValue(key, out List<ButtonState> states))
+            if (ButtonMap.TryGetValue(key, out ButtonState state))
             {
-                return states;
+                return state;
             }
-            return new List<ButtonState>();
+
+            return null;
         }
     }
 }

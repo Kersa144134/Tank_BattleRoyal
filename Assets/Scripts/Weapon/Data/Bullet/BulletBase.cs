@@ -22,6 +22,9 @@ namespace WeaponSystem.Data
         /// <summary>弾丸が現在有効かどうかを示すフラグ</summary>
         private bool _isEnabled;
 
+        /// <summary>弾丸の生成座標</summary>
+        protected Vector3 _spawnPosition;
+
         /// <summary>時間による寿命判定で使用されるタイマー</summary>
         protected float _lifetimeTimer;
 
@@ -64,7 +67,12 @@ namespace WeaponSystem.Data
         // ======================================================
 
         /// <summary>
-        /// 派生クラス固有の移動・衝突・追尾などの処理
+        /// 弾丸の飛行方向を設定する抽象メソッド
+        /// </summary>
+        protected abstract void SetDirection(Vector3 direction);
+
+        /// <summary>
+        /// 弾丸の移動・衝突・追尾などの処理をする抽象メソッド
         /// </summary>
         protected abstract void Tick(float deltaTime);
 
@@ -88,12 +96,20 @@ namespace WeaponSystem.Data
         // ======================================================
 
         /// <summary>
-        /// 弾丸が使用開始されたフレームで呼び出される
+        /// 発射時に Spawn 位置と方向を注入
         /// </summary>
-        public virtual void OnEnter(Vector3 direction)
+        /// <param name="position">発射位置</param>
+        /// <param name="direction">飛行方向</param>
+        public virtual void OnEnter(Vector3 position, Vector3 direction)
         {
+            _spawnPosition = position;
+            CurrentPosition = position;
+
             IsEnabled = true;
             _lifetimeTimer = 0f;
+
+            SetDirection(direction);
+            ApplyToTransform();
         }
 
         /// <summary>

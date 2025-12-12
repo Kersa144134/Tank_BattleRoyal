@@ -6,13 +6,15 @@
 // 概要     : シーン遷移、フェーズ管理、Update 管理を統括する
 // ======================================================
 
-using System;
-using UnityEngine;
 using InputSystem.Manager;
 using SceneSystem.Controller;
 using SceneSystem.Data;
 using SceneSystem.Interface;
+using System;
 using TankSystem.Manager;
+using UnityEngine;
+using WeaponSystem.Data;
+using WeaponSystem.Manager;
 
 public class SceneManager : MonoBehaviour
 {
@@ -28,6 +30,9 @@ public class SceneManager : MonoBehaviour
     // コンポーネント参照
     // ======================================================
 
+    // --------------------------------------------------
+    // シーン・フェーズ制御
+    // --------------------------------------------------
     /// <summary>IUpdatable を保持し毎フレーム OnUpdate を実行するコントローラ</summary>
     private UpdateController _updateController;
 
@@ -36,6 +41,12 @@ public class SceneManager : MonoBehaviour
 
     /// <summary>フェーズデータを実行時形式で保持するランタイムデータ</summary>
     private PhaseRuntimeData _phaseRuntimeData;
+
+    // --------------------------------------------------
+    // その他
+    // --------------------------------------------------
+    /// <summary>弾丸オブジェクトとロジックの管理を行うプールクラス</summary>
+    private BulletPool _bulletPool;
 
     /// <summary>入力管理クラス</summary>
     private InputManager _inputManager;
@@ -104,6 +115,10 @@ public class SceneManager : MonoBehaviour
             updatable.OnEnter();
 
             // コンポーネントのキャッシュ登録
+            if (updatable is BulletPool bulletPool)
+            {
+                _bulletPool = bulletPool;
+            }
             if (updatable is InputManager inputManager)
             {
                 _inputManager = inputManager;
@@ -151,12 +166,14 @@ public class SceneManager : MonoBehaviour
     private void OnEnable()
     {
         // イベント購読
+        _tankRootManager.OnFireBullet += HandleFireBullet;
         _tankRootManager.OnOptionButtonPressed += HandleOptionButtonPressed;
     }
 
     private void OnDisable()
     {
         // イベント購読解除
+        _tankRootManager.OnFireBullet -= HandleFireBullet;
         _tankRootManager.OnOptionButtonPressed -= HandleOptionButtonPressed;
     }
 
@@ -217,8 +234,12 @@ public class SceneManager : MonoBehaviour
         _updateController.OnPhaseEnter();
     }
 
+    // ======================================================
+    // イベントハンドラ
+    // ======================================================
+
     /// <summary>
-    /// オプションボタン押下時の処理
+    /// オプションボタン押下時の処理を行うハンドラ
     /// 現在のフェーズに応じて入力マッピングとターゲットフェーズを切り替える
     /// </summary>
     private void HandleOptionButtonPressed()
@@ -244,5 +265,25 @@ public class SceneManager : MonoBehaviour
             default:
                 break;
         }
+    }
+
+    /// <summary>
+    /// TankRootManager から発射イベントを受け取り BulletPool で弾丸を生成・発射する
+    /// </summary>
+    /// <param name="type">発射する弾丸の種類</param>
+    private void HandleFireBullet(BulletType type)
+    {
+        if (_bulletPool == null || _tankRootManager == null)
+        {
+            Debug.LogWarning("[SceneManager] BulletPool または TankRootManager が未設定です。");
+            return;
+        }
+
+        // 発射位置と方向を取得
+        Vector3 firePosition = _tankRootManager.FirePoint.position;
+        Vector3 fireDirection = _tankRootManager.transform.forward;
+
+        // BulletPool で弾丸を生成・発射
+        _bulletPool.Spawn(type, firePosition, fireDirection);
     }
 }

@@ -16,7 +16,7 @@ using TankSystem.Data;
 using TankSystem.Service;
 using TankSystem.Utility;
 using UnityEngine;
-using static TankSystem.Data.TankInputKeys;
+using WeaponSystem.Data;
 
 namespace TankSystem.Manager
 {
@@ -97,6 +97,13 @@ namespace TankSystem.Manager
         // ======================================================
 
         // ======================================================
+        // プロパティ
+        // ======================================================
+
+        /// <summary>弾丸発射ローカル位置</summary>
+        public Transform FirePoint => _firePoint;
+        
+        // ======================================================
         // 定数
         // ======================================================
 
@@ -107,12 +114,12 @@ namespace TankSystem.Manager
         // イベント
         // ======================================================
 
-        /// <summary>
-        /// オプションボタン押下時に発火するイベント
-        /// 外部から登録してUIやサウンド処理などを接続可能
-        /// </summary>
+        /// <summary>オプションボタン押下時に発火するイベント</summary>
         public event Action OnOptionButtonPressed;
-        
+
+        /// <summary>弾丸が発射された際に発火するイベント</summary>
+        public event Action<BulletType> OnFireBullet;
+
         // ======================================================
         // IUpdatable イベント
         // ======================================================
@@ -149,6 +156,7 @@ namespace TankSystem.Manager
             _collisionService.SetItemOBBs(items);
 
             // イベント購読
+            _attackManager.OnFireBullet += HandleFireBullet;
             _collisionService.OnObstacleHit += HandleObstacleHit;
             _collisionService.OnItemHit += HandleItemHit;
             _sceneRegistry.OnItemListChanged += HandleItemListChanged;
@@ -169,24 +177,20 @@ namespace TankSystem.Manager
             // --------------------------------------------------
             // オプション
             // --------------------------------------------------
-            foreach (ButtonState state in _inputManager.GetButtonStates(TankInputKeys.INPUT_OPTION))
+            if (_inputManager.GetButtonState(TankInputKeys.INPUT_OPTION).Down)
             {
-                if (state != null && state.Down)
-                {
-                    OnOptionButtonPressed?.Invoke();
-                    break;
-                }
+                OnOptionButtonPressed?.Invoke();
             }
 
             // --------------------------------------------------
             // 攻撃
             // --------------------------------------------------
             // 辞書から攻撃ボタンを取得して更新
-            // ButtonState leftAttackButton = _inputManager.GetButton(TankInputKeys.INPUT_EXPLOSIVE_FIRE);
-            // ButtonState rightAttack = _inputManager.GetButton(TankInputKeys.INPUT_EXPLOSIVE_FIRE);
+            ButtonState leftAttackButton = _inputManager.GetButtonState(TankInputKeys.INPUT_LEFT_FIRE);
+            ButtonState rightAttack = _inputManager.GetButtonState(TankInputKeys.INPUT_RIGHT_FIRE);
 
             // 攻撃処理
-            // _attackManager.UpdateAttack(leftAttackButton, rightAttack);
+            _attackManager.UpdateAttack(leftAttackButton, rightAttack);
 
             // --------------------------------------------------
             // 機動
@@ -208,6 +212,7 @@ namespace TankSystem.Manager
         public void OnExit()
         {
             // イベント購読の解除
+            _attackManager.OnFireBullet -= HandleFireBullet;
             _collisionService.OnObstacleHit -= HandleObstacleHit;
             _collisionService.OnItemHit -= HandleItemHit;
             _sceneRegistry.OnItemListChanged -= HandleItemListChanged;
@@ -268,11 +273,27 @@ namespace TankSystem.Manager
 
         /// <summary>
         /// SceneObjectRegistry のアイテム更新イベント受信時に
-        /// OBB 情報を再生成する
+        /// OBB 情報を再生成する処理を行うハンドラ
         /// </summary>
         private void HandleItemListChanged(List<ItemSlot> newList)
         {
             _collisionService.SetItemOBBs(newList);
+        }
+
+        /// <summary>
+        /// 左右トリガー入力を元に攻撃を実行し、
+        /// 弾丸タイプを通知する処理を行うハンドラ
+        /// </summary>
+        private void HandleFireBullet(BulletType type)
+        {
+            // 発射位置を取得
+            Vector3 firePosition = _firePoint.position;
+
+            // 発射方向は戦車前方
+            Vector3 fireDirection = transform.forward;
+
+            // イベントを外部に通知
+            OnFireBullet?.Invoke(type);
         }
     }
 }
