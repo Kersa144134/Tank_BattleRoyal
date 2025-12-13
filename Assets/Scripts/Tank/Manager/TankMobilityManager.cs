@@ -9,6 +9,7 @@
 // ======================================================
 
 using UnityEngine;
+using CollisionSystem.Data;
 using TankSystem.Controller;
 using TankSystem.Service;
 
@@ -125,7 +126,7 @@ namespace TankSystem.Manager
         public void CheckObstaclesCollision(in Transform obstacle)
         {
             // 侵入量を計算
-            TankCollisionService.CollisionResolveInfo resolveInfo =
+            CollisionResolveInfo resolveInfo =
                 _collisionService.CalculateObstacleResolveInfo(obstacle);
 
             // 有効でなければ何もしない

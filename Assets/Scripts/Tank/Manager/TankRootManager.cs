@@ -6,16 +6,17 @@
 // 概要     : 戦車の各種制御を統合管理する
 // ======================================================
 
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+using CollisionSystem.Calculator;
 using InputSystem.Data;
 using ItemSystem.Data;
 using SceneSystem.Interface;
-using System;
-using System.Collections.Generic;
 using TankSystem.Controller;
 using TankSystem.Data;
 using TankSystem.Service;
 using TankSystem.Utility;
-using UnityEngine;
 using WeaponSystem.Data;
 
 namespace TankSystem.Manager
@@ -72,7 +73,7 @@ namespace TankSystem.Manager
         private TankTrackController _trackController = new TankTrackController();
 
         /// <summary>AABB / OBB の距離計算および衝突判定を行うコントローラー</summary>
-        private BoundingBoxCollisionController _boxCollisionController = new BoundingBoxCollisionController();
+        private BoundingBoxCollisionCalculator _boxCollisionCalculator = new BoundingBoxCollisionCalculator();
 
         /// <summary>OBB を生成するためのファクトリー</summary>
         private OBBFactory _obbFactory = new OBBFactory();
@@ -134,7 +135,7 @@ namespace TankSystem.Manager
 
             _collisionService = new TankCollisionService(
                 _obbFactory,
-                _boxCollisionController,
+                _boxCollisionCalculator,
                 transform,
                 _hitboxCenter,
                 _hitboxSize,

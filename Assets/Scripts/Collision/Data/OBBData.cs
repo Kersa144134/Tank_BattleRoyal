@@ -2,13 +2,13 @@
 // OBBData.cs
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-11
-// 更新日時 : 2025-12-11
+// 更新日時 : 2025-12-13
 // 概要     : OBBDataの中心座標・半サイズ・回転を保持するデータ構造体
 // ======================================================
 
 using UnityEngine;
 
-namespace TankSystem.Data
+namespace CollisionSystem.Data
 {
     /// <summary>
     /// 回転を考慮した境界ボックスのデータ構造体

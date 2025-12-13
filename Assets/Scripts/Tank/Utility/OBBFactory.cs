@@ -8,7 +8,7 @@
 // ======================================================
 
 using UnityEngine;
-using TankSystem.Data;
+using CollisionSystem.Data;
 
 namespace TankSystem.Utility
 {
@@ -33,13 +33,16 @@ namespace TankSystem.Utility
             in Vector3 localSize
         )
         {
-            // ローカル座標を Transform の回転・位置を考慮してワールド空間へ変換する
+            // ローカル中心をワールド空間へ変換
             Vector3 worldCenter = targetTransform.TransformPoint(localCenter);
 
-            // ローカルサイズをそのまま半サイズとして使用する
-            Vector3 halfSize = localSize * 0.5f;
+            // ローカルサイズに Transform のスケールを反映
+            Vector3 scaledSize = Vector3.Scale(localSize, targetTransform.lossyScale);
 
-            // Transform の回転をそのまま OBB の回転として使用する
+            // 半サイズに変換
+            Vector3 halfSize = scaledSize * 0.5f;
+
+            // 回転は Transform のワールド回転を使用
             Quaternion rotation = targetTransform.rotation;
 
             return new OBBData(
