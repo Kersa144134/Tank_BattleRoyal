@@ -108,7 +108,7 @@ namespace TankSystem.Manager
         // ======================================================
 
         /// <summary>戦車の移動許容距離半径</summary>
-        private const float MOVEMENT_ALLOWED_RADIUS = 200f;
+        private const float MOVEMENT_ALLOWED_RADIUS = 400f;
         
         // ======================================================
         // イベント

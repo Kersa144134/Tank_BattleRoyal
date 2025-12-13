@@ -2,8 +2,8 @@
 // BoundingBoxCollisionController.cs
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-11
-// 更新日時 : 2025-12-11
-// 概要     : OBB 間の衝突判定と距離計算を担当するコントローラクラス
+// 更新日時 : 2025-12-13
+// 概要     : OBB 間の衝突判定および MTV（最小移動量）の算出を担当する
 // ======================================================
 
 using UnityEngine;
@@ -21,91 +21,255 @@ namespace TankSystem.Controller
         // ======================================================
 
         /// <summary>
-        /// 2つのOBBが衝突しているか判定する
+        /// 2つの OBB が衝突しているか判定する
         /// </summary>
-        /// <param name="a">OBB A</param>
-        /// <param name="b">OBB B</param>
-        /// <returns>衝突していれば true、していなければ false</returns>
         public bool IsColliding(in OBBData a, in OBBData b)
         {
-            // OBBのローカル軸をワールド回転込みで取得
-            Vector3[] axesA = { a.Rotation * Vector3.right, a.Rotation * Vector3.up, a.Rotation * Vector3.forward };
-            Vector3[] axesB = { b.Rotation * Vector3.right, b.Rotation * Vector3.up, b.Rotation * Vector3.forward };
+            // 判定用の分離軸を生成
+            Vector3[] axes = CreateFullTestAxes(a, b, out int axisCount);
 
-            // 衝突判定用の全軸
-            Vector3[] testAxes = new Vector3[15];
-
-            // AOBBとBOBBの軸を追加
-            for (int i = 0; i < 3; i++)
+            // 全軸で重なりを確認
+            for (int i = 0; i < axisCount; i++)
             {
-                testAxes[i] = axesA[i];
-                testAxes[i + 3] = axesB[i];
-            }
-
-            // 外積による分離軸追加
-            int idx = 6;
-            for (int i = 0; i < 3; i++)
-                for (int j = 0; j < 3; j++)
+                // 一つでも分離軸があれば非衝突
+                if (!IsOverlappingOnAxis(a, b, axes[i]))
                 {
-                    Vector3 cross = Vector3.Cross(axesA[i], axesB[j]);
-                    // 軸の長さが0に近くない場合のみ追加
-                    if (cross.sqrMagnitude > 1e-6f)
-                        testAxes[idx++] = cross.normalized;
-                }
-
-            // 重なり判定
-            for (int i = 0; i < idx; i++)
-            {
-                // 一つでも分離軸があれば衝突なし
-                if (!OverlapOnAxis(a, b, testAxes[i]))
                     return false;
+                }
             }
 
-            // 全ての軸で重なりがあれば衝突
             return true;
         }
 
+        /// <summary>
+        /// 2 つの OBB が侵入している前提で、
+        /// 分離に必要な最小移動量（MTV）を算出する
+        /// </summary>
+        public bool TryCalculateMTV(
+            in OBBData a,
+            in OBBData b,
+            out Vector3 minAxis,
+            out float minOverlap
+        )
+        {
+            // 初期化
+            minAxis = Vector3.zero;
+            minOverlap = float.MaxValue;
+
+            // --------------------------------------------------
+            // SAT 用の分離軸を取得（Y 回転のみ）
+            // --------------------------------------------------
+
+            Vector3[] axes = CreateHorizontalSATAxes(a, b);
+
+            // --------------------------------------------------
+            // 中心差分ベクトルを算出
+            // --------------------------------------------------
+
+            Vector3 centerDelta = CalculateCenterDelta(a, b);
+
+            // --------------------------------------------------
+            // 各軸で侵入量を評価
+            // --------------------------------------------------
+
+            for (int i = 0; i < axes.Length; i++)
+            {
+                // 軸を正規化
+                Vector3 axis = axes[i].normalized;
+
+                // 侵入量を算出
+                if (!TryCalculateOverlapOnAxis(
+                        a,
+                        b,
+                        centerDelta,
+                        axis,
+                        out float overlap
+                    ))
+                {
+                    return false;
+                }
+
+                // 最小侵入量を更新
+                if (overlap < minOverlap)
+                {
+                    minOverlap = overlap;
+                    minAxis = axis;
+                }
+            }
+
+            // 有効な MTV が得られたか確認
+            return minAxis != Vector3.zero;
+        }
+
         // ======================================================
-        // プライベートメソッド
+        // SAT 構築関連
         // ======================================================
 
         /// <summary>
-        /// 指定軸に投影したときの2つのOBBの重なりを判定
+        /// Y 回転のみを考慮した SAT 用分離軸を生成する
         /// </summary>
-        /// <param name="a">OBB A</param>
-        /// <param name="b">OBB B</param>
-        /// <param name="axis">判定軸</param>
-        /// <returns>重なっていれば true、していなければ false</returns>
-        private bool OverlapOnAxis(in OBBData a, in OBBData b, in Vector3 axis)
+        private Vector3[] CreateHorizontalSATAxes(in OBBData a, in OBBData b)
         {
-            // 各OBBを軸に投影した半長さを取得
-            float aProj = ProjectOBB(a, axis);
-            float bProj = ProjectOBB(b, axis);
+            // OBB A のローカル軸
+            Vector3 aForward = a.Rotation * Vector3.forward;
+            Vector3 aRight = a.Rotation * Vector3.right;
 
-            // OBB中心間の距離を軸方向に投影
-            float distance = Mathf.Abs(Vector3.Dot(b.Center - a.Center, axis));
+            // OBB B のローカル軸
+            Vector3 bForward = b.Rotation * Vector3.forward;
+            Vector3 bRight = b.Rotation * Vector3.right;
 
-            // 投影長さの合計より距離が小さければ重なりあり
-            return distance <= (aProj + bProj);
+            return new Vector3[]
+            {
+                aForward,
+                aRight,
+                bForward,
+                bRight
+            };
         }
 
         /// <summary>
-        /// OBBを指定軸に投影した半長さを計算する
+        /// OBB 中心間の差分ベクトルを算出する
         /// </summary>
-        /// <param name="obb">OBB</param>
-        /// <param name="axis">投影軸</param>
-        /// <returns>投影半長さ</returns>
-        private float ProjectOBB(in OBBData obb, in Vector3 axis)
+        private Vector3 CalculateCenterDelta(in OBBData a, in OBBData b)
         {
-            // OBBのローカル軸を回転・半サイズを考慮してワールド軸ベクトルに変換
-            Vector3 right = obb.Rotation * Vector3.right * obb.HalfSize.x;
-            Vector3 up = obb.Rotation * Vector3.up * obb.HalfSize.y;
-            Vector3 forward = obb.Rotation * Vector3.forward * obb.HalfSize.z;
+            // 中心差分を算出
+            Vector3 delta = a.Center - b.Center;
 
-            // 指定軸に投影して絶対値を合計
-            return Mathf.Abs(Vector3.Dot(right, axis))
-                 + Mathf.Abs(Vector3.Dot(up, axis))
-                 + Mathf.Abs(Vector3.Dot(forward, axis));
+            // Y 方向は判定対象外
+            delta.y = 0f;
+
+            return delta;
+        }
+
+        // ======================================================
+        // 侵入量計算
+        // ======================================================
+
+        /// <summary>
+        /// 指定軸上での侵入量を算出する
+        /// </summary>
+        private bool TryCalculateOverlapOnAxis(
+            in OBBData a,
+            in OBBData b,
+            in Vector3 centerDelta,
+            in Vector3 axis,
+            out float overlap
+        )
+        {
+            // 中心間距離を軸に射影
+            float distance =
+                Mathf.Abs(Vector3.Dot(centerDelta, axis));
+
+            // OBB A の射影半径
+            float projectionA =
+                CalculateProjectionRadius(a, axis);
+
+            // OBB B の射影半径
+            float projectionB =
+                CalculateProjectionRadius(b, axis);
+
+            // 侵入量を算出
+            overlap = projectionA + projectionB - distance;
+
+            // 分離していれば非侵入
+            return overlap > 0f;
+        }
+
+        /// <summary>
+        /// OBB を指定軸に射影した半径を算出する
+        /// </summary>
+        private float CalculateProjectionRadius(
+            in OBBData obb,
+            in Vector3 axis
+        )
+        {
+            // 各ローカル軸をワールド空間に変換
+            Vector3 right =
+                obb.Rotation * Vector3.right * obb.HalfSize.x;
+
+            Vector3 up =
+                obb.Rotation * Vector3.up * obb.HalfSize.y;
+
+            Vector3 forward =
+                obb.Rotation * Vector3.forward * obb.HalfSize.z;
+
+            // 各成分を軸に射影して合算
+            return
+                Mathf.Abs(Vector3.Dot(right, axis)) +
+                Mathf.Abs(Vector3.Dot(up, axis)) +
+                Mathf.Abs(Vector3.Dot(forward, axis));
+        }
+
+        // ======================================================
+        // IsColliding 用（完全 SAT）
+        // ======================================================
+
+        /// <summary>
+        /// 完全 SAT 用の分離軸を生成する
+        /// </summary>
+        private Vector3[] CreateFullTestAxes(
+            in OBBData a,
+            in OBBData b,
+            out int axisCount
+        )
+        {
+            Vector3[] axesA =
+            {
+                a.Rotation * Vector3.right,
+                a.Rotation * Vector3.up,
+                a.Rotation * Vector3.forward
+            };
+
+            Vector3[] axesB =
+            {
+                b.Rotation * Vector3.right,
+                b.Rotation * Vector3.up,
+                b.Rotation * Vector3.forward
+            };
+
+            Vector3[] axes = new Vector3[15];
+            axisCount = 0;
+
+            // 各 OBB の軸
+            for (int i = 0; i < 3; i++)
+            {
+                axes[axisCount++] = axesA[i];
+                axes[axisCount++] = axesB[i];
+            }
+
+            // 外積軸
+            for (int i = 0; i < 3; i++)
+            {
+                for (int j = 0; j < 3; j++)
+                {
+                    Vector3 cross = Vector3.Cross(axesA[i], axesB[j]);
+
+                    if (cross.sqrMagnitude > 1e-6f)
+                    {
+                        axes[axisCount++] = cross.normalized;
+                    }
+                }
+            }
+
+            return axes;
+        }
+
+        /// <summary>
+        /// 指定軸上で OBB 同士が重なっているか判定する
+        /// </summary>
+        private bool IsOverlappingOnAxis(
+            in OBBData a,
+            in OBBData b,
+            in Vector3 axis
+        )
+        {
+            float projectionA = CalculateProjectionRadius(a, axis);
+            float projectionB = CalculateProjectionRadius(b, axis);
+
+            float distance =
+                Mathf.Abs(Vector3.Dot(b.Center - a.Center, axis));
+
+            return distance <= projectionA + projectionB;
         }
     }
 }

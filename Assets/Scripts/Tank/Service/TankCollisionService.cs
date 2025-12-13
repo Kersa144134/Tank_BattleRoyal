@@ -2,7 +2,7 @@
 // TankCollisionService.cs
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-10
-// 更新日時 : 2025-12-10
+// 更新日時 : 2025-12-13
 // 概要     : 戦車と障害物の OBB 衝突判定を専任で担当するサービスクラス
 //            障害物 OBB をキャッシュし、戦車の OBB を動的生成して判定を行う
 // ======================================================
@@ -21,6 +21,25 @@ namespace TankSystem.Service
     /// </summary>
     public class TankCollisionService
     {
+        // ======================================================
+        // 構造体
+        // ======================================================
+
+        /// <summary>
+        /// OBB 衝突解決に必要な最小移動量情報
+        /// </summary>
+        public struct CollisionResolveInfo
+        {
+            /// <summary>押し戻し方向</summary>
+            public Vector3 ResolveDirection;
+
+            /// <summary>押し戻し距離</summary>
+            public float ResolveDistance;
+
+            /// <summary>有効な解決情報か</summary>
+            public bool IsValid;
+        }
+        
         // ======================================================
         // コンポーネント参照
         // ======================================================
@@ -146,18 +165,29 @@ namespace TankSystem.Service
                 _hitboxSize
             );
 
-            // 障害物チェック
+            // --------------------------------------------------
+            // 障害物衝突チェック
+            // --------------------------------------------------
             for (int i = 0; i < _obstacles.Length; i++)
             {
-                if (_obstacles[i] == null) continue;
+                // 無効な障害物は無視
+                if (_obstacles[i] == null)
+                {
+                    continue;
+                }
 
-                if (_boxCollisionController.IsColliding(_tankOBB, _obstacleOBBs[i]))
+                // 衝突していれば毎フレーム通知
+                if (_boxCollisionController.IsColliding(
+                        _tankOBB,
+                        _obstacleOBBs[i]))
                 {
                     OnObstacleHit?.Invoke(_obstacles[i]);
                 }
             }
 
+            // --------------------------------------------------
             // アイテムチェック
+            // --------------------------------------------------
             for (int i = 0; i < _items.Count; i++)
             {
                 if (!_items[i].IsEnabled || _items[i].ItemTransform == null)
@@ -173,36 +203,71 @@ namespace TankSystem.Service
         }
 
         /// <summary>
-        /// 指定した座標に戦車を移動させた場合、障害物と衝突するか判定する
+        /// 戦車 OBB と指定した障害物 OBB の侵入量を計算し、
+        /// 解消に必要な最小移動量を返す
         /// </summary>
-        /// <param name="tankPos">判定対象となる戦車の座標</param>
-        /// <returns>
-        /// 衝突していれば <c>true</c>、衝突していなければ <c>false</c> を返す
-        /// </returns>
-        public bool IsCollidingWithObstacleAtPosition(Vector3 tankPos)
+        public CollisionResolveInfo CalculateObstacleResolveInfo(in Transform obstacle)
         {
-            // 戦車 OBB を生成
-            _tankOBB = _obbFactory.CreateOBB(
+            // null 安全チェック
+            if (obstacle == null)
+            {
+                return default;
+            }
+
+            // BoxCollider を持たない場合は無効
+            if (!obstacle.TryGetComponent(out BoxCollider boxCollider))
+            {
+                return default;
+            }
+
+            // --------------------------------------------------
+            // OBB 再生成（戦車）
+            // --------------------------------------------------
+
+            OBBData tankOBB = _obbFactory.CreateOBB(
                 _tankTransform,
                 _hitboxCenter,
                 _hitboxSize
             );
 
-            // 障害物チェック
-            for (int i = 0; i < _obstacleOBBs.Length; i++)
-            {
-                if (_obstacles[i] == null)
-                {
-                    continue;
-                }
+            // --------------------------------------------------
+            // OBB 生成（障害物）
+            // --------------------------------------------------
 
-                if (_boxCollisionController.IsColliding(_tankOBB, _obstacleOBBs[i]))
-                {
-                    return true;
-                }
+            OBBData obstacleOBB = CreateOBBFromTransform(obstacle);
+
+            // --------------------------------------------------
+            // MTV 算出（SAT）
+            // --------------------------------------------------
+
+            if (!_boxCollisionController.TryCalculateMTV(
+                tankOBB,
+                obstacleOBB,
+                out Vector3 resolveAxis,
+                out float resolveDistance
+            ))
+            {
+                return default;
             }
 
-            return false;
+            // --------------------------------------------------
+            // 押し戻し方向補正
+            // --------------------------------------------------
+
+            Vector3 centerDelta = tankOBB.Center - obstacleOBB.Center;
+            centerDelta.y = 0f;
+
+            if (Vector3.Dot(resolveAxis, centerDelta) < 0f)
+            {
+                resolveAxis = -resolveAxis;
+            }
+
+            return new CollisionResolveInfo
+            {
+                ResolveDirection = resolveAxis,
+                ResolveDistance = resolveDistance,
+                IsValid = true
+            };
         }
 
         // ======================================================
@@ -232,6 +297,33 @@ namespace TankSystem.Service
             Quaternion rotation = tf.rotation;
 
             return new OBBData(center, half, rotation);
+        }
+
+        /// <summary>
+        /// 現在生成されている戦車 OBB が、
+        /// 指定したインデックスの障害物 OBB と衝突しているか判定する
+        /// </summary>
+        /// <param name="obstacleIndex">障害物インデックス</param>
+        /// <returns>衝突していれば true</returns>
+        private bool IsCollidingWithObstacleAtIndex(in int obstacleIndex)
+        {
+            // インデックス範囲外は衝突なし
+            if (obstacleIndex < 0 || obstacleIndex >= _obstacleOBBs.Length)
+            {
+                return false;
+            }
+
+            // 対象障害物が無効なら衝突なし
+            if (_obstacles[obstacleIndex] == null)
+            {
+                return false;
+            }
+
+            // OBB 同士の衝突判定
+            return _boxCollisionController.IsColliding(
+                _tankOBB,
+                _obstacleOBBs[obstacleIndex]
+            );
         }
     }
 }

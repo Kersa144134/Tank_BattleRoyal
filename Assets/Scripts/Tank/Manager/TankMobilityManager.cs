@@ -2,7 +2,7 @@
 // TankMobilityManager.cs
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-05
-// 更新日時 : 2025-12-10
+// 更新日時 : 2025-12-13
 // 概要     : 戦車の前進・旋回処理を担当する機動力管理クラス。
 //            TrackController による前進量・旋回量を Transform に反映し、
 //            TankCollisionService により移動後の衝突判定を行う。
@@ -39,11 +39,14 @@ namespace TankSystem.Manager
         /// <summary>戦車本体の Transform</summary>
         private readonly Transform _tankTransform;
 
+        /// <summary>戦車本体の当たり判定中心位置</summary>
+        private readonly Vector3 _hitboxCenter;
+
+        /// <summary>戦車本体の当たり判定スケール</summary>
+        private readonly Vector3 _hitboxSize;
+
         /// <summary>現在の機動力倍率（前進・旋回に適用）</summary>
         private float _mobilityMultiplier = BASE_MOBILITY;
-
-        /// <summary>接触した戦車と障害物の距離</summary>
-        private float _lastHitDistance = -1f;
 
         // ======================================================
         // 定数
@@ -54,12 +57,6 @@ namespace TankSystem.Manager
 
         /// <summary>馬力1あたりの倍率加算値</summary>
         private const float HORSEPOWER_MULTIPLIER = 1.5f;
-
-        /// <summary>衝突回避時のXZ平面での移動ステップ量</summary>
-        private const float COLLISION_RETREAT_STEP = 0.05f;
-
-        /// <summary>衝突回避時の最大ステップ回数</summary>
-        private const int COLLISION_MAX_STEPS = 100;
 
         // ======================================================
         // コンストラクタ
@@ -122,32 +119,27 @@ namespace TankSystem.Manager
         }
 
         /// <summary>
-        /// 移動後の衝突をチェックし、必要に応じて位置を戻す
+        /// TankCollisionService からの衝突通知を受けて、
+        /// 戦車と障害物のめり込みを解消する
         /// </summary>
-        public void CheckObstaclesCollision(Transform obstacle)
+        public void CheckObstaclesCollision(in Transform obstacle)
         {
-            // 現在位置と障害物の距離を算出
-            float distance = Vector3.Distance(_tankTransform.position, obstacle.position);
+            // 侵入量を計算
+            TankCollisionService.CollisionResolveInfo resolveInfo =
+                _collisionService.CalculateObstacleResolveInfo(obstacle);
 
-            // 初回判定
-            if (_lastHitDistance < 0f)
+            // 有効でなければ何もしない
+            if (!resolveInfo.IsValid)
             {
-                _lastHitDistance = distance;
                 return;
             }
 
-            if (distance < _lastHitDistance)
-            {
-                // 障害物に近づく方向
-                ResolveCollision(obstacle.position);
-                return;
-            }
-            else
-            {
-                // 障害物から離れる方向
-                _lastHitDistance = distance;
-                return;
-            }
+            // 押し戻し適用
+            const float COLLISION_EPSILON = 0.001f;
+
+            _tankTransform.position +=
+                resolveInfo.ResolveDirection *
+                (resolveInfo.ResolveDistance + COLLISION_EPSILON);
         }
 
         // ======================================================
@@ -167,39 +159,6 @@ namespace TankSystem.Manager
             if (_mobilityMultiplier > 50f)
             {
                 _mobilityMultiplier = 50f;
-            }
-        }
-
-        /// <summary>
-        /// 衝突した場合に、障害物との方向に沿ってXZ平面のみで戦車を少しずつ後退させ、
-        /// 衝突が解消されるまで移動を調整する
-        /// </summary>
-        /// <param name="hitPos">接触対象の座標</param>
-        private void ResolveCollision(Vector3 hitPos)
-        {
-            // 戦車から障害物への方向ベクトルを計算
-            Vector3 toObstacle = hitPos - _tankTransform.position;
-
-            // Y成分を無視
-            toObstacle.y = 0f;
-
-            // 長さ0ベクトルは処理不要
-            if (toObstacle.sqrMagnitude < 1e-6f)
-            {
-                return;
-            }
-
-            // 衝突回避用の後退ベクトル
-            Vector3 retreatDirection = -toObstacle.normalized;
-
-            int stepCount = 0;
-
-            // 衝突が解消されるまでループ
-            while (_collisionService.IsCollidingWithObstacleAtPosition(_tankTransform.position) && stepCount < COLLISION_MAX_STEPS)
-            {
-                // XZ平面方向に少しずつ退避
-                _tankTransform.position += retreatDirection * COLLISION_RETREAT_STEP;
-                stepCount++;
             }
         }
     }
