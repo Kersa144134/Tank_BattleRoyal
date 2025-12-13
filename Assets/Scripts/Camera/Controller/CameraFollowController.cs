@@ -2,7 +2,7 @@
 // CameraFollowController.cs
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-04
-// 更新日時 : 2025-12-04
+// 更新日時 : 2025-12-13
 // 概要     : ターゲット追従ロジッククラス
 //            CameraTarget 配列を参照し、オフセットの適用、ターゲット切替に対応
 // ======================================================
@@ -37,7 +37,7 @@ namespace CameraSystem.Controller
         private const float FOLLOW_SPEED = 10f;
 
         // ======================================================
-        // 初期化
+        // コンストラクタ
         // ======================================================
 
         /// <summary>
@@ -45,46 +45,15 @@ namespace CameraSystem.Controller
         /// </summary>
         /// <param name="cameraTransform">カメラ Transform</param>
         /// <param name="targetArray">追従対象の CameraTarget 配列</param>
-        public void Initialize(Transform cameraTransform, CameraTarget[] targetArray)
+        public CameraFollowController(in Transform cameraTransform, in CameraTarget[] targetArray)
         {
             _cameraTransform = cameraTransform;
             _targets = targetArray;
         }
 
         // ======================================================
-        // パブリックメソッド
+        // セッター
         // ======================================================
-
-        /// <summary>
-        /// 配列のターゲットを追従
-        /// </summary>
-        public void UpdateFollow()
-        {
-            if (_cameraTransform == null || _targets == null || _targets.Length == 0 || _targets[0] == null || _targets[0].TargetTransform == null)
-            {
-                return;
-            }
-
-            CameraTarget target = _targets[_currentTargetIndex];
-
-            // ターゲットの座標を取得
-            Vector3 targetPos = target.TargetTransform.position;
-
-            // オフセットを追加
-            targetPos += target.TargetTransform.TransformVector(target.PositionOffset);
-
-            // 補間してカメラに適用
-            _cameraTransform.position = Vector3.Lerp(_cameraTransform.position, targetPos, FOLLOW_SPEED * Time.deltaTime);
-
-            // ターゲットの回転を取得
-            Quaternion targetRotation = target.TargetTransform.rotation;
-
-            // オフセットを追加
-            targetRotation *= Quaternion.Euler(target.RotationOffset);
-
-            // 補間してカメラに適用
-            _cameraTransform.rotation = Quaternion.Slerp(_cameraTransform.rotation, targetRotation, FOLLOW_SPEED * Time.deltaTime);
-        }
 
         /// <summary>
         /// 現在追従中のターゲットを指定インデックスに変更
@@ -96,6 +65,10 @@ namespace CameraSystem.Controller
             _currentTargetIndex = index;
         }
 
+        // ======================================================
+        // ゲッター
+        // ======================================================
+
         /// <summary>
         /// 現在追従中のターゲットインデックスを取得
         /// </summary>
@@ -105,6 +78,94 @@ namespace CameraSystem.Controller
             if (_targets == null || _targets.Length == 0) return -1;
             if (_targets[_currentTargetIndex] == null || _targets[_currentTargetIndex].TargetTransform == null) return -1;
             return _currentTargetIndex;
+        }
+
+        // ======================================================
+        // パブリックメソッド
+        // ======================================================
+
+        /// <summary>
+        /// 配列のターゲットを追従
+        /// </summary>
+        public void UpdateFollow()
+        {
+            // カメラやターゲットが設定されていない場合は処理をスキップ
+            if (_cameraTransform == null ||
+                _targets == null ||
+                _targets.Length == 0 ||
+                _targets[_currentTargetIndex] == null ||
+                _targets[_currentTargetIndex].TargetTransform == null
+            )
+            {
+                return;
+            }
+
+            CameraTarget target = _targets[_currentTargetIndex];
+
+            // 位置追従
+            _cameraTransform.position = CalculateFollowPosition(target);
+
+            // 回転追従
+            _cameraTransform.rotation = CalculateFollowRotation(target);
+        }
+
+        // ======================================================
+        // プライベートメソッド
+        // ======================================================
+
+        /// <summary>
+        /// ターゲットとオフセットに基づき、補間済みの追従位置を計算して返す
+        /// </summary>
+        /// <param name="target">追従対象の CameraTarget データ</param>
+        /// <returns>補間済みのカメラ追従位置</returns>
+        private Vector3 CalculateFollowPosition(in CameraTarget target)
+        {
+            Vector3 targetPos = target.TargetTransform.position;
+
+            if (target.IsRotationFixed)
+            {
+                // 回転固定の場合はワールド座標オフセットを直接加算
+                targetPos += target.PositionOffset;
+            }
+            else
+            {
+                // ターゲット回転に応じたローカルオフセットをワールド座標に変換して加算
+                targetPos += target.TargetTransform.TransformVector(target.PositionOffset);
+            }
+
+            // 補間してカメラ位置に適用
+            return Vector3.Lerp(_cameraTransform.position, targetPos, FOLLOW_SPEED * Time.deltaTime);
+        }
+
+        /// <summary>
+        /// ターゲットとオフセットに基づき、補間済みの追従回転を計算して返す
+        /// </summary>
+        /// <param name="target">追従対象の CameraTarget データ</param>
+        /// <returns>補間済みのカメラ追従回転</returns>
+        private Quaternion CalculateFollowRotation(in CameraTarget target)
+        {
+            Quaternion targetRotation;
+
+            if (target.IsRotationFixed)
+            {
+                // 回転固定の場合は前回の回転からオフセット角度まで補間
+                targetRotation = Quaternion.Slerp(
+                    _cameraTransform.rotation,
+                    Quaternion.Euler(target.RotationOffset),
+                    FOLLOW_SPEED * Time.deltaTime
+                );
+            }
+            else
+            {
+                // ターゲット回転にオフセットを加え、前回の回転から補間
+                targetRotation = Quaternion.Slerp(
+                    _cameraTransform.rotation,
+                    target.TargetTransform.rotation * Quaternion.Euler(target.RotationOffset),
+                    FOLLOW_SPEED * Time.deltaTime
+                );
+            }
+
+            return targetRotation;
         }
     }
 }

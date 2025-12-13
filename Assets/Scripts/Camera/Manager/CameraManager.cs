@@ -8,10 +8,10 @@
 //            入力で追従ターゲットを切り替え可能
 // ======================================================
 
+using UnityEngine;
 using CameraSystem.Controller;
 using InputSystem.Manager;
 using SceneSystem.Interface;
-using UnityEngine;
 
 namespace CameraSystem.Manager
 {
@@ -45,10 +45,7 @@ namespace CameraSystem.Manager
         public void OnEnter()
         {
             // CameraFollowController クラスを生成
-            _followController = new CameraFollowController();
-
-            // カメラ座標とターゲット配列を渡す
-            _followController.Initialize(cameraTransform, cameraTargets);
+            _followController = new CameraFollowController(cameraTransform, cameraTargets);
         }
 
         public void OnUpdate()

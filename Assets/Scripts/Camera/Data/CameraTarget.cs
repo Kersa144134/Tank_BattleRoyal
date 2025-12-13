@@ -25,5 +25,8 @@ namespace CameraSystem.Controller
 
         /// <summary>カメラの回転オフセット（角度）</summary>
         public Vector3 RotationOffset = Vector3.zero;
+
+        /// <summary>回転を固定するかどうか</summary>
+        public bool IsRotationFixed = false;
     }
 }

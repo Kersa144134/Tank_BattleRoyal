@@ -325,12 +325,19 @@ MonoBehaviour:
   - TargetTransform: {fileID: 435110471}
     PositionOffset: {x: 0, y: 5, z: -5}
     RotationOffset: {x: 15, y: 0, z: 0}
+    IsRotationFixed: 0
   - TargetTransform: {fileID: 435110471}
     PositionOffset: {x: 0, y: 15, z: -15}
     RotationOffset: {x: 30, y: 0, z: 0}
+    IsRotationFixed: 0
+  - TargetTransform: {fileID: 435110471}
+    PositionOffset: {x: 0, y: 50, z: 0}
+    RotationOffset: {x: 90, y: 0, z: 0}
+    IsRotationFixed: 1
   - TargetTransform: {fileID: 1363193130}
-    PositionOffset: {x: 0, y: 30, z: -15}
-    RotationOffset: {x: 60, y: 0, z: 0}
+    PositionOffset: {x: 0, y: 50, z: 0}
+    RotationOffset: {x: 90, y: 0, z: 0}
+    IsRotationFixed: 0
 --- !u!4 &76211784
 Transform:
   m_ObjectHideFlags: 0
