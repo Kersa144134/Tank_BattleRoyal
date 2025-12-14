@@ -6,11 +6,13 @@
 // 概要     : シーン上の戦車・障害物・アイテムを一元管理するレジストリクラス
 // ======================================================
 
+using SceneSystem.Interface;
 using System;
 using System.Collections.Generic;
-using UnityEngine;
-using SceneSystem.Interface;
 using TankSystem.Data;
+using UnityEngine;
+using WeaponSystem.Data;
+using WeaponSystem.Manager;
 
 namespace TankSystem.Manager
 {
@@ -45,7 +47,14 @@ namespace TankSystem.Manager
 
         /// <summary>アイテム管理担当マネージャー</summary>
         private ItemManager _itemManager;
-        
+
+        // ======================================================
+        // フィールド
+        // ======================================================
+
+        /// <summary>更新対象の弾丸リスト</summary>
+        private readonly List<BulletBase> _updatableBullets = new List<BulletBase>();
+
         // ======================================================
         // プロパティ
         // ======================================================
@@ -103,33 +112,54 @@ namespace TankSystem.Manager
 
         public void OnUpdate()
         {
+            // 登録された弾丸の更新
+            float deltaTime = Time.deltaTime;
+
+            for (int i = _updatableBullets.Count - 1; i >= 0; i--)
+            {
+                BulletBase bullet = _updatableBullets[i];
+
+                // 無効な弾丸はスキップ
+                if (bullet == null || !bullet.IsEnabled)
+                {
+                    continue;
+                }
+
+                // 弾丸更新
+                bullet.OnUpdate(deltaTime);
+
+                // 更新後に無効化された場合は解除
+                if (!bullet.IsEnabled)
+                {
+                    _updatableBullets.RemoveAt(i);
+                }
+            }
+
+            // アイテム回転処理
             _itemManager.UpdateItemRotations();
-        }
-
-        public void OnLateUpdate()
-        {
-
-        }
-
-        public void OnExit()
-        {
-            
-        }
-
-        public void OnPhaseEnter()
-        {
-
-        }
-
-        public void OnPhaseExit()
-        {
-
         }
 
         // ======================================================
         // パブリックメソッド
         // ======================================================
 
+        /// <summary>弾丸を更新対象として登録する</summary>
+        /// <param name="bullet">登録する弾丸</param>
+        public void RegisterBullet(BulletBase bullet)
+        {
+            if (!_updatableBullets.Contains(bullet))
+            {
+                _updatableBullets.Add(bullet);
+            }
+        }
+
+        /// <summary>弾丸を更新対象から解除する</summary>
+        /// <param name="bullet">解除する弾丸</param>
+        public void UnregisterBullet(BulletBase bullet)
+        {
+            _updatableBullets.Remove(bullet);
+        }
+        
         /// <summary>
         /// アイテムスロットを追加しイベントを発火する
         /// </summary>

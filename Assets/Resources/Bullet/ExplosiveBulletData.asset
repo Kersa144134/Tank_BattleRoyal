@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: ExplosiveBulletData
   m_EditorClassIdentifier: 
   BulletType: 0
-  BulletSpeed: 10
-  Lifetime: 10
+  BulletSpeed: 1.5
+  Mass: 1.5
   ExplosiveRadius: 0
   PenetrationSpeed: 0
   RotateSpeed: 0

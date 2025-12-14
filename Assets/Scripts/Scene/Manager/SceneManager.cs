@@ -51,8 +51,11 @@ public class SceneManager : MonoBehaviour
     /// <summary>入力管理クラス</summary>
     private InputManager _inputManager;
 
-    /// <summary>戦車の各種制御を統括するクラス</summary>
-    private TankRootManager _tankRootManager;
+    /// <summary>プレイヤー戦車の各種制御を統括するクラス</summary>
+    private PlayerTankRootManager _playerTankRootManager;
+
+    /// <summary>エネミー戦車の各種制御を統括するクラス</summary>
+    private EnemyTankRootManager _enemyTankRootManager;
 
     // ======================================================
     // フィールド
@@ -123,9 +126,13 @@ public class SceneManager : MonoBehaviour
             {
                 _inputManager = inputManager;
             }
-            if (updatable is TankRootManager tankRootManager)
+            if (updatable is PlayerTankRootManager playerTankRootManager)
             {
-                _tankRootManager = tankRootManager;
+                _playerTankRootManager = playerTankRootManager;
+            }
+            if (updatable is EnemyTankRootManager enemyTankRootManager)
+            {
+                _enemyTankRootManager = enemyTankRootManager;
             }
         }
     }
@@ -166,15 +173,15 @@ public class SceneManager : MonoBehaviour
     private void OnEnable()
     {
         // イベント購読
-        _tankRootManager.OnFireBullet += HandleFireBullet;
-        _tankRootManager.OnOptionButtonPressed += HandleOptionButtonPressed;
+        _playerTankRootManager.OnFireBullet += HandleFireBullet;
+        _playerTankRootManager.OnOptionButtonPressed += HandleOptionButtonPressed;
     }
 
     private void OnDisable()
     {
         // イベント購読解除
-        _tankRootManager.OnFireBullet -= HandleFireBullet;
-        _tankRootManager.OnOptionButtonPressed -= HandleOptionButtonPressed;
+        _playerTankRootManager.OnFireBullet -= HandleFireBullet;
+        _playerTankRootManager.OnOptionButtonPressed -= HandleOptionButtonPressed;
     }
 
     // ======================================================
@@ -273,15 +280,15 @@ public class SceneManager : MonoBehaviour
     /// <param name="type">発射する弾丸の種類</param>
     private void HandleFireBullet(BulletType type)
     {
-        if (_bulletPool == null || _tankRootManager == null)
+        if (_bulletPool == null || _playerTankRootManager == null)
         {
             Debug.LogWarning("[SceneManager] BulletPool または TankRootManager が未設定です。");
             return;
         }
 
         // 発射位置と方向を取得
-        Vector3 firePosition = _tankRootManager.FirePoint.position;
-        Vector3 fireDirection = _tankRootManager.transform.forward;
+        Vector3 firePosition = _playerTankRootManager.FirePoint.position;
+        Vector3 fireDirection = _playerTankRootManager.transform.forward;
 
         // BulletPool で弾丸を生成・発射
         _bulletPool.Spawn(type, firePosition, fireDirection);

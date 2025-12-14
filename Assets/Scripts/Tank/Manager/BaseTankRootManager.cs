@@ -24,14 +24,14 @@ namespace TankSystem.Manager
     /// <summary>
     /// 戦車の各種制御を統括するクラス
     /// </summary>
-    public class TankRootManager : MonoBehaviour, IUpdatable
+    public abstract class BaseTankRootManager : MonoBehaviour, IUpdatable
     {
         // ======================================================
         // インスペクタ設定
         // ======================================================
 
         [Header("コンポーネント参照")]
-        /// <summary>障害物・アイテム・戦車などを保持する SceneObjectRegistry</summary>
+        /// <summary>シーン上のオブジェクト Transform を保持するレジストリー</summary>
         [SerializeField] private SceneObjectRegistry _sceneRegistry;
 
         [Header("ステータス")]
@@ -79,12 +79,6 @@ namespace TankSystem.Manager
         private OBBFactory _obbFactory = new OBBFactory();
 
         // --------------------------------------------------
-        // 入力
-        // --------------------------------------------------
-        /// <summary>戦車の入力管理クラス</summary>
-        private TankInputManager _inputManager = new TankInputManager();
-
-        // --------------------------------------------------
         // サービス
         // --------------------------------------------------
         /// <summary>戦車移動範囲制限サービス</summary>
@@ -122,10 +116,31 @@ namespace TankSystem.Manager
         public event Action<BulletType> OnFireBullet;
 
         // ======================================================
+        // 抽象メソッド
+        // ======================================================
+
+        /// <summary>
+        /// 毎フレーム呼び出される入力更新処理を実装する抽象メソッド
+        /// プレイヤーの場合はプレイヤー入力を、敵AIの場合は自動制御入力を設定する
+        /// </summary>
+        /// <param name="leftMobility">左キャタピラ入力から算出される前進/後退量</param>
+        /// <param name="rightMobility">右キャタピラ入力から算出される前進/後退量</param>
+        /// <param name="optionPressed">オプションボタン押下フラグ</param>
+        /// <param name="leftFire">左攻撃ボタンの状態</param>
+        /// <param name="rightFire">右攻撃ボタンの状態</param>
+        protected abstract void UpdateInput(
+            out float leftMobility,
+            out float rightMobility,
+            out bool optionPressed,
+            out ButtonState leftFire,
+            out ButtonState rightFire
+        );
+        
+        // ======================================================
         // IUpdatable イベント
         // ======================================================
 
-        public void OnEnter()
+        public virtual void OnEnter()
         {
             // SceneObjectRegistry から必要なシーン情報を取得
             Transform[] obstacles = _sceneRegistry.Obstacles;
@@ -163,22 +178,23 @@ namespace TankSystem.Manager
             _sceneRegistry.OnItemListChanged += HandleItemListChanged;
         }
 
-        public void OnUpdate()
+        public virtual void OnUpdate()
         {
             // --------------------------------------------------
             // 入力
             // --------------------------------------------------
             // 入力取得
-            _inputManager.UpdateInput();
-
-            // 入力変換
-            float leftMobility = _inputManager.LeftStick.y;
-            float rightMobility = _inputManager.RightStick.y;
+            UpdateInput(out float leftMobility,
+                out float rightMobility,
+                out bool optionPressed,
+                out ButtonState leftFire,
+                out ButtonState rightFire
+            );
 
             // --------------------------------------------------
             // オプション
             // --------------------------------------------------
-            if (_inputManager.GetButtonState(TankInputKeys.INPUT_OPTION).Down)
+            if (optionPressed)
             {
                 OnOptionButtonPressed?.Invoke();
             }
@@ -186,12 +202,8 @@ namespace TankSystem.Manager
             // --------------------------------------------------
             // 攻撃
             // --------------------------------------------------
-            // 辞書から攻撃ボタンを取得して更新
-            ButtonState leftAttackButton = _inputManager.GetButtonState(TankInputKeys.INPUT_LEFT_FIRE);
-            ButtonState rightAttack = _inputManager.GetButtonState(TankInputKeys.INPUT_RIGHT_FIRE);
-
             // 攻撃処理
-            _attackManager.UpdateAttack(leftAttackButton, rightAttack);
+            _attackManager.UpdateAttack(leftFire, rightFire);
 
             // --------------------------------------------------
             // 機動
@@ -205,28 +217,13 @@ namespace TankSystem.Manager
             _collisionService.UpdateCollisionChecks();
         }
 
-        public void OnLateUpdate()
-        {
-            
-        }
-
-        public void OnExit()
+        public virtual void OnExit()
         {
             // イベント購読の解除
             _attackManager.OnFireBullet -= HandleFireBullet;
             _collisionService.OnObstacleHit -= HandleObstacleHit;
             _collisionService.OnItemHit -= HandleItemHit;
             _sceneRegistry.OnItemListChanged -= HandleItemListChanged;
-        }
-
-        public void OnPhaseEnter()
-        {
-
-        }
-
-        public void OnPhaseExit()
-        {
-
         }
 
         // ======================================================

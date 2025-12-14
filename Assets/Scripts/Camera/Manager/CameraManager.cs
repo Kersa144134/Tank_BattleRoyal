@@ -60,21 +60,6 @@ namespace CameraSystem.Manager
             _followController.UpdateFollow();
         }
 
-        public void OnExit()
-        {
-            
-        }
-
-        public void OnPhaseEnter()
-        {
-            
-        }
-
-        public void OnPhaseExit()
-        {
-
-        }
-
         // ======================================================
         // プライベートメソッド
         // ======================================================

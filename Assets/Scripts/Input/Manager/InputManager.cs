@@ -147,26 +147,6 @@ namespace InputSystem.Manager
             _stickStateManager.UpdateStickStates(_deviceManager.ActiveController);
         }
 
-        public void OnLateUpdate()
-        {
-
-        }
-
-        public void OnExit()
-        {
-
-        }
-
-        public void OnPhaseEnter()
-        {
-
-        }
-
-        public void OnPhaseExit()
-        {
-
-        }
-
         // ======================================================
         // パブリックメソッド
         // ======================================================

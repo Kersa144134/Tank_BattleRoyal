@@ -21,31 +21,31 @@ namespace SceneSystem.Interface
         /// <summary>
         /// シーン開始時に 1 度だけ呼ばれる初期化処理
         /// </summary>
-        void OnEnter();
+        void OnEnter() { }
 
         /// <summary>
         /// シーン終了時に 1 度だけ呼ばれる終了処理
         /// </summary>
-        void OnExit();
+        void OnExit() { }
 
         /// <summary>
         /// フェーズ突入時に 1 度だけ呼ばれる初期化処理
         /// </summary>
-        void OnPhaseEnter();
+        void OnPhaseEnter() { }
 
         /// <summary>
         /// フェーズ離脱時に 1 度だけ呼ばれる終了処理
         /// </summary>
-        void OnPhaseExit();
+        void OnPhaseExit() { }
 
         /// <summary>
         /// 毎フレーム実行される更新処理
         /// </summary>
-        void OnUpdate();
+        void OnUpdate() { }
 
         /// <summary>
         /// LateUpdate 相当で毎フレーム実行される処理
         /// </summary>
-        void OnLateUpdate();
+        void OnLateUpdate() { }
     }
 }

@@ -54,8 +54,6 @@ namespace TransformSystem.Utility
             {
                 return;
             }
-
-            Debug.Log(_targetTransform.position);
             
             // LookAt により瞬時にターゲット方向を向く
             _sourceTransform.LookAt(_targetTransform.position);

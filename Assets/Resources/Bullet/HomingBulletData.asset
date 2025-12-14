@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: HomingBulletData
   m_EditorClassIdentifier: 
   BulletType: 2
-  BulletSpeed: 10
-  Lifetime: 10
+  BulletSpeed: 2
+  Mass: 1
   ExplosiveRadius: 0
   PenetrationSpeed: 0
   RotateSpeed: 0
