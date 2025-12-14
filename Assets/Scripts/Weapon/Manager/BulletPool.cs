@@ -2,15 +2,17 @@
 // BulletPool.cs
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-12
-// 更新日時 : 2025-12-12
+// 更新日時 : 2025-12-14
 // 概要     : 弾丸の見た目とロジックを種類ごとに管理するオブジェクトプール
 //            弾丸生成・有効化・更新・無効化を一括で扱う
+//            更新処理は SceneObjectRegistry に委譲
 // ======================================================
 
+using SceneSystem.Interface;
 using System;
 using System.Collections.Generic;
+using TankSystem.Manager;
 using UnityEngine;
-using SceneSystem.Interface;
 using WeaponSystem.Data;
 
 namespace WeaponSystem.Manager
@@ -24,7 +26,11 @@ namespace WeaponSystem.Manager
         // インスペクタ設定
         // ======================================================
 
-        [System.Serializable]
+        [Header("コンポーネント参照")]
+        /// <summary>シーン上のオブジェクト Transform を保持するレジストリー</summary>
+        [SerializeField] private SceneObjectRegistry _sceneRegistry;
+
+        [Serializable]
         public class BulletPoolEntry
         {
             /// <summary>弾丸タイプ（識別用）</summary>
@@ -44,14 +50,14 @@ namespace WeaponSystem.Manager
         [SerializeField] private List<BulletPoolEntry> bulletEntries = new List<BulletPoolEntry>();
 
         // ======================================================
-        // プール管理コンテナ
+        // 辞書
         // ======================================================
-
-        /// <summary>未使用の弾丸を種類ごとに保持</summary>
-        private readonly Dictionary<BulletType, List<BulletBase>> _inactivePool = new Dictionary<BulletType, List<BulletBase>>();
 
         /// <summary>使用中の弾丸を種類ごとに保持</summary>
         private readonly Dictionary<BulletType, List<BulletBase>> _activePool = new Dictionary<BulletType, List<BulletBase>>();
+
+        /// <summary>未使用の弾丸を種類ごとに保持</summary>
+        private readonly Dictionary<BulletType, List<BulletBase>> _inactivePool = new Dictionary<BulletType, List<BulletBase>>();
 
         // ======================================================
         // IUpdatable イベント
@@ -74,60 +80,6 @@ namespace WeaponSystem.Manager
                     CreateNewBullet(entry);
                 }
             }
-        }
-
-        public void OnUpdate()
-        {
-            // 経過時間を取得
-            float deltaTime = Time.deltaTime;
-
-            // すべての弾丸タイプを処理
-            foreach (KeyValuePair<BulletType, List<BulletBase>> pair in _activePool)
-            {
-                // 種類ごとのアクティブリストを取得
-                List<BulletBase> list = pair.Value;
-
-                // 逆順で更新
-                for (int i = list.Count - 1; i >= 0; i--)
-                {
-                    BulletBase bullet = list[i];
-
-                    // 無効弾や null はスキップ
-                    if (bullet == null || !bullet.IsEnabled)
-                    {
-                        continue;
-                    }
-
-                    // ロジックの更新処理
-                    bullet.OnUpdate(deltaTime);
-
-                    // 更新後に終了状態になった場合はプールへ戻す
-                    if (!bullet.IsEnabled)
-                    {
-                        Despawn(bullet);
-                    }
-                }
-            }
-        }
-
-        public void OnLateUpdate()
-        {
-
-        }
-
-        public void OnExit()
-        {
-            
-        }
-
-        public void OnPhaseEnter()
-        {
-
-        }
-
-        public void OnPhaseExit()
-        {
-
         }
 
         // ======================================================
@@ -170,9 +122,12 @@ namespace WeaponSystem.Manager
             // 発射
             bullet.OnEnter(position, direction);
 
-            // 未使用プールから削除してアクティブプールに追加
+            // プール管理
             _inactivePool[type].Remove(bullet);
             _activePool[type].Add(bullet);
+
+            // SceneObjectRegistry に登録して更新委譲
+            _sceneRegistry.RegisterBullet(bullet);
 
             return bullet;
         }
@@ -180,7 +135,7 @@ namespace WeaponSystem.Manager
         /// <summary>
         /// 使用後の弾丸を非アクティブ化し、プールへ戻す
         /// </summary>
-        private void Despawn(in BulletBase bullet)
+        public void Despawn(in BulletBase bullet)
         {
             // 弾丸を無効化
             bullet.OnExit();
@@ -205,6 +160,9 @@ namespace WeaponSystem.Manager
             {
                 inactiveList.Add(bullet);
             }
+
+            // SceneObjectRegistry から登録解除
+            _sceneRegistry.UnregisterBullet(bullet);
         }
 
         // ======================================================

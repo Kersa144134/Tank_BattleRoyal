@@ -25,14 +25,14 @@ namespace WeaponSystem.Factory
         // --------------------------------------------------
         // ‹¤’Ê
         // --------------------------------------------------
-        /// <summary>’eŠÛ‚Ìí—Ş‚ğ•Û</summary>
+        /// <summary>’eŠÛ‚Ìí—Ş</summary>
         private readonly BulletType _bulletType;
 
-        /// <summary>’e‘¬i‹¤’Êj</summary>
+        /// <summary>’e‘¬‚ÌŠî€”{—¦</summary>
         private readonly float _bulletSpeed;
 
-        /// <summary>õ–½i•bj</summary>
-        private readonly float _lifetime;
+        /// <summary>’eŠÛ‚Ì¿—Ê‚ÌŠî€”{—¦</summary>
+        private readonly float _mass;
 
         // --------------------------------------------------
         // Ö’e
@@ -60,22 +60,22 @@ namespace WeaponSystem.Factory
         /// ƒtƒ@ƒNƒgƒŠ[¶¬‚Éƒpƒ‰ƒ[ƒ^‚ğó‚¯æ‚è“à•”‚É•Û‚·‚é
         /// </summary>
         /// <param name="type">’eŠÛƒ^ƒCƒv</param>
-        /// <param name="speed">’e‘¬i‹¤’Êj</param>
-        /// <param name="life">õ–½</param>
+        /// <param name="speed">’e‘¬‚ÌŠî€”{—¦</param>
+        /// <param name="mass">’eŠÛ‚Ì¿—Ê‚ÌŠî€”{—¦</param>
         /// <param name="explosiveRadius">”š”­”¼Œa</param>
         /// <param name="penetrationSpeed">ŠÑ’Ê‰Â”\‘¬“x</param>
         /// <param name="rotateSpeed">ù‰ñ‘¬“x</param>
         public BulletFactory(
             BulletType type,
             float speed,
-            float life,
+            float mass,
             float explosiveRadius = 0f,
             float penetrationSpeed = 0f,
             float rotateSpeed = 0f)
         {
             _bulletType = type;
             _bulletSpeed = speed;
-            _lifetime = life;
+            _mass = mass;
             _explosiveRadius = explosiveRadius;
             _penetrationSpeed = penetrationSpeed;
             _rotateSpeed = rotateSpeed;
@@ -105,7 +105,7 @@ namespace WeaponSystem.Factory
                         ExplosiveBullet bullet = new ExplosiveBullet
                         {
                             BulletSpeed = _bulletSpeed,
-                            Lifetime = _lifetime,
+                            Mass = _mass,
                             ExplosiveRadius = _explosiveRadius
                         };
                         instance = bullet;
@@ -120,7 +120,7 @@ namespace WeaponSystem.Factory
                         PenetrationBullet bullet = new PenetrationBullet
                         {
                             BulletSpeed = _bulletSpeed,
-                            Lifetime = _lifetime,
+                            Mass = _mass,
                             PenetrationSpeed = _penetrationSpeed
                         };
                         instance = bullet;
@@ -135,7 +135,7 @@ namespace WeaponSystem.Factory
                         HomingBullet bullet = new HomingBullet
                         {
                             BulletSpeed = _bulletSpeed,
-                            Lifetime = _lifetime,
+                            Mass = _mass,
                             RotateSpeed = _rotateSpeed
                         };
                         instance = bullet;

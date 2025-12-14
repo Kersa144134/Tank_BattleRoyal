@@ -29,11 +29,11 @@ namespace WeaponSystem.Data
         /// <summary>’eŠÛ‚Ìí—Ş</summary>
         public BulletType BulletType;
 
-        /// <summary>’e‘¬i‹¤’Êj</summary>
-        public float BulletSpeed;
+        /// <summary>’e‘¬‚ÌŠî€”{—¦</summary>
+        [Range(1f, 2f)] public float BulletSpeed;
 
-        /// <summary>õ–½i•bj</summary>
-        public float Lifetime;
+        /// <summary>’eŠÛ‚Ì¿—Ê‚ÌŠî€”{—¦</summary>
+        [Range(1f, 2f)] public float Mass;
 
         // --------------------------------------------------
         // Ö’e
@@ -68,7 +68,7 @@ namespace WeaponSystem.Data
             BulletFactory factory = new BulletFactory(
                 BulletType,
                 BulletSpeed,
-                Lifetime,
+                Mass,
                 ExplosiveRadius,
                 PenetrationSpeed,
                 RotateSpeed
