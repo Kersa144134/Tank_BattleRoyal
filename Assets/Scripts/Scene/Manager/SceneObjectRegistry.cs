@@ -23,6 +23,10 @@ namespace TankSystem.Manager
         // インスペクタ設定
         // ======================================================
 
+        [Header("メインカメラ")]
+        /// <summary>メインカメラ</summary>
+        [SerializeField] private Camera _mainCamera;
+
         [Header("プレイヤー戦車")]
         /// <summary>プレイヤー戦車の Transform</summary>
         [SerializeField] private Transform _playerTankTransform;
@@ -85,13 +89,21 @@ namespace TankSystem.Manager
 
         public void OnEnter()
         {
-            // ItemManager を生成して保持
-            _itemManager = new ItemManager(_itemSlots, OnItemListChanged);
+            _itemManager = new ItemManager(_itemSlots, OnItemListChanged, _mainCamera.transform);
+
+            // アイテムスロットをすべて有効化して登録
+            foreach (ItemSlot slot in _itemSlots)
+            {
+                if (slot.ItemTransform != null)
+                {
+                    _itemManager.AddItem(slot);
+                }
+            }
         }
 
         public void OnUpdate()
         {
-
+            _itemManager.UpdateItemRotations();
         }
 
         public void OnLateUpdate()
