@@ -6,6 +6,7 @@
 // 概要     : 弾丸の見た目とロジックを種類ごとに管理するオブジェクトプール
 //            弾丸生成・有効化・更新・無効化を一括で扱う
 //            更新処理は SceneObjectRegistry に委譲
+//            戦車ごとのプールも生成可能
 // ======================================================
 
 using SceneSystem.Interface;
@@ -29,6 +30,10 @@ namespace WeaponSystem.Manager
         [Header("コンポーネント参照")]
         /// <summary>シーン上のオブジェクト Transform を保持するレジストリー</summary>
         [SerializeField] private SceneObjectRegistry _sceneRegistry;
+
+        [Header("戦車オブジェクト")]
+        /// <summary>プレイヤー戦車や敵戦車の GameObject 配列。TankRootManager 派生がアタッチされている場合、戦車ごとにプールを生成</summary>
+        [SerializeField] private GameObject[] _tankObjects;
 
         [Serializable]
         public class BulletPoolEntry
@@ -65,19 +70,31 @@ namespace WeaponSystem.Manager
 
         public void OnEnter()
         {
-            // すべての BulletPoolEntry を初期化
-            foreach (BulletPoolEntry entry in bulletEntries)
+            // 戦車ごとのプール生成
+            foreach (GameObject tankObj in _tankObjects)
             {
-                // 種類ごとの未使用リストを作成
-                _inactivePool[entry.Type] = new List<BulletBase>();
-
-                // 種類ごとの使用中リストを作成
-                _activePool[entry.Type] = new List<BulletBase>();
-
-                // 初期数だけ弾丸を生成
-                for (int i = 0; i < entry.InitialCount; i++)
+                if (tankObj.TryGetComponent<BaseTankRootManager>(out BaseTankRootManager _))
                 {
-                    CreateNewBullet(entry);
+                    foreach (BulletPoolEntry entry in bulletEntries)
+                    {
+                        // 種類ごとの未使用リストを作成
+                        if (!_inactivePool.ContainsKey(entry.Type))
+                        {
+                            _inactivePool[entry.Type] = new List<BulletBase>();
+                        }
+
+                        // 種類ごとの使用中リストを作成
+                        if (!_activePool.ContainsKey(entry.Type))
+                        {
+                            _activePool[entry.Type] = new List<BulletBase>();
+                        }
+
+                        // 初期数だけ弾丸を生成
+                        for (int i = 0; i < entry.InitialCount; i++)
+                        {
+                            CreateNewBullet(entry);
+                        }
+                    }
                 }
             }
         }

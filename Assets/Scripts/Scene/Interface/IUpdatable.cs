@@ -24,6 +24,16 @@ namespace SceneSystem.Interface
         void OnEnter() { }
 
         /// <summary>
+        /// 毎フレーム実行される更新処理
+        /// </summary>
+        void OnUpdate() { }
+
+        /// <summary>
+        /// LateUpdate 相当で毎フレーム実行される処理
+        /// </summary>
+        void OnLateUpdate() { }
+
+        /// <summary>
         /// シーン終了時に 1 度だけ呼ばれる終了処理
         /// </summary>
         void OnExit() { }
@@ -37,15 +47,5 @@ namespace SceneSystem.Interface
         /// フェーズ離脱時に 1 度だけ呼ばれる終了処理
         /// </summary>
         void OnPhaseExit() { }
-
-        /// <summary>
-        /// 毎フレーム実行される更新処理
-        /// </summary>
-        void OnUpdate() { }
-
-        /// <summary>
-        /// LateUpdate 相当で毎フレーム実行される処理
-        /// </summary>
-        void OnLateUpdate() { }
     }
 }
