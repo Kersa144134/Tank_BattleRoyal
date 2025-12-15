@@ -52,10 +52,10 @@ namespace WeaponSystem.Data
             }
         }
 
-        /// <summary>弾速の基準倍率</summary>
+        /// <summary>弾速</summary>
         public float BulletSpeed { get; set; }
 
-        /// <summary>弾丸の質量の基準倍率</summary>
+        /// <summary>弾丸の質量</summary>
         public float Mass { get; set; }
 
         /// <summary>弾丸の Transform</summary>
@@ -73,6 +73,34 @@ namespace WeaponSystem.Data
         /// </summary>
         protected virtual float Drag => 1f / Mass;
 
+        // ======================================================
+        // 定数
+        // ======================================================
+
+        // --------------------------------------------------
+        // 弾丸基準値
+        // --------------------------------------------------
+        /// <summary>基準となる弾速</summary>
+        private const float BASE_BULLET_SPEED = 10f;
+
+        /// <summary>基準となる弾丸質量</summary>
+        private const float BASE_BULLET_MASS = 1f;
+        
+        // --------------------------------------------------
+        // パラメーター
+        // --------------------------------------------------
+        /// <summary>基準となる砲身ステータス</summary>
+        private const float BASE_BARREL_SCALE = 1f;
+
+        /// <summary>砲身1あたりの倍率加算値</summary>
+        private const float BARREL_SCALE_MULTIPLIER = 0.05f;
+
+        /// <summary>基準となる質量ステータス</summary>
+        private const float BASE_PROJECTILE_MASS = 1f;
+
+        /// <summary>質量1あたりの倍率加算値</summary>
+        private const float PROJECTILE_MASS_MULTIPLIER = 0.3f;
+        
         // ======================================================
         // 抽象メソッド
         // ======================================================
@@ -128,9 +156,22 @@ namespace WeaponSystem.Data
         /// <summary>
         /// 発射時に戦車ステータスを元に弾丸性能を確定させる
         /// </summary>
+        /// <param name="tankStatus">発射元戦車のステータス</param>
         public virtual void ApplyTankStatus(in TankStatus tankStatus)
         {
+            // 弾速を計算
+            // BASE_BULLET_SPEED: 基準となる弾速
+            // BASE_BARREL_SCALE: 基準砲身倍率
+            // tankStatus.BarrelScale: 戦車ステータスに応じた砲身スケール
+            // BARREL_SCALE_MULTIPLIER: 砲身スケール1あたりの補正係数
+            BulletSpeed = BASE_BULLET_SPEED * (BASE_BARREL_SCALE + tankStatus.BarrelScale * BARREL_SCALE_MULTIPLIER);
 
+            // 弾丸の質量を計算
+            // BASE_BULLET_MASS: 基準となる弾丸質量
+            // BASE_PROJECTILE_MASS: 基準質量倍率
+            // tankStatus.ProjectileMass: 戦車ステータスに応じた弾丸質量
+            // PROJECTILE_MASS_MULTIPLIER: 弾丸質量1あたりの補正係数
+            Mass = BASE_BULLET_MASS * (BASE_PROJECTILE_MASS + tankStatus.ProjectileMass * PROJECTILE_MASS_MULTIPLIER);
         }
 
         /// <summary>

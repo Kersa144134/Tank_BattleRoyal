@@ -40,12 +40,6 @@ namespace TankSystem.Manager
         /// <summary>戦車本体の Transform</summary>
         private readonly Transform _tankTransform;
 
-        /// <summary>戦車本体の当たり判定中心位置</summary>
-        private readonly Vector3 _hitboxCenter;
-
-        /// <summary>戦車本体の当たり判定スケール</summary>
-        private readonly Vector3 _hitboxSize;
-
         /// <summary>現在の機動力倍率（前進・旋回に適用）</summary>
         private float _mobilityMultiplier = BASE_MOBILITY;
 
