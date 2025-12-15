@@ -34,7 +34,7 @@ namespace CameraSystem.Controller
         // ======================================================
 
         /// <summary>追従速度</summary>
-        private const float FOLLOW_SPEED = 10f;
+        private const float FOLLOW_SPEED = 20f;
 
         // ======================================================
         // コンストラクタ

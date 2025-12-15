@@ -93,13 +93,13 @@ namespace WeaponSystem.Data
         private const float BASE_BARREL_SCALE = 1f;
 
         /// <summary>砲身1あたりの倍率加算値</summary>
-        private const float BARREL_SCALE_MULTIPLIER = 0.05f;
+        private const float BARREL_SCALE_MULTIPLIER = 0.1f;
 
         /// <summary>基準となる質量ステータス</summary>
         private const float BASE_PROJECTILE_MASS = 1f;
 
         /// <summary>質量1あたりの倍率加算値</summary>
-        private const float PROJECTILE_MASS_MULTIPLIER = 0.3f;
+        private const float PROJECTILE_MASS_MULTIPLIER = 0.05f;
         
         // ======================================================
         // 抽象メソッド

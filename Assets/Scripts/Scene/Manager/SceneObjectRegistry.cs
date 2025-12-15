@@ -12,7 +12,6 @@ using System.Collections.Generic;
 using TankSystem.Data;
 using UnityEngine;
 using WeaponSystem.Data;
-using WeaponSystem.Manager;
 
 namespace TankSystem.Manager
 {
@@ -33,9 +32,9 @@ namespace TankSystem.Manager
         /// <summary>プレイヤー戦車の Transform</summary>
         [SerializeField] private Transform _playerTankTransform;
 
-        [Header("障害物リスト")]
-        /// <summary>障害物オブジェクトの Transform 配列</summary>
-        [SerializeField] private Transform[] _obstacleTransforms;
+        [Header("障害物オブジェクト")]
+        /// <summary>障害物オブジェクトの親 Transform</summary>
+        [SerializeField] private Transform _obstacleRoot;
 
         [Header("アイテムリスト")]
         /// <summary>アイテムオブジェクトの Transform とデータを併せ持つスロットリスト</summary>
@@ -52,6 +51,9 @@ namespace TankSystem.Manager
         // フィールド
         // ======================================================
 
+        /// <summary>障害物オブジェクトの Transform 配列</summary>
+         private Transform[] _obstacleTransforms;
+        
         /// <summary>更新対象の弾丸リスト</summary>
         private readonly List<BulletBase> _updatableBullets = new List<BulletBase>();
 
@@ -100,14 +102,11 @@ namespace TankSystem.Manager
         {
             _itemManager = new ItemManager(_itemSlots, OnItemListChanged, _mainCamera.transform);
 
-            // アイテムスロットをすべて有効化して登録
-            foreach (ItemSlot slot in _itemSlots)
-            {
-                if (slot.ItemTransform != null)
-                {
-                    _itemManager.AddItem(slot);
-                }
-            }
+            // 障害物オブジェクトを取得して登録
+            InitializeObstacles();
+
+            // アイテムスロットを有効化して登録
+            InitializeItemSlots();
         }
 
         public void OnUpdate()
@@ -172,6 +171,45 @@ namespace TankSystem.Manager
         {
             // スロット削除処理
             _itemManager.RemoveItem(slot);
+        }
+
+        // ======================================================
+        // プライベートメソッド
+        // ======================================================
+
+        /// <summary>
+        /// シーン内の障害物を親オブジェクトから取得して配列に格納
+        /// </summary>
+        private void InitializeObstacles()
+        {
+            if (_obstacleRoot == null)
+            {
+                _obstacleTransforms = Array.Empty<Transform>();
+                Debug.LogWarning("[SceneObjectRegistry] 障害物親オブジェクトが未設定です。");
+                return;
+            }
+
+            // 親オブジェクトの子すべてを取得
+            int count = _obstacleRoot.childCount;
+            _obstacleTransforms = new Transform[count];
+            for (int i = 0; i < count; i++)
+            {
+                _obstacleTransforms[i] = _obstacleRoot.GetChild(i);
+            }
+        }
+
+        /// <summary>
+        /// 登録済みアイテムスロットを初期化して ItemManager に追加
+        /// </summary>
+        private void InitializeItemSlots()
+        {
+            foreach (ItemSlot slot in _itemSlots)
+            {
+                if (slot.ItemTransform != null)
+                {
+                    _itemManager.AddItem(slot);
+                }
+            }
         }
     }
 }
