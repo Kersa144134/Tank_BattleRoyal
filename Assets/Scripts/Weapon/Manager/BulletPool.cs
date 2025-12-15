@@ -9,11 +9,12 @@
 //            戦車ごとのプールも生成可能
 // ======================================================
 
+using SceneSystem.Interface;
 using System;
 using System.Collections.Generic;
-using UnityEngine;
-using SceneSystem.Interface;
+using TankSystem.Data;
 using TankSystem.Manager;
+using UnityEngine;
 using WeaponSystem.Data;
 
 namespace WeaponSystem.Manager
@@ -141,10 +142,11 @@ namespace WeaponSystem.Manager
         /// 発射位置と進行方向を設定したうえで発射処理を行う
         /// </summary>
         /// <param name="type">発射する弾丸の種類</param>
+        /// <param name="tankStatus">発射元の戦車のパラメーター</param>
         /// <param name="position">弾丸を生成・発射するワールド座標</param>
         /// <param name="direction">弾丸の進行方向を表す正規化済みベクトル</param>
         /// <returns>発射に成功した場合は使用中状態となった弾丸インスタンス</returns>
-        public BulletBase Spawn(BulletType type, in Vector3 position, in Vector3 direction)
+        public BulletBase Spawn(BulletType type, TankStatus tankStatus, in Vector3 position, in Vector3 direction)
         {
             BulletPoolEntry entry = bulletEntries.Find(e => e.Type == type);
             if (entry == null)
@@ -172,6 +174,9 @@ namespace WeaponSystem.Manager
                 // direction は Spawn 引数をそのまま使用
                 explosive.SetParams(explosive.ExplosiveRadius);
             }
+
+            // 戦車ステータスを反映
+            bullet.ApplyTankStatus(tankStatus);
 
             // 発射
             bullet.OnEnter(position, direction);

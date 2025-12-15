@@ -329,6 +329,6 @@ public class SceneManager : MonoBehaviour
         Vector3 fireDirection = tank.transform.forward;
 
         // BulletPool Ç≈íeä€Çê∂ê¨ÅEî≠éÀ
-        _bulletPool.Spawn(type, firePosition, fireDirection);
+        _bulletPool.Spawn(type, tank.TankStatus, firePosition, fireDirection);
     }
 }

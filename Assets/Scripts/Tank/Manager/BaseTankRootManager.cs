@@ -95,6 +95,9 @@ namespace TankSystem.Manager
         // プロパティ
         // ======================================================
 
+        /// <summary>ゲーム中に変動する戦車のパラメーター</summary>
+        public TankStatus TankStatus => _tankStatus;
+
         /// <summary>弾丸発射ローカル位置</summary>
         public Transform FirePoint => _firePoint;
         

@@ -8,6 +8,7 @@
 // ======================================================
 
 using System;
+using TankSystem.Data;
 using UnityEngine;
 
 namespace WeaponSystem.Data
@@ -31,7 +32,7 @@ namespace WeaponSystem.Data
         // プロパティ
         // ======================================================
 
-        /// <summary>弾丸が現在有効かどうかを示すフラグ</summary>
+        /// <summary>弾丸が現在有効かどうかを</summary>
         public bool IsEnabled
         {
             get => _isEnabled;
@@ -39,7 +40,7 @@ namespace WeaponSystem.Data
             {
                 _isEnabled = value;
 
-                // Transform が存在する場合はレンダラーの表示/非表示を切り替え
+                // Transform がある場合は Renderer を有効/無効
                 if (Transform != null)
                 {
                     Renderer renderer = Transform.GetComponent<Renderer>();
@@ -51,10 +52,10 @@ namespace WeaponSystem.Data
             }
         }
 
-        /// <summary>弾丸の現在速度</summary>
+        /// <summary>弾速の基準倍率</summary>
         public float BulletSpeed { get; set; }
 
-        /// <summary>弾丸の質量</summary>
+        /// <summary>弾丸の質量の基準倍率</summary>
         public float Mass { get; set; }
 
         /// <summary>弾丸の Transform</summary>
@@ -121,8 +122,16 @@ namespace WeaponSystem.Data
         }
 
         // ======================================================
-        // IBullet イベント
+        // BulletBase イベント
         // ======================================================
+
+        /// <summary>
+        /// 発射時に戦車ステータスを元に弾丸性能を確定させる
+        /// </summary>
+        public virtual void ApplyTankStatus(in TankStatus tankStatus)
+        {
+
+        }
 
         /// <summary>
         /// 発射時に Spawn 位置と方向を注入
