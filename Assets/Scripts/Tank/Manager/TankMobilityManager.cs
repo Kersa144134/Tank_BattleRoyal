@@ -43,15 +43,24 @@ namespace TankSystem.Manager
         /// <summary>現在の機動力倍率（前進・旋回に適用）</summary>
         private float _mobilityMultiplier = BASE_MOBILITY;
 
+        /// <summary>現在フレームでの前進量</summary>
+        private float _currentForward;
+
+        /// <summary>現在フレームでの旋回量</summary>
+        private float _currentTurn;
+
         // ======================================================
         // 定数
         // ======================================================
 
         /// <summary>基準機動力倍率</summary>
-        private const float BASE_MOBILITY = 10.0f;
+        private const float BASE_MOBILITY = 15.0f;
 
         /// <summary>馬力1あたりの倍率加算値</summary>
-        private const float HORSEPOWER_MULTIPLIER = 1.5f;
+        private const float HORSEPOWER_MULTIPLIER = 1.75f;
+
+        /// <summary>前進・旋回補間速度の係数</summary>
+        private const float MOVEMENT_SMOOTH = 1f;
 
         // ======================================================
         // コンストラクタ
@@ -94,20 +103,19 @@ namespace TankSystem.Manager
             UpdateMobilityMultiplier(horsePower);
 
             // キャタピラ入力から前進量と旋回量を取得
-            _trackController.UpdateTrack(left, right, out float forward, out float turn);
+            _trackController.UpdateTrack(left, right, out float forwardInput, out float turnInput);
 
-            // 前進量・旋回量に倍率を掛けて適用
-            _tankTransform.Translate(
-                Vector3.forward * forward * _mobilityMultiplier * Time.deltaTime,
-                Space.Self
-            );
+            // 目標移動量・回転量を計算
+            float targetForward = forwardInput * _mobilityMultiplier;
+            float targetTurn = turnInput * _mobilityMultiplier;
+            
+            // 現在位置・角度からスムーズに補間して適用
+            _currentForward = Mathf.Lerp(_currentForward, targetForward, Time.deltaTime * MOVEMENT_SMOOTH);
+            _currentTurn = Mathf.Lerp(_currentTurn, targetTurn, Time.deltaTime * MOVEMENT_SMOOTH);
 
-            _tankTransform.Rotate(
-                0f,
-                turn * _mobilityMultiplier * Time.deltaTime,
-                0f,
-                Space.Self
-            );
+            // 補間済み値で移動・旋回
+            _tankTransform.Translate(Vector3.forward * _currentForward * Time.deltaTime, Space.Self);
+            _tankTransform.Rotate(0f, _currentTurn * Time.deltaTime, 0f, Space.Self);
 
             // 移動範囲チェック
             _boundaryService.ClampPosition(_tankTransform);

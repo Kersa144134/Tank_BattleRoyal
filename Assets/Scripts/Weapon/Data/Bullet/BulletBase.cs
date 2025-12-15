@@ -81,7 +81,7 @@ namespace WeaponSystem.Data
         // ’eŠÛŠî€’l
         // --------------------------------------------------
         /// <summary>Šî€‚Æ‚È‚é’e‘¬</summary>
-        private const float BASE_BULLET_SPEED = 20f;
+        private const float BASE_BULLET_SPEED = 30f;
 
         /// <summary>Šî€‚Æ‚È‚é’eŠÛ¿—Ê</summary>
         private const float BASE_BULLET_MASS = 1f;
