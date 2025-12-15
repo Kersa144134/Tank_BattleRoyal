@@ -6,13 +6,14 @@
 // 概要     : シーン遷移、フェーズ管理、Update 管理を統括する
 // ======================================================
 
+using System;
+using System.Collections.Generic;
+using UnityEngine;
 using InputSystem.Manager;
 using SceneSystem.Controller;
 using SceneSystem.Data;
 using SceneSystem.Interface;
-using System;
 using TankSystem.Manager;
-using UnityEngine;
 using WeaponSystem.Data;
 using WeaponSystem.Manager;
 
@@ -54,8 +55,8 @@ public class SceneManager : MonoBehaviour
     /// <summary>プレイヤー戦車の各種制御を統括するクラス</summary>
     private PlayerTankRootManager _playerTankRootManager;
 
-    /// <summary>エネミー戦車の各種制御を統括するクラス</summary>
-    private EnemyTankRootManager _enemyTankRootManager;
+    /// <summary>シーン上に存在するすべてのエネミー戦車の各種制御を統括するクラス配列</summary>
+    private EnemyTankRootManager[] _enemyTankRootManagers;
 
     // ======================================================
     // フィールド
@@ -112,6 +113,9 @@ public class SceneManager : MonoBehaviour
         _targetPhase = PhaseType.Play;
         ChangePhase(_targetPhase);
 
+        // 一時的にエネミーを収集するためのリスト
+        List<EnemyTankRootManager> enemyList = new List<EnemyTankRootManager>();
+
         // 現在シーンの OnEnter を実行
         foreach (IUpdatable updatable in _updatables)
         {
@@ -130,11 +134,16 @@ public class SceneManager : MonoBehaviour
             {
                 _playerTankRootManager = playerTankRootManager;
             }
+
+            // Enemy 戦車は一時リストに収集
             if (updatable is EnemyTankRootManager enemyTankRootManager)
             {
-                _enemyTankRootManager = enemyTankRootManager;
+                enemyList.Add(enemyTankRootManager);
             }
         }
+
+        // List → 配列へ確定
+        _enemyTankRootManagers = enemyList.ToArray();
     }
 
     private void Update()
@@ -173,15 +182,39 @@ public class SceneManager : MonoBehaviour
     private void OnEnable()
     {
         // イベント購読
-        _playerTankRootManager.OnFireBullet += HandleFireBullet;
-        _playerTankRootManager.OnOptionButtonPressed += HandleOptionButtonPressed;
+        if (_playerTankRootManager != null)
+        {
+            _playerTankRootManager.OnFireBullet += HandleFireBullet;
+            _playerTankRootManager.OnOptionButtonPressed += HandleOptionButtonPressed;
+        }
+
+        if (_enemyTankRootManagers == null)
+        {
+            return;
+        }
+        for (int i = 0; i < _enemyTankRootManagers.Length; i++)
+        {
+            _enemyTankRootManagers[i].OnFireBullet += HandleFireBullet;
+        }
     }
 
     private void OnDisable()
     {
         // イベント購読解除
-        _playerTankRootManager.OnFireBullet -= HandleFireBullet;
-        _playerTankRootManager.OnOptionButtonPressed -= HandleOptionButtonPressed;
+        if (_playerTankRootManager != null)
+        {
+            _playerTankRootManager.OnFireBullet -= HandleFireBullet;
+            _playerTankRootManager.OnOptionButtonPressed -= HandleOptionButtonPressed;
+        }
+
+        if (_enemyTankRootManagers == null)
+        {
+            return;
+        }
+        for (int i = 0; i < _enemyTankRootManagers.Length; i++)
+        {
+            _enemyTankRootManagers[i].OnFireBullet -= HandleFireBullet;
+        }
     }
 
     // ======================================================
@@ -275,20 +308,25 @@ public class SceneManager : MonoBehaviour
     }
 
     /// <summary>
-    /// TankRootManager から発射イベントを受け取り BulletPool で弾丸を生成・発射する
+    /// TankRootManager から発射イベントを受け取り
+    /// BulletPool で弾丸を生成・発射する
     /// </summary>
+    /// <param name="tank">発射元の戦車</param>
     /// <param name="type">発射する弾丸の種類</param>
-    private void HandleFireBullet(BulletType type)
+    private void HandleFireBullet(BaseTankRootManager tank, BulletType type)
     {
-        if (_bulletPool == null || _playerTankRootManager == null)
+        // 必須参照が欠けている場合は処理しない
+        if (_bulletPool == null || tank == null)
         {
             Debug.LogWarning("[SceneManager] BulletPool または TankRootManager が未設定です。");
             return;
         }
 
-        // 発射位置と方向を取得
-        Vector3 firePosition = _playerTankRootManager.FirePoint.position;
-        Vector3 fireDirection = _playerTankRootManager.transform.forward;
+        // 発射位置を発射元戦車から取得
+        Vector3 firePosition = tank.FirePoint.position;
+
+        // 発射方向を発射元戦車の前方から取得
+        Vector3 fireDirection = tank.transform.forward;
 
         // BulletPool で弾丸を生成・発射
         _bulletPool.Spawn(type, firePosition, fireDirection);

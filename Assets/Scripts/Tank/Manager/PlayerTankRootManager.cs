@@ -58,7 +58,8 @@ namespace TankSystem.Manager
 
             // UŒ‚ƒ{ƒ^ƒ“ó‘Ô‚ğæ“¾
             leftFire = _inputManager.GetButtonState(TankInputKeys.INPUT_LEFT_FIRE);
-            rightFire = _inputManager.GetButtonState(TankInputKeys.INPUT_RIGHT_FIRE);
+            rightFire = new ButtonState();
+            // rightFire = _inputManager.GetButtonState(TankInputKeys.INPUT_RIGHT_FIRE);
         }
     }
 }

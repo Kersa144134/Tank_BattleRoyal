@@ -127,12 +127,6 @@ namespace TankSystem.Manager
 
                 // 弾丸更新
                 bullet.OnUpdate(deltaTime);
-
-                // 更新後に無効化された場合は解除
-                if (!bullet.IsEnabled)
-                {
-                    _updatableBullets.RemoveAt(i);
-                }
             }
 
             // アイテム回転処理

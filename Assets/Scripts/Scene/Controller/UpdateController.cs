@@ -4,11 +4,11 @@
 // 作成日時 : 2025-12-05
 // 更新日時 : 2025-12-15
 // 概要     : 指定された IUpdatable オブジェクトを保持し OnUpdate を実行するコントローラ
-//            GC 発生を抑制するため、実行時は配列キャッシュを使用する
 // ======================================================
 
 using System.Collections.Generic;
 using SceneSystem.Interface;
+using Unity.VisualScripting;
 
 namespace SceneSystem.Controller
 {
@@ -29,7 +29,6 @@ namespace SceneSystem.Controller
 
         /// <summary>
         /// 毎フレーム実行用の Updatable 配列キャッシュ
-        /// foreach を排除し GC を発生させないために使用する
         /// </summary>
         private IUpdatable[] _updateArray = new IUpdatable[0];
 
@@ -94,67 +93,8 @@ namespace SceneSystem.Controller
 
         // --------------------------------------------------
         // IUpdatable イベント
+        // OnEnter / OnExit はシーン上のすべての Updatable を対象にするため記載なし
         // --------------------------------------------------
-        /// <summary>
-        /// シーン開始時に呼ばれる初期化処理
-        /// </summary>
-        public void OnEnter()
-        {
-            // 実行前にキャッシュを最新化する
-            RebuildCache();
-
-            // for ループで GC を発生させずに実行する
-            for (int i = 0; i < _updateArray.Length; i++)
-            {
-                _updateArray[i].OnEnter();
-            }
-        }
-
-        /// <summary>
-        /// シーン終了時に呼ばれる終了処理
-        /// </summary>
-        public void OnExit()
-        {
-            // 実行前にキャッシュを最新化する
-            RebuildCache();
-
-            // for ループで GC を発生させずに実行する
-            for (int i = 0; i < _updateArray.Length; i++)
-            {
-                _updateArray[i].OnExit();
-            }
-        }
-
-        /// <summary>
-        /// フェーズ開始時に呼ばれる初期化処理
-        /// </summary>
-        public void OnPhaseEnter()
-        {
-            // 実行前にキャッシュを最新化する
-            RebuildCache();
-
-            // for ループで GC を発生させずに実行する
-            for (int i = 0; i < _updateArray.Length; i++)
-            {
-                _updateArray[i].OnPhaseEnter();
-            }
-        }
-
-        /// <summary>
-        /// フェーズ終了時に呼ばれる終了処理
-        /// </summary>
-        public void OnPhaseExit()
-        {
-            // 実行前にキャッシュを最新化する
-            RebuildCache();
-
-            // for ループで GC を発生させずに実行する
-            for (int i = 0; i < _updateArray.Length; i++)
-            {
-                _updateArray[i].OnPhaseExit();
-            }
-        }
-
         /// <summary>
         /// OnUpdate を毎フレーム実行
         /// </summary>
@@ -163,7 +103,6 @@ namespace SceneSystem.Controller
             // 実行前にキャッシュを最新化する
             RebuildCache();
 
-            // for ループで GC を発生させずに実行する
             for (int i = 0; i < _updateArray.Length; i++)
             {
                 _updateArray[i].OnUpdate();
@@ -178,10 +117,37 @@ namespace SceneSystem.Controller
             // 実行前にキャッシュを最新化する
             RebuildCache();
 
-            // for ループで GC を発生させずに実行する
             for (int i = 0; i < _updateArray.Length; i++)
             {
                 _updateArray[i].OnLateUpdate();
+            }
+        }
+
+        /// <summary>
+        /// フェーズ開始時に呼ばれる初期化処理
+        /// </summary>
+        public void OnPhaseEnter()
+        {
+            // 実行前にキャッシュを最新化する
+            RebuildCache();
+
+            for (int i = 0; i < _updateArray.Length; i++)
+            {
+                _updateArray[i].OnPhaseEnter();
+            }
+        }
+
+        /// <summary>
+        /// フェーズ終了時に呼ばれる終了処理
+        /// </summary>
+        public void OnPhaseExit()
+        {
+            // 実行前にキャッシュを最新化する
+            RebuildCache();
+
+            for (int i = 0; i < _updateArray.Length; i++)
+            {
+                _updateArray[i].OnPhaseExit();
             }
         }
 

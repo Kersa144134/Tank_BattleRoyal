@@ -7,6 +7,7 @@
 //            弾速・質量に基づく減衰処理を行い、生存時間を判定する
 // ======================================================
 
+using System;
 using UnityEngine;
 
 namespace WeaponSystem.Data
@@ -62,10 +63,9 @@ namespace WeaponSystem.Data
         /// <summary>弾丸の現在座標</summary>
         public Vector3 CurrentPosition { get; protected set; }
 
-        // ======================================================
-        // 減衰設定
-        // ======================================================
-
+        // --------------------------------------------------
+        // 内部計算用プロパティ
+        // --------------------------------------------------
         /// <summary>
         /// 弾速減衰率
         /// 大きな質量ほど減衰が緩やかになる
@@ -91,7 +91,17 @@ namespace WeaponSystem.Data
         protected abstract void Tick(float deltaTime);
 
         // ======================================================
-        // 初期化処理
+        // イベント
+        // ======================================================
+
+        /// <summary>
+        /// 弾丸が終了したことを通知するイベント
+        /// プール側で Despawn 処理を行うために使用する
+        /// </summary>
+        public event Action<BulletBase> OnDespawnRequested;
+        
+        // ======================================================
+        // 初期化
         // ======================================================
 
         /// <summary>
@@ -176,6 +186,9 @@ namespace WeaponSystem.Data
         public virtual void OnExit()
         {
             IsEnabled = false;
+
+            // プールへ戻すための通知を発行
+            OnDespawnRequested?.Invoke(this);
         }
 
         // ======================================================

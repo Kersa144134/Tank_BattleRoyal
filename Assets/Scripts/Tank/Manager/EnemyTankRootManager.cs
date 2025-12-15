@@ -8,6 +8,8 @@
 // ======================================================
 
 using InputSystem.Data;
+using TankSystem.Data;
+using UnityEngine;
 
 namespace TankSystem.Manager
 {
@@ -17,6 +19,13 @@ namespace TankSystem.Manager
     /// </summary>
     public sealed class EnemyTankRootManager : BaseTankRootManager
     {
+        // ======================================================
+        // フィールド
+        // ======================================================
+
+        /// <summary>プレイヤー入力管理クラス</summary>
+        private readonly TankInputManager _inputManager = new TankInputManager();
+
         // ======================================================
         // 入力処理
         // ======================================================
@@ -38,10 +47,12 @@ namespace TankSystem.Manager
             out ButtonState rightFire
         )
         {
+            // 入力の更新
+            _inputManager.UpdateInput();
+
             // --------------------------------------------------
             // AI制御の簡易例
             // 前進と旋回の固定値を出力
-            // 実際のAIアルゴリズムに応じて上書き可能
             // --------------------------------------------------
             leftMobility = 1f;
             rightMobility = 0f;
@@ -49,7 +60,7 @@ namespace TankSystem.Manager
             optionPressed = false;
 
             leftFire = new ButtonState();
-            rightFire = new ButtonState();
+            rightFire = _inputManager.GetButtonState(TankInputKeys.INPUT_RIGHT_FIRE);
         }
     }
 }

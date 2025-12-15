@@ -113,7 +113,7 @@ namespace TankSystem.Manager
         public event Action OnOptionButtonPressed;
 
         /// <summary>弾丸が発射された際に発火するイベント</summary>
-        public event Action<BulletType> OnFireBullet;
+        public event Action<BaseTankRootManager, BulletType> OnFireBullet;
 
         // ======================================================
         // 抽象メソッド
@@ -291,7 +291,7 @@ namespace TankSystem.Manager
             Vector3 fireDirection = transform.forward;
 
             // イベントを外部に通知
-            OnFireBullet?.Invoke(type);
+            OnFireBullet?.Invoke(this, type);
         }
     }
 }

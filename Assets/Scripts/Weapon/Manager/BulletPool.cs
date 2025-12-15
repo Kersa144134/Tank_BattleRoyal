@@ -9,11 +9,11 @@
 //            戦車ごとのプールも生成可能
 // ======================================================
 
-using SceneSystem.Interface;
 using System;
 using System.Collections.Generic;
-using TankSystem.Manager;
 using UnityEngine;
+using SceneSystem.Interface;
+using TankSystem.Manager;
 using WeaponSystem.Data;
 
 namespace WeaponSystem.Manager
@@ -70,31 +70,64 @@ namespace WeaponSystem.Manager
 
         public void OnEnter()
         {
-            // 戦車ごとのプール生成
+            // 戦車オブジェクトごとにプール初期化を行う
             foreach (GameObject tankObj in _tankObjects)
             {
-                if (tankObj.TryGetComponent<BaseTankRootManager>(out BaseTankRootManager _))
+                // 戦車ルートであることを確認（弾丸プール生成対象かの判定）
+                if (!tankObj.TryGetComponent<BaseTankRootManager>(out BaseTankRootManager _))
                 {
-                    foreach (BulletPoolEntry entry in bulletEntries)
+                    // 戦車でないオブジェクトはスキップ
+                    continue;
+                }
+
+                // 戦車専用の弾丸ルートオブジェクトを生成
+                GameObject bulletRootObject = new GameObject($"{tankObj.name}_BulletRoot");
+
+                // BulletPool 配下にまとめて配置（Hierarchy 整理用）
+                bulletRootObject.transform.SetParent(transform);
+
+                // 弾丸生成時に使用する Transform を取得
+                Transform bulletRootTransform = bulletRootObject.transform;
+
+                // 弾丸タイプごとにプールを初期化
+                foreach (BulletPoolEntry entry in bulletEntries)
+                {
+                    // 未使用プールが未生成の場合は作成
+                    if (!_inactivePool.ContainsKey(entry.Type))
                     {
-                        // 種類ごとの未使用リストを作成
-                        if (!_inactivePool.ContainsKey(entry.Type))
-                        {
-                            _inactivePool[entry.Type] = new List<BulletBase>();
-                        }
-
-                        // 種類ごとの使用中リストを作成
-                        if (!_activePool.ContainsKey(entry.Type))
-                        {
-                            _activePool[entry.Type] = new List<BulletBase>();
-                        }
-
-                        // 初期数だけ弾丸を生成
-                        for (int i = 0; i < entry.InitialCount; i++)
-                        {
-                            CreateNewBullet(entry);
-                        }
+                        _inactivePool[entry.Type] = new List<BulletBase>();
                     }
+
+                    // 使用中プールが未生成の場合は作成
+                    if (!_activePool.ContainsKey(entry.Type))
+                    {
+                        _activePool[entry.Type] = new List<BulletBase>();
+                    }
+
+                    // 初期生成数ぶんだけ弾丸を生成し、戦車専用ルート配下に配置
+                    for (int i = 0; i < entry.InitialCount; i++)
+                    {
+                        CreateNewBullet(entry, bulletRootTransform);
+                    }
+                }
+            }
+        }
+
+        public void OnExit()
+        {
+            foreach (List<BulletBase> list in _activePool.Values)
+            {
+                foreach (BulletBase bullet in list)
+                {
+                    bullet.OnDespawnRequested -= Despawn;
+                }
+            }
+
+            foreach (List<BulletBase> list in _inactivePool.Values)
+            {
+                foreach (BulletBase bullet in list)
+                {
+                    bullet.OnDespawnRequested -= Despawn;
                 }
             }
         }
@@ -104,9 +137,13 @@ namespace WeaponSystem.Manager
         // ======================================================
 
         /// <summary>
-        /// 指定した弾丸タイプを発射し、位置と方向を設定する
-        /// 未使用の弾丸が存在しない場合は発射を中止する
+        /// 指定した弾丸タイプの弾丸をプールから取得し、
+        /// 発射位置と進行方向を設定したうえで発射処理を行う
         /// </summary>
+        /// <param name="type">発射する弾丸の種類</param>
+        /// <param name="position">弾丸を生成・発射するワールド座標</param>
+        /// <param name="direction">弾丸の進行方向を表す正規化済みベクトル</param>
+        /// <returns>発射に成功した場合は使用中状態となった弾丸インスタンス</returns>
         public BulletBase Spawn(BulletType type, in Vector3 position, in Vector3 direction)
         {
             BulletPoolEntry entry = bulletEntries.Find(e => e.Type == type);
@@ -150,13 +187,11 @@ namespace WeaponSystem.Manager
         }
 
         /// <summary>
-        /// 使用後の弾丸を非アクティブ化し、プールへ戻す
+        /// 使用が終了した弾丸を非アクティブ状態へ遷移させ、管理対象のプールへ戻す処理を行う
         /// </summary>
-        public void Despawn(in BulletBase bullet)
+        /// <param name="bullet">非アクティブ化してプールへ戻す対象の弾丸インスタンス</param>
+        public void Despawn(BulletBase bullet)
         {
-            // 弾丸を無効化
-            bullet.OnExit();
-
             // 弾丸のタイプを取得
             BulletType type = bullet switch
             {
@@ -187,18 +222,26 @@ namespace WeaponSystem.Manager
         // ======================================================
 
         /// <summary>
-        /// プレハブを元に新しい弾丸を生成し、プールへ追加する
+        /// 指定された弾丸定義エントリと親 Transform を基に、
+        /// 新しい弾丸インスタンスを生成し、未使用状態としてプールへ登録する
+        /// 生成された弾丸は指定した親オブジェクト配下に配置される
         /// </summary>
-        private BulletBase CreateNewBullet(in BulletPoolEntry entry)
+        /// <param name="entry">生成対象となる弾丸のプール定義情報</param>
+        /// <param name="parent">生成される弾丸オブジェクトの親となる Transform</param>
+        /// <returns>プール登録が完了した弾丸インスタンス</returns>
+        private BulletBase CreateNewBullet(in BulletPoolEntry entry, in Transform parent)
         {
-            // 弾丸の Transform を生成
-            Transform bulletTransform = Instantiate(entry.Prefab, transform);
+            // 親を戦車ルートに指定
+            Transform bulletTransform = Instantiate(entry.Prefab, parent);
 
             // ScriptableObject からロジックインスタンスを生成
             BulletBase bulletBase = entry.Data.CreateInstance();
 
             // Transform を渡して初期化
             bulletBase.Initialize(bulletTransform);
+
+            // デスポーン要求イベントを購読
+            bulletBase.OnDespawnRequested += Despawn;
 
             // 未使用リストへ追加
             _inactivePool[entry.Type].Add(bulletBase);
