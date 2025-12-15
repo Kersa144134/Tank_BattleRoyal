@@ -51,7 +51,7 @@ namespace TankSystem.Manager
         private const float BASE_MOBILITY = 5.0f;
 
         /// <summary>馬力1あたりの倍率加算値</summary>
-        private const float HORSEPOWER_MULTIPLIER = 1.5f;
+        private const float HORSEPOWER_MULTIPLIER = 0.5f;
 
         // ======================================================
         // コンストラクタ

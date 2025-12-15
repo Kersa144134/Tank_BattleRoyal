@@ -1393,6 +1393,7 @@ MonoBehaviour:
     _barrelScale: 0
     _projectileMass: 0
     _reloadTime: 0
+  _turret: {fileID: 7520656438791090926}
   _firePoint: {fileID: 443024298}
   _hitboxCenter: {x: 0, y: 1.4, z: 1.25}
   _hitboxSize: {x: 3.75, y: 2.8, z: 9.25}
@@ -3187,15 +3188,15 @@ MonoBehaviour:
   - Type: 0
     Prefab: {fileID: 7471330300124771681, guid: 15ab4d0e97663a84996789471428e9fd, type: 3}
     Data: {fileID: 11400000, guid: a7cc45f2b97ff9443956a0fd6d187ed3, type: 2}
-    InitialCount: 10
+    InitialCount: 20
   - Type: 1
     Prefab: {fileID: 7471330300124771681, guid: 31ae57274131a814eba81ae17e4ac47d, type: 3}
     Data: {fileID: 11400000, guid: 545f9eff41352954a80b9d35dc4065e4, type: 2}
-    InitialCount: 10
+    InitialCount: 20
   - Type: 2
     Prefab: {fileID: 7471330300124771681, guid: 10e5982e9204704498b64e1396d6dbe6, type: 3}
     Data: {fileID: 11400000, guid: 9108d0859e37ca946ba44af7ec27542f, type: 2}
-    InitialCount: 10
+    InitialCount: 20
 --- !u!4 &1327687268
 Transform:
   m_ObjectHideFlags: 0
@@ -4514,6 +4515,7 @@ MonoBehaviour:
     _barrelScale: 0
     _projectileMass: 0
     _reloadTime: 0
+  _turret: {fileID: 0}
   _firePoint: {fileID: 1090782555}
   _hitboxCenter: {x: 0, y: 1.4, z: 1.25}
   _hitboxSize: {x: 3.75, y: 2.8, z: 9.25}

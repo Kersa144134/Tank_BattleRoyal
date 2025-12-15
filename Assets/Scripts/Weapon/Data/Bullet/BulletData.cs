@@ -30,10 +30,10 @@ namespace WeaponSystem.Data
         public BulletType BulletType;
 
         /// <summary>’e‘¬‚ÌŠî€”{—¦</summary>
-        [Range(1f, 2f)] public float BulletSpeed;
+        [Range(0.5f, 2f)] public float BulletSpeed;
 
         /// <summary>’eŠÛ‚Ì¿—Ê‚ÌŠî€”{—¦</summary>
-        [Range(1f, 2f)] public float Mass;
+        [Range(0.5f, 2f)] public float Mass;
 
         // --------------------------------------------------
         // Ö’e

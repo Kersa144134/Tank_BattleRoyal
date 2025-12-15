@@ -39,6 +39,9 @@ namespace TankSystem.Manager
         [SerializeField] private TankStatus _tankStatus;
 
         [Header("UŒ‚İ’è")]
+        /// <summary>–Cg‚Ì Transform</summary>
+        [SerializeField] private Transform _turret;
+
         /// <summary>’eŠÛ”­Ëƒ[ƒJƒ‹ˆÊ’u</summary>
         [SerializeField] private Transform _firePoint;
 
