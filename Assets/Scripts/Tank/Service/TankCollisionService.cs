@@ -2,7 +2,7 @@
 // TankCollisionService.cs
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-10
-// 更新日時 : 2025-12-13
+// 更新日時 : 2025-12-15
 // 概要     : 戦車と障害物の OBB 衝突判定を専任で担当するサービスクラス
 //            障害物 OBB をキャッシュし、戦車の OBB を動的生成して判定を行う
 // ======================================================
@@ -200,6 +200,13 @@ namespace TankSystem.Service
         /// </summary>
         public void UpdateCollisionChecks()
         {
+            if (_obstacles == null || _obstacleOBBs == null
+                || _items == null || _itemOBBs == null
+            )
+            {
+                return;
+            }
+                
             // 戦車 OBB を生成
             _tankOBB = _obbFactory.CreateOBB(
                 _tankTransform,
