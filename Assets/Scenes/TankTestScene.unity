@@ -3485,6 +3485,7 @@ MonoBehaviour:
     _reloadTime: 0
   _turret: {fileID: 366697374421106752}
   _firePoint: {fileID: 443024298}
+  _inputMode: 1
   _hitboxCenter: {x: 0, y: 1.4, z: 1.25}
   _hitboxSize: {x: 3.75, y: 2.8, z: 9.25}
 --- !u!1 &443024297
@@ -12579,6 +12580,7 @@ MonoBehaviour:
     _reloadTime: 0
   _turret: {fileID: 0}
   _firePoint: {fileID: 1090782555}
+  _inputMode: 0
   _hitboxCenter: {x: 0, y: 1.4, z: 1.25}
   _hitboxSize: {x: 3.75, y: 2.8, z: 9.25}
 --- !u!1 &1957855839
@@ -15219,7 +15221,7 @@ Transform:
   m_LocalRotation: {x: 0.000000006954532, y: 0, z: -0, w: 1}
   m_LocalPosition: {x: 0.00000062162695, y: 0.00033164024, z: 1.1896484}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 1
+  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2833210695102216937}
   m_Father: {fileID: 4124809350744838690}

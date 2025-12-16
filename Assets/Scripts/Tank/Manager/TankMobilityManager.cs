@@ -8,11 +8,11 @@
 //            TankCollisionService により移動後の衝突判定を行う。
 // ======================================================
 
+using UnityEngine;
 using CollisionSystem.Data;
 using TankSystem.Controller;
 using TankSystem.Data;
 using TankSystem.Service;
-using UnityEngine;
 
 namespace TankSystem.Manager
 {
@@ -37,6 +37,9 @@ namespace TankSystem.Manager
         // ======================================================
         // フィールド
         // ======================================================
+
+        /// <summary>キャタピラ入力モード</summary>
+        private readonly BaseTankRootManager.TrackInputMode _inputMode;
 
         /// <summary>戦車本体の Transform</summary>
         private readonly Transform _tankTransform;
@@ -95,6 +98,7 @@ namespace TankSystem.Manager
             in TankTrackController trackController,
             in TankCollisionService collisionService,
             in TankMovementBoundaryService boundaryService,
+            in BaseTankRootManager.TrackInputMode inputMode,
             in Transform transform,
             in Vector3 hitboxCenter,
             in Vector3 hitboxSize,
@@ -104,6 +108,7 @@ namespace TankSystem.Manager
             _trackController = trackController;
             _collisionService = collisionService;
             _boundaryService = boundaryService;
+            _inputMode = inputMode;
 
             // 操作対象の戦車 Transform を保持する
             _tankTransform = transform;
@@ -119,7 +124,7 @@ namespace TankSystem.Manager
         /// <param name="tankStatus">戦車のステータス</param>
         /// <param name="left">左キャタピラ入力値（-1～1）</param>
         /// <param name="right">右キャタピラ入力値（-1～1）</param>
-        public void ApplyMobility(in TankStatus tankStatus, in float left, in float right)
+        public void ApplyMobility(in TankStatus tankStatus, in Vector2 left, in Vector2 right)
         {
             // 機動力関連の倍率を更新
             UpdateMobilityParameters(tankStatus);
@@ -129,9 +134,6 @@ namespace TankSystem.Manager
 
             // 加減速を適用して現在値を更新
             ApplyAcceleration(targetForward, targetTurn);
-
-            // デバッグ用ログ出力
-            LogMobilityDebug(targetForward, targetTurn);
 
             // 前進を適用
             _tankTransform.Translate(
@@ -205,13 +207,13 @@ namespace TankSystem.Manager
         /// キャタピラ入力から前進・旋回の目標値を算出する
         /// </summary>
         private void CalculateTargetMovement(
-            in float left,
-            in float right,
+            in Vector2 left,
+            in Vector2 right,
             out float targetForward,
             out float targetTurn)
         {
             // キャタピラ入力を前進量・旋回量に変換
-            _trackController.UpdateTrack(left, right, out float forwardInput, out float turnInput);
+            _trackController.UpdateTrack(_inputMode, left, right, out float forwardInput, out float turnInput);
 
             // 機動力倍率を掛けて最終的な目標値を算出
             targetForward = forwardInput * _mobilityMultiplier;
@@ -243,27 +245,6 @@ namespace TankSystem.Manager
                 _currentTurn,
                 targetTurn,
                 turnMaxDelta
-            );
-        }
-
-        // ======================================================
-        // デバッグ
-        // ======================================================
-
-        /// <summary>
-        /// 移動・旋回の目標値と現在値をログ出力する
-        /// デバッグ確認用途（最終的に削除・無効化前提）
-        /// </summary>
-        private void LogMobilityDebug(
-            in float targetForward,
-            in float targetTurn)
-        {
-            Debug.Log(
-                $"[Mobility] " +
-                $"TargetForward:{targetForward:F2} " +
-                $"CurrentForward:{_currentForward:F2} | " +
-                $"TargetTurn:{targetTurn:F2} " +
-                $"CurrentTurn:{_currentTurn:F2}"
             );
         }
     }

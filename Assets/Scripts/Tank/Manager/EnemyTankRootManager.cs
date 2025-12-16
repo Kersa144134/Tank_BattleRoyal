@@ -7,9 +7,9 @@
 //            BaseTankRootManager を継承し、入力処理をAI制御に差し替える
 // ======================================================
 
+using UnityEngine;
 using InputSystem.Data;
 using TankSystem.Data;
-using UnityEngine;
 
 namespace TankSystem.Manager
 {
@@ -34,14 +34,14 @@ namespace TankSystem.Manager
         /// 毎フレーム呼び出される AI 入力更新処理
         /// BaseTankRootManager の抽象メソッドをオーバーライド
         /// </summary>
-        /// <param name="leftMobility">左キャタピラ入力から算出される前進/後退量</param>
-        /// <param name="rightMobility">右キャタピラ入力から算出される前進/後退量</param>
+        /// <param name="leftMobility">左キャタピラ入力から算出される前進/旋回量</param>
+        /// <param name="rightMobility">右キャタピラ入力から算出される前進/旋回量</param>
         /// <param name="optionPressed">オプションボタン押下フラグ（AIは使用しない）</param>
         /// <param name="leftFire">左攻撃ボタンの状態（AIは自動制御）</param>
         /// <param name="rightFire">右攻撃ボタンの状態（AIは自動制御）</param>
         protected override void UpdateInput(
-            out float leftMobility,
-            out float rightMobility,
+            out Vector2 leftMobility,
+            out Vector2 rightMobility,
             out bool optionPressed,
             out ButtonState leftFire,
             out ButtonState rightFire
@@ -54,8 +54,8 @@ namespace TankSystem.Manager
             // AI制御の簡易例
             // 前進と旋回の固定値を出力
             // --------------------------------------------------
-            leftMobility = 1f;
-            rightMobility = 0f;
+            leftMobility = new Vector2(0f, 1f);
+            rightMobility = Vector2.zero;
 
             optionPressed = false;
 

@@ -26,6 +26,22 @@ namespace TankSystem.Manager
     /// </summary>
     public abstract class BaseTankRootManager : MonoBehaviour, IUpdatable
     {
+        // ======================================================================
+        // 列挙型
+        // ======================================================================
+
+        /// <summary>
+        /// キャタピラ入力モード定義
+        /// </summary>
+        public enum TrackInputMode
+        {
+            /// <summary>単独スティック操作モード</summary>
+            Single,
+
+            /// <summary>左右スティック独立操作モード</summary>
+            Dual
+        }
+
         // ======================================================
         // インスペクタ設定
         // ======================================================
@@ -44,6 +60,10 @@ namespace TankSystem.Manager
 
         /// <summary>弾丸発射ローカル位置</summary>
         [SerializeField] private Transform _firePoint;
+
+        [Header("機動設定")]
+        /// <summary>キャタピラ入力モード</summary>
+        [SerializeField] private TrackInputMode _inputMode;
 
         [Header("当たり判定設定")]
         /// <summary>戦車本体の当たり判定中心位置</summary>
@@ -129,14 +149,14 @@ namespace TankSystem.Manager
         /// 毎フレーム呼び出される入力更新処理を実装する抽象メソッド
         /// プレイヤーの場合はプレイヤー入力を、敵AIの場合は自動制御入力を設定する
         /// </summary>
-        /// <param name="leftMobility">左キャタピラ入力から算出される前進/後退量</param>
-        /// <param name="rightMobility">右キャタピラ入力から算出される前進/後退量</param>
+        /// <param name="leftMobility">左キャタピラ入力から算出される前進/旋回量</param>
+        /// <param name="rightMobility">右キャタピラ入力から算出される前進/旋回量</param>
         /// <param name="optionPressed">オプションボタン押下フラグ</param>
         /// <param name="leftFire">左攻撃ボタンの状態</param>
         /// <param name="rightFire">右攻撃ボタンの状態</param>
         protected abstract void UpdateInput(
-            out float leftMobility,
-            out float rightMobility,
+            out Vector2 leftMobility,
+            out Vector2 rightMobility,
             out bool optionPressed,
             out ButtonState leftFire,
             out ButtonState rightFire
@@ -169,6 +189,7 @@ namespace TankSystem.Manager
                 _trackController,
                 _collisionService,
                 _boundaryService,
+                _inputMode,
                 transform,
                 _hitboxCenter,
                 _hitboxSize,
@@ -189,8 +210,8 @@ namespace TankSystem.Manager
             // --------------------------------------------------
             // 入力
             // --------------------------------------------------
-            UpdateInput(out float leftMobility,
-                out float rightMobility,
+            UpdateInput(out Vector2 leftMobility,
+                out Vector2 rightMobility,
                 out bool optionPressed,
                 out ButtonState leftFire,
                 out ButtonState rightFire

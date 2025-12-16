@@ -7,6 +7,7 @@
 //            BaseTankRootManager を継承し、入力処理をプレイヤー操作に差し替える
 // ======================================================
 
+using UnityEngine;
 using InputSystem.Data;
 using TankSystem.Data;
 
@@ -33,14 +34,14 @@ namespace TankSystem.Manager
         /// 毎フレーム呼び出される入力更新処理
         /// BaseTankRootManager の抽象メソッドをオーバーライド
         /// </summary>
-        /// <param name="leftMobility">左キャタピラ入力から算出される前進/後退量</param>
-        /// <param name="rightMobility">右キャタピラ入力から算出される前進/後退量</param>
+        /// <param name="leftMobility">左キャタピラ入力から算出される前進/旋回量</param>
+        /// <param name="rightMobility">右キャタピラ入力から算出される前進/旋回量</param>
         /// <param name="optionPressed">オプションボタン押下フラグ</param>
         /// <param name="leftFire">左攻撃ボタンの状態</param>
         /// <param name="rightFire">右攻撃ボタンの状態</param>
         protected override void UpdateInput(
-            out float leftMobility,
-            out float rightMobility,
+            out Vector2 leftMobility,
+            out Vector2 rightMobility,
             out bool optionPressed,
             out ButtonState leftFire,
             out ButtonState rightFire
@@ -50,8 +51,8 @@ namespace TankSystem.Manager
             _inputManager.UpdateInput();
 
             // 左右キャタピラ入力を取得
-            leftMobility = _inputManager.LeftStick.y;
-            rightMobility = _inputManager.RightStick.y;
+            leftMobility = _inputManager.LeftStick;
+            rightMobility = _inputManager.RightStick;
 
             // オプションボタン押下判定
             optionPressed = _inputManager.GetButtonState(TankInputKeys.INPUT_OPTION).Down;
