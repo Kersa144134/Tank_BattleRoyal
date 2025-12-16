@@ -7,12 +7,12 @@
 // ======================================================
 
 using UnityEngine;
-using CollisionSystem.Data;
+using CollisionSystem.Interface;
 
 namespace CollisionSystem.Utility
 {
     /// <summary>
-    /// SAT に基づいた OBB の分離判定ロジックを提供する
+    /// SAT に基づいた OBB の分離判定ロジックを提供
     /// </summary>
     public class SATMath
     {
@@ -45,33 +45,20 @@ namespace CollisionSystem.Utility
         /// </summary>
         /// <param name="a">OBB A</param>
         /// <param name="b">OBB B</param>
-        /// <param name="axis">分離判定に使用する軸（正規化前提）</param>
-        /// <returns>
-        /// 投影区間が重なっていれば true、
-        /// 分離していれば false
-        /// </returns>
+        /// <param name="axis">分離判定に使用する軸（正規化済み前提）</param>
+        /// <returns>投影区間が重なっていれば true、分離していれば false</returns>
         public bool IsOverlappingOnAxis(
-            in OBBData a,
-            in OBBData b,
+            in IOBBData a,
+            in IOBBData b,
             in Vector3 axis
         )
         {
-            // OBB A の投影半径を算出
-            float projectionA =
-                _obbMath.CalculateProjectionRadius(a, axis);
-
-            // OBB B の投影半径を算出
-            float projectionB =
-                _obbMath.CalculateProjectionRadius(b, axis);
+            // 各 OBB の指定軸への投影半径を計算
+            float projectionA = _obbMath.CalculateProjectionRadius(a, axis);
+            float projectionB = _obbMath.CalculateProjectionRadius(b, axis);
 
             // OBB 中心間距離を軸方向へ射影
-            float distance =
-                Mathf.Abs(
-                    Vector3.Dot(
-                        b.Center - a.Center,
-                        axis
-                    )
-                );
+            float distance = Mathf.Abs(Vector3.Dot(b.Center - a.Center, axis));
 
             // 投影区間が重なっているか判定
             return distance <= projectionA + projectionB;

@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using CollisionSystem.Calculator;
 using CollisionSystem.Data;
+using CollisionSystem.Interface;
 using TankSystem.Data;
 using TankSystem.Utility;
 
@@ -42,14 +43,11 @@ namespace TankSystem.Service
         /// <summary>戦車本体の Transform</summary>
         private readonly Transform _tankTransform;
 
-        /// <summary>戦車の当たり判定ローカル中心</summary>
-        private readonly Vector3 _hitboxCenter;
-
-        /// <summary>戦車の当たり判定ローカルサイズ</summary>
-        private readonly Vector3 _hitboxSize;
+        /// <summary>戦車本体の BoxCollider </summary>
+        private readonly BoxCollider _tankCollider;
 
         /// <summary>戦車の OBBData</summary>
-        private OBBData _tankOBB;
+        private IOBBData _tankOBB;
 
         // --------------------------------------------------
         // 障害物
@@ -61,7 +59,7 @@ namespace TankSystem.Service
         private readonly BoxCollider[] _obstacleColliders;
 
         /// <summary>障害物の OBBData 配列</summary>
-        private readonly OBBData[] _obstacleOBBs;
+        private readonly IOBBData[] _obstacleOBBs;
 
         // --------------------------------------------------
         // アイテム
@@ -70,7 +68,7 @@ namespace TankSystem.Service
         private List<ItemSlot> _items;
 
         /// <summary>アイテムの OBBData 配列</summary>
-        private OBBData[] _itemOBBs;
+        private IOBBData[] _itemOBBs;
 
         // ======================================================
         // 辞書
@@ -99,28 +97,32 @@ namespace TankSystem.Service
         /// <param name="obbFactory">OBB を生成するファクトリークラス</param>
         /// <param name="boxCollisionCalculator">OBB 衝突判定と MTV 算出を行う計算クラス</param>
         /// <param name="tankTransform">戦車本体の Transform</param>
-        /// <param name="hitboxCenter">戦車当たり判定のローカル中心座標</param>
-        /// <param name="hitboxSize">戦車当たり判定のローカルサイズ</param>
+        /// <param name="tankCollider">戦車本体の Collider</param>
         /// <param name="obstacles">障害物の Transform 配列</param>
         public TankCollisionService(
             in OBBFactory obbFactory,
             in BoundingBoxCollisionCalculator boxCollisionCalculator,
             in Transform tankTransform,
-            in Vector3 hitboxCenter,
-            in Vector3 hitboxSize,
+            in BoxCollider tankCollider,
             in Transform[] obstacles
         )
         {
             _obbFactory = obbFactory;
             _boxCollisionCalculator = boxCollisionCalculator;
             _tankTransform = tankTransform;
-            _hitboxCenter = hitboxCenter;
-            _hitboxSize = hitboxSize;
+            _tankCollider = tankCollider;
             _obstacles = obstacles;
+
+            // 戦車 OBB を生成
+            _tankOBB = _obbFactory.CreateDynamicOBB(
+                _tankTransform,
+                _tankCollider.center,
+                _tankCollider.size
+            );
 
             // 障害物のキャッシュデータ配列を初期化する
             _obstacleColliders = new BoxCollider[_obstacles.Length];
-            _obstacleOBBs = new OBBData[_obstacles.Length];
+            _obstacleOBBs = new IOBBData[_obstacles.Length];
 
             // 障害物インデックス対応表を登録
             _obstacleIndexMap = new Dictionary<Transform, int>(_obstacles.Length);
@@ -149,7 +151,7 @@ namespace TankSystem.Service
 
                 _obstacleColliders[i] = boxCollider;
 
-                _obstacleOBBs[i] = _obbFactory.CreateOBB(
+                _obstacleOBBs[i] = _obbFactory.CreateStaticOBB(
                     _obstacles[i],
                     boxCollider.center,
                     boxCollider.size
@@ -169,20 +171,20 @@ namespace TankSystem.Service
         {
             if (items == null || items.Count == 0)
             {
-                _itemOBBs = new OBBData[0];
+                _itemOBBs = new IOBBData[0];
                 return;
             }
 
             _items = items;
 
             // アイテム OBB のキャッシュ配列を初期化する
-            _itemOBBs = new OBBData[items.Count];
+            _itemOBBs = new IOBBData[items.Count];
 
             // アイテム OBB を生成
             for (int i = 0; i < items.Count; i++)
             {
                 // アイテムは Transform 原点を中心とし、Transform のスケールと一致する OBB として扱う
-                _itemOBBs[i] = _obbFactory.CreateOBB(
+                _itemOBBs[i] = _obbFactory.CreateStaticOBB(
                 items[i].ItemTransform,
                     Vector3.zero,
                     Vector3.one
@@ -206,13 +208,12 @@ namespace TankSystem.Service
             {
                 return;
             }
-                
-            // 戦車 OBB を生成
-            _tankOBB = _obbFactory.CreateOBB(
-                _tankTransform,
-                _hitboxCenter,
-                _hitboxSize
-            );
+
+            // --------------------------------------------------
+            // 戦車 OBB 更新
+            // --------------------------------------------------
+
+            _tankOBB.Update();
 
             // --------------------------------------------------
             // 障害物衝突チェック
@@ -310,32 +311,18 @@ namespace TankSystem.Service
             }
 
             // --------------------------------------------------
-            // 戦車 OBB 再生成
+            // 戦車 OBB 更新
             // --------------------------------------------------
 
-            OBBData tankOBB = _obbFactory.CreateOBB(
-                _tankTransform,
-                _hitboxCenter,
-                _hitboxSize
-            );
-
-            // --------------------------------------------------
-            // 障害物 OBB 生成
-            // --------------------------------------------------
-
-            OBBData obstacleOBB = _obbFactory.CreateOBB(
-                _obstacles[obstacleIndex],
-                boxCollider.center,
-                boxCollider.size
-            );
+            _tankOBB.Update();
 
             // --------------------------------------------------
             // MTV 算出（SAT）
             // --------------------------------------------------
 
             if (!_boxCollisionCalculator.TryCalculateHorizontalMTV(
-                tankOBB,
-                obstacleOBB,
+                _tankOBB,
+                _obstacleOBBs[obstacleIndex],
                 out Vector3 resolveAxis,
                 out float resolveDistance
             ))
@@ -347,7 +334,7 @@ namespace TankSystem.Service
             // 押し戻し方向補正
             // --------------------------------------------------
 
-            Vector3 centerDelta = tankOBB.Center - obstacleOBB.Center;
+            Vector3 centerDelta = _tankOBB.Center - _obstacleOBBs[obstacleIndex].Center;
             centerDelta.y = 0f;
 
             if (Vector3.Dot(resolveAxis, centerDelta) < 0f)

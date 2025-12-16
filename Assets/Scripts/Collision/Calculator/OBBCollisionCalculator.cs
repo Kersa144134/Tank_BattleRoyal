@@ -8,6 +8,7 @@
 
 using UnityEngine;
 using CollisionSystem.Data;
+using CollisionSystem.Interface;
 using CollisionSystem.Utility;
 
 namespace CollisionSystem.Calculator
@@ -59,8 +60,8 @@ namespace CollisionSystem.Calculator
         /// <param name="b">衝突判定を行う対象 OBB B</param>
         /// <returns>すべての分離軸で重なりが確認された場合は true、確認されなかった場合は false</returns>
         public bool IsCollidingHorizontal(
-            in OBBData a,
-            in OBBData b
+            in IOBBData a,
+            in IOBBData b
         )
         {
             // OBB A の水平軸を取得
@@ -117,8 +118,8 @@ namespace CollisionSystem.Calculator
         /// <param name="overlap">算出された最小侵入量</param>
         /// <returns>有効な MTV が算出できた場合は true、衝突していないなど算出できなかった場合は false</returns>
         public bool TryCalculateHorizontalMTV(
-            in OBBData a,
-            in OBBData b,
+            in IOBBData a,
+            in IOBBData b,
             out Vector3 axis,
             out float overlap
         )
@@ -186,8 +187,8 @@ namespace CollisionSystem.Calculator
         /// <param name="bestOverlap">現在の最小侵入量</param>
         /// <returns>指定軸で侵入が存在する場合は true、存在しない場合は false</returns>
         private bool TryEvaluateAxis(
-            in OBBData a,
-            in OBBData b,
+            in IOBBData a,
+            in IOBBData b,
             in Vector3 rawAxis,
             ref Vector3 bestAxis,
             ref float bestOverlap

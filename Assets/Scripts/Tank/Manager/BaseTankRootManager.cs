@@ -45,12 +45,9 @@ namespace TankSystem.Manager
         /// <summary>弾丸発射ローカル位置</summary>
         [SerializeField] private Transform _firePoint;
 
-        [Header("当たり判定設定")]
-        /// <summary>戦車本体の当たり判定中心位置</summary>
-        [SerializeField] private Vector3 _hitboxCenter;
-
-        /// <summary>戦車本体の当たり判定スケール</summary>
-        [SerializeField] private Vector3 _hitboxSize;
+        [Header("防御設定")]
+        /// <summary>戦車本体の BoxCollider</summary>
+        [SerializeField] private BoxCollider _tankCollider;
         
         // ======================================================
         // コンポーネント参照
@@ -161,8 +158,7 @@ namespace TankSystem.Manager
                 _obbFactory,
                 _boxCollisionCalculator,
                 transform,
-                _hitboxCenter,
-                _hitboxSize,
+                _tankCollider,
                 obstacles
             );
             _boundaryService = new TankMovementBoundaryService(MOVEMENT_ALLOWED_RADIUS);
@@ -170,10 +166,7 @@ namespace TankSystem.Manager
                 _trackController,
                 _collisionService,
                 _boundaryService,
-                transform,
-                _hitboxCenter,
-                _hitboxSize,
-                obstacles
+                transform
             );
 
             _collisionService.SetItemOBBs(items);

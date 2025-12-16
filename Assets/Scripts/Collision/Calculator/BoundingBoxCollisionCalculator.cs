@@ -6,9 +6,9 @@
 // 概要     : OBB 衝突計算を OBBCollisionCalculator に委譲する調停クラス
 // ======================================================
 
-using CollisionSystem.Data;
-using CollisionSystem.Utility;
 using UnityEngine;
+using CollisionSystem.Interface;
+using CollisionSystem.Utility;
 
 namespace CollisionSystem.Calculator
 {
@@ -57,8 +57,8 @@ namespace CollisionSystem.Calculator
         /// Y 回転のみを考慮した OBB 衝突判定
         /// </summary>
         public bool IsCollidingHorizontal(
-            in OBBData a,
-            in OBBData b
+            in IOBBData a,
+            in IOBBData b
         )
         {
             // OBB 衝突判定を委譲
@@ -69,8 +69,8 @@ namespace CollisionSystem.Calculator
         /// Y 回転のみを考慮した MTV を算出する
         /// </summary>
         public bool TryCalculateHorizontalMTV(
-            in OBBData a,
-            in OBBData b,
+            in IOBBData a,
+            in IOBBData b,
             out Vector3 resolveAxis,
             out float resolveDistance
         )

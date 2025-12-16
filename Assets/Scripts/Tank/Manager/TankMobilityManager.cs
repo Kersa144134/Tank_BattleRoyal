@@ -110,17 +110,11 @@ namespace TankSystem.Manager
         /// <param name="collisionService">戦車と障害物の衝突判定および押し戻し量を算出するサービス</param>
         /// <param name="boundaryService">戦車の移動可能範囲を制御する境界判定サービス</param>
         /// <param name="transform">操作対象となる戦車本体の Transform</param>
-        /// <param name="hitboxCenter">戦車の当たり判定ボックスのローカル中心座標</param>
-        /// <param name="hitboxSize">戦車の当たり判定ボックスのサイズ</param>
-        /// <param name="obstacles">衝突判定対象となる障害物 Transform 配列</param>
         public TankMobilityManager(
             in TankTrackController trackController,
             in TankCollisionService collisionService,
             in TankMovementBoundaryService boundaryService,
-            in Transform transform,
-            in Vector3 hitboxCenter,
-            in Vector3 hitboxSize,
-            in Transform[] obstacles
+            in Transform transform
         )
         {
             _trackController = trackController;

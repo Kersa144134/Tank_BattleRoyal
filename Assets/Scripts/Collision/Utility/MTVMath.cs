@@ -7,7 +7,7 @@
 // ======================================================
 
 using UnityEngine;
-using CollisionSystem.Data;
+using CollisionSystem.Interface;
 
 namespace CollisionSystem.Utility
 {
@@ -33,7 +33,6 @@ namespace CollisionSystem.Utility
         /// <param name="obbMath">OBB の射影計算を担当する数学ユーティリティ</param>
         public MTVMath(in OBBMath obbMath)
         {
-            // 依存コンポーネントを保持
             _obbMath = obbMath;
         }
 
@@ -50,48 +49,26 @@ namespace CollisionSystem.Utility
         /// <param name="overlap">算出された侵入量</param>
         /// <returns>侵入していれば true、分離していれば false</returns>
         public bool TryCalculateOverlap(
-            in OBBData a,
-            in OBBData b,
+            in IOBBData a,
+            in IOBBData b,
             in Vector3 axis,
             out float overlap
         )
         {
-            // ----------------------------------------------
             // 中心差分ベクトルを算出
-            // ----------------------------------------------
-            // OBB 中心間の差分
-            Vector3 centerDelta =
-                a.Center - b.Center;
+            Vector3 centerDelta = a.Center - b.Center;
 
-            // ----------------------------------------------
             // 軸方向の中心間距離を算出
-            // ----------------------------------------------
-            // 中心差分を軸に射影した距離
-            float distance =
-                Mathf.Abs(Vector3.Dot(centerDelta, axis));
+            float distance = Mathf.Abs(Vector3.Dot(centerDelta, axis));
 
-            // ----------------------------------------------
             // 各 OBB の射影半径を算出
-            // ----------------------------------------------
-            // OBB A の射影半径
-            float projectionA =
-                _obbMath.CalculateProjectionRadius(a, axis);
+            float projectionA = _obbMath.CalculateProjectionRadius(a, axis);
+            float projectionB = _obbMath.CalculateProjectionRadius(b, axis);
 
-            // OBB B の射影半径
-            float projectionB =
-                _obbMath.CalculateProjectionRadius(b, axis);
-
-            // ----------------------------------------------
             // 侵入量を算出
-            // ----------------------------------------------
-            // 投影半径の合計から距離を引いた値が侵入量
-            overlap =
-                projectionA + projectionB - distance;
+            overlap = projectionA + projectionB - distance;
 
-            // ----------------------------------------------
-            // 侵入判定
-            // ----------------------------------------------
-            // 正の値であれば侵入
+            // 侵入判定（正の値で侵入）
             return overlap > 0f;
         }
     }
