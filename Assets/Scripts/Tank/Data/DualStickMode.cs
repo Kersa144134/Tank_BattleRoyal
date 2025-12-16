@@ -20,8 +20,8 @@ namespace TankSystem.Data
         // コンポーネント参照
         // ======================================================
 
-        /// <summary>計算ロジック参照</summary>
-        private readonly TankTrackController calculator;
+        /// <summary>移動量および旋回量計算を担当するコントローラ</summary>
+        private readonly TankTrackController _trackController;
 
         // ======================================================
         // コンストラクタ
@@ -30,10 +30,10 @@ namespace TankSystem.Data
         /// <summary>
         /// デュアルスティック入力方式の計算ロジックを生成する
         /// </summary>
-        /// <param name="calculator">移動量および旋回量計算を担当するコントローラ</param>
-        internal DualStickMode(TankTrackController calculator)
+        /// <param name="trackController">移動量および旋回量計算を担当するコントローラ</param>
+        internal DualStickMode(TankTrackController trackController)
         {
-            this.calculator = calculator;
+            _trackController = trackController;
         }
 
         // ======================================================
@@ -55,16 +55,16 @@ namespace TankSystem.Data
         )
         {
             // 左キャタピラ入力を補正
-            float left = calculator.RoundValue(leftInput.y);
+            float left = _trackController.RoundValue(leftInput.y);
 
             // 右キャタピラ入力を補正
-            float right = calculator.RoundValue(rightInput.y);
+            float right = _trackController.RoundValue(rightInput.y);
 
             // 前進量を算出
-            forwardAmount = calculator.CalculateForwardAmount(left, right);
+            forwardAmount = _trackController.CalculateForwardAmount(left, right);
 
             // 旋回量を算出
-            turnAmount = calculator.CalculateTurnAmount(left, right);
+            turnAmount = _trackController.CalculateTurnAmount(left, right);
         }
     }
 }

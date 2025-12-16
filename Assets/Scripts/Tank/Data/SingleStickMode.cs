@@ -20,8 +20,8 @@ namespace TankSystem.Data
         // コンポーネント参照
         // ======================================================
 
-        /// <summary>計算ロジック参照</summary>
-        private readonly TankTrackController calculator;
+        /// <summary>移動量および旋回量計算を担当するコントローラ</summary>
+        private readonly TankTrackController _trackController;
 
         // ======================================================
         // フィールド
@@ -41,6 +41,11 @@ namespace TankSystem.Data
         /// </summary>
         private const float LAST_FORWARD_SIGN_UPDATE_DEADZONE = 0.5f;
 
+        /// <summary>
+        /// 前進優先かその場旋回かを判定するための入力差分閾値
+        /// </summary>
+        private const float IN_PLACE_TURN_DIFF_THRESHOLD = 0.75f;
+
         // ======================================================
         // コンストラクタ
         // ======================================================
@@ -49,9 +54,9 @@ namespace TankSystem.Data
         /// シングルスティック入力方式の計算ロジックを生成する
         /// </summary>
         /// <param name="calculator">移動量および旋回量計算を担当するコントローラ</param>
-        internal SingleStickMode(TankTrackController calculator)
+        internal SingleStickMode(TankTrackController trackController)
         {
-            this.calculator = calculator;
+            _trackController = trackController;
         }
 
         // ======================================================
@@ -73,74 +78,134 @@ namespace TankSystem.Data
         )
         {
             // 横入力を補正
-            float x = calculator.RoundValue(leftInput.x);
+            float x = _trackController.RoundValue(leftInput.x);
 
             // 縦入力を補正
-            float y = calculator.RoundValue(leftInput.y);
+            float y = _trackController.RoundValue(leftInput.y);
 
-            // 上下入力がある場合は前進・後退を優先
-            if (!Mathf.Approximately(y, 0f))
+            // 前進優先かどうかを判定
+            bool isForwardPriority = IsForwardPriority(x, y);
+
+            // 前進／後退優先時の処理
+            if (isForwardPriority)
             {
-                // 前進量を算出（入力の大小に関わらず実行）
-                forwardAmount = calculator.CalculateForwardFromSingleAxis(y);
+                // 前進量を算出
+                forwardAmount = _trackController.CalculateForwardFromSingleAxis(y);
 
-                // 入力履歴更新に使う有効入力かを判定
-                bool canUpdateLastSign =
-                    Mathf.Abs(y) >= LAST_FORWARD_SIGN_UPDATE_DEADZONE;
+                // 入力履歴を更新
+                UpdateLastForwardSign(y);
 
-                // 履歴更新判定用の入力絶対値を取得
-                float absY = Mathf.Abs(y);
-
-                // 現在の入力符号を取得（0 の場合は 0）
-                float currentSign = Mathf.Sign(y);
-
-                // 逆符号入力かどうかを判定
-                bool isReverseInput =
-                    _lastForwardSign != 0f &&
-                    currentSign != 0f &&
-                    currentSign != _lastForwardSign;
-
-                // --------------------------------------------------
-                // 直前方向の更新ロジック
-                // --------------------------------------------------
-                if (isReverseInput)
-                {
-                    // 逆符号かつ十分な入力がある場合は即座に反転
-                    if (absY >= LAST_FORWARD_SIGN_UPDATE_DEADZONE)
-                    {
-                        _lastForwardSign = currentSign;
-                    }
-                    // 逆符号だが微小入力の場合はいったん無効化
-                    else
-                    {
-                        _lastForwardSign = 0f;
-                    }
-                }
-                else
-                {
-                    // 同符号、または未設定状態の場合のみ通常更新
-                    if (_lastForwardSign == 0f && absY >= LAST_FORWARD_SIGN_UPDATE_DEADZONE)
-                    {
-                        _lastForwardSign = currentSign;
-                    }
-                }
-
-                // 左右入力がある場合のみ旋回
-                turnAmount = Mathf.Approximately(x, 0f)
-                    ? 0f
-                    : calculator.CalculateTurnFromSingleAxis(x) * Mathf.Sign(y);
+                // 前進中の旋回量を算出
+                turnAmount = CalculateForwardTurn(x, y);
 
                 return;
             }
 
-            // 前進量はゼロ
+            // その場旋回時の処理
             forwardAmount = 0f;
 
+            // その場旋回量を算出
+            turnAmount = CalculateInPlaceTurn(x);
+        }
+
+        // ======================================================
+        // プライベートメソッド
+        // ======================================================
+
+        // --------------------------------------------------
+        // 前進／旋回判定
+        // --------------------------------------------------
+        /// <summary>
+        /// 前進入力が旋回入力より優勢かを判定する
+        /// </summary>
+        private bool IsForwardPriority(float x, float y)
+        {
+            // 横入力の絶対値を取得
+            float absX = Mathf.Abs(x);
+
+            // 縦入力の絶対値を取得
+            float absY = Mathf.Abs(y);
+
+            // 横入力が縦入力より一定以上大きい場合はその場旋回と判定
+            return absX - absY < IN_PLACE_TURN_DIFF_THRESHOLD;
+        }
+
+        // --------------------------------------------------
+        // 旋回量算出
+        // --------------------------------------------------
+        /// <summary>
+        /// 前進中の旋回量を算出する
+        /// </summary>
+        private float CalculateForwardTurn(float x, float y)
+        {
+            // 横入力が無い場合は旋回しない
+            if (Mathf.Approximately(x, 0f))
+            {
+                return 0f;
+            }
+
+            // 前進方向に応じて旋回方向を決定
+            return _trackController.CalculateTurnFromSingleAxis(x) * Mathf.Sign(y);
+        }
+
+        /// <summary>
+        /// その場旋回時の旋回量を算出する
+        /// </summary>
+        private float CalculateInPlaceTurn(float x)
+        {
             // 直前が後退だった場合のみ旋回方向を反転
             float turnSign = _lastForwardSign < 0f ? -1f : 1f;
 
-            // 旋回量を算出
-            turnAmount = calculator.CalculateTurnFromSingleAxis(x) * turnSign;
+            // 横入力に基づいて旋回量を算出
+            return _trackController.CalculateTurnFromSingleAxis(x) * turnSign;
+        }
+
+        // --------------------------------------------------
+        // 入力履歴更新
+        // --------------------------------------------------
+        /// <summary>
+        /// 前進／後退方向の入力履歴を更新する
+        /// </summary>
+        private void UpdateLastForwardSign(float y)
+        {
+            // 縦入力の絶対値を取得
+            float absY = Mathf.Abs(y);
+
+            // 現在の入力符号を取得
+            float currentSign = Mathf.Sign(y);
+
+            // 履歴更新に使える入力かを判定
+            bool canUpdate =
+                absY >= LAST_FORWARD_SIGN_UPDATE_DEADZONE;
+
+            // 逆符号入力かどうかを判定
+            bool isReverseInput =
+                _lastForwardSign != 0f &&
+                currentSign != 0f &&
+                currentSign != _lastForwardSign;
+
+            // 逆符号入力時の処理
+            if (isReverseInput)
+            {
+                // 十分な入力がある場合は即座に反転
+                if (canUpdate)
+                {
+                    _lastForwardSign = currentSign;
+                }
+                // 微小入力の場合は一旦リセット
+                else
+                {
+                    _lastForwardSign = 0f;
+                }
+
+                return;
+            }
+
+            // 同符号または未設定時の通常更新
+            if (_lastForwardSign == 0f && canUpdate)
+            {
+                _lastForwardSign = currentSign;
+            }
         }
     }
 }
