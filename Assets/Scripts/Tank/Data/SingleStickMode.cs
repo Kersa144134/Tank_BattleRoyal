@@ -24,6 +24,15 @@ namespace TankSystem.Data
         private readonly TankTrackController calculator;
 
         // ======================================================
+        // フィールド
+        // ======================================================
+
+        /// <summary>
+        /// 直前の前進／後退方向（前進:+1 / 停止:0 / 後退:-1）
+        /// </summary>
+        private float _lastForwardSign = 0f;
+        
+        // ======================================================
         // コンストラクタ
         // ======================================================
 
@@ -66,17 +75,28 @@ namespace TankSystem.Data
                 // 前進量を算出
                 forwardAmount = calculator.CalculateForwardFromSingleAxis(y);
 
+                // 前進／後退の方向を取得
+                float forwardSign = Mathf.Sign(y);
+
+                // 直前の前進方向を更新
+                _lastForwardSign = forwardSign;
+
                 // 左右入力がある場合のみ旋回
                 turnAmount = Mathf.Approximately(x, 0f)
                     ? 0f
-                    : calculator.CalculateTurnFromSingleAxis(x);
+                    : calculator.CalculateTurnFromSingleAxis(x) * forwardSign;
 
                 return;
             }
 
-            // 上下入力が無い場合はその場旋回
+            // 前進量はゼロ
             forwardAmount = 0f;
-            turnAmount = calculator.CalculateTurnFromSingleAxis(x);
+
+            // 直前が後退だった場合のみ旋回方向を反転
+            float turnSign = _lastForwardSign < 0f ? -1f : 1f;
+
+            // 旋回量を算出
+            turnAmount = calculator.CalculateTurnFromSingleAxis(x) * turnSign;
         }
     }
 }
