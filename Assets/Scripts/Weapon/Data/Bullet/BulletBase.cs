@@ -71,7 +71,7 @@ namespace WeaponSystem.Data
         /// 弾速減衰率
         /// 大きな質量ほど減衰が緩やかになる
         /// </summary>
-        protected virtual float Drag => 1f / Mass;
+        protected virtual float Drag => BASE_BULLET_DRAG / Mass;
 
         // ======================================================
         // 定数
@@ -81,11 +81,14 @@ namespace WeaponSystem.Data
         // 基準値
         // --------------------------------------------------
         /// <summary>基準となる弾速</summary>
-        private const float BASE_BULLET_SPEED = 30f;
+        private const float BASE_BULLET_SPEED = 75f;
 
         /// <summary>基準となる弾丸質量</summary>
         private const float BASE_BULLET_MASS = 1f;
-        
+
+        /// <summary>基準となる弾速減衰値</summary>
+        private const float BASE_BULLET_DRAG = 50f;
+
         // --------------------------------------------------
         // パラメーター
         // --------------------------------------------------
@@ -93,7 +96,7 @@ namespace WeaponSystem.Data
         private const float BASE_BARREL_SCALE = 1f;
 
         /// <summary>砲身1あたりの倍率加算値</summary>
-        private const float BARREL_SCALE_MULTIPLIER = 0.1f;
+        private const float BARREL_SCALE_MULTIPLIER = 0.05f;
 
         /// <summary>基準となる質量ステータス</summary>
         private const float BASE_PROJECTILE_MASS = 1f;
