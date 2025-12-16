@@ -79,10 +79,10 @@ namespace TankSystem.Data
         )
         {
             // ‰¡“ü—Í‚ğ•â³
-            float x = _trackController.RoundValue(leftInput.x);
+            float x = _trackController.ConvertRoundedInputToCorrectedValue(leftInput.x);
 
             // c“ü—Í‚ğ•â³
-            float y = _trackController.RoundValue(leftInput.y);
+            float y = _trackController.ConvertRoundedInputToCorrectedValue(leftInput.y);
 
             // ‘Oi—Dæ‚©‚Ç‚¤‚©‚ğ”»’è
             bool isForwardPriority = IsForwardPriority(x, y);

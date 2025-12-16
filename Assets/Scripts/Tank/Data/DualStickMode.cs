@@ -56,10 +56,10 @@ namespace TankSystem.Data
         )
         {
             // 左キャタピラ入力を補正
-            float left = _trackController.RoundValue(leftInput.y);
+            float left = _trackController.ConvertRoundedInputToCorrectedValue(leftInput.y);
 
             // 右キャタピラ入力を補正
-            float right = _trackController.RoundValue(rightInput.y);
+            float right = _trackController.ConvertRoundedInputToCorrectedValue(rightInput.y);
 
             // 前進量を算出
             forwardAmount = _trackController.CalculateForwardAmount(left, right);

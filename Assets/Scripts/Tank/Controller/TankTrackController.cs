@@ -6,11 +6,10 @@
 // 概要     : キャタピラ入力モードを管理し、移動・旋回量を算出するロジッククラス
 // ==============================================================================
 
-using System.Collections.Generic;
 using UnityEngine;
 using TankSystem.Data;
 using TankSystem.Interface;
-using TankSystem.Manager;
+using TankSystem.Utility;
 
 namespace TankSystem.Controller
 {
@@ -31,6 +30,8 @@ namespace TankSystem.Controller
 
         /// <summary>デュアルスティック入力モード</summary>
         private readonly ITrackInputMode _dualStickMode;
+
+        private readonly InputCorrectionUtility _correctionUtility = new InputCorrectionUtility();
 
         // ======================================================
         // フィールド
@@ -90,14 +91,14 @@ namespace TankSystem.Controller
         /// 指定された入力モードで前進量と旋回量を算出する
         /// </summary>
         /// <param name="inputMode">使用するキャタピラ入力モード</param>
-        /// <param name="leftInput">左スティックの入力値</param>
-        /// <param name="rightInput">右スティックの入力値</param>
+        /// <param name="left">左スティックの入力値</param>
+        /// <param name="right">右スティックの入力値</param>
         /// <param name="forwardAmount">算出された前進／後退量</param>
         /// <param name="turnAmount">算出された旋回量</param>
         public void UpdateTrack(
             in TrackInputMode inputMode,
-            in Vector2 leftInput,
-            in Vector2 rightInput,
+            in Vector2 left,
+            in Vector2 right,
             out float forwardAmount,
             out float turnAmount
         )
@@ -112,8 +113,8 @@ namespace TankSystem.Controller
 
             // 現在の入力モードへ計算処理を委譲
             _currentInputMode.Calculate(
-                leftInput,
-                rightInput,
+                left,
+                right,
                 out forwardAmount,
                 out turnAmount
             );
@@ -159,13 +160,13 @@ namespace TankSystem.Controller
         // ======================================================================
 
         /// <summary>
-        /// 入力値を小数第1位に丸める
+        /// 入力値を小数第1位に丸めた後、段階補正テーブルに基づいて補正値へ変換する
         /// </summary>
-        /// <param name="value">丸め対象となる入力値</param>
-        /// <returns>小数第1位に丸められた値</returns>
-        internal float RoundValue(in float value)
+        /// <param name="value">補正対象となる入力値</param>
+        /// <returns>段階補正後の入力値</returns>
+        internal float ConvertRoundedInputToCorrectedValue(in float value)
         {
-            return Mathf.Round(value * 10f) * 0.1f;
+            return _correctionUtility.ConvertRoundedInputToCorrectedValue(value);
         }
 
         /// <summary>
