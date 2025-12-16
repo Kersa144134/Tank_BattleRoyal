@@ -68,7 +68,7 @@ namespace TankSystem.Data
         /// 左スティック入力を移動量および旋回量に変換する
         /// </summary>
         /// <param name="leftInput">左スティックの入力値</param>
-        /// <param name="rightInput">右スティックの入力値（本モードでは未使用）</param>
+        /// <param name="rightInput">右スティックの入力値</param>
         /// <param name="forwardAmount">算出された前進／後退量</param>
         /// <param name="turnAmount">算出された旋回量</param>
         public void Calculate(

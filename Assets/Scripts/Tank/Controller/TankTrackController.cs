@@ -51,17 +51,14 @@ namespace TankSystem.Controller
         // 定数
         // ======================================================================
 
-        /// <summary>基準前後移動速度定数</summary>
-        private const float MOVE_SPEED = 1f;
-
-        /// <summary>前進量の指数補正値</summary>
-        private const float FORWARD_EXPONENT = 1.5f;
+        /// <summary>基準前進後退速度定数</summary>
+        private const float FORWARD_SPEED = 1.0f;
 
         /// <summary>基準旋回速度定数</summary>
-        private const float TURN_SPEED = 7.5f;
+        private const float TURN_SPEED = 5.0f;
 
-        /// <summary>旋回量の指数補正値</summary>
-        private const float TURN_EXPONENT = 1.5f;
+        /// <summary>入力値の指数補正値</summary>
+        private const float INPUT_EXPONENT = 2.0f;
 
         // ======================================================================
         // コンストラクタ
@@ -91,14 +88,14 @@ namespace TankSystem.Controller
         /// 指定された入力モードで前進量と旋回量を算出する
         /// </summary>
         /// <param name="inputMode">使用するキャタピラ入力モード</param>
-        /// <param name="left">左スティックの入力値</param>
+        /// <param name="leftInput">左スティックの入力値</param>
         /// <param name="right">右スティックの入力値</param>
         /// <param name="forwardAmount">算出された前進／後退量</param>
         /// <param name="turnAmount">算出された旋回量</param>
         public void UpdateTrack(
             in TrackInputMode inputMode,
-            in Vector2 left,
-            in Vector2 right,
+            in Vector2 leftInput,
+            in Vector2 rightInput,
             out float forwardAmount,
             out float turnAmount
         )
@@ -113,8 +110,8 @@ namespace TankSystem.Controller
 
             // 現在の入力モードへ計算処理を委譲
             _currentInputMode.Calculate(
-                left,
-                right,
+                leftInput,
+                rightInput,
                 out forwardAmount,
                 out turnAmount
             );
@@ -184,13 +181,13 @@ namespace TankSystem.Controller
             float abs = Mathf.Abs(average);
 
             // 入力感度を指数カーブで補正
-            float curved = Mathf.Pow(abs, FORWARD_EXPONENT);
+            float curved = Mathf.Pow(abs, INPUT_EXPONENT);
 
             // 入力方向を復元
             float curvedSigned = curved * Mathf.Sign(average);
 
             // 基準移動速度を掛けて最終的な前進量を算出
-            return curvedSigned * MOVE_SPEED;
+            return curvedSigned * FORWARD_SPEED;
         }
 
         /// <summary>
@@ -204,13 +201,13 @@ namespace TankSystem.Controller
             float abs = Mathf.Abs(input);
 
             // 入力感度を指数カーブで補正
-            float curved = Mathf.Pow(abs, FORWARD_EXPONENT);
+            float curved = Mathf.Pow(abs, INPUT_EXPONENT);
 
             // 入力方向を復元
             float curvedSigned = curved * Mathf.Sign(input);
 
             // 基準移動速度を掛けて最終的な前進量を算出
-            return curvedSigned * MOVE_SPEED;
+            return curvedSigned * FORWARD_SPEED;
         }
 
         /// <summary>
@@ -228,7 +225,7 @@ namespace TankSystem.Controller
             float abs = Mathf.Abs(diff);
 
             // 入力感度を逆指数カーブで補正
-            float curved = Mathf.Pow(abs, 1f / TURN_EXPONENT);
+            float curved = Mathf.Pow(abs, 1f / INPUT_EXPONENT);
 
             // 入力方向を反映して旋回方向を決定
             float curvedSigned = curved * Mathf.Sign(diff);
@@ -248,7 +245,7 @@ namespace TankSystem.Controller
             float abs = Mathf.Abs(input);
 
             // 入力感度を逆指数カーブで補正
-            float curved = Mathf.Pow(abs, 1f / TURN_EXPONENT);
+            float curved = Mathf.Pow(abs, 1f / INPUT_EXPONENT);
 
             // 入力方向を反映して旋回方向を決定
             float curvedSigned = curved * Mathf.Sign(input);

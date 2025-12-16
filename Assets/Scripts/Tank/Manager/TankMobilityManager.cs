@@ -56,8 +56,20 @@ namespace TankSystem.Manager
         /// <summary>現在フレームでの前進量</summary>
         private float _currentForward;
 
+        /// <summary>現在フレームでの正方向の前進量</summary>
+        private float _currentForwardPositive;
+
+        /// <summary>現在フレームでの負方向の前進量</summary>
+        private float _currentForwardNegative;
+
         /// <summary>現在フレームでの旋回量</summary>
         private float _currentTurn;
+
+        /// <summary>現在フレームでの正方向の旋回量</summary>
+        private float _currentTurnPositive;
+
+        /// <summary>現在フレームでの負方向の旋回量</summary>
+        private float _currentTurnNegative;
 
         // ======================================================
         // 定数
@@ -70,10 +82,10 @@ namespace TankSystem.Manager
         private const float BASE_MOBILITY_MULTIPLIER = 15.0f;
 
         /// <summary>基準となる前進加減速倍率</summary>
-        private const float BASE_FORWARD_ACCELERATION_MULTIPLIER = 7.5f;
+        private const float BASE_FORWARD_ACCELERATION_MULTIPLIER = 5.0f;
 
         /// <summary>基準となる旋回加減速倍率</summary>
-        private const float BASE_TURN_ACCELERATION_MULTIPLIER = 120.0f;
+        private const float BASE_TURN_ACCELERATION_MULTIPLIER = 80.0f;
 
         // --------------------------------------------------
         // パラメーター
@@ -82,10 +94,10 @@ namespace TankSystem.Manager
         private const float HORSEPOWER_MULTIPLIER = 1.75f;
 
         /// <summary>変速 1 あたりの前進倍率加算値</summary>
-        private const float TRANSMISSION_FORWARD_ACCELERATION_MULTIPLIER = 24.625f;
+        private const float TRANSMISSION_FORWARD_ACCELERATION_MULTIPLIER = 4.75f;
 
         /// <summary>変速 1 あたりの旋回倍率加算値</summary>
-        private const float TRANSMISSION_TURN_ACCELERATION_MULTIPLIER = 394.0f;
+        private const float TRANSMISSION_TURN_ACCELERATION_MULTIPLIER = 76.0f;
 
         // ======================================================
         // コンストラクタ
@@ -127,15 +139,15 @@ namespace TankSystem.Manager
         /// 前進・旋回処理を適用し、移動後に境界制御を行う
         /// </summary>
         /// <param name="tankStatus">戦車のステータス</param>
-        /// <param name="left">左キャタピラ入力値（-1～1）</param>
-        /// <param name="right">右キャタピラ入力値（-1～1）</param>
-        public void ApplyMobility(in TankStatus tankStatus, in Vector2 left, in Vector2 right)
+        /// <param name="leftInput">左キャタピラ入力値（-1～1）</param>
+        /// <param name="rightInput">右キャタピラ入力値（-1～1）</param>
+        public void ApplyMobility(in TankStatus tankStatus, in Vector2 leftInput, in Vector2 rightInput)
         {
             // 機動力関連の倍率を更新
             UpdateMobilityParameters(tankStatus);
 
             // 入力から目標移動量を算出
-            CalculateTargetMovement(left, right, out float targetForward, out float targetTurn);
+            CalculateTargetMovement(leftInput, rightInput, out float targetForward, out float targetTurn);
 
             // 加減速を適用して現在値を更新
             ApplyAcceleration(targetForward, targetTurn);
@@ -221,18 +233,18 @@ namespace TankSystem.Manager
         /// <summary>
         /// キャタピラ入力から前進・旋回の目標値を算出する
         /// </summary>
-        /// <param name="left">左キャタピラ入力値</param>
-        /// <param name="right">右キャタピラ入力値</param>
+        /// <param name="leftInput">左キャタピラ入力値</param>
+        /// <param name="rightInput">右キャタピラ入力値</param>
         /// <param name="targetForward">算出された前進・後退の目標値</param>
         /// <param name="targetTurn">算出された旋回の目標値</param>
         private void CalculateTargetMovement(
-            in Vector2 left,
-            in Vector2 right,
+            in Vector2 leftInput,
+            in Vector2 rightInput,
             out float targetForward,
             out float targetTurn)
         {
             // キャタピラ入力を前進量・旋回量に変換
-            _trackController.UpdateTrack(_inputMode, left, right, out float forwardInput, out float turnInput);
+            _trackController.UpdateTrack(_inputMode, leftInput, rightInput, out float forwardInput, out float turnInput);
 
             // 機動力倍率を掛けて最終的な目標値を算出
             targetForward = forwardInput * _mobilityMultiplier;
@@ -240,33 +252,85 @@ namespace TankSystem.Manager
         }
 
         /// <summary>
-        /// 目標移動量に向かって現在値を加減速させる
+        /// 目標移動量に向かって現在値を加減速させる（正負方向分離版）
         /// </summary>
         /// <param name="targetForward">前進・後退の目標移動量</param>
         /// <param name="targetTurn">旋回の目標移動量</param>
         private void ApplyAcceleration(in float targetForward, in float targetTurn)
         {
-            // 前進用：1フレームあたりの最大変化量を算出
-            float forwardMaxDelta =
-                _forwardAccelerationMultiplier * Time.deltaTime;
+            float dt = Time.deltaTime;
 
-            // 旋回用：1フレームあたりの最大変化量を算出
-            float turnMaxDelta =
-                _turnAccelerationMultiplier * Time.deltaTime;
+            // =========================
+            // 前進・後退の加減速
+            // =========================
+            float forwardMaxDelta = _forwardAccelerationMultiplier * dt;
 
-            // 前進量を加減速
-            _currentForward = Mathf.MoveTowards(
-                _currentForward,
-                targetForward,
-                forwardMaxDelta
-            );
+            // 正方向（前進）の減速および加速
+            if (targetForward >= 0f)
+            {
+                _currentForwardPositive = Mathf.MoveTowards(
+                    _currentForwardPositive,
+                    targetForward,
+                    forwardMaxDelta
+                );
+                _currentForwardNegative = Mathf.MoveTowards(
+                    _currentForwardNegative,
+                    0f,
+                    forwardMaxDelta
+                );
+            }
+            else // 負方向（後退）の減速および加速
+            {
+                _currentForwardNegative = Mathf.MoveTowards(
+                    _currentForwardNegative,
+                    -targetForward,
+                    forwardMaxDelta
+                );
+                _currentForwardPositive = Mathf.MoveTowards(
+                    _currentForwardPositive,
+                    0f,
+                    forwardMaxDelta
+                );
+            }
 
-            // 旋回量を加減速
-            _currentTurn = Mathf.MoveTowards(
-                _currentTurn,
-                targetTurn,
-                turnMaxDelta
-            );
+            // 正負の合算で現在前進量を決定
+            _currentForward = _currentForwardPositive - _currentForwardNegative;
+
+            // =========================
+            // 旋回の加減速
+            // =========================
+            float turnMaxDelta = _turnAccelerationMultiplier * dt;
+
+            // 正方向（右旋回）の減速および加速
+            if (targetTurn >= 0f)
+            {
+                _currentTurnPositive = Mathf.MoveTowards(
+                    _currentTurnPositive,
+                    targetTurn,
+                    turnMaxDelta
+                );
+                _currentTurnNegative = Mathf.MoveTowards(
+                    _currentTurnNegative,
+                    0f,
+                    turnMaxDelta
+                );
+            }
+            else // 負方向（左旋回）の減速および加速
+            {
+                _currentTurnNegative = Mathf.MoveTowards(
+                    _currentTurnNegative,
+                    -targetTurn,
+                    turnMaxDelta
+                );
+                _currentTurnPositive = Mathf.MoveTowards(
+                    _currentTurnPositive,
+                    0f,
+                    turnMaxDelta
+                );
+            }
+
+            // 正負の合算で現在旋回量を決定
+            _currentTurn = _currentTurnPositive - _currentTurnNegative;
         }
     }
 }
