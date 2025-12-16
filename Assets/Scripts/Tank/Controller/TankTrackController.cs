@@ -20,6 +20,19 @@ namespace TankSystem.Controller
     public class TankTrackController
     {
         // ======================================================================
+        // コンポーネント参照
+        // ======================================================================
+
+        /// <summary>現在有効な入力モード</summary>
+        private ITrackInputMode _currentInputMode;
+
+        /// <summary>シングルスティック入力モード</summary>
+        private readonly ITrackInputMode _singleStickMode;
+
+        /// <summary>デュアルスティック入力モード</summary>
+        private readonly ITrackInputMode _dualStickMode;
+
+        // ======================================================================
         // 定数
         // ======================================================================
 
@@ -36,36 +49,24 @@ namespace TankSystem.Controller
         private const float TURN_EXPONENT = 1.5f;
 
         // ======================================================================
-        // 辞書
-        // ======================================================================
-
-        /// <summary>入力モード管理用辞書</summary>
-        private readonly Dictionary<BaseTankRootManager.TrackInputMode, ITrackInputMode> _modeTable;
-
-        // ======================================================================
         // コンストラクタ
         // ======================================================================
 
         /// <summary>
-        /// 各入力モードを生成し管理テーブルへ登録する
+        /// 入力モードを生成し初期モードを設定する
         /// </summary>
-        public TankTrackController()
-        {
-            // モード管理テーブルを生成
-            _modeTable = new Dictionary<BaseTankRootManager.TrackInputMode, ITrackInputMode>
-            {
-                // 左右スティック独立操作モードを登録
-                {
-                    BaseTankRootManager.TrackInputMode.Dual,
-                    new DualStickMode(this)
-                },
+        /// /// <param name="inputMode">使用するキャタピラ入力モード</param>
 
-                // 左スティック単独操作モードを登録
-                {
-                    BaseTankRootManager.TrackInputMode.Single,
-                    new SingleStickMode(this)
-                }
-            };
+        public TankTrackController(in TrackInputMode inputMode)
+        {
+            // シングルスティック入力モードを生成
+            _singleStickMode = new SingleStickMode(this);
+
+            // デュアルスティック入力モードを生成
+            _dualStickMode = new DualStickMode(this);
+
+            // 初期入力モードを設定
+            SetInputMode(inputMode);
         }
 
         // ======================================================================
@@ -81,28 +82,88 @@ namespace TankSystem.Controller
         /// <param name="forwardAmount">算出された前進／後退量</param>
         /// <param name="turnAmount">算出された旋回量</param>
         public void UpdateTrack(
-            in BaseTankRootManager.TrackInputMode inputMode,
+            in TrackInputMode inputMode,
             in Vector2 leftInput,
             in Vector2 rightInput,
             out float forwardAmount,
             out float turnAmount
         )
         {
-            // 指定モードが未登録の場合は停止
-            if (!_modeTable.TryGetValue(inputMode, out ITrackInputMode mode))
+            // 入力モードが未設定の場合は停止
+            if (_currentInputMode == null)
             {
                 forwardAmount = 0f;
                 turnAmount = 0f;
                 return;
             }
 
-            // 入力モードに処理を委譲
-            mode.Calculate(
+            // 現在の入力モードへ計算処理を委譲
+            _currentInputMode.Calculate(
                 leftInput,
                 rightInput,
                 out forwardAmount,
                 out turnAmount
             );
+        }
+
+        /// <summary>
+        /// キャタピラの入力モードを切り替える
+        /// </summary>
+        public void ChangeInputMode()
+        {
+            // 現在の入力モードに応じて次のモードを決定
+            TrackInputMode nextMode;
+
+            // 現在有効な Strategy を基準に判定
+            if (_currentInputMode == _singleStickMode)
+            {
+                // シングル操作中の場合はデュアル操作へ切り替える
+                nextMode = TrackInputMode.Dual;
+            }
+            else
+            {
+                // それ以外の場合はシングル操作へ切り替える
+                nextMode = TrackInputMode.Single;
+            }
+
+            // 切り替え後の入力モードを適用
+            switch (nextMode)
+            {
+                case TrackInputMode.Single:
+                    _currentInputMode = _singleStickMode;
+                    break;
+
+                case TrackInputMode.Dual:
+                    _currentInputMode = _dualStickMode;
+                    break;
+            }
+        }
+
+        // ======================================================================
+        // プライベートメソッド
+        // ======================================================================
+
+        /// <summary>
+        /// キャタピラの入力モードを設定する
+        /// </summary>
+        /// <param name="inputMode">使用するキャタピラ入力モード</param>
+        private void SetInputMode(in TrackInputMode inputMode)
+        {
+            // enum に応じてモードを差し替え
+            switch (inputMode)
+            {
+                case TrackInputMode.Single:
+                    _currentInputMode = _singleStickMode;
+                    break;
+
+                case TrackInputMode.Dual:
+                    _currentInputMode = _dualStickMode;
+                    break;
+
+                default:
+                    _currentInputMode = null;
+                    break;
+            }
         }
 
         // ======================================================================

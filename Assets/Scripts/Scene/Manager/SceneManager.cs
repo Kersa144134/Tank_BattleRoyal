@@ -184,8 +184,9 @@ public class SceneManager : MonoBehaviour
         // イベント購読
         if (_playerTankRootManager != null)
         {
-            _playerTankRootManager.OnFireBullet += HandleFireBullet;
+            _playerTankRootManager.OnModeChangeButtonPressed += HandleModeChangeButtonPressed;
             _playerTankRootManager.OnOptionButtonPressed += HandleOptionButtonPressed;
+            _playerTankRootManager.OnFireBullet += HandleFireBullet;
         }
 
         if (_enemyTankRootManagers == null)
@@ -203,8 +204,9 @@ public class SceneManager : MonoBehaviour
         // イベント購読解除
         if (_playerTankRootManager != null)
         {
-            _playerTankRootManager.OnFireBullet -= HandleFireBullet;
+            _playerTankRootManager.OnModeChangeButtonPressed -= HandleModeChangeButtonPressed;
             _playerTankRootManager.OnOptionButtonPressed -= HandleOptionButtonPressed;
+            _playerTankRootManager.OnFireBullet -= HandleFireBullet;
         }
 
         if (_enemyTankRootManagers == null)
@@ -277,6 +279,15 @@ public class SceneManager : MonoBehaviour
     // ======================================================
     // イベントハンドラ
     // ======================================================
+
+    /// <summary>
+    /// オプションボタン押下時の処理を行うハンドラ
+    /// 現在の入力モードに応じて、次の入力モードへ切り替える
+    /// </summary>
+    private void HandleModeChangeButtonPressed()
+    {
+        _playerTankRootManager.ChangeInputMode();
+    }
 
     /// <summary>
     /// オプションボタン押下時の処理を行うハンドラ

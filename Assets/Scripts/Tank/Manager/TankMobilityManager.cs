@@ -39,7 +39,7 @@ namespace TankSystem.Manager
         // ======================================================
 
         /// <summary>キャタピラ入力モード</summary>
-        private readonly BaseTankRootManager.TrackInputMode _inputMode;
+        private readonly TrackInputMode _inputMode;
 
         /// <summary>戦車本体の Transform</summary>
         private readonly Transform _tankTransform;
@@ -98,7 +98,7 @@ namespace TankSystem.Manager
             in TankTrackController trackController,
             in TankCollisionService collisionService,
             in TankMovementBoundaryService boundaryService,
-            in BaseTankRootManager.TrackInputMode inputMode,
+            in TrackInputMode inputMode,
             in Transform transform,
             in Vector3 hitboxCenter,
             in Vector3 hitboxSize,
@@ -175,6 +175,14 @@ namespace TankSystem.Manager
             _tankTransform.position +=
                 resolveInfo.ResolveDirection *
                 (resolveInfo.ResolveDistance + COLLISION_EPSILON);
+        }
+
+        /// <summary>
+        /// キャタピラの入力モードを切り替える
+        /// </summary>
+        public void ChangeInputMode()
+        {
+            _trackController.ChangeInputMode();
         }
 
         // ======================================================

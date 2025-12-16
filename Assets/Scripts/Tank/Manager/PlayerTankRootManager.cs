@@ -36,13 +36,15 @@ namespace TankSystem.Manager
         /// </summary>
         /// <param name="leftMobility">左キャタピラ入力から算出される前進/旋回量</param>
         /// <param name="rightMobility">右キャタピラ入力から算出される前進/旋回量</param>
-        /// <param name="optionPressed">オプションボタン押下フラグ</param>
+        /// <param name="modeChange">入力モード切替ボタン押下フラグ</param>
+        /// <param name="option">オプションボタン押下フラグ</param>
         /// <param name="leftFire">左攻撃ボタンの状態</param>
         /// <param name="rightFire">右攻撃ボタンの状態</param>
         protected override void UpdateInput(
             out Vector2 leftMobility,
             out Vector2 rightMobility,
-            out bool optionPressed,
+            out bool modeChange,
+            out bool option,
             out ButtonState leftFire,
             out ButtonState rightFire
         )
@@ -54,8 +56,11 @@ namespace TankSystem.Manager
             leftMobility = _inputManager.LeftStick;
             rightMobility = _inputManager.RightStick;
 
+            // 入力切替ボタン押下判定
+            modeChange = _inputManager.GetButtonState(TankInputKeys.INPUT_MODE_CHANGE).Down;
+
             // オプションボタン押下判定
-            optionPressed = _inputManager.GetButtonState(TankInputKeys.INPUT_OPTION).Down;
+            option = _inputManager.GetButtonState(TankInputKeys.INPUT_OPTION).Down;
 
             // 攻撃ボタン状態を取得
             leftFire = _inputManager.GetButtonState(TankInputKeys.INPUT_LEFT_FIRE);

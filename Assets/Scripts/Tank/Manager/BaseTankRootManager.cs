@@ -26,22 +26,6 @@ namespace TankSystem.Manager
     /// </summary>
     public abstract class BaseTankRootManager : MonoBehaviour, IUpdatable
     {
-        // ======================================================================
-        // 列挙型
-        // ======================================================================
-
-        /// <summary>
-        /// キャタピラ入力モード定義
-        /// </summary>
-        public enum TrackInputMode
-        {
-            /// <summary>単独スティック操作モード</summary>
-            Single,
-
-            /// <summary>左右スティック独立操作モード</summary>
-            Dual
-        }
-
         // ======================================================
         // インスペクタ設定
         // ======================================================
@@ -60,10 +44,6 @@ namespace TankSystem.Manager
 
         /// <summary>弾丸発射ローカル位置</summary>
         [SerializeField] private Transform _firePoint;
-
-        [Header("機動設定")]
-        /// <summary>キャタピラ入力モード</summary>
-        [SerializeField] private TrackInputMode _inputMode;
 
         [Header("当たり判定設定")]
         /// <summary>戦車本体の当たり判定中心位置</summary>
@@ -93,7 +73,7 @@ namespace TankSystem.Manager
         private TankMobilityManager _mobilityManager;
 
         /// <summary>左右キャタピラ入力から前進量・旋回量を算出するコントローラー</summary>
-        private TankTrackController _trackController = new TankTrackController();
+        private TankTrackController _trackController;
 
         /// <summary>AABB / OBB の距離計算および衝突判定を行うコントローラー</summary>
         private BoundingBoxCollisionCalculator _boxCollisionCalculator = new BoundingBoxCollisionCalculator();
@@ -114,6 +94,9 @@ namespace TankSystem.Manager
         // フィールド
         // ======================================================
 
+        /// <summary>キャタピラ入力モード</summary>
+        private TrackInputMode _inputMode = TrackInputMode.Dual;
+
         // ======================================================
         // プロパティ
         // ======================================================
@@ -130,10 +113,13 @@ namespace TankSystem.Manager
 
         /// <summary>戦車の移動許容距離半径</summary>
         private const float MOVEMENT_ALLOWED_RADIUS = 315f;
-        
+
         // ======================================================
         // イベント
         // ======================================================
+
+        /// <summary>入力モード切替ボタン押下時に発火するイベント</summary>
+        public event Action OnModeChangeButtonPressed;
 
         /// <summary>オプションボタン押下時に発火するイベント</summary>
         public event Action OnOptionButtonPressed;
@@ -151,13 +137,15 @@ namespace TankSystem.Manager
         /// </summary>
         /// <param name="leftMobility">左キャタピラ入力から算出される前進/旋回量</param>
         /// <param name="rightMobility">右キャタピラ入力から算出される前進/旋回量</param>
-        /// <param name="optionPressed">オプションボタン押下フラグ</param>
+        /// <param name="modeChange">入力モード切替ボタン押下フラグ</param>
+        /// <param name="option">オプションボタン押下フラグ</param>
         /// <param name="leftFire">左攻撃ボタンの状態</param>
         /// <param name="rightFire">右攻撃ボタンの状態</param>
         protected abstract void UpdateInput(
             out Vector2 leftMobility,
             out Vector2 rightMobility,
-            out bool optionPressed,
+            out bool modeChange,
+            out bool option,
             out ButtonState leftFire,
             out ButtonState rightFire
         );
@@ -173,7 +161,7 @@ namespace TankSystem.Manager
             List<ItemSlot> items = _sceneRegistry.ItemSlots;
 
             _attackManager = new TankAttackManager(_firePoint);
-
+            _trackController = new TankTrackController(_inputMode);
             _collisionService = new TankCollisionService(
                 _obbFactory,
                 _boxCollisionCalculator,
@@ -182,9 +170,7 @@ namespace TankSystem.Manager
                 _hitboxSize,
                 obstacles
             );
-
             _boundaryService = new TankMovementBoundaryService(MOVEMENT_ALLOWED_RADIUS);
-
             _mobilityManager = new TankMobilityManager(
                 _trackController,
                 _collisionService,
@@ -212,15 +198,24 @@ namespace TankSystem.Manager
             // --------------------------------------------------
             UpdateInput(out Vector2 leftMobility,
                 out Vector2 rightMobility,
-                out bool optionPressed,
+                out bool modeChange,
+                out bool option,
                 out ButtonState leftFire,
                 out ButtonState rightFire
             );
 
             // --------------------------------------------------
+            // 入力モード切替
+            // --------------------------------------------------
+            if (modeChange)
+            {
+                OnModeChangeButtonPressed?.Invoke();
+            }
+
+            // --------------------------------------------------
             // オプション
             // --------------------------------------------------
-            if (optionPressed)
+            if (option)
             {
                 OnOptionButtonPressed?.Invoke();
             }
@@ -252,6 +247,18 @@ namespace TankSystem.Manager
             _sceneRegistry.OnItemListChanged -= HandleItemListChanged;
         }
 
+        // ======================================================
+        // パブリックメソッド
+        // ======================================================
+
+        /// <summary>
+        /// キャタピラの入力モードを切り替える
+        /// </summary>
+        public void ChangeInputMode()
+        {
+            _mobilityManager.ChangeInputMode();
+        }
+        
         // ======================================================
         // イベントハンドラ
         // ======================================================

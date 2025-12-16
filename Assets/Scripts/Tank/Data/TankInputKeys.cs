@@ -13,6 +13,9 @@ namespace TankSystem.Data
     /// </summary>
     public class TankInputKeys
     {
+        /// <summary>入力切り替えボタンキー</summary>
+        public const string INPUT_MODE_CHANGE = "ModeChange";
+
         /// <summary>オプションボタンキー</summary>
         public const string INPUT_OPTION = "Option";
 

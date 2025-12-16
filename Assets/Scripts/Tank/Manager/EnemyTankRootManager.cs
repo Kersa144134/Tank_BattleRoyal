@@ -36,13 +36,15 @@ namespace TankSystem.Manager
         /// </summary>
         /// <param name="leftMobility">左キャタピラ入力から算出される前進/旋回量</param>
         /// <param name="rightMobility">右キャタピラ入力から算出される前進/旋回量</param>
-        /// <param name="optionPressed">オプションボタン押下フラグ（AIは使用しない）</param>
+        /// <param name="modeChange">入力モード切替ボタン押下フラグ</param>
+        /// <param name="option">オプションボタン押下フラグ</param>
         /// <param name="leftFire">左攻撃ボタンの状態（AIは自動制御）</param>
         /// <param name="rightFire">右攻撃ボタンの状態（AIは自動制御）</param>
         protected override void UpdateInput(
             out Vector2 leftMobility,
             out Vector2 rightMobility,
-            out bool optionPressed,
+            out bool modeChange,
+            out bool option,
             out ButtonState leftFire,
             out ButtonState rightFire
         )
@@ -57,7 +59,8 @@ namespace TankSystem.Manager
             leftMobility = new Vector2(0f, 1f);
             rightMobility = Vector2.zero;
 
-            optionPressed = false;
+            modeChange = false;
+            option = false;
 
             leftFire = new ButtonState();
             rightFire = _inputManager.GetButtonState(TankInputKeys.INPUT_RIGHT_FIRE);

@@ -58,7 +58,8 @@ namespace TankSystem.Manager
                 LeftStick = InputManager.Instance.LeftStick;
                 RightStick = InputManager.Instance.RightStick;
 
-                // çUåÇÉ{É^Éì
+                ButtonMap[TankInputKeys.INPUT_MODE_CHANGE] = InputManager.Instance.LeftStickButton;
+
                 ButtonMap[TankInputKeys.INPUT_LEFT_FIRE] = InputManager.Instance.LeftTrigger;
                 ButtonMap[TankInputKeys.INPUT_RIGHT_FIRE] = InputManager.Instance.RightTrigger;
             }
@@ -69,6 +70,8 @@ namespace TankSystem.Manager
                 // --------------------------------------------------
                 LeftStick = Vector2.zero;
                 RightStick = Vector2.zero;
+
+                ButtonMap[TankInputKeys.INPUT_MODE_CHANGE] = null;
 
                 ButtonMap[TankInputKeys.INPUT_LEFT_FIRE] = null;
                 ButtonMap[TankInputKeys.INPUT_RIGHT_FIRE] = null;
