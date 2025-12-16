@@ -171,33 +171,6 @@ namespace TankSystem.Data
         private readonly Dictionary<TankParam, Action<int>> _paramMap;
 
         // ======================================================
-        // コンストラクタ
-        // ======================================================
-
-        /// <summary>
-        /// 全パラメーターを初期値0で初期化
-        /// </summary>
-        public TankStatus()
-        {
-            _fuel = 0; _ammo = 0; _durability = 0; _armor = 0;
-            _horsePower = 0; _transmission = 0; _barrelScale = 0; _projectileMass = 0; _reloadTime = 0;
-
-            // TankParam とプロパティ更新アクションを紐付け
-            _paramMap = new Dictionary<TankParam, Action<int>>
-            {
-                { TankParam.Fuel,           amount => Fuel += amount },
-                { TankParam.Ammo,           amount => Ammo += amount },
-                { TankParam.Durability,     amount => Durability += amount },
-                { TankParam.Armor,          amount => Armor += amount },
-                { TankParam.HorsePower,     amount => HorsePower += amount },
-                { TankParam.Acceleration,   amount => Transmission += amount },
-                { TankParam.BarrelScale,    amount => BarrelScale += amount },
-                { TankParam.ProjectileMass, amount => ProjectileMass += amount },
-                { TankParam.ReloadTime,     amount => ReloadTime += amount },
-            };
-        }
-
-        // ======================================================
         // パラメーター上昇処理
         // ======================================================
 
