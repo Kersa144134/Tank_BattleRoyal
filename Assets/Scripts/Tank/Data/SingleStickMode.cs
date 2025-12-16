@@ -31,7 +31,16 @@ namespace TankSystem.Data
         /// 直前の前進／後退方向（前進:+1 / 停止:0 / 後退:-1）
         /// </summary>
         private float _lastForwardSign = 0f;
-        
+
+        // ======================================================
+        // 定数
+        // ======================================================
+
+        /// <summary>
+        /// 直前の前進方向として記録するための最小入力閾値
+        /// </summary>
+        private const float LAST_FORWARD_SIGN_UPDATE_DEADZONE = 0.5f;
+
         // ======================================================
         // コンストラクタ
         // ======================================================
@@ -72,19 +81,54 @@ namespace TankSystem.Data
             // 上下入力がある場合は前進・後退を優先
             if (!Mathf.Approximately(y, 0f))
             {
-                // 前進量を算出
+                // 前進量を算出（入力の大小に関わらず実行）
                 forwardAmount = calculator.CalculateForwardFromSingleAxis(y);
 
-                // 前進／後退の方向を取得
-                float forwardSign = Mathf.Sign(y);
+                // 入力履歴更新に使う有効入力かを判定
+                bool canUpdateLastSign =
+                    Mathf.Abs(y) >= LAST_FORWARD_SIGN_UPDATE_DEADZONE;
 
-                // 直前の前進方向を更新
-                _lastForwardSign = forwardSign;
+                // 履歴更新判定用の入力絶対値を取得
+                float absY = Mathf.Abs(y);
+
+                // 現在の入力符号を取得（0 の場合は 0）
+                float currentSign = Mathf.Sign(y);
+
+                // 逆符号入力かどうかを判定
+                bool isReverseInput =
+                    _lastForwardSign != 0f &&
+                    currentSign != 0f &&
+                    currentSign != _lastForwardSign;
+
+                // --------------------------------------------------
+                // 直前方向の更新ロジック
+                // --------------------------------------------------
+                if (isReverseInput)
+                {
+                    // 逆符号かつ十分な入力がある場合は即座に反転
+                    if (absY >= LAST_FORWARD_SIGN_UPDATE_DEADZONE)
+                    {
+                        _lastForwardSign = currentSign;
+                    }
+                    // 逆符号だが微小入力の場合はいったん無効化
+                    else
+                    {
+                        _lastForwardSign = 0f;
+                    }
+                }
+                else
+                {
+                    // 同符号、または未設定状態の場合のみ通常更新
+                    if (_lastForwardSign == 0f && absY >= LAST_FORWARD_SIGN_UPDATE_DEADZONE)
+                    {
+                        _lastForwardSign = currentSign;
+                    }
+                }
 
                 // 左右入力がある場合のみ旋回
                 turnAmount = Mathf.Approximately(x, 0f)
                     ? 0f
-                    : calculator.CalculateTurnFromSingleAxis(x) * forwardSign;
+                    : calculator.CalculateTurnFromSingleAxis(x) * Mathf.Sign(y);
 
                 return;
             }
