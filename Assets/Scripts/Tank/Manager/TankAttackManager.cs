@@ -20,16 +20,6 @@ namespace TankSystem.Manager
     public class TankAttackManager
     {
         // ======================================================
-        // 定数
-        // ======================================================
-
-        /// <summary>入力を受けて攻撃を決定するまでの待機時間（秒）</summary>
-        private const float INPUT_DECISION_DELAY = 0.1f;
-
-        /// <summary>攻撃クールタイム（秒）</summary>
-        private const float ATTACK_COOLDOWN = 1.0f;
-
-        // ======================================================
         // フィールド
         // ======================================================
 
@@ -44,6 +34,16 @@ namespace TankSystem.Manager
 
         /// <summary>右攻撃ボタンが押されてからの経過時間（同時押し判定用、未押下時は -1）</summary>
         private float _rightInputTimer = -1f;
+
+        // ======================================================
+        // 定数
+        // ======================================================
+
+        /// <summary>入力を受けて攻撃を決定するまでの待機時間（秒）</summary>
+        private const float INPUT_DECISION_DELAY = 0.1f;
+
+        /// <summary>攻撃クールタイム（秒）</summary>
+        private const float ATTACK_COOLDOWN = 1.0f;
 
         // ======================================================
         // イベント

@@ -65,9 +65,9 @@ namespace TankSystem.Data
         [SerializeField, Range(MIN_PARAMETER_VALUE, MAX_PARAMETER_VALUE), Tooltip("馬力　本体の移動速度")]
         private int _horsePower;
 
-        /// <summary>変速　本体の加速度</summary>
-        [SerializeField, Range(MIN_PARAMETER_VALUE, MAX_PARAMETER_VALUE), Tooltip("変速　本体の加速度")]
-        private int _acceleration;
+        /// <summary>変速　本体の加減速度</summary>
+        [SerializeField, Range(MIN_PARAMETER_VALUE, MAX_PARAMETER_VALUE), Tooltip("変速　本体の加減速度")]
+        private int _transmission;
 
         // --------------------------------------------------
         // 攻撃力関連
@@ -133,11 +133,11 @@ namespace TankSystem.Data
             private set => _horsePower = Mathf.Clamp(value, MIN_PARAMETER_VALUE, MAX_PARAMETER_VALUE);
         }
 
-        /// <summary>変速　本体の移動最高速度に達するまでの加速度</summary>
-        public int Acceleration
+        /// <summary>変速　本体の加減速度</summary>
+        public int Transmission
         {
-            get => _acceleration;
-            private set => _acceleration = Mathf.Clamp(value, MIN_PARAMETER_VALUE, MAX_PARAMETER_VALUE);
+            get => _transmission;
+            private set => _transmission = Mathf.Clamp(value, MIN_PARAMETER_VALUE, MAX_PARAMETER_VALUE);
         }
 
         // --------------------------------------------------
@@ -180,7 +180,7 @@ namespace TankSystem.Data
         public TankStatus()
         {
             _fuel = 0; _ammo = 0; _durability = 0; _armor = 0;
-            _horsePower = 0; _acceleration = 0; _barrelScale = 0; _projectileMass = 0; _reloadTime = 0;
+            _horsePower = 0; _transmission = 0; _barrelScale = 0; _projectileMass = 0; _reloadTime = 0;
 
             // TankParam とプロパティ更新アクションを紐付け
             _paramMap = new Dictionary<TankParam, Action<int>>
@@ -190,7 +190,7 @@ namespace TankSystem.Data
                 { TankParam.Durability,     amount => Durability += amount },
                 { TankParam.Armor,          amount => Armor += amount },
                 { TankParam.HorsePower,     amount => HorsePower += amount },
-                { TankParam.Acceleration,   amount => Acceleration += amount },
+                { TankParam.Acceleration,   amount => Transmission += amount },
                 { TankParam.BarrelScale,    amount => BarrelScale += amount },
                 { TankParam.ProjectileMass, amount => ProjectileMass += amount },
                 { TankParam.ReloadTime,     amount => ReloadTime += amount },

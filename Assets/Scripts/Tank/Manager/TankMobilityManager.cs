@@ -8,10 +8,11 @@
 //            TankCollisionService により移動後の衝突判定を行う。
 // ======================================================
 
-using UnityEngine;
 using CollisionSystem.Data;
 using TankSystem.Controller;
+using TankSystem.Data;
 using TankSystem.Service;
+using UnityEngine;
 
 namespace TankSystem.Manager
 {
@@ -40,8 +41,14 @@ namespace TankSystem.Manager
         /// <summary>戦車本体の Transform</summary>
         private readonly Transform _tankTransform;
 
-        /// <summary>現在の機動力倍率（前進・旋回に適用）</summary>
-        private float _mobilityMultiplier = BASE_MOBILITY;
+        /// <summary>現在の機動倍率（前進・旋回に適用）</summary>
+        private float _mobilityMultiplier = BASE_MOBILITY_MULTIPLIER;
+
+        /// <summary>現在の前進加減速倍率</summary>
+        private float _forwardAccelerationMultiplier = BASE_FORWARD_ACCELERATION_MULTIPLIER;
+
+        /// <summary>現在の旋回加減速倍率</summary>
+        private float _turnAccelerationMultiplier = BASE_TURN_ACCELERATION_MULTIPLIER;
 
         /// <summary>現在フレームでの前進量</summary>
         private float _currentForward;
@@ -53,14 +60,29 @@ namespace TankSystem.Manager
         // 定数
         // ======================================================
 
-        /// <summary>基準機動力倍率</summary>
-        private const float BASE_MOBILITY = 15.0f;
+        // --------------------------------------------------
+        // 基準値
+        // --------------------------------------------------
+        /// <summary>基準となる機動倍率</summary>
+        private const float BASE_MOBILITY_MULTIPLIER = 15.0f;
 
-        /// <summary>馬力1あたりの倍率加算値</summary>
+        /// <summary>基準となる前進加減速倍率</summary>
+        private const float BASE_FORWARD_ACCELERATION_MULTIPLIER = 7.5f;
+
+        /// <summary>基準となる旋回加減速倍率</summary>
+        private const float BASE_TURN_ACCELERATION_MULTIPLIER = 120.0f;
+
+        // --------------------------------------------------
+        // パラメーター
+        // --------------------------------------------------
+        /// <summary>馬力 1 あたりの機動倍率加算値</summary>
         private const float HORSEPOWER_MULTIPLIER = 1.75f;
 
-        /// <summary>前進・旋回補間速度の係数</summary>
-        private const float MOVEMENT_SMOOTH = 1f;
+        /// <summary>変速 1 あたりの前進倍率加算値</summary>
+        private const float TRANSMISSION_FORWARD_ACCELERATION_MULTIPLIER = 24.625f;
+
+        /// <summary>変速 1 あたりの旋回倍率加算値</summary>
+        private const float TRANSMISSION_TURN_ACCELERATION_MULTIPLIER = 394.0f;
 
         // ======================================================
         // コンストラクタ
@@ -92,32 +114,40 @@ namespace TankSystem.Manager
         // ======================================================
 
         /// <summary>
-        /// 前進・旋回処理を適用し、移動後に衝突判定を行う
+        /// 前進・旋回処理を適用し、移動後に境界制御を行う
         /// </summary>
-        /// <param name="horsePower">戦車の馬力パラメーター</param>
+        /// <param name="tankStatus">戦車のステータス</param>
         /// <param name="left">左キャタピラ入力値（-1～1）</param>
         /// <param name="right">右キャタピラ入力値（-1～1）</param>
-        public void ApplyMobility(in int horsePower, in float left, in float right)
+        public void ApplyMobility(in TankStatus tankStatus, in float left, in float right)
         {
-            // 馬力に応じた倍率を更新
-            UpdateMobilityMultiplier(horsePower);
+            // 機動力関連の倍率を更新
+            UpdateMobilityParameters(tankStatus);
 
-            // キャタピラ入力から前進量と旋回量を取得
-            _trackController.UpdateTrack(left, right, out float forwardInput, out float turnInput);
+            // 入力から目標移動量を算出
+            CalculateTargetMovement(left, right, out float targetForward, out float targetTurn);
 
-            // 目標移動量・回転量を計算
-            float targetForward = forwardInput * _mobilityMultiplier;
-            float targetTurn = turnInput * _mobilityMultiplier;
-            
-            // 現在位置・角度からスムーズに補間して適用
-            _currentForward = Mathf.Lerp(_currentForward, targetForward, Time.deltaTime * MOVEMENT_SMOOTH);
-            _currentTurn = Mathf.Lerp(_currentTurn, targetTurn, Time.deltaTime * MOVEMENT_SMOOTH);
+            // 加減速を適用して現在値を更新
+            ApplyAcceleration(targetForward, targetTurn);
 
-            // 補間済み値で移動・旋回
-            _tankTransform.Translate(Vector3.forward * _currentForward * Time.deltaTime, Space.Self);
-            _tankTransform.Rotate(0f, _currentTurn * Time.deltaTime, 0f, Space.Self);
+            // デバッグ用ログ出力
+            LogMobilityDebug(targetForward, targetTurn);
 
-            // 移動範囲チェック
+            // 前進を適用
+            _tankTransform.Translate(
+                Vector3.forward * _currentForward * Time.deltaTime,
+                Space.Self
+            );
+
+            // 旋回を適用
+            _tankTransform.Rotate(
+                0f,
+                _currentTurn * Time.deltaTime,
+                0f,
+                Space.Self
+            );
+
+            // 移動範囲を制限
             _boundaryService.ClampPosition(_tankTransform);
         }
 
@@ -150,19 +180,91 @@ namespace TankSystem.Manager
         // ======================================================
 
         /// <summary>
-        /// 現在の馬力パラメーターに応じて機動力倍率を計算し更新する
+        /// HorsePower・Transmission を元に
+        /// 最高速倍率と前進・旋回の加減速倍率を算出する
         /// </summary>
-        /// <param name="horsePower">戦車の馬力</param>
-        private void UpdateMobilityMultiplier(in int horsePower)
+        private void UpdateMobilityParameters(in TankStatus tankStatus)
         {
-            // 馬力を反映した倍率計算
-            _mobilityMultiplier = BASE_MOBILITY + horsePower * HORSEPOWER_MULTIPLIER;
+            // 最高速度・旋回速度に影響する機動倍率を算出
+            _mobilityMultiplier =
+                BASE_MOBILITY_MULTIPLIER
+                + tankStatus.HorsePower * HORSEPOWER_MULTIPLIER;
 
-            // 最大値を50に制限
-            if (_mobilityMultiplier > 50f)
-            {
-                _mobilityMultiplier = 50f;
-            }
+            // 前進加減速性能に影響する倍率を算出
+            _forwardAccelerationMultiplier =
+                BASE_FORWARD_ACCELERATION_MULTIPLIER
+                + tankStatus.Transmission * TRANSMISSION_FORWARD_ACCELERATION_MULTIPLIER;
+
+            // 旋回加減速性能に影響する倍率を算出
+            _turnAccelerationMultiplier =
+                BASE_TURN_ACCELERATION_MULTIPLIER
+                + tankStatus.Transmission * TRANSMISSION_TURN_ACCELERATION_MULTIPLIER;
+        }
+
+        /// <summary>
+        /// キャタピラ入力から前進・旋回の目標値を算出する
+        /// </summary>
+        private void CalculateTargetMovement(
+            in float left,
+            in float right,
+            out float targetForward,
+            out float targetTurn)
+        {
+            // キャタピラ入力を前進量・旋回量に変換
+            _trackController.UpdateTrack(left, right, out float forwardInput, out float turnInput);
+
+            // 機動力倍率を掛けて最終的な目標値を算出
+            targetForward = forwardInput * _mobilityMultiplier;
+            targetTurn = turnInput * _mobilityMultiplier;
+        }
+
+        /// <summary>
+        /// 目標移動量に向かって現在値を加減速させる
+        /// </summary>
+        private void ApplyAcceleration(in float targetForward, in float targetTurn)
+        {
+            // 前進用：1フレームあたりの最大変化量を算出
+            float forwardMaxDelta =
+                _forwardAccelerationMultiplier * Time.deltaTime;
+
+            // 旋回用：1フレームあたりの最大変化量を算出
+            float turnMaxDelta =
+                _turnAccelerationMultiplier * Time.deltaTime;
+
+            // 前進量を加減速
+            _currentForward = Mathf.MoveTowards(
+                _currentForward,
+                targetForward,
+                forwardMaxDelta
+            );
+
+            // 旋回量を加減速
+            _currentTurn = Mathf.MoveTowards(
+                _currentTurn,
+                targetTurn,
+                turnMaxDelta
+            );
+        }
+
+        // ======================================================
+        // デバッグ
+        // ======================================================
+
+        /// <summary>
+        /// 移動・旋回の目標値と現在値をログ出力する
+        /// デバッグ確認用途（最終的に削除・無効化前提）
+        /// </summary>
+        private void LogMobilityDebug(
+            in float targetForward,
+            in float targetTurn)
+        {
+            Debug.Log(
+                $"[Mobility] " +
+                $"TargetForward:{targetForward:F2} " +
+                $"CurrentForward:{_currentForward:F2} | " +
+                $"TargetTurn:{targetTurn:F2} " +
+                $"CurrentTurn:{_currentTurn:F2}"
+            );
         }
     }
 }

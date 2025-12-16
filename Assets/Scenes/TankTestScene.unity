@@ -3479,7 +3479,7 @@ MonoBehaviour:
     _durability: 0
     _armor: 0
     _horsePower: 0
-    _acceleration: 0
+    _transmission: 0
     _barrelScale: 0
     _projectileMass: 0
     _reloadTime: 0
@@ -5310,7 +5310,6 @@ MonoBehaviour:
   - {fileID: 76211782}
   - {fileID: 1327687266}
   - {fileID: 435110467}
-  - {fileID: 1909697141}
 --- !u!1 &820916603
 GameObject:
   m_ObjectHideFlags: 0
@@ -12574,7 +12573,7 @@ MonoBehaviour:
     _durability: 0
     _armor: 0
     _horsePower: 10
-    _acceleration: 0
+    _transmission: 0
     _barrelScale: 0
     _projectileMass: 0
     _reloadTime: 0

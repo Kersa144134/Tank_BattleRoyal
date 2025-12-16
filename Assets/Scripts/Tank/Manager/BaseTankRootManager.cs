@@ -214,7 +214,7 @@ namespace TankSystem.Manager
             // 機動
             // --------------------------------------------------
             // 前進・旋回処理
-            _mobilityManager.ApplyMobility(_tankStatus.HorsePower, leftMobility, rightMobility);
+            _mobilityManager.ApplyMobility(_tankStatus, leftMobility, rightMobility);
 
             // --------------------------------------------------
             // 衝突判定
