@@ -806,10 +806,6 @@ MonoBehaviour:
     PositionOffset: {x: 0, y: 50, z: 0}
     RotationOffset: {x: 90, y: 0, z: 0}
     IsRotationFixed: 1
-  - TargetTransform: {fileID: 1363193130}
-    PositionOffset: {x: 0, y: 50, z: 0}
-    RotationOffset: {x: 90, y: 0, z: 0}
-    IsRotationFixed: 0
 --- !u!4 &76211784
 Transform:
   m_ObjectHideFlags: 0
@@ -3485,7 +3481,6 @@ MonoBehaviour:
     _reloadTime: 0
   _turret: {fileID: 366697374421106752}
   _firePoint: {fileID: 443024298}
-  _inputMode: 0
   _hitboxCenter: {x: 0, y: 1.4, z: 1.25}
   _hitboxSize: {x: 3.75, y: 2.8, z: 9.25}
 --- !u!1 &443024297
@@ -8575,37 +8570,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1359462786}
   m_Mesh: {fileID: 8416014176990064650, guid: 8383bdf117bcd2a4da5dd2e573b9de23, type: 3}
---- !u!1 &1363193129
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1363193130}
-  m_Layer: 0
-  m_Name: ToVCameraPosition
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1363193130
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1363193129}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1363381943
 GameObject:
   m_ObjectHideFlags: 0
@@ -12580,7 +12544,6 @@ MonoBehaviour:
     _reloadTime: 0
   _turret: {fileID: 1957855840}
   _firePoint: {fileID: 1090782555}
-  _inputMode: 1
   _hitboxCenter: {x: 0, y: 1.4, z: 1.25}
   _hitboxSize: {x: 3.75, y: 2.8, z: 9.25}
 --- !u!1 &1957855839
@@ -15959,6 +15922,5 @@ SceneRoots:
   - {fileID: 435110471}
   - {fileID: 1909697143}
   - {fileID: 1832899783}
-  - {fileID: 1363193130}
   - {fileID: 2109405612}
   - {fileID: 1327687268}

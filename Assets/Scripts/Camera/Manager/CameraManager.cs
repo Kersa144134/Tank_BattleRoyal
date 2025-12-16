@@ -50,8 +50,7 @@ namespace CameraSystem.Manager
 
         public void OnUpdate()
         {
-            // ターゲット切替
-            CheckTargetSwitchInput();
+            
         }
 
         public void OnLateUpdate()
@@ -61,33 +60,29 @@ namespace CameraSystem.Manager
         }
 
         // ======================================================
-        // プライベートメソッド
+        // パブリックメソッド
         // ======================================================
 
         /// <summary>
-        /// 入力によるターゲット切替処理
-        /// <summary>
-        private void CheckTargetSwitchInput()
+        /// 指定されたインデックスのターゲットへ切り替える
+        /// </summary>
+        /// <param name="targetIndex">
+        /// 設定するターゲットのインデックス
+        /// </param>
+        public void SetTargetByIndex(int targetIndex)
         {
-            // 左スティックボタンでターゲット 1 切替
-            if (InputManager.Instance.LeftStickButton.Down)
-            {
-                int current = _followController.GetCurrentTargetIndex();
+            // 現在設定されているターゲットインデックスを取得
+            int currentIndex = _followController.GetCurrentTargetIndex();
 
-                // トグル処理
-                int nextIndex = (current == 1) ? 0 : 1;
-                _followController.SetTarget(nextIndex);
+            // 同一ターゲットが指定された場合は解除（未選択状態へ戻す）
+            if (currentIndex == targetIndex)
+            {
+                _followController.SetTarget(0);
+                return;
             }
 
-            // 右スティックボタンでターゲット 2 切替
-            if (InputManager.Instance.RightStickButton.Down)
-            {
-                int current = _followController.GetCurrentTargetIndex();
-
-                // トグル処理
-                int nextIndex = (current == 2) ? 0 : 2;
-                _followController.SetTarget(nextIndex);
-            }
+            // 指定されたインデックスのターゲットを設定
+            _followController.SetTarget(targetIndex);
         }
     }
 }

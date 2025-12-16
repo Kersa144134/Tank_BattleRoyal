@@ -6,14 +6,16 @@
 // 概要     : シーン遷移、フェーズ管理、Update 管理を統括する
 // ======================================================
 
-using System;
-using System.Collections.Generic;
-using UnityEngine;
+using CameraSystem.Manager;
 using InputSystem.Manager;
 using SceneSystem.Controller;
 using SceneSystem.Data;
 using SceneSystem.Interface;
+using System;
+using System.Collections.Generic;
+using TankSystem.Data;
 using TankSystem.Manager;
+using UnityEngine;
 using WeaponSystem.Data;
 using WeaponSystem.Manager;
 
@@ -49,6 +51,9 @@ public class SceneManager : MonoBehaviour
     /// <summary>弾丸オブジェクトとロジックの管理を行うプールクラス</summary>
     private BulletPool _bulletPool;
 
+    /// <summary>カメラ管理クラス</summary>
+    private CameraManager _cameraManager;
+
     /// <summary>入力管理クラス</summary>
     private InputManager _inputManager;
 
@@ -82,68 +87,23 @@ public class SceneManager : MonoBehaviour
 
     private void Awake()
     {
-        // UpdateController の生成
-        _updateController = new UpdateController();
+        // UpdateController を生成
+        CreateUpdateController();
 
-        // Resources/Phase フォルダ内のすべての PhaseData を取得
-        PhaseData[] phaseDataList = Resources.LoadAll<PhaseData>("Phase");
-        if (phaseDataList == null || phaseDataList.Length == 0)
-        {
-            Debug.LogWarning("[SceneManager] PhaseData が Resources/Phase に存在しません");
-        }
+        // PhaseData を読み込み
+        PhaseData[] phaseDataList = LoadPhaseData();
 
-        // PhaseRuntimeData の生成
-        _phaseRuntimeData = new PhaseRuntimeData();
+        // PhaseRuntimeData を生成
+        CreatePhaseRuntimeData(phaseDataList);
 
-        // シーン上すべての IUpdatable を取得して登録
-        _updatables = UpdatableCollector.Collect(_components);
+        // PhaseController を生成
+        CreatePhaseController();
 
-        // フェーズごとに IUpdatable を取得して登録
-        foreach (PhaseData phaseData in phaseDataList)
-        {
-            Type[] types = phaseData.GetUpdatableTypes();
-            IUpdatable[] updatables = UpdatableCollector.Collect(_components, types);
-            _phaseRuntimeData.RegisterPhase(phaseData.Phase, updatables);
-        }
+        // 初期フェーズを設定
+        InitializePhase();
 
-        // PhaseController の生成
-        _phaseController = new PhaseController(_phaseRuntimeData, _updateController);
-
-        // 初期フェーズ設定
-        _targetPhase = PhaseType.Play;
-        ChangePhase(_targetPhase);
-
-        // 一時的にエネミーを収集するためのリスト
-        List<EnemyTankRootManager> enemyList = new List<EnemyTankRootManager>();
-
-        // 現在シーンの OnEnter を実行
-        foreach (IUpdatable updatable in _updatables)
-        {
-            updatable.OnEnter();
-
-            // コンポーネントのキャッシュ登録
-            if (updatable is BulletPool bulletPool)
-            {
-                _bulletPool = bulletPool;
-            }
-            if (updatable is InputManager inputManager)
-            {
-                _inputManager = inputManager;
-            }
-            if (updatable is PlayerTankRootManager playerTankRootManager)
-            {
-                _playerTankRootManager = playerTankRootManager;
-            }
-
-            // Enemy 戦車は一時リストに収集
-            if (updatable is EnemyTankRootManager enemyTankRootManager)
-            {
-                enemyList.Add(enemyTankRootManager);
-            }
-        }
-
-        // List → 配列へ確定
-        _enemyTankRootManagers = enemyList.ToArray();
+        // シーン内 IUpdatable を初期化・キャッシュ
+        InitializeUpdatables();
     }
 
     private void Update()
@@ -154,8 +114,6 @@ public class SceneManager : MonoBehaviour
         if (_currentScene != _targetScene)
         {
             ChangeScene(_targetScene);
-
-            // シーン切替中は以降処理をスキップ
             return;
         }
 
@@ -224,6 +182,128 @@ public class SceneManager : MonoBehaviour
     // ======================================================
 
     /// <summary>
+    /// UpdateController を生成する
+    /// </summary>
+    private void CreateUpdateController()
+    {
+        _updateController = new UpdateController();
+    }
+
+    /// <summary>
+    /// Resources から PhaseData を読み込む
+    /// </summary>
+    private PhaseData[] LoadPhaseData()
+    {
+        PhaseData[] phaseDataList = Resources.LoadAll<PhaseData>("Phase");
+
+        if (phaseDataList == null || phaseDataList.Length == 0)
+        {
+            Debug.LogWarning("[SceneManager] PhaseData が Resources/Phase に存在しません");
+        }
+
+        return phaseDataList;
+    }
+
+    /// <summary>
+    /// PhaseRuntimeData を生成し、フェーズごとの IUpdatable を登録する
+    /// </summary>
+    private void CreatePhaseRuntimeData(PhaseData[] phaseDataList)
+    {
+        // PhaseRuntimeData の生成
+        _phaseRuntimeData = new PhaseRuntimeData();
+
+        // シーン上すべての IUpdatable を取得
+        _updatables = UpdatableCollector.Collect(_components);
+
+        // フェーズ単位で IUpdatable を登録
+        foreach (PhaseData phaseData in phaseDataList)
+        {
+            Type[] types = phaseData.GetUpdatableTypes();
+            IUpdatable[] updatables = UpdatableCollector.Collect(_components, types);
+            _phaseRuntimeData.RegisterPhase(phaseData.Phase, updatables);
+        }
+    }
+
+    /// <summary>
+    /// PhaseController を生成する
+    /// </summary>
+    private void CreatePhaseController()
+    {
+        _phaseController = new PhaseController(
+            _phaseRuntimeData,
+            _updateController
+        );
+    }
+
+    /// <summary>
+    /// 初期フェーズを設定する
+    /// </summary>
+    private void InitializePhase()
+    {
+        _targetPhase = PhaseType.Play;
+        ChangePhase(_targetPhase);
+    }
+
+    /// <summary>
+    /// IUpdatable の OnEnter を実行し、必要な参照をキャッシュする
+    /// </summary>
+    private void InitializeUpdatables()
+    {
+        // Enemy 一時収集用リスト
+        List<EnemyTankRootManager> enemyList =
+            new List<EnemyTankRootManager>();
+
+        // OnEnter 実行と参照キャッシュ
+        foreach (IUpdatable updatable in _updatables)
+        {
+            updatable.OnEnter();
+
+            CacheUpdatable(updatable, enemyList);
+        }
+
+        // Enemy 配列を確定
+        _enemyTankRootManagers = enemyList.ToArray();
+    }
+
+    /// <summary>
+    /// IUpdatable の型に応じて参照をキャッシュする
+    /// </summary>
+    private void CacheUpdatable(
+        IUpdatable updatable,
+        List<EnemyTankRootManager> enemyList
+    )
+    {
+        if (updatable is BulletPool bulletPool)
+        {
+            _bulletPool = bulletPool;
+            return;
+        }
+
+        if (updatable is CameraManager cameraManager)
+        {
+            _cameraManager = cameraManager;
+            return;
+        }
+
+        if (updatable is InputManager inputManager)
+        {
+            _inputManager = inputManager;
+            return;
+        }
+
+        if (updatable is PlayerTankRootManager playerTankRootManager)
+        {
+            _playerTankRootManager = playerTankRootManager;
+            return;
+        }
+
+        if (updatable is EnemyTankRootManager enemyTankRootManager)
+        {
+            enemyList.Add(enemyTankRootManager);
+        }
+    }
+    
+    /// <summary>
     /// シーン遷移を実行する
     /// </summary>
     /// <param name="sceneName">遷移先のシーン名</param>
@@ -286,7 +366,20 @@ public class SceneManager : MonoBehaviour
     /// </summary>
     private void HandleModeChangeButtonPressed()
     {
+        // プレイヤー戦車のキャタピラ入力モードをトグル切替
         _playerTankRootManager.ChangeInputMode();
+
+        // 現在の入力モードを取得
+        TrackInputMode currentMode = _playerTankRootManager.InputMode;
+
+        // 入力モードに応じてカメラターゲット用インデックスを決定
+        int cameraTargetIndex =
+            currentMode == TrackInputMode.Single
+            ? 1
+            : 0;
+
+        // カメラの追従ターゲットを切り替え
+        _cameraManager.SetTargetByIndex(cameraTargetIndex);
     }
 
     /// <summary>

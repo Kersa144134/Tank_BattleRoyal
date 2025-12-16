@@ -94,11 +94,17 @@ namespace TankSystem.Manager
         /// <summary>
         /// 移動処理および衝突判定に必要な外部参照を受け取って初期化する
         /// </summary>
+        /// <param name="trackController">キャタピラ入力を管理し、前進量・旋回量を算出するコントローラ</param>
+        /// <param name="collisionService">戦車と障害物の衝突判定および押し戻し量を算出するサービス</param>
+        /// <param name="boundaryService">戦車の移動可能範囲を制御する境界判定サービス</param>
+        /// <param name="transform">操作対象となる戦車本体の Transform</param>
+        /// <param name="hitboxCenter">戦車の当たり判定ボックスのローカル中心座標</param>
+        /// <param name="hitboxSize">戦車の当たり判定ボックスのサイズ</param>
+        /// <param name="obstacles">衝突判定対象となる障害物 Transform 配列</param>
         public TankMobilityManager(
             in TankTrackController trackController,
             in TankCollisionService collisionService,
             in TankMovementBoundaryService boundaryService,
-            in TrackInputMode inputMode,
             in Transform transform,
             in Vector3 hitboxCenter,
             in Vector3 hitboxSize,
@@ -108,7 +114,6 @@ namespace TankSystem.Manager
             _trackController = trackController;
             _collisionService = collisionService;
             _boundaryService = boundaryService;
-            _inputMode = inputMode;
 
             // 操作対象の戦車 Transform を保持する
             _tankTransform = transform;
@@ -157,6 +162,7 @@ namespace TankSystem.Manager
         /// TankCollisionService からの衝突通知を受けて、
         /// 戦車と障害物のめり込みを解消する
         /// </summary>
+        /// <param name="obstacle">衝突判定の対象となる障害物の Transform</param>
         public void CheckObstaclesCollision(in Transform obstacle)
         {
             // 侵入量を計算
@@ -193,6 +199,7 @@ namespace TankSystem.Manager
         /// HorsePower・Transmission を元に
         /// 最高速倍率と前進・旋回の加減速倍率を算出する
         /// </summary>
+        /// <param name="tankStatus">機動力算出に使用する戦車ステータス情報</param>
         private void UpdateMobilityParameters(in TankStatus tankStatus)
         {
             // 最高速度・旋回速度に影響する機動倍率を算出
@@ -214,6 +221,10 @@ namespace TankSystem.Manager
         /// <summary>
         /// キャタピラ入力から前進・旋回の目標値を算出する
         /// </summary>
+        /// <param name="left">左キャタピラ入力値</param>
+        /// <param name="right">右キャタピラ入力値</param>
+        /// <param name="targetForward">算出された前進・後退の目標値</param>
+        /// <param name="targetTurn">算出された旋回の目標値</param>
         private void CalculateTargetMovement(
             in Vector2 left,
             in Vector2 right,
@@ -231,6 +242,8 @@ namespace TankSystem.Manager
         /// <summary>
         /// 目標移動量に向かって現在値を加減速させる
         /// </summary>
+        /// <param name="targetForward">前進・後退の目標移動量</param>
+        /// <param name="targetTurn">旋回の目標移動量</param>
         private void ApplyAcceleration(in float targetForward, in float targetTurn)
         {
             // 前進用：1フレームあたりの最大変化量を算出

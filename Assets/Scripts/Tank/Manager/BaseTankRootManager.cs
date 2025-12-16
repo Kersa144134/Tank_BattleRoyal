@@ -73,7 +73,7 @@ namespace TankSystem.Manager
         private TankMobilityManager _mobilityManager;
 
         /// <summary>左右キャタピラ入力から前進量・旋回量を算出するコントローラー</summary>
-        private TankTrackController _trackController;
+        private TankTrackController _trackController = new TankTrackController();
 
         /// <summary>AABB / OBB の距離計算および衝突判定を行うコントローラー</summary>
         private BoundingBoxCollisionCalculator _boxCollisionCalculator = new BoundingBoxCollisionCalculator();
@@ -91,15 +91,11 @@ namespace TankSystem.Manager
         private TankCollisionService _collisionService;
 
         // ======================================================
-        // フィールド
+        // プロパティ
         // ======================================================
 
         /// <summary>キャタピラ入力モード</summary>
-        private TrackInputMode _inputMode = TrackInputMode.Dual;
-
-        // ======================================================
-        // プロパティ
-        // ======================================================
+        public TrackInputMode InputMode => _trackController.InputMode;
 
         /// <summary>ゲーム中に変動する戦車のパラメーター</summary>
         public TankStatus TankStatus => _tankStatus;
@@ -161,7 +157,6 @@ namespace TankSystem.Manager
             List<ItemSlot> items = _sceneRegistry.ItemSlots;
 
             _attackManager = new TankAttackManager(_firePoint);
-            _trackController = new TankTrackController(_inputMode);
             _collisionService = new TankCollisionService(
                 _obbFactory,
                 _boxCollisionCalculator,
@@ -175,7 +170,6 @@ namespace TankSystem.Manager
                 _trackController,
                 _collisionService,
                 _boundaryService,
-                _inputMode,
                 transform,
                 _hitboxCenter,
                 _hitboxSize,
