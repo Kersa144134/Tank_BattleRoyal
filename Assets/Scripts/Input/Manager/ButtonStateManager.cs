@@ -2,21 +2,19 @@
 // ButtonStateManager.cs
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-11-11
-// 更新日時 : 2025-12-08
-// 概要     : ボタン入力状態の管理クラス
-//            InputManager.ButtonState を内部で保持し、ボタン押下状態を更新する
+// 更新日時 : 2025-12-16
+// 概要     : ボタン入力状態を管理するクラス
+//            InputManager.ButtonState を内部で保持し、押下状態を更新する
 // ======================================================
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using InputSystem.Data;
 
 namespace InputSystem.Manager
 {
     /// <summary>
     /// ボタン状態を管理するクラス
-    /// サブクラス ButtonState で押下/離上状態を更新する
+    /// GamepadInputType 列挙順に配列で保持し、毎フレーム更新
     /// </summary>
     public class ButtonStateManager
     {
@@ -24,23 +22,27 @@ namespace InputSystem.Manager
         // フィールド
         // ======================================================
 
-        /// <summary>ボタン種別ごとの状態を保持する辞書</summary>
-        private readonly Dictionary<GamepadInputType, ButtonState> _buttonStates;
+        /// <summary>ボタン状態配列（GamepadInputType の順序で固定）</summary>
+        private readonly ButtonState[] _buttonStates;
 
         // ======================================================
         // コンストラクタ
         // ======================================================
 
-        /// <summary>ButtonStateManager のコンストラクタ。全ボタンを初期化</summary>
+        /// <summary>
+        /// ButtonStateManager のコンストラクタ
+        /// </summary>
         public ButtonStateManager()
         {
-            // 辞書を初期化
-            _buttonStates = new Dictionary<GamepadInputType, ButtonState>();
+            // enum の数だけ配列を確保
+            int enumLength = Enum.GetValues(typeof(GamepadInputType)).Length;
 
-            // 全 GamepadInputType を列挙して初期状態を作成
-            foreach (GamepadInputType type in Enum.GetValues(typeof(GamepadInputType)))
+            _buttonStates = new ButtonState[enumLength];
+
+            // 各ボタン状態を初期化
+            for (int i = 0; i < _buttonStates.Length; i++)
             {
-                _buttonStates[type] = new ButtonState();
+                _buttonStates[i] = new ButtonState();
             }
         }
 
@@ -49,80 +51,63 @@ namespace InputSystem.Manager
         // ======================================================
 
         /// <summary>ボタンAの状態</summary>
-        public ButtonState ButtonA => _buttonStates[GamepadInputType.ButtonA];
+        public ButtonState ButtonA => _buttonStates[(int)GamepadInputType.ButtonA];
 
         /// <summary>ボタンBの状態</summary>
-        public ButtonState ButtonB => _buttonStates[GamepadInputType.ButtonB];
+        public ButtonState ButtonB => _buttonStates[(int)GamepadInputType.ButtonB];
 
         /// <summary>ボタンXの状態</summary>
-        public ButtonState ButtonX => _buttonStates[GamepadInputType.ButtonX];
+        public ButtonState ButtonX => _buttonStates[(int)GamepadInputType.ButtonX];
 
         /// <summary>ボタンYの状態</summary>
-        public ButtonState ButtonY => _buttonStates[GamepadInputType.ButtonY];
+        public ButtonState ButtonY => _buttonStates[(int)GamepadInputType.ButtonY];
 
         /// <summary>左ショルダーの状態</summary>
-        public ButtonState LeftShoulder => _buttonStates[GamepadInputType.LeftShoulder];
+        public ButtonState LeftShoulder => _buttonStates[(int)GamepadInputType.LeftShoulder];
 
         /// <summary>右ショルダーの状態</summary>
-        public ButtonState RightShoulder => _buttonStates[GamepadInputType.RightShoulder];
+        public ButtonState RightShoulder => _buttonStates[(int)GamepadInputType.RightShoulder];
 
         /// <summary>左トリガーの状態</summary>
-        public ButtonState LeftTrigger => _buttonStates[GamepadInputType.LeftTrigger];
+        public ButtonState LeftTrigger => _buttonStates[(int)GamepadInputType.LeftTrigger];
 
         /// <summary>右トリガーの状態</summary>
-        public ButtonState RightTrigger => _buttonStates[GamepadInputType.RightTrigger];
+        public ButtonState RightTrigger => _buttonStates[(int)GamepadInputType.RightTrigger];
 
         /// <summary>左スティックボタンの状態</summary>
-        public ButtonState LeftStickButton => _buttonStates[GamepadInputType.LeftStickButton];
+        public ButtonState LeftStickButton => _buttonStates[(int)GamepadInputType.LeftStickButton];
 
         /// <summary>右スティックボタンの状態</summary>
-        public ButtonState RightStickButton => _buttonStates[GamepadInputType.RightStickButton];
+        public ButtonState RightStickButton => _buttonStates[(int)GamepadInputType.RightStickButton];
 
         /// <summary>Startボタンの状態</summary>
-        public ButtonState StartButton => _buttonStates[GamepadInputType.Start];
+        public ButtonState StartButton => _buttonStates[(int)GamepadInputType.Start];
 
         /// <summary>Selectボタンの状態</summary>
-        public ButtonState SelectButton => _buttonStates[GamepadInputType.Select];
+        public ButtonState SelectButton => _buttonStates[(int)GamepadInputType.Select];
 
         // ======================================================
         // パブリックメソッド
         // ======================================================
 
         /// <summary>
-        /// コントローラ入力からボタン状態を更新する（列挙中例外を回避）
+        /// ゲームパッド入力からボタン状態を更新する
         /// </summary>
         /// <param name="controller">IGamepadInputSource を実装した入力コントローラ</param>
         public void UpdateButtonStates(in IGamepadInputSource controller)
         {
-            // 辞書のキーを配列化して列挙中変更エラーを防止
-            GamepadInputType[] keys = _buttonStates.Keys.ToArray();
-
-            for (int i = 0; i < keys.Length; i++)
-            {
-                GamepadInputType key = keys[i];
-
-                // 現在の押下状態を取得
-                bool pressed = key switch
-                {
-                    GamepadInputType.ButtonA => controller.ButtonA,
-                    GamepadInputType.ButtonB => controller.ButtonB,
-                    GamepadInputType.ButtonX => controller.ButtonX,
-                    GamepadInputType.ButtonY => controller.ButtonY,
-                    GamepadInputType.LeftShoulder => controller.LeftShoulder,
-                    GamepadInputType.RightShoulder => controller.RightShoulder,
-                    GamepadInputType.LeftTrigger => controller.LeftTrigger,
-                    GamepadInputType.RightTrigger => controller.RightTrigger,
-                    GamepadInputType.LeftStickButton => controller.LeftStickButton,
-                    GamepadInputType.RightStickButton => controller.RightStickButton,
-                    GamepadInputType.Start => controller.StartButton,
-                    GamepadInputType.Select => controller.SelectButton,
-                    _ => false
-                };
-
-                // クラスの更新
-                ButtonState state = _buttonStates[key];
-                state.Update(pressed);
-            }
+            _buttonStates[(int)GamepadInputType.ButtonA].Update(controller.ButtonA);
+            _buttonStates[(int)GamepadInputType.ButtonB].Update(controller.ButtonB);
+            _buttonStates[(int)GamepadInputType.ButtonX].Update(controller.ButtonX);
+            _buttonStates[(int)GamepadInputType.ButtonY].Update(controller.ButtonY);
+            _buttonStates[(int)GamepadInputType.LeftShoulder].Update(controller.LeftShoulder);
+            _buttonStates[(int)GamepadInputType.RightShoulder].Update(controller.RightShoulder);
+            _buttonStates[(int)GamepadInputType.LeftTrigger].Update(controller.LeftTrigger);
+            _buttonStates[(int)GamepadInputType.RightTrigger].Update(controller.RightTrigger);
+            _buttonStates[(int)GamepadInputType.LeftStickButton].Update(controller.LeftStickButton);
+            _buttonStates[(int)GamepadInputType.RightStickButton].Update(controller.RightStickButton);
+            _buttonStates[(int)GamepadInputType.Start].Update(controller.StartButton);
+            _buttonStates[(int)GamepadInputType.Select].Update(controller.SelectButton);
         }
     }
 }

@@ -26,6 +26,9 @@ namespace TankSystem.Manager
         /// <summary>プレイヤー入力管理クラス</summary>
         private readonly TankInputManager _inputManager = new TankInputManager();
 
+        /// <summary>無入力ボタン</summary>
+        private readonly ButtonState _none = new ButtonState();
+
         // ======================================================
         // 入力処理
         // ======================================================
@@ -64,7 +67,7 @@ namespace TankSystem.Manager
 
             // 攻撃ボタン状態を取得
             leftFire = _inputManager.GetButtonState(TankInputKeys.INPUT_LEFT_FIRE);
-            rightFire = new ButtonState();
+            rightFire = _none;
             // rightFire = _inputManager.GetButtonState(TankInputKeys.INPUT_RIGHT_FIRE);
         }
     }
