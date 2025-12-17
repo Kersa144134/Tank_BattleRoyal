@@ -189,20 +189,15 @@ namespace TankSystem.Manager
         }
 
         /// <summary>
-        /// 衝突解決による押し戻し量をそのまま適用する
+        /// TankVersusTankCollisionService からの衝突通知を受けて、
+        /// 戦車と戦車のめり込みを解消する
         /// </summary>
-        /// <param name="resolveInfo">呼び出し側で算出済みの押し戻し情報</param>
-        public void ApplyCollisionResolve(in CollisionResolveInfo resolveInfo)
+        /// <param name="obstacle">呼び出し側で算出済みの押し戻し情報</param>
+        public void ApplyTankVersusTankCollisionResolve(in CollisionResolveInfo resolveInfo)
         {
-            // 有効でなければ何もしない
-            if (!resolveInfo.IsValid)
-            {
-                return;
-            }
-
-            _tankTransform.position += resolveInfo.ResolveDirection * resolveInfo.ResolveDistance;
+            ApplyCollisionResolve(resolveInfo);
         }
-        
+
         // ======================================================
         // プライベートメソッド
         // ======================================================
@@ -331,6 +326,28 @@ namespace TankSystem.Manager
 
             // 正負の合算で現在旋回量を決定
             _currentTurn = _currentTurnPositive - _currentTurnNegative;
+        }
+
+        /// <summary>
+        /// 衝突解決による押し戻し量をそのまま適用する
+        /// </summary>
+        /// <param name="resolveInfo">呼び出し側で算出済みの押し戻し情報</param>
+        private void ApplyCollisionResolve(in CollisionResolveInfo resolveInfo)
+        {
+            // 有効でなければ何もしない
+            if (!resolveInfo.IsValid)
+            {
+                return;
+            }
+
+            // 微小な押し戻し量は無視
+            const float MIN_RESOLVE_DISTANCE = 0.001f;
+            if (resolveInfo.ResolveDistance < MIN_RESOLVE_DISTANCE)
+            {
+                return;
+            }
+
+            _tankTransform.position += resolveInfo.ResolveDirection * resolveInfo.ResolveDistance;
         }
     }
 }

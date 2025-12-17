@@ -283,7 +283,7 @@ namespace TankSystem.Manager
         /// <param name="resolveInfo">ŒÄ‚Ño‚µ‘¤‚ÅZoÏ‚İ‚Ì‰Ÿ‚µ–ß‚µî•ñ</param>
         public void ApplyTankVersusTankCollisionResolve(in CollisionResolveInfo resolveInfo)
         {
-            _mobilityManager.ApplyCollisionResolve(resolveInfo);
+            _mobilityManager.ApplyTankVersusTankCollisionResolve(resolveInfo);
         }
         
         // ======================================================
