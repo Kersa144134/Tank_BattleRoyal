@@ -1,0 +1,28 @@
+// ======================================================
+// MovementLockAxis.cs
+// 作成者   : 高橋一翔
+// 作成日時 : 2025-12-17
+// 更新日時 : 2025-12-17
+// 概要     : 戦車やキャラクターの移動を軸単位（X / Z）で制限するためのフラグ列挙型
+// ======================================================
+
+using System;
+
+namespace CollisionSystem.Data
+{
+    /// <summary>
+    /// 移動制限される軸方向
+    /// </summary>
+    [Flags]
+    public enum MovementLockAxis
+    {
+        /// <summary>制限なし</summary>
+        None = 0,
+
+        /// <summary>X 軸移動禁止</summary>
+        X = 1 << 0,
+
+        /// <summary>Z 軸移動禁止</summary>
+        Z = 1 << 1
+    }
+}

@@ -6,9 +6,11 @@
 // 概要     : 戦車同士の衝突判定と解決を統括する
 // ======================================================
 
+using CollisionSystem.Data;
 using System.Collections.Generic;
 using TankSystem.Data;
 using TankSystem.Service;
+using UnityEngine.Rendering.VirtualTexturing;
 
 namespace TankSystem.Utility
 {
@@ -24,7 +26,7 @@ namespace TankSystem.Utility
         /// <summary>戦車衝突判定サービス</summary>
         private readonly TankVersusTankCollisionService _service;
 
-        /// <summary>戦車IDと衝突エントリの対応表</summary>
+        /// <summary>戦車IDと衝突エントリーの対応表</summary>
         private readonly Dictionary<int, TankCollisionEntry> _entries;
 
         // ======================================================
@@ -37,16 +39,13 @@ namespace TankSystem.Utility
         public TankCollisionCoordinator()
         {
             // サービス生成
-            _service =
-                new TankVersusTankCollisionService();
+            _service = new TankVersusTankCollisionService();
 
             // 辞書生成
-            _entries =
-                new Dictionary<int, TankCollisionEntry>();
+            _entries = new Dictionary<int, TankCollisionEntry>();
 
             // 衝突イベント購読
-            _service.OnTankVersusTankHit +=
-                HandleTankHit;
+            _service.OnTankVersusTankHit += HandleTankHit;
         }
 
         // ======================================================
@@ -60,8 +59,7 @@ namespace TankSystem.Utility
         public void Register(TankCollisionEntry entry)
         {
             // 戦車IDを採番
-            int tankId =
-                _entries.Count;
+            int tankId = _entries.Count;
 
             // 辞書へ登録
             _entries.Add(tankId, entry);
@@ -86,45 +84,36 @@ namespace TankSystem.Utility
         /// <summary>
         /// 戦車同士が接触した際の解決処理
         /// </summary>
+        /// <param name="tankIdA">戦車AのID</param>
+        /// <param name="tankIdB">戦車BのID</param>
         private void HandleTankHit(int tankIdA, int tankIdB)
         {
+            // ID からエントリを取得
+            if (!_entries.TryGetValue(tankIdA, out TankCollisionEntry entryA) ||
+                !_entries.TryGetValue(tankIdB, out TankCollisionEntry entryB))
+            {
+                return;
+            }
+
             // 各戦車の前進量を取得
-            float deltaA =
-                GetDeltaForward(tankIdA);
+            float deltaA = entryA.TankRootManager.DeltaForward;
+            float deltaB = entryB.TankRootManager.DeltaForward;
 
-            float deltaB =
-                GetDeltaForward(tankIdB);
-
-            // 衝突解決処理を実行
-            _service.ResolveTankVersusTank(
-                tankIdA,
-                tankIdB,
+            // 押し戻し計算処理を実行し、各戦車の押し戻し情報を out で受け取る
+            CollisionResolveInfo resolveA;
+            CollisionResolveInfo resolveB;
+            _service.CalculateTankVersusTankResolveInfo(
+                entryA,
+                entryB,
                 deltaA,
-                deltaB
+                deltaB,
+                out resolveA,
+                out resolveB
             );
-        }
 
-        /// <summary>
-        /// 戦車IDから直前フレームの前進量を取得する
-        /// </summary>
-        private float GetDeltaForward(int tankId)
-        {
-            // 対応エントリがなければ 0
-            if (!_entries.TryGetValue(
-                tankId,
-                out TankCollisionEntry entry))
-            {
-                return 0f;
-            }
-
-            // TankRootManager 未設定なら 0
-            if (entry.TankRootManager == null)
-            {
-                return 0f;
-            }
-
-            // 戦車側で管理している前進量を返す
-            return entry.TankRootManager.DeltaForward;
+            // 押し戻し処理を実行
+            entryA.TankRootManager.ApplyTankVersusTankCollisionResolve(resolveA);
+            entryB.TankRootManager.ApplyTankVersusTankCollisionResolve(resolveB);
         }
     }
 }

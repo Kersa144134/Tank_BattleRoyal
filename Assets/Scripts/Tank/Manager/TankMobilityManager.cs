@@ -185,20 +185,24 @@ namespace TankSystem.Manager
             CollisionResolveInfo resolveInfo =
                 _collisionService.CalculateObstacleResolveInfo(obstacle);
 
+            ApplyCollisionResolve(resolveInfo);
+        }
+
+        /// <summary>
+        /// 衝突解決による押し戻し量をそのまま適用する
+        /// </summary>
+        /// <param name="resolveInfo">呼び出し側で算出済みの押し戻し情報</param>
+        public void ApplyCollisionResolve(in CollisionResolveInfo resolveInfo)
+        {
             // 有効でなければ何もしない
             if (!resolveInfo.IsValid)
             {
                 return;
             }
 
-            // 押し戻し適用
-            const float COLLISION_EPSILON = 0.001f;
-
-            _tankTransform.position +=
-                resolveInfo.ResolveDirection *
-                (resolveInfo.ResolveDistance + COLLISION_EPSILON);
+            _tankTransform.position += resolveInfo.ResolveDirection * resolveInfo.ResolveDistance;
         }
-
+        
         // ======================================================
         // プライベートメソッド
         // ======================================================
@@ -256,9 +260,9 @@ namespace TankSystem.Manager
         {
             float dt = Time.deltaTime;
 
-            // =========================
+            // --------------------------------------------------
             // 前進・後退の加減速
-            // =========================
+            // --------------------------------------------------
             float forwardMaxDelta = _forwardAccelerationMultiplier * dt;
 
             // 正方向（前進）の減速および加速
@@ -292,9 +296,9 @@ namespace TankSystem.Manager
             // 正負の合算で現在前進量を決定
             _currentForward = _currentForwardPositive - _currentForwardNegative;
 
-            // =========================
+            // --------------------------------------------------
             // 旋回の加減速
-            // =========================
+            // --------------------------------------------------
             float turnMaxDelta = _turnAccelerationMultiplier * dt;
 
             // 正方向（右旋回）の減速および加速

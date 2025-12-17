@@ -7,7 +7,6 @@
 // ======================================================
 
 using UnityEngine;
-using CollisionSystem.Data;
 using CollisionSystem.Interface;
 using CollisionSystem.Utility;
 

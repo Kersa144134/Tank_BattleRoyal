@@ -15,25 +15,13 @@ namespace CollisionSystem.Data
     /// </summary>
     public struct CollisionResolveInfo
     {
-        // ======================================================
-        // フィールド
-        // ======================================================
-
-        /// <summary>
-        /// 押し戻し方向ベクトル
-        /// 正規化済みであり、ResolveDistance と掛け合わせて使用する
-        /// </summary>
+        /// <summary>押し戻し方向</summary>
         public Vector3 ResolveDirection;
 
-        /// <summary>
-        /// 押し戻しに必要な最小距離
-        /// </summary>
+        /// <summary>押し戻し距離</summary>
         public float ResolveDistance;
 
-        /// <summary>
-        /// この解決情報が有効かどうか
-        /// 衝突していない場合や算出失敗時は false となる
-        /// </summary>
+        /// <summary>解消情報が有効かどうか</summary>
         public bool IsValid;
     }
 }

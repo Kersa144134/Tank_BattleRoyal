@@ -6,17 +6,18 @@
 // 概要     : 戦車の各種制御を統合管理する
 // ======================================================
 
-using System;
-using System.Collections.Generic;
-using UnityEngine;
 using CollisionSystem.Calculator;
+using CollisionSystem.Data;
 using InputSystem.Data;
 using ItemSystem.Data;
 using SceneSystem.Interface;
+using System;
+using System.Collections.Generic;
 using TankSystem.Controller;
 using TankSystem.Data;
 using TankSystem.Service;
 using TankSystem.Utility;
+using UnityEngine;
 using WeaponSystem.Data;
 
 namespace TankSystem.Manager
@@ -104,8 +105,7 @@ namespace TankSystem.Manager
         public float DeltaForward => _mobilityManager.DeltaForward;
 
         /// <summary>
-        /// 戦車同士衝突判定用のエントリ情報
-        /// SceneManager へ登録される参照データ
+        /// 戦車同士衝突判定用のエントリー情報
         /// </summary>
         public TankCollisionEntry CollisionEntry
         {
@@ -118,6 +118,11 @@ namespace TankSystem.Manager
                 );
             }
         }
+
+        /// <summary>
+        /// 今フレーム中に移動を制限すべき軸
+        /// </summary>
+        public MovementLockAxis CurrentFrameLockAxis { get; private set; } = MovementLockAxis.None;
 
         // ======================================================
         // 定数
@@ -194,11 +199,17 @@ namespace TankSystem.Manager
             _attackManager.OnFireBullet += HandleFireBullet;
             _collisionService.OnObstacleHit += HandleObstacleHit;
             _collisionService.OnItemHit += HandleItemHit;
+            _collisionService.OnMovementLockAxisHit += HandleMovementLockAxisHit;
             _sceneRegistry.OnItemListChanged += HandleItemListChanged;
         }
 
         public virtual void OnUpdate()
         {
+            // --------------------------------------------------
+            // フレーム開始時に軸制限をリセット
+            // --------------------------------------------------
+            CurrentFrameLockAxis = MovementLockAxis.None;
+
             // --------------------------------------------------
             // 入力
             // --------------------------------------------------
@@ -250,6 +261,7 @@ namespace TankSystem.Manager
             _attackManager.OnFireBullet -= HandleFireBullet;
             _collisionService.OnObstacleHit -= HandleObstacleHit;
             _collisionService.OnItemHit -= HandleItemHit;
+            _collisionService.OnMovementLockAxisHit -= HandleMovementLockAxisHit;
             _sceneRegistry.OnItemListChanged -= HandleItemListChanged;
         }
 
@@ -263,6 +275,15 @@ namespace TankSystem.Manager
         public void ChangeInputMode()
         {
             _trackController.ChangeInputMode();
+        }
+
+        /// <summary>
+        /// 戦車同士の衝突解決による押し戻し量をそのまま適用する
+        /// </summary>
+        /// <param name="resolveInfo">呼び出し側で算出済みの押し戻し情報</param>
+        public void ApplyTankVersusTankCollisionResolve(in CollisionResolveInfo resolveInfo)
+        {
+            _mobilityManager.ApplyCollisionResolve(resolveInfo);
         }
         
         // ======================================================
@@ -312,6 +333,16 @@ namespace TankSystem.Manager
         private void HandleItemListChanged(List<ItemSlot> newList)
         {
             _collisionService.SetItemOBBs(newList);
+        }
+
+        /// <summary>
+        /// TankCollisionService からの軸移動制限通知を受け取り
+        /// CurrentFrameLockAxis を更新する処理を行うハンドラ
+        /// </summary>
+        /// <param name="lockAxis">制限すべき軸</param>
+        private void HandleMovementLockAxisHit(MovementLockAxis lockAxis)
+        {
+            CurrentFrameLockAxis |= lockAxis;
         }
 
         /// <summary>

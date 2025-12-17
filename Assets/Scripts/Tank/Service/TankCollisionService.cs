@@ -93,6 +93,9 @@ namespace TankSystem.Service
 
         /// <summary>アイテム取得時</summary>
         public event Action<ItemSlot> OnItemHit;
+        
+        /// <summary>通知した軸方向の移動を制限する</summary>
+        public event Action<MovementLockAxis> OnMovementLockAxisHit;
 
         // ======================================================
         // コンストラクタ
@@ -316,14 +319,10 @@ namespace TankSystem.Service
                 return default;
             }
 
-            // --------------------------------------------------
             // 戦車 OBB 更新
-            // --------------------------------------------------
             _tankOBB.Update();
 
-            // --------------------------------------------------
-            // MTV 算出（SAT）
-            // --------------------------------------------------
+            // MTV 算出
             if (!_boxCollisionCalculator.TryCalculateHorizontalMTV(
                 _tankOBB,
                 _obstacleOBBs[obstacleIndex],
@@ -334,16 +333,34 @@ namespace TankSystem.Service
                 return default;
             }
 
-            // --------------------------------------------------
             // 押し戻し方向補正
-            // --------------------------------------------------
-            Vector3 centerDelta = _tankOBB.Center - _obstacleOBBs[obstacleIndex].Center;
+            Vector3 centerDelta =
+                _tankOBB.Center - _obstacleOBBs[obstacleIndex].Center;
+
             centerDelta.y = 0f;
 
             if (Vector3.Dot(resolveAxis, centerDelta) < 0f)
             {
                 resolveAxis = -resolveAxis;
             }
+
+            // --------------------------------------------------
+            // 移動ロック軸判定
+            // --------------------------------------------------
+            MovementLockAxis lockAxis = MovementLockAxis.None;
+
+            // X 成分が支配的なら X 軸をロック
+            if (Mathf.Abs(resolveAxis.x) > Mathf.Abs(resolveAxis.z))
+            {
+                lockAxis |= MovementLockAxis.X;
+            }
+            // Z 成分が支配的なら Z 軸をロック
+            else
+            {
+                lockAxis |= MovementLockAxis.Z;
+            }
+
+            OnMovementLockAxisHit?.Invoke(lockAxis);
 
             return new CollisionResolveInfo
             {

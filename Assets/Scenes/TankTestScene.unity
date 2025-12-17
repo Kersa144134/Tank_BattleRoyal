@@ -4000,8 +4000,8 @@ MonoBehaviour:
     _ammo: 0
     _durability: 0
     _armor: 0
-    _horsePower: 20
-    _transmission: 20
+    _horsePower: 10
+    _transmission: 10
     _barrelScale: 0
     _projectileMass: 0
     _reloadTime: 0

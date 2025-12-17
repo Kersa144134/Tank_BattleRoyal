@@ -8,10 +8,12 @@
 // ======================================================
 
 using CollisionSystem.Calculator;
+using CollisionSystem.Data;
 using System;
 using System.Collections.Generic;
 using TankSystem.Data;
 using UnityEngine;
+using UnityEngine.Rendering.VirtualTexturing;
 
 namespace TankSystem.Service
 {
@@ -139,30 +141,31 @@ namespace TankSystem.Service
         }
 
         /// <summary>
-        /// 衝突している 2 台の戦車に対して MTV を用いた押し戻し処理を行う
+        /// 衝突している 2 台の戦車に対して MTV を用いた押し戻し量を計算する
+        /// 軸ロックを最優先に考慮し、ロック軸分を相手に逆向きで付与する
         /// </summary>
-        /// <param name="tankIdA">戦車AのID</param>
-        /// <param name="tankIdB">戦車BのID</param>
-        /// <param name="deltaForwardA">戦車Aの直前前進量</param>
-        /// <param name="deltaForwardB">戦車Bの直前前進量</param>
-        public void ResolveTankVersusTank(
-            in int tankIdA,
-            in int tankIdB,
+        public void CalculateTankVersusTankResolveInfo(
+            in TankCollisionEntry entryA,
+            in TankCollisionEntry entryB,
             in float deltaForwardA,
-            in float deltaForwardB
+            in float deltaForwardB,
+            out CollisionResolveInfo resolveInfoA,
+            out CollisionResolveInfo resolveInfoB
         )
         {
-            // 対象エントリを取得
-            TankCollisionEntry entryA = _tankEntries[tankIdA];
-            TankCollisionEntry entryB = _tankEntries[tankIdB];
+            // 初期化
+            resolveInfoA = default;
+            resolveInfoB = default;
 
-            // OBB を最新状態に更新
+            // フレーム中の軸制限を取得
+            MovementLockAxis lockAxisA = entryA.TankRootManager.CurrentFrameLockAxis;
+            MovementLockAxis lockAxisB = entryB.TankRootManager.CurrentFrameLockAxis;
+
+            // OBB を最新化
             entryA.OBB.Update();
             entryB.OBB.Update();
 
-            // --------------------------------------------------
-            // MTV 算出（SAT）
-            // --------------------------------------------------
+            // MTV 算出
             if (!_boxCollisionCalculator.TryCalculateHorizontalMTV(
                 entryA.OBB,
                 entryB.OBB,
@@ -173,70 +176,124 @@ namespace TankSystem.Service
                 return;
             }
 
-            // --------------------------------------------------
             // 押し戻し方向補正（中心差）
-            // --------------------------------------------------
-            Vector3 centerDelta =
-                entryA.OBB.Center - entryB.OBB.Center;
-
+            Vector3 centerDelta = entryA.OBB.Center - entryB.OBB.Center;
             centerDelta.y = 0f;
-
             if (Vector3.Dot(resolveAxis, centerDelta) < 0f)
             {
                 resolveAxis = -resolveAxis;
             }
 
-            // --------------------------------------------------
-            // 押し戻し対象決定
-            // --------------------------------------------------
+            // 最終押し戻し量
+            Vector3 finalResolveA = Vector3.zero;
+            Vector3 finalResolveB = Vector3.zero;
 
-            // A と B の移動有無を判定
-            bool isMovingA = !Mathf.Approximately(deltaForwardA, 0f);
-            bool isMovingB = !Mathf.Approximately(deltaForwardB, 0f);
-
-            // --------------------------------------------------
-            // 両方動いている場合
-            // DeltaForward が小さい方を押し戻す
-            // --------------------------------------------------
-            if (isMovingA && isMovingB)
+            // --------------------------
+            // X 軸押し戻し
+            // --------------------------
+            if ((lockAxisA & MovementLockAxis.X) != 0)
             {
-                // A の方が移動量が小さい場合
-                if (Mathf.Abs(deltaForwardA) <= Mathf.Abs(deltaForwardB))
+                // A がロック中なら B に押し返し
+                finalResolveB.x = -resolveAxis.x * resolveDistance;
+            }
+            else if ((lockAxisB & MovementLockAxis.X) != 0)
+            {
+                // B がロック中なら A に押し返し
+                finalResolveA.x = resolveAxis.x * resolveDistance;
+            }
+            else
+            {
+                // 両方動ける場合は DeltaForward による振り分け
+                if (!Mathf.Approximately(deltaForwardA, 0f) && !Mathf.Approximately(deltaForwardB, 0f))
                 {
-                    // A を押し戻す
-                    entryA.Transform.position +=
-                        resolveAxis * resolveDistance;
+                    if (Mathf.Abs(deltaForwardA) <= Mathf.Abs(deltaForwardB))
+                    {
+                        finalResolveA.x = resolveAxis.x * resolveDistance;
+                        finalResolveB.x = 0f;
+                    }
+                    else
+                    {
+                        finalResolveA.x = 0f;
+                        finalResolveB.x = -resolveAxis.x * resolveDistance;
+                    }
                 }
-                else
+                else if (!Mathf.Approximately(deltaForwardA, 0f))
                 {
-                    // B を押し戻す
-                    entryB.Transform.position -=
-                        resolveAxis * resolveDistance;
+                    finalResolveB.x = -resolveAxis.x * resolveDistance;
                 }
-
-                return;
+                else if (!Mathf.Approximately(deltaForwardB, 0f))
+                {
+                    finalResolveA.x = resolveAxis.x * resolveDistance;
+                }
             }
 
-            // --------------------------------------------------
-            // A のみ動いている場合
-            // → B を押し戻す
-            // --------------------------------------------------
-            if (isMovingA)
+            // --------------------------
+            // Z 軸押し戻し
+            // --------------------------
+            if ((lockAxisA & MovementLockAxis.Z) != 0)
             {
-                entryB.Transform.position -=
-                    resolveAxis * resolveDistance;
-
-                return;
+                // A が Z 軸ロック → B に押し返す
+                finalResolveA.z = 0f;
+                finalResolveB.z = -resolveAxis.z * resolveDistance;
+            }
+            else if ((lockAxisB & MovementLockAxis.Z) != 0)
+            {
+                // B が Z 軸ロック → A に押し返す
+                finalResolveA.z = resolveAxis.z * resolveDistance;
+                finalResolveB.z = 0f;
+            }
+            else
+            {
+                // 両方動ける場合は DeltaForward による振り分け
+                if (!Mathf.Approximately(deltaForwardA, 0f) && !Mathf.Approximately(deltaForwardB, 0f))
+                {
+                    if (Mathf.Abs(deltaForwardA) <= Mathf.Abs(deltaForwardB))
+                    {
+                        finalResolveA.z = resolveAxis.z * resolveDistance;
+                        finalResolveB.z = 0f;
+                    }
+                    else
+                    {
+                        finalResolveA.z = 0f;
+                        finalResolveB.z = -resolveAxis.z * resolveDistance;
+                    }
+                }
+                else if (!Mathf.Approximately(deltaForwardA, 0f))
+                {
+                    finalResolveB.z = -resolveAxis.z * resolveDistance;
+                }
+                else if (!Mathf.Approximately(deltaForwardB, 0f))
+                {
+                    finalResolveA.z = resolveAxis.z * resolveDistance;
+                }
             }
 
-            // --------------------------------------------------
-            // B のみ動いている場合
-            // → A を押し戻す
-            // --------------------------------------------------
-            if (isMovingB)
+            // 押し戻し量を CollisionResolveInfo に格納
+            resolveInfoA = new CollisionResolveInfo
             {
-                entryA.Transform.position +=
-                    resolveAxis * resolveDistance;
+                ResolveDirection = finalResolveA.normalized,
+                ResolveDistance = finalResolveA.magnitude,
+                IsValid = true
+            };
+
+            resolveInfoB = new CollisionResolveInfo
+            {
+                ResolveDirection = finalResolveB.normalized,
+                ResolveDistance = finalResolveB.magnitude,
+                IsValid = true
+            };
+
+            // ログ出力（押し返す側のみ、軸ロックが関与している場合）
+            bool isPushingBack = false;
+            if ((lockAxisA & MovementLockAxis.X) != 0 && finalResolveB.x != 0f) isPushingBack = true;
+            if ((lockAxisB & MovementLockAxis.X) != 0 && finalResolveA.x != 0f) isPushingBack = true;
+            if ((lockAxisA & MovementLockAxis.Z) != 0 && finalResolveB.z != 0f) isPushingBack = true;
+            if ((lockAxisB & MovementLockAxis.Z) != 0 && finalResolveA.z != 0f) isPushingBack = true;
+
+            if (isPushingBack)
+            {
+                Debug.Log($"Tank {entryA.Transform.name} Resolve: Direction={resolveInfoA.ResolveDirection}");
+                Debug.Log($"Tank {entryB.Transform.name} Resolve: Direction={resolveInfoB.ResolveDirection}");
             }
         }
     }
