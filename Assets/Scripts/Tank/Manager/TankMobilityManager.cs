@@ -8,11 +8,12 @@
 //            TankCollisionService により移動後の衝突判定を行う。
 // ======================================================
 
-using UnityEngine;
 using CollisionSystem.Data;
 using TankSystem.Controller;
 using TankSystem.Data;
 using TankSystem.Service;
+using UnityEngine;
+using static UnityEngine.EventSystems.EventTrigger;
 
 namespace TankSystem.Manager
 {
@@ -340,14 +341,11 @@ namespace TankSystem.Manager
                 return;
             }
 
-            // 微小な押し戻し量は無視
-            const float MIN_RESOLVE_DISTANCE = 0.001f;
-            if (resolveInfo.ResolveDistance < MIN_RESOLVE_DISTANCE)
-            {
-                return;
-            }
-
             _tankTransform.position += resolveInfo.ResolveDirection * resolveInfo.ResolveDistance;
+
+            Debug.Log($"Tank {_tankTransform.name}" +
+                $"Resolve: Direction={resolveInfo.ResolveDirection}" +
+                $"ResolveDistance={resolveInfo.ResolveDistance}");
         }
     }
 }

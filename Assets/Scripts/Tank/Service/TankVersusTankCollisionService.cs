@@ -282,19 +282,6 @@ namespace TankSystem.Service
                 ResolveDistance = finalResolveB.magnitude,
                 IsValid = true
             };
-
-            // ログ出力（押し返す側のみ、軸ロックが関与している場合）
-            bool isPushingBack = false;
-            if ((lockAxisA & MovementLockAxis.X) != 0 && finalResolveB.x != 0f) isPushingBack = true;
-            if ((lockAxisB & MovementLockAxis.X) != 0 && finalResolveA.x != 0f) isPushingBack = true;
-            if ((lockAxisA & MovementLockAxis.Z) != 0 && finalResolveB.z != 0f) isPushingBack = true;
-            if ((lockAxisB & MovementLockAxis.Z) != 0 && finalResolveA.z != 0f) isPushingBack = true;
-
-            if (isPushingBack)
-            {
-                Debug.Log($"Tank {entryA.Transform.name} Resolve: Direction={resolveInfoA.ResolveDirection}");
-                Debug.Log($"Tank {entryB.Transform.name} Resolve: Direction={resolveInfoB.ResolveDirection}");
-            }
         }
     }
 }

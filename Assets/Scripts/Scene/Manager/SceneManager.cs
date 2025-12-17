@@ -170,13 +170,13 @@ namespace SceneSystem.Manager
 
             // Update 実行
             _updateManager.Update();
-
-            // 戦車衝突更新
-            _tankCollisionCoordinator.Update();
         }
 
         private void LateUpdate()
         {
+            // 戦車衝突更新
+            _tankCollisionCoordinator.Update();
+            
             // LateUpdate 実行
             _updateManager.LateUpdate();
         }
