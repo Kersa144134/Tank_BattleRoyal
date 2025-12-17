@@ -59,7 +59,7 @@ namespace TankSystem.Manager
             // AI制御の簡易例
             // 前進と旋回の固定値を出力
             // --------------------------------------------------
-            leftMobility = new Vector2(0f, 1f);
+            leftMobility = new Vector2(0f, 2f);
             rightMobility = Vector2.zero;
 
             modeChange = false;

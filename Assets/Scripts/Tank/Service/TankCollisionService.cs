@@ -30,7 +30,7 @@ namespace TankSystem.Service
         /// <summary>OBB を生成するためのファクトリークラス</summary>
         private readonly OBBFactory _obbFactory;
 
-        /// <summary>OBB / OBB の距離計算および衝突判定を行うコントローラー</summary>
+        /// <summary>OBB / OBB の距離計算および衝突判定を行う計算器</summary>
         private readonly BoundingBoxCollisionCalculator _boxCollisionCalculator;
 
         // ======================================================
@@ -69,6 +69,13 @@ namespace TankSystem.Service
 
         /// <summary>アイテムの OBBData 配列</summary>
         private IOBBData[] _itemOBBs;
+
+        // ======================================================
+        // パブリック
+        // ======================================================
+
+        /// <summary>戦車本体の動的 OBB</summary>
+        public IOBBData TankOBB => _tankOBB;
 
         // ======================================================
         // 辞書
@@ -212,7 +219,6 @@ namespace TankSystem.Service
             // --------------------------------------------------
             // 戦車 OBB 更新
             // --------------------------------------------------
-
             _tankOBB.Update();
 
             // --------------------------------------------------
@@ -313,13 +319,11 @@ namespace TankSystem.Service
             // --------------------------------------------------
             // 戦車 OBB 更新
             // --------------------------------------------------
-
             _tankOBB.Update();
 
             // --------------------------------------------------
             // MTV 算出（SAT）
             // --------------------------------------------------
-
             if (!_boxCollisionCalculator.TryCalculateHorizontalMTV(
                 _tankOBB,
                 _obstacleOBBs[obstacleIndex],
@@ -333,7 +337,6 @@ namespace TankSystem.Service
             // --------------------------------------------------
             // 押し戻し方向補正
             // --------------------------------------------------
-
             Vector3 centerDelta = _tankOBB.Center - _obstacleOBBs[obstacleIndex].Center;
             centerDelta.y = 0f;
 

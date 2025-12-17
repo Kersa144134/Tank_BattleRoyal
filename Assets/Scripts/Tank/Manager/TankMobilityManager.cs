@@ -71,6 +71,16 @@ namespace TankSystem.Manager
         /// <summary>現在フレームでの負方向の旋回量</summary>
         private float _currentTurnNegative;
 
+        /// <summary>前フレームの前進量を保持し、移動量計算に使用する</summary>
+        private float _previousForward;
+        
+        // ======================================================
+        // プロパティ
+        // ======================================================
+
+        /// <summary>前フレームからの移動量</summary>
+        public float DeltaForward => _currentForward - _previousForward;
+        
         // ======================================================
         // 定数
         // ======================================================
@@ -187,14 +197,6 @@ namespace TankSystem.Manager
             _tankTransform.position +=
                 resolveInfo.ResolveDirection *
                 (resolveInfo.ResolveDistance + COLLISION_EPSILON);
-        }
-
-        /// <summary>
-        /// キャタピラの入力モードを切り替える
-        /// </summary>
-        public void ChangeInputMode()
-        {
-            _trackController.ChangeInputMode();
         }
 
         // ======================================================

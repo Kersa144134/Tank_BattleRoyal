@@ -72,7 +72,7 @@ namespace TankSystem.Manager
         /// <summary>左右キャタピラ入力から前進量・旋回量を算出するコントローラー</summary>
         private TankTrackController _trackController = new TankTrackController();
 
-        /// <summary>AABB / OBB の距離計算および衝突判定を行うコントローラー</summary>
+        /// <summary>AABB / OBB の距離計算および衝突判定を行う計算器</summary>
         private BoundingBoxCollisionCalculator _boxCollisionCalculator = new BoundingBoxCollisionCalculator();
 
         /// <summary>OBB を生成するためのファクトリー</summary>
@@ -91,15 +91,34 @@ namespace TankSystem.Manager
         // プロパティ
         // ======================================================
 
-        /// <summary>キャタピラ入力モード</summary>
-        public TrackInputMode InputMode => _trackController.InputMode;
-
         /// <summary>ゲーム中に変動する戦車のパラメーター</summary>
         public TankStatus TankStatus => _tankStatus;
 
+        /// <summary>キャタピラ入力モード</summary>
+        public TrackInputMode InputMode => _trackController.InputMode;
+
         /// <summary>弾丸発射ローカル位置</summary>
         public Transform FirePoint => _firePoint;
-        
+
+        /// <summary>前フレームからの移動量</summary>
+        public float DeltaForward => _mobilityManager.DeltaForward;
+
+        /// <summary>
+        /// 戦車同士衝突判定用のエントリ情報
+        /// SceneManager へ登録される参照データ
+        /// </summary>
+        public TankCollisionEntry CollisionEntry
+        {
+            get
+            {
+                return new TankCollisionEntry(
+                    this,
+                    transform,
+                    _collisionService.TankOBB
+                );
+            }
+        }
+
         // ======================================================
         // 定数
         // ======================================================
@@ -243,7 +262,7 @@ namespace TankSystem.Manager
         /// </summary>
         public void ChangeInputMode()
         {
-            _mobilityManager.ChangeInputMode();
+            _trackController.ChangeInputMode();
         }
         
         // ======================================================

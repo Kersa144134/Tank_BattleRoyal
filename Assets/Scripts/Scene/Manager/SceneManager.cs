@@ -15,6 +15,7 @@ using System;
 using System.Collections.Generic;
 using TankSystem.Data;
 using TankSystem.Manager;
+using TankSystem.Service;
 using UnityEngine;
 using WeaponSystem.Data;
 using WeaponSystem.Manager;
@@ -37,7 +38,7 @@ public class SceneManager : MonoBehaviour
     // シーン・フェーズ制御
     // --------------------------------------------------
     /// <summary>IUpdatable を保持し毎フレーム OnUpdate を実行するコントローラ</summary>
-    private UpdateController _updateController;
+    private UpdateController _updateController = new UpdateController();
 
     /// <summary>フェーズ切替を管理し UpdateController に対象を割り当てるコントローラ</summary>
     private PhaseController _phaseController;
@@ -46,7 +47,14 @@ public class SceneManager : MonoBehaviour
     private PhaseRuntimeData _phaseRuntimeData;
 
     // --------------------------------------------------
-    // その他
+    // 内部参照
+    // --------------------------------------------------
+    /// <summary>戦車同士の衝突判定を一元管理するサービス</summary>
+    private TankVersusTankCollisionService
+        _tankVersusTankCollisionService = new TankVersusTankCollisionService();
+
+    // --------------------------------------------------
+    // 外部参照
     // --------------------------------------------------
     /// <summary>弾丸オブジェクトとロジックの管理を行うプールクラス</summary>
     private BulletPool _bulletPool;
@@ -82,13 +90,20 @@ public class SceneManager : MonoBehaviour
     private IUpdatable[] _updatables;
 
     // ======================================================
+    // 辞書
+    // ======================================================
+
+    /// <summary>戦車IDと衝突判定エントリーの対応表</summary>
+    private Dictionary<int, TankCollisionEntry> _tankEntries;
+
+    // ======================================================
     // Unityイベント
     // ======================================================
 
     private void Awake()
     {
-        // UpdateController を生成
-        CreateUpdateController();
+        // 戦車エントリーを生成
+        _tankEntries = new Dictionary<int, TankCollisionEntry>();
 
         // PhaseData を読み込み
         PhaseData[] phaseDataList = LoadPhaseData();
@@ -104,6 +119,9 @@ public class SceneManager : MonoBehaviour
 
         // シーン内 IUpdatable を初期化・キャッシュ
         InitializeUpdatables();
+
+        // 戦車 OBB を衝突判定サービスへ登録
+        RegisterTankOBBs();
     }
 
     private void Update()
@@ -129,6 +147,11 @@ public class SceneManager : MonoBehaviour
         // 更新処理
         // --------------------------------------------------
         _updateController.OnUpdate();
+
+        // --------------------------------------------------
+        // 戦車衝突処理
+        // --------------------------------------------------
+        _tankVersusTankCollisionService.UpdateCollisionChecks();
     }
 
     private void LateUpdate()
@@ -155,6 +178,9 @@ public class SceneManager : MonoBehaviour
         {
             _enemyTankRootManagers[i].OnFireBullet += HandleFireBullet;
         }
+
+        _tankVersusTankCollisionService.OnTankVersusTankHit
+            += HandleTankVersusTankHit;
     }
 
     private void OnDisable()
@@ -175,19 +201,14 @@ public class SceneManager : MonoBehaviour
         {
             _enemyTankRootManagers[i].OnFireBullet -= HandleFireBullet;
         }
+
+        _tankVersusTankCollisionService.OnTankVersusTankHit
+            -= HandleTankVersusTankHit;
     }
 
     // ======================================================
     // プライベートメソッド
     // ======================================================
-
-    /// <summary>
-    /// UpdateController を生成する
-    /// </summary>
-    private void CreateUpdateController()
-    {
-        _updateController = new UpdateController();
-    }
 
     /// <summary>
     /// Resources から PhaseData を読み込む
@@ -302,7 +323,88 @@ public class SceneManager : MonoBehaviour
             enemyList.Add(enemyTankRootManager);
         }
     }
-    
+
+    /// <summary>
+    /// 戦車の衝突判定エントリを登録する
+    /// </summary>
+    /// <param name="tankId">戦車固有ID</param>
+    /// <param name="entry">衝突判定エントリ</param>
+    private void RegisterTankEntry(
+        in int tankId,
+        in TankCollisionEntry entry
+    )
+    {
+        // 既存キーがある場合は上書きしない
+        if (_tankEntries.ContainsKey(tankId))
+        {
+            return;
+        }
+
+        _tankEntries.Add(tankId, entry);
+    }
+
+    /// <summary>
+    /// シーン内に存在するすべての戦車の OBB 情報を TankVersusTankCollisionService に登録する
+    /// </summary>
+    private void RegisterTankOBBs()
+    {
+        // 戦車IDカウンタ
+        int tankId = 0;
+
+        // プレイヤー戦車が存在しない場合は処理しない
+        if (_playerTankRootManager == null)
+        {
+            return;
+        }
+
+        // プレイヤー戦車を登録
+        RegisterTankEntry(
+            tankId,
+            _playerTankRootManager.CollisionEntry
+        );
+        tankId++;
+
+        // エネミー戦車が存在しない場合は終了
+        if (_enemyTankRootManagers == null)
+        {
+            return;
+        }
+
+        // エネミー戦車を登録
+        for (int i = 0; i < _enemyTankRootManagers.Length; i++)
+        {
+            RegisterTankEntry(
+                tankId,
+                _enemyTankRootManagers[i].CollisionEntry
+            );
+            tankId++;
+        }
+
+        // 一括で衝突判定サービスへ反映
+        _tankVersusTankCollisionService.SetTankEntries(_tankEntries);
+    }
+
+    /// <summary>
+    /// 戦車IDから直前フレームの前進移動量を取得する
+    /// </summary>
+    private float GetDeltaForwardByTankId(in int tankId)
+    {
+        // 対応する戦車エントリが存在しない場合は 0
+        if (!_tankEntries.TryGetValue(tankId, out TankCollisionEntry entry))
+        {
+            return 0f;
+        }
+
+        // 戦車コンポーネントが未設定の場合は 0
+        if (entry.TankRootManager == null)
+        {
+            return 0f;
+        }
+
+        // 戦車側で管理している直前前進量を取得
+        return entry.TankRootManager.DeltaForward;
+    }
+
     /// <summary>
     /// シーン遷移を実行する
     /// </summary>
@@ -434,5 +536,29 @@ public class SceneManager : MonoBehaviour
 
         // BulletPool で弾丸を生成・発射
         _bulletPool.Spawn(type, tank.TankStatus, firePosition, fireDirection);
+    }
+
+    /// <summary>
+    /// 戦車同士が接触した際に呼び出されるハンドラ
+    /// </summary>
+    /// <param name="tankIdA">戦車AのID</param>
+    /// <param name="tankIdB">戦車BのID</param>
+    private void HandleTankVersusTankHit(
+        int tankIdA,
+        int tankIdB
+    )
+    {
+        float deltaForwardA =
+        GetDeltaForwardByTankId(tankIdA);
+
+        float deltaForwardB =
+            GetDeltaForwardByTankId(tankIdB);
+
+        _tankVersusTankCollisionService.ResolveTankVersusTank(
+            tankIdA,
+            tankIdB,
+            deltaForwardA,
+            deltaForwardB
+        );
     }
 }
