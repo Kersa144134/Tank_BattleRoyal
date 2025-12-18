@@ -12,7 +12,6 @@ using UnityEngine;
 using CollisionSystem.Calculator;
 using CollisionSystem.Data;
 using InputSystem.Data;
-using ItemSystem.Data;
 using SceneSystem.Interface;
 using TankSystem.Controller;
 using TankSystem.Data;
@@ -73,12 +72,6 @@ namespace TankSystem.Manager
         /// <summary>左右キャタピラ入力から前進量・旋回量を算出するコントローラー</summary>
         private TankTrackController _trackController = new TankTrackController();
 
-        /// <summary>AABB / OBB の距離計算および衝突判定を行う計算器</summary>
-        private BoundingBoxCollisionCalculator _boxCollisionCalculator = new BoundingBoxCollisionCalculator();
-
-        /// <summary>OBB を生成するためのファクトリー</summary>
-        private OBBFactory _obbFactory = new OBBFactory();
-
         // --------------------------------------------------
         // サービス
         // --------------------------------------------------
@@ -107,6 +100,12 @@ namespace TankSystem.Manager
 
         /// <summary>弾丸発射ローカル位置</summary>
         public Transform FirePoint => _firePoint;
+
+        /// <summary>移動予定ワールド座標</summary>
+        public Vector3 PlannedNextPosition => _plannedNextPosition;
+
+        /// <summary>移動予定回転</summary>
+        public Quaternion PlannedNextRotation => _plannedNextRotation;
 
         /// <summary>前フレームからの移動量</summary>
         public float DeltaForward => _mobilityManager.DeltaForward;
@@ -179,7 +178,6 @@ namespace TankSystem.Manager
 
             // イベント購読
             _attackManager.OnFireBullet += HandleFireBullet;
-            _sceneRegistry.OnItemListChanged += HandleItemListChanged;
         }
 
         public virtual void OnUpdate()
@@ -251,7 +249,6 @@ namespace TankSystem.Manager
         {
             // イベント購読の解除
             _attackManager.OnFireBullet -= HandleFireBullet;
-            _sceneRegistry.OnItemListChanged -= HandleItemListChanged;
         }
 
         // ======================================================
@@ -278,61 +275,6 @@ namespace TankSystem.Manager
         // ======================================================
         // イベントハンドラ
         // ======================================================
-
-        /// <summary>
-        /// 障害物に衝突したときの処理を行うハンドラ
-        /// </summary>
-        /// <param name="obstacle">衝突した障害物の Transform</param>
-        private void HandleObstacleHit(Transform obstacle)
-        {
-            //_mobilityManager.CheckObstaclesCollision(obstacle);
-        }
-
-        /// <summary>
-        /// アイテムに衝突したときの処理を行うハンドラ
-        /// </summary>
-        /// <param name="itemSlot">衝突したアイテムの Slot</param>
-        private void HandleItemHit(ItemSlot itemSlot)
-        {
-            ItemData data = itemSlot.ItemData;
-
-            // 型判定で ParamItemData か WeaponItemData を判別
-            if (data is ParamItemData param)
-            {
-                // 戦車パラメーターを増加
-                _tankStatus.IncreaseParameter(param.Type, param.Value);
-            }
-            else if (data is WeaponItemData weapon)
-            {
-                // 武装アイテム取得処理
-            }
-            else
-            {
-                return;
-            }
-
-            // アイテム削除
-            _sceneRegistry.RemoveItem(itemSlot);
-        }
-
-        /// <summary>
-        /// SceneObjectRegistry のアイテム更新イベント受信時に
-        /// OBB 情報を再生成する処理を行うハンドラ
-        /// </summary>
-        private void HandleItemListChanged(List<ItemSlot> newList)
-        {
-            //_collisionService.SetItemOBBs(newList);
-        }
-
-        /// <summary>
-        /// TankCollisionService からの軸移動制限通知を受け取り
-        /// CurrentFrameLockAxis を更新する処理を行うハンドラ
-        /// </summary>
-        /// <param name="lockAxis">制限すべき軸</param>
-        private void HandleMovementLockAxisHit(MovementLockAxis lockAxis)
-        {
-            CurrentFrameLockAxis |= lockAxis;
-        }
 
         /// <summary>
         /// 左右トリガー入力を元に攻撃を実行し、

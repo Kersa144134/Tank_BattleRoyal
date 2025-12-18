@@ -1,27 +1,26 @@
 // ======================================================
-// VersusItemCollisionService.cs
+// VersusTankCollisionService.cs
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-17
 // 更新日時 : 2025-12-18
-// 概要     : 戦車とアイテムの OBB 衝突判定を担当するサービス
+// 概要     : 戦車同士の OBB 衝突判定を担当するサービス
+//            判定ループは内部で完結させる
 // ======================================================
 
 using CollisionSystem.Calculator;
-using CollisionSystem.Interface;
 using System;
 using System.Collections.Generic;
 using TankSystem.Data;
 using TankSystem.Interface;
-using TankSystem.Utility;
 using UnityEngine;
 
 namespace TankSystem.Service
 {
     /// <summary>
-    /// 戦車とアイテム間の衝突判定を専門に処理するサービス
-    /// アイテムは取得専用であり、押し戻し処理は行わない
+    /// 戦車同士の衝突判定を専門に処理するサービス
+    /// 各戦車ペアの重複判定を防ぎつつ判定を行う
     /// </summary>
-    public sealed class VersusItemCollisionService : ITankCollisionService
+    public sealed class VersusTankCollisionService : ITankCollisionService
     {
         // ======================================================
         // コンポーネント参照
@@ -41,34 +40,23 @@ namespace TankSystem.Service
         /// </summary>
         private readonly List<TankCollisionContext> _tanks;
 
-        /// <summary>
-        /// シーン上に存在するアイテムスロット一覧
-        /// </summary>
-        private List<ItemSlot> _items;
-
-        /// <summary>
-        /// 各アイテムに対応する静的 OBB 配列
-        /// ItemSlot のインデックスと 1 対 1 で対応する
-        /// </summary>
-        private IOBBData[] _itemOBBs;
-
         // ======================================================
         // イベント
         // ======================================================
 
         /// <summary>
-        /// 戦車がアイテムと接触した際に通知されるイベント
+        /// 戦車同士が接触した際に通知されるイベント
         /// </summary>
-        public event Action<TankCollisionContext, ItemSlot> OnItemHit;
+        public event Action<TankCollisionContext, TankCollisionContext> OnTankHit;
 
         // ======================================================
         // コンストラクタ
         // ======================================================
 
         /// <summary>
-        /// 戦車 vs アイテム 衝突判定サービスを生成する
+        /// 戦車 vs 戦車 衝突判定サービスを生成する
         /// </summary>
-        public VersusItemCollisionService(
+        public VersusTankCollisionService(
             in BoundingBoxCollisionCalculator boxCollisionCalculator,
             in List<TankCollisionContext> tanks
         )
@@ -81,48 +69,12 @@ namespace TankSystem.Service
         }
 
         // ======================================================
-        // セッター
-        // ======================================================
-
-        /// <summary>
-        /// アイテム一覧から静的 OBB を生成し、内部にキャッシュする
-        /// </summary>
-        public void SetItemOBBs(
-            in OBBFactory obbFactory,
-            in List<ItemSlot> items
-        )
-        {
-            _items = items;
-
-            // アイテムが存在しない場合は空配列を設定
-            if (_items == null || _items.Count == 0)
-            {
-                _itemOBBs = Array.Empty<IOBBData>();
-                return;
-            }
-
-            // アイテム数分の OBB 配列を生成
-            _itemOBBs = new IOBBData[_items.Count];
-
-            // 各アイテム Transform から静的 OBB を生成
-            for (int i = 0; i < _items.Count; i++)
-            {
-                _itemOBBs[i] =
-                    obbFactory.CreateStaticOBB(
-                        _items[i].ItemTransform,
-                        Vector3.zero,
-                        Vector3.one
-                    );
-            }
-        }
-
-        // ======================================================
         // ITankCollisionService 実装
         // ======================================================
 
         /// <summary>
         /// 判定ループ開始前の事前処理
-        /// アイテム側にはフレーム更新が無いため処理なし
+        /// 全戦車の OBB を最新状態に更新する
         /// </summary>
         public void PreUpdate()
         {
@@ -134,49 +86,46 @@ namespace TankSystem.Service
             // 全戦車の OBB を更新
             for (int i = 0; i < _tanks.Count; i++)
             {
-                TankCollisionContext context = _tanks[i];
-                context.OBB.Update();
+                _tanks[i].OBB.Update();
             }
         }
 
         /// <summary>
-        /// 戦車とアイテムの衝突判定を実行する
+        /// 戦車同士の衝突判定を実行する
         /// </summary>
         public void Execute()
         {
-            if (_items == null || _itemOBBs == null)
+            if (_tanks == null || _tanks.Count < 2)
             {
                 return;
             }
 
             // --------------------------------------------------
-            // 戦車 × アイテム 判定ループ
+            // 戦車 × 戦車 判定ループ
             // --------------------------------------------------
-            for (int i = 0; i < _tanks.Count; i++)
+            for (int i = 0; i < _tanks.Count - 1; i++)
             {
-                // 判定対象戦車を取得する
-                TankCollisionContext tankContext = _tanks[i];
+                // 判定基準となる戦車 A
+                TankCollisionContext tankA = _tanks[i];
 
-                for (int t = 0; t < _itemOBBs.Length; t++)
+                for (int j = i + 1; j < _tanks.Count; j++)
                 {
-                    if (!_items[t].IsEnabled)
-                    {
-                        continue;
-                    }
+                    // 判定対象となる戦車 B
+                    TankCollisionContext tankB = _tanks[j];
 
                     // OBB 衝突判定
                     if (!_boxCollisionCalculator.IsCollidingHorizontal(
-                        tankContext.OBB,
-                        _itemOBBs[t]
+                        tankA.OBB,
+                        tankB.OBB
                     ))
                     {
                         continue;
                     }
 
-                    // アイテム取得イベントを通知
-                    OnItemHit?.Invoke(
-                        tankContext,
-                        _items[t]
+                    // 戦車同士の衝突イベントを通知
+                    OnTankHit?.Invoke(
+                        tankA,
+                        tankB
                     );
                 }
             }

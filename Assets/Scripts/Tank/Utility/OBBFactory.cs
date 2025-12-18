@@ -53,12 +53,12 @@ namespace TankSystem.Utility
         /// <summary>
         /// 動的 OBBData（DynamicOBBData）を生成する
         /// </summary>
-        /// <param name="targetTransform">追従対象 Transform</param>
+        /// <param name="context">衝突判定および衝突解決処理で使用されるコンテキスト</param>
         /// <param name="localCenter">ローカル空間での中心位置</param>
         /// <param name="localSize">ローカル空間でのサイズ</param>
         /// <returns>動的 OBBData</returns>
         public DynamicOBBData CreateDynamicOBB(
-            in Transform targetTransform,
+            in BaseCollisionContext context,
             in Vector3 localCenter,
             in Vector3 localSize
         )
@@ -67,7 +67,7 @@ namespace TankSystem.Utility
             Vector3 halfSize = localSize * 0.5f;
 
             // DynamicOBBData を生成して返す
-            return new DynamicOBBData(targetTransform, localCenter, halfSize);
+            return new DynamicOBBData(context, localCenter, halfSize);
         }
     }
 }

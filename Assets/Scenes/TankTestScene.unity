@@ -6622,11 +6622,11 @@ MonoBehaviour:
   - {fileID: 1512516190}
   - {fileID: 2029526539}
   - {fileID: 76211782}
-  - {fileID: 1749357753}
-  - {fileID: 1327687266}
   - {fileID: 435110467}
   - {fileID: 1909697141}
   - {fileID: 52312538}
+  - {fileID: 1327687266}
+  - {fileID: 1749357753}
 --- !u!1 &820916603
 GameObject:
   m_ObjectHideFlags: 0
@@ -11496,7 +11496,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ebb6e99756f00f24b9853709354891ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _mainCamera: {fileID: 330585545}
+  _mainCamera: {fileID: 330585546}
   _tanks:
   - {fileID: 435110471}
   - {fileID: 1909697143}
@@ -12943,7 +12943,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6c7a226746e3b5e48a47e38226cea862, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _sceneRegistry: {fileID: 0}
+  _sceneRegistry: {fileID: 1512516192}
 --- !u!1 &1785222240
 GameObject:
   m_ObjectHideFlags: 0

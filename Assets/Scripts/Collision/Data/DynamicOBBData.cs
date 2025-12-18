@@ -2,17 +2,17 @@
 // DynamicOBBData.cs
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-16
-// 更新日時 : 2025-12-16
-// 概要     : 動的オブジェクト用 OBB データ
+// 更新日時 : 2025-12-18
+// 概要     : 動的 OBB データ（BaseCollisionContext連動）
 // ======================================================
 
-using CollisionSystem.Interface;
 using UnityEngine;
+using CollisionSystem.Interface;
 
 namespace CollisionSystem.Data
 {
     /// <summary>
-    /// 動的 OBB データ
+    /// BaseCollisionContext の移動予定座標・回転を基準に OBB を更新する汎用動的 OBB
     /// </summary>
     public class DynamicOBBData : IOBBData
     {
@@ -20,45 +20,31 @@ namespace CollisionSystem.Data
         // プロパティ
         // ======================================================
 
-        /// <summary>OBB の中心座標（ワールド基準）</summary>
         public Vector3 Center { get; private set; }
-
-        /// <summary>OBB の半サイズ（ローカル基準）</summary>
         public Vector3 HalfSize { get; private set; }
-
-        /// <summary>OBB の回転（ワールド基準）</summary>
         public Quaternion Rotation { get; private set; }
-
-        /// <summary>OBB の Transform</summary>
-        public Transform Transform => _transform;
 
         // ======================================================
         // フィールド
         // ======================================================
 
-        /// <summary>OBB を追従する Transform</summary>
-        private readonly Transform _transform;
-
-        /// <summary>Transform 基準のローカル中心オフセット</summary>
+        /// <summary>ローカル中心オフセット</summary>
         private readonly Vector3 _localCenter;
+
+        /// <summary>参照する汎用コンテキスト</summary>
+        private readonly BaseCollisionContext _context;
 
         // ======================================================
         // コンストラクタ
         // ======================================================
 
-        /// <summary>
-        /// 動的 OBB を初期化する
-        /// </summary>
-        /// <param name="transform">追従する Transform</param>
-        /// <param name="localCenter">Transform 基準のローカル中心オフセット</param>
-        /// <param name="halfSize">半サイズ</param>
         public DynamicOBBData(
-            in Transform transform,
+            in BaseCollisionContext context,
             in Vector3 localCenter,
             in Vector3 halfSize
         )
         {
-            _transform = transform;
+            _context = context;
             _localCenter = localCenter;
             HalfSize = halfSize;
 
@@ -72,20 +58,18 @@ namespace CollisionSystem.Data
         // ======================================================
 
         /// <summary>
-        /// 毎フレーム呼び出して Transform に基づき Center と Rotation を更新する
+        /// BaseCollisionContext の予定座標・回転を基準に毎フレーム OBB を更新
         /// </summary>
         public void Update()
         {
-            if (_transform == null)
+            if (_context == null)
             {
                 return;
             }
 
-            // 中心座標の更新
-            Center = _transform.position + _localCenter;
-
-            // 回転の更新
-            Rotation = _transform.rotation;
+            // PlannedNextPosition / PlannedNextRotation を基準に OBB 更新
+            Center = _context.PlannedNextPosition + _localCenter;
+            Rotation = _context.PlannedNextRotation;
         }
     }
 }

@@ -10,9 +10,12 @@ using CollisionSystem.Calculator;
 using SceneSystem.Interface;
 using System.Collections.Generic;
 using TankSystem.Data;
+using TankSystem.Interface;
 using TankSystem.Service;
 using TankSystem.Utility;
+using UnityEditorInternal.Profiling.Memory.Experimental;
 using UnityEngine;
+using static TankSystem.Interface.ITankCollisionService;
 
 namespace TankSystem.Manager
 {
@@ -45,7 +48,14 @@ namespace TankSystem.Manager
         /// <summary>OBB を生成するファクトリー</summary>
         private readonly OBBFactory _obbFactory = new OBBFactory();
 
-        private readonly TankCollisionContextFactory _collisionContextFactory;
+        /// <summary>戦車衝突用コンテキストを生成するファクトリー</summary>
+        private TankCollisionContextFactory _collisionContextFactory;
+
+        /// <summary>
+        /// 衝突判定サービス一覧
+        /// 判定順は登録順で制御する
+        /// </summary>
+        private readonly List<ITankCollisionService> _collisionServices = new List<ITankCollisionService>();
 
         /// <summary>対 障害物 衝突判定サービス</summary>
         private VersusObstacleCollisionService _versusObstacleService;
@@ -57,14 +67,13 @@ namespace TankSystem.Manager
         private VersusTankCollisionService _versusTankService;
 
         // ======================================================
-        // コンテキスト
+        // フィールド
         // ======================================================
 
         /// <summary>
         /// 現在有効な戦車衝突コンテキスト一覧
         /// </summary>
-        private readonly List<TankCollisionContext> _tankContexts =
-            new List<TankCollisionContext>();
+        private readonly List<TankCollisionContext> _tankContexts = new List<TankCollisionContext>();
 
         // ======================================================
         // IUpdatable 実装
@@ -72,6 +81,8 @@ namespace TankSystem.Manager
 
         public void OnEnter()
         {
+            _collisionContextFactory = new TankCollisionContextFactory(_obbFactory);
+
             // --------------------------------------------------
             // 戦車コンテキスト構築
             // --------------------------------------------------
@@ -83,6 +94,22 @@ namespace TankSystem.Manager
             _versusObstacleService = new VersusObstacleCollisionService(_boxCollisionCalculator, _tankContexts, _sceneRegistry.Obstacles);
             _versusItemService = new VersusItemCollisionService(_boxCollisionCalculator, _tankContexts);
             _versusTankService = new VersusTankCollisionService(_boxCollisionCalculator, _tankContexts);
+
+            // --------------------------------------------------
+            // 初回 OBB 生成 
+            // --------------------------------------------------
+            _versusObstacleService.SetObstacleOBBs(_obbFactory);
+            SetItems(_sceneRegistry.ItemSlots);
+
+            // --------------------------------------------------
+            // 判定順に各衝突判定サービスを登録
+            // --------------------------------------------------
+            // 障害物
+            _collisionServices.Add(_versusObstacleService);
+            // 戦車同士
+            _collisionServices.Add(_versusTankService);
+            // アイテム
+            _collisionServices.Add(_versusItemService);
 
             // --------------------------------------------------
             // イベント購読
@@ -104,16 +131,15 @@ namespace TankSystem.Manager
         public void OnUpdate()
         {
             // --------------------------------------------------
-            // 衝突判定実行順
+            // 衝突判定サービス実行
             // --------------------------------------------------
-            // 1. 障害物（ロック軸が最優先）
-            _versusObstacleService.UpdateCollisionChecks();
+            for (int s = 0; s < _collisionServices.Count; s++)
+            {
+                ITankCollisionService service = _collisionServices[s];
 
-            // 2. 戦車同士（ロック軸を考慮）
-            _versusTankService.UpdateCollisionChecks();
-
-            // 3. アイテム（最終的な位置で判定）
-            _versusItemService.UpdateCollisionChecks();
+                service.PreUpdate();
+                service.Execute();
+            }
         }
 
         public void OnExit()
@@ -140,16 +166,7 @@ namespace TankSystem.Manager
         // ======================================================
 
         /// <summary>
-        /// アイテム情報を戦車 vs アイテム判定サービスへ登録する
-        /// </summary>
-        /// <param name="items">衝突判定対象となるアイテム一覧</param>
-        public void SetObstacles(in List<ItemSlot> items)
-        {
-            _versusObstacleService.SetObstacleOBBs(_obbFactory);
-        }
-
-        /// <summary>
-        /// アイテム情報を戦車 vs アイテム判定サービスへ登録する
+        /// アイテム情報を登録する
         /// </summary>
         /// <param name="items">衝突判定対象となるアイテム一覧</param>
         public void SetItems(in List<ItemSlot> items)
@@ -158,14 +175,22 @@ namespace TankSystem.Manager
         }
 
         // ======================================================
-        // 初期化処理
+        // プライベートメソッド
         // ======================================================
 
+        // --------------------------------------------------
+        // 初期化
+        // --------------------------------------------------
         /// <summary>
         /// SceneObjectRegistry から戦車衝突コンテキストを生成する
         /// </summary>
         private void BuildTankContexts()
         {
+            if (_sceneRegistry == null)
+            {
+                return;
+            }
+
             // 既存データをクリア
             _tankContexts.Clear();
 
@@ -200,7 +225,6 @@ namespace TankSystem.Manager
                 TankCollisionContext context =
                     _collisionContextFactory.Create(
                         tankId,
-                        tankTransform,
                         boxCollider,
                         rootManager
                     );
@@ -210,10 +234,9 @@ namespace TankSystem.Manager
             }
         }
 
-        // ======================================================
+        // --------------------------------------------------
         // イベントハンドラ
-        // ======================================================
-
+        // --------------------------------------------------
         /// <summary>
         /// 障害物衝突時の通知
         /// </summary>
@@ -222,7 +245,10 @@ namespace TankSystem.Manager
             Transform obstacle
         )
         {
-            
+            // 衝突した戦車名と障害物名をログ出力する
+            Debug.Log(
+                $"[ObstacleHit] Tank:{context.TankId} Obstacle:{obstacle.name}"
+            );
         }
 
         /// <summary>
@@ -233,7 +259,10 @@ namespace TankSystem.Manager
             ItemSlot item
         )
         {
-            
+            // 取得した戦車とアイテム情報をログ出力する
+            Debug.Log(
+                $"[ItemHit] Tank:{context.TankId} Item:{item.ItemData.Name}"
+            );
         }
 
         /// <summary>
@@ -244,7 +273,8 @@ namespace TankSystem.Manager
             TankCollisionContext contextB
         )
         {
-            
+            // 接触した 2 台の戦車 ID をログ出力する
+            Debug.Log($"[TankHit] TankA:{contextA.TankId} TankB:{contextB.TankId}");
         }
     }
 }
