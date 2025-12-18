@@ -6,9 +6,11 @@
 // 概要     : シーン内イベントの仲介を行う
 // ======================================================
 
-using UnityEngine;
+using System;
 using SceneSystem.Data;
+using TankSystem.Data;
 using TankSystem.Manager;
+using UnityEngine;
 using WeaponSystem.Data;
 
 namespace SceneSystem.Utility
@@ -28,6 +30,13 @@ namespace SceneSystem.Utility
 
         /// <summary>イベント購読が完了しているかどうかを示すフラグ</summary>
         private bool _isSubscribed;
+
+        // ======================================================
+        // イベント
+        // ======================================================
+
+        /// <summary>オプションボタン押下時に発火するイベント</summary>
+        public event Action OnOptionButtonPressed;
 
         // ======================================================
         // コンストラクタ
@@ -64,9 +73,9 @@ namespace SceneSystem.Utility
             // プレイヤー戦車が存在する場合のみ購読
             if (_context.PlayerTank != null)
             {
-                // プレイヤーの弾発射イベントを登録
-                _context.PlayerTank.OnFireBullet +=
-                    HandleFireBullet;
+                _context.PlayerTank.OnModeChangeButtonPressed += HandleModeChangeButtonPressed;
+                _context.PlayerTank.OnOptionButtonPressed += HandleOptionButtonPressed;
+                _context.PlayerTank.OnFireBullet += HandleFireBullet;
             }
 
             // EnemyTank 配列が存在しない場合はここで終了
@@ -80,8 +89,7 @@ namespace SceneSystem.Utility
             // すべての EnemyTank の発射イベントを購読
             for (int i = 0; i < _context.EnemyTanks.Length; i++)
             {
-                _context.EnemyTanks[i].OnFireBullet +=
-                    HandleFireBullet;
+                _context.EnemyTanks[i].OnFireBullet += HandleFireBullet;
             }
 
             // すべての購読が完了したためフラグを更新
@@ -103,8 +111,9 @@ namespace SceneSystem.Utility
             // プレイヤー戦車が存在する場合のみ解除
             if (_context.PlayerTank != null)
             {
-                _context.PlayerTank.OnFireBullet -=
-                    HandleFireBullet;
+                _context.PlayerTank.OnModeChangeButtonPressed -= HandleModeChangeButtonPressed;
+                _context.PlayerTank.OnOptionButtonPressed -= HandleOptionButtonPressed;
+                _context.PlayerTank.OnFireBullet -= HandleFireBullet;
             }
 
             // EnemyTank 配列が存在する場合のみ解除
@@ -112,8 +121,7 @@ namespace SceneSystem.Utility
             {
                 for (int i = 0; i < _context.EnemyTanks.Length; i++)
                 {
-                    _context.EnemyTanks[i].OnFireBullet -=
-                        HandleFireBullet;
+                    _context.EnemyTanks[i].OnFireBullet -= HandleFireBullet;
                 }
             }
 
@@ -124,6 +132,37 @@ namespace SceneSystem.Utility
         // ======================================================
         // プライベートメソッド
         // ======================================================
+
+        /// <summary>
+        /// 入力モード切り替えボタン押下時の処理を行うハンドラ
+        /// 現在の入力モードに応じて、次の入力モードへ切り替える
+        /// </summary>
+        private void HandleModeChangeButtonPressed()
+        {
+            // プレイヤー戦車のキャタピラ入力モードをトグル切替
+            _context.PlayerTank.ChangeInputMode();
+
+            // 現在の入力モードを取得
+            TrackInputMode currentMode = _context.PlayerTank.InputMode;
+
+            // 入力モードに応じてカメラターゲット用インデックスを決定
+            int cameraTargetIndex =
+                currentMode == TrackInputMode.Single
+                ? 1
+                : 0;
+
+            // カメラの追従ターゲットを切り替え
+            _context.CameraManager.SetTargetByIndex(cameraTargetIndex);
+        }
+
+        /// <summary>
+        /// オプションボタン押下時の処理を行うハンドラ
+        /// SceneManager へフェーズ切り替え通知を行う
+        /// </summary>
+        private void HandleOptionButtonPressed()
+        {
+            OnOptionButtonPressed.Invoke();
+        }
 
         /// <summary>
         /// 戦車から弾発射イベントを受け取り

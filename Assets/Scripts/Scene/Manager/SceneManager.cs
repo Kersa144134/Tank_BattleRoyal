@@ -7,6 +7,7 @@
 // ======================================================
 
 using UnityEngine;
+using InputSystem.Manager;
 using SceneSystem.Controller;
 using SceneSystem.Data;
 using SceneSystem.Interface;
@@ -78,17 +79,12 @@ namespace SceneSystem.Manager
 
         private void Awake()
         {
-            // PhaseData を Resources から読み込む
-            PhaseData[] phaseDataList =
-                Resources.LoadAll<PhaseData>("Phase");
+            PhaseData[] phaseDataList = Resources.LoadAll<PhaseData>("Phase");
 
-            // PhaseRuntimeData を生成
             _phaseRuntimeData = new PhaseRuntimeData();
 
-            // シーン上の IUpdatable を収集
             IUpdatable[] allUpdatables = UpdatableCollector.Collect(_components);
 
-            // フェーズごとに IUpdatable を登録
             foreach (PhaseData phaseData in phaseDataList)
             {
                 IUpdatable[] phaseUpdatables =
@@ -103,28 +99,21 @@ namespace SceneSystem.Manager
                 );
             }
 
-            // UpdateController を生成
             UpdateController updateController = new UpdateController();
 
-            // フェーズ制御を生成
             _phaseController = new PhaseController(
                 _phaseRuntimeData,
                 updateController
             );
 
-            // UpdateManager を生成
             _updateManager = new UpdateManager(updateController);
 
-            // Bootstrapper を生成
             _bootstrapper = new UpdatableBootstrapper();
 
-            // IUpdatable を初期化し参照を取得
             UpdatableContext context = _bootstrapper.Initialize(_components);
 
-            // 衝突管理を生成
             _tankCollisionCoordinator = new TankCollisionCoordinator();
 
-            // 戦車衝突エントリを登録
             if (context.PlayerTank != null)
             {
                 _tankCollisionCoordinator.Register(
@@ -142,13 +131,11 @@ namespace SceneSystem.Manager
                 }
             }
 
-            // イベント仲介を生成
             _sceneEventRouter = new SceneEventRouter(context);
 
-            // イベント購読
             _sceneEventRouter.Subscribe();
+            _sceneEventRouter.OnOptionButtonPressed += ToggleOptionPhaseChange;
 
-            // 初期フェーズを設定
             _targetPhase = PhaseType.Play;
             ChangePhase(_targetPhase);
         }
@@ -170,6 +157,12 @@ namespace SceneSystem.Manager
 
             // Update 実行
             _updateManager.Update();
+
+            // オプションボタン押下判定
+            if (InputManager.Instance.StartButton.Down)
+            {
+                ToggleOptionPhaseChange();
+            }
         }
 
         private void LateUpdate()
@@ -185,6 +178,7 @@ namespace SceneSystem.Manager
         {
             // イベント購読解除
             _sceneEventRouter.Dispose();
+            _sceneEventRouter.OnOptionButtonPressed -= ToggleOptionPhaseChange;
         }
 
         // ======================================================
@@ -222,6 +216,30 @@ namespace SceneSystem.Manager
 
             // UpdateManager 側へ通知
             _updateManager.ChangePhase(nextPhase);
+        }
+
+        /// <summary>
+        /// オプションボタン押下時のフェーズ切り替え処理を行うハンドラ
+        /// 現在のフェーズに応じてターゲットフェーズを切り替える
+        /// </summary>
+        private void ToggleOptionPhaseChange()
+        {
+            switch (_currentPhase)
+            {
+                case PhaseType.Play:
+                    // Play フェーズなら Pause に切替
+                    _targetPhase = PhaseType.Pause;
+                    break;
+
+                case PhaseType.Pause:
+                    // Pause フェーズなら Play に切替
+                    _targetPhase = PhaseType.Play;
+                    break;
+
+                default:
+                    _targetPhase = PhaseType.None;
+                    break;
+            }
         }
     }
 }

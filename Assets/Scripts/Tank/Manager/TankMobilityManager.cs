@@ -336,16 +336,16 @@ namespace TankSystem.Manager
         private void ApplyCollisionResolve(in CollisionResolveInfo resolveInfo)
         {
             // 有効でなければ何もしない
-            if (!resolveInfo.IsValid)
+            if (!resolveInfo.IsValid || resolveInfo.ResolveDirection == new Vector3(0f, 0f, 0f))
             {
                 return;
             }
 
             _tankTransform.position += resolveInfo.ResolveDirection * resolveInfo.ResolveDistance;
 
-            Debug.Log($"Tank {_tankTransform.name}" +
-                $"Resolve: Direction={resolveInfo.ResolveDirection}" +
-                $"ResolveDistance={resolveInfo.ResolveDistance}");
+            Debug.Log($"Time {Time.time}" +
+                $"Tank {_tankTransform.name}" +
+                $"Resolve: Direction={resolveInfo.ResolveDirection}");
         }
     }
 }
