@@ -85,8 +85,15 @@ namespace TankSystem.Manager
         /// <summary>戦車移動範囲制限サービス</summary>
         private TankMovementBoundaryService _boundaryService;
 
-        /// <summary>戦車当たり判定サービス</summary>
-        private TankCollisionService _collisionService;
+        // ======================================================
+        // フィールド
+        // ======================================================
+
+        /// <summary>移動予定ワールド座標</summary>
+        private Vector3 _plannedNextPosition;
+
+        /// <summary>移動予定回転</summary>
+        private Quaternion _plannedNextRotation;
 
         // ======================================================
         // プロパティ
@@ -103,21 +110,6 @@ namespace TankSystem.Manager
 
         /// <summary>前フレームからの移動量</summary>
         public float DeltaForward => _mobilityManager.DeltaForward;
-
-        /// <summary>
-        /// 戦車同士衝突判定用のエントリー情報
-        /// </summary>
-        public TankCollisionEntry CollisionEntry
-        {
-            get
-            {
-                return new TankCollisionEntry(
-                    this,
-                    transform,
-                    _collisionService.TankOBB
-                );
-            }
-        }
 
         /// <summary>
         /// 今フレーム中に移動を制限すべき軸
@@ -178,28 +170,15 @@ namespace TankSystem.Manager
             List<ItemSlot> items = _sceneRegistry.ItemSlots;
 
             _attackManager = new TankAttackManager(_firePoint);
-            _collisionService = new TankCollisionService(
-                _obbFactory,
-                _boxCollisionCalculator,
-                transform,
-                _tankCollider,
-                obstacles
-            );
             _boundaryService = new TankMovementBoundaryService(MOVEMENT_ALLOWED_RADIUS);
             _mobilityManager = new TankMobilityManager(
                 _trackController,
-                _collisionService,
                 _boundaryService,
                 transform
             );
 
-            _collisionService.SetItemOBBs(items);
-
             // イベント購読
             _attackManager.OnFireBullet += HandleFireBullet;
-            _collisionService.OnObstacleHit += HandleObstacleHit;
-            _collisionService.OnItemHit += HandleItemHit;
-            _collisionService.OnMovementLockAxisHit += HandleMovementLockAxisHit;
             _sceneRegistry.OnItemListChanged += HandleItemListChanged;
         }
 
@@ -246,22 +225,32 @@ namespace TankSystem.Manager
             // --------------------------------------------------
             // 機動
             // --------------------------------------------------
-            // 前進・旋回処理
-            _mobilityManager.ApplyMobility(_tankStatus, leftMobility, rightMobility);
+            // 前進・旋回を適用した場合の移動結果を計算し、予定位置と回転を受け取る
+            _mobilityManager.CalculateMobilityResult(
+                _tankStatus,
+                leftMobility,
+                rightMobility,
+                out _plannedNextPosition,
+                out _plannedNextRotation
+            );
+        }
 
+        public virtual void OnLateUpdate()
+        {
             // --------------------------------------------------
-            // 衝突判定
+            // 機動
             // --------------------------------------------------
-            _collisionService.UpdateCollisionChecks();
+            // 計算済みの移動・回転結果を Transform に適用する
+            _mobilityManager.ApplyPlannedTransform(
+                _plannedNextPosition,
+                _plannedNextRotation
+            );
         }
 
         public virtual void OnExit()
         {
             // イベント購読の解除
             _attackManager.OnFireBullet -= HandleFireBullet;
-            _collisionService.OnObstacleHit -= HandleObstacleHit;
-            _collisionService.OnItemHit -= HandleItemHit;
-            _collisionService.OnMovementLockAxisHit -= HandleMovementLockAxisHit;
             _sceneRegistry.OnItemListChanged -= HandleItemListChanged;
         }
 
@@ -278,12 +267,12 @@ namespace TankSystem.Manager
         }
 
         /// <summary>
-        /// 戦車同士の衝突解決による押し戻し量をそのまま適用する
+        /// TankCollisionService からの衝突通知を受けて、戦車のめり込みを解消する
         /// </summary>
         /// <param name="resolveInfo">呼び出し側で算出済みの押し戻し情報</param>
-        public void ApplyTankVersusTankCollisionResolve(in CollisionResolveInfo resolveInfo)
+        public void ApplyCollisionResolve(in CollisionResolveInfo resolveInfo)
         {
-            _mobilityManager.ApplyTankVersusTankCollisionResolve(resolveInfo);
+            _mobilityManager.ApplyCollisionResolve(resolveInfo);
         }
         
         // ======================================================
@@ -296,7 +285,7 @@ namespace TankSystem.Manager
         /// <param name="obstacle">衝突した障害物の Transform</param>
         private void HandleObstacleHit(Transform obstacle)
         {
-            _mobilityManager.CheckObstaclesCollision(obstacle);
+            //_mobilityManager.CheckObstaclesCollision(obstacle);
         }
 
         /// <summary>
@@ -332,7 +321,7 @@ namespace TankSystem.Manager
         /// </summary>
         private void HandleItemListChanged(List<ItemSlot> newList)
         {
-            _collisionService.SetItemOBBs(newList);
+            //_collisionService.SetItemOBBs(newList);
         }
 
         /// <summary>

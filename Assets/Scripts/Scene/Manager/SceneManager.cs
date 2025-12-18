@@ -12,7 +12,7 @@ using SceneSystem.Controller;
 using SceneSystem.Data;
 using SceneSystem.Interface;
 using SceneSystem.Utility;
-using TankSystem.Utility;
+using TankSystem.Service;
 
 namespace SceneSystem.Manager
 {
@@ -37,16 +37,13 @@ namespace SceneSystem.Manager
         private PhaseController _phaseController;
 
         /// <summary>フェーズ単位の IUpdatable を保持するクラス</summary>
-        private PhaseRuntimeData _phaseRuntimeData;
+        private PhaseRuntimeData _phaseRuntimeData = new PhaseRuntimeData();
 
         /// <summary>Update / LateUpdate / PhaseEnterExit を管理するクラス</summary>
         private UpdateManager _updateManager;
 
         /// <summary>IUpdatable の初期化と参照解決を行うクラス</summary>
-        private UpdatableBootstrapper _bootstrapper;
-
-        /// <summary>戦車同士の衝突判定を統括するクラス</summary>
-        private TankCollisionCoordinator _tankCollisionCoordinator;
+        private UpdatableBootstrapper _bootstrapper = new UpdatableBootstrapper();
 
         /// <summary>シーン内イベントを仲介するクラス</summary>
         private SceneEventRouter _sceneEventRouter;
@@ -81,10 +78,6 @@ namespace SceneSystem.Manager
         {
             PhaseData[] phaseDataList = Resources.LoadAll<PhaseData>("Phase");
 
-            _phaseRuntimeData = new PhaseRuntimeData();
-
-            IUpdatable[] allUpdatables = UpdatableCollector.Collect(_components);
-
             foreach (PhaseData phaseData in phaseDataList)
             {
                 IUpdatable[] phaseUpdatables =
@@ -108,28 +101,7 @@ namespace SceneSystem.Manager
 
             _updateManager = new UpdateManager(updateController);
 
-            _bootstrapper = new UpdatableBootstrapper();
-
             UpdatableContext context = _bootstrapper.Initialize(_components);
-
-            _tankCollisionCoordinator = new TankCollisionCoordinator();
-
-            if (context.PlayerTank != null)
-            {
-                _tankCollisionCoordinator.Register(
-                    context.PlayerTank.CollisionEntry
-                );
-            }
-
-            if (context.EnemyTanks != null)
-            {
-                for (int i = 0; i < context.EnemyTanks.Length; i++)
-                {
-                    _tankCollisionCoordinator.Register(
-                        context.EnemyTanks[i].CollisionEntry
-                    );
-                }
-            }
 
             _sceneEventRouter = new SceneEventRouter(context);
 
@@ -138,6 +110,8 @@ namespace SceneSystem.Manager
 
             _targetPhase = PhaseType.Play;
             ChangePhase(_targetPhase);
+
+            //_tankCollisionService = new TankCollisionService();
         }
 
         private void Update()
@@ -167,9 +141,6 @@ namespace SceneSystem.Manager
 
         private void LateUpdate()
         {
-            // 戦車衝突更新
-            _tankCollisionCoordinator.Update();
-            
             // LateUpdate 実行
             _updateManager.LateUpdate();
         }

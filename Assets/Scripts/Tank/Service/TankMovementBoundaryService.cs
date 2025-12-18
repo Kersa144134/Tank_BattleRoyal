@@ -42,38 +42,73 @@ namespace TankSystem.Service
         // ======================================================
 
         /// <summary>
-        /// 戦車がステージ範囲外へ出た場合、半径内へ押し戻す
+        /// 戦車の予定位置がステージ範囲外の場合、
+        /// 半径内に収まるよう補正した位置を計算して返す
         /// </summary>
-        /// <param name="target">移動対象の戦車 Transform</param>
-        public void ClampPosition(Transform target)
+        /// <param name="plannedPosition">移動後に予定されているワールド座標</param>
+        /// <param name="clampedPosition">範囲制限後のワールド座標</param>
+        public void ClampPlannedPosition(
+            in Vector3 plannedPosition,
+            out Vector3 clampedPosition
+        )
         {
-            // 現在位置を取得する
-            Vector3 pos = target.position;
+            // --------------------------------------------------
+            // XZ 平面上の位置を算出
+            // --------------------------------------------------
 
-            // XZ 平面上での位置に変換する
-            Vector3 flatPos = new Vector3(pos.x, 0f, pos.z);
+            // 高さ成分を除いた平面位置を生成する
+            Vector3 flatPosition = new Vector3(
+                plannedPosition.x,
+                0f,
+                plannedPosition.z
+            );
+
+            // ステージ中心はワールド原点とする
             Vector3 flatCenter = Vector3.zero;
 
-            // ステージ中心からの距離を計算する
-            float distance = Vector3.Distance(flatPos, flatCenter);
+            // --------------------------------------------------
+            // ステージ中心からの距離を計算
+            // --------------------------------------------------
 
-            // 半径以内なら処理不要
-            if (distance <= _stageRadius)
+            // 中心からの距離を算出する
+            float distanceFromCenter = Vector3.Distance(
+                flatPosition,
+                flatCenter
+            );
+
+            // --------------------------------------------------
+            // 半径内判定
+            // --------------------------------------------------
+
+            // ステージ半径以内であれば補正不要
+            if (distanceFromCenter <= _stageRadius)
             {
+                // 入力された予定位置をそのまま返す
+                clampedPosition = plannedPosition;
                 return;
             }
 
-            // 範囲外の場合は円周上に押し戻すため方向ベクトルを計算
-            Vector3 direction = (flatPos - flatCenter).normalized;
+            // --------------------------------------------------
+            // 範囲外の場合の押し戻し計算
+            // --------------------------------------------------
 
-            // 円周位置を算出する
-            Vector3 clampedPos = flatCenter + direction * _stageRadius;
+            // 中心から外向きの正規化方向ベクトルを算出する
+            Vector3 outwardDirection = (flatPosition - flatCenter).normalized;
 
-            // 元のY座標を維持する
-            clampedPos.y = pos.y;
+            // 円周上の補正後平面位置を算出する
+            Vector3 correctedFlatPosition =
+                flatCenter + outwardDirection * _stageRadius;
 
-            // 新しい位置を適用する
-            target.position = clampedPos;
+            // --------------------------------------------------
+            // 高さ成分を復元
+            // --------------------------------------------------
+
+            // 元の Y 座標を維持した最終位置を生成する
+            clampedPosition = new Vector3(
+                correctedFlatPosition.x,
+                plannedPosition.y,
+                correctedFlatPosition.z
+            );
         }
     }
 }

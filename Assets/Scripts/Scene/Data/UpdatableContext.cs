@@ -32,6 +32,9 @@ namespace SceneSystem.Data
         /// <summary>入力管理</summary>
         public InputManager InputManager;
 
+        /// <summary>カメラ管理</summary>
+        public TankCollisionManager TankCollisionManager;
+
         /// <summary>プレイヤー戦車</summary>
         public PlayerTankRootManager PlayerTank;
 

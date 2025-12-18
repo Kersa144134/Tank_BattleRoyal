@@ -29,9 +29,6 @@ namespace TankSystem.Manager
         /// <summary>左右キャタピラ入力から前進量・旋回量を算出するコントローラ</summary>
         private readonly TankTrackController _trackController;
 
-        /// <summary>衝突判定サービス</summary>
-        private readonly TankCollisionService _collisionService;
-
         /// <summary>戦車移動範囲制限サービス</summary>
         private readonly TankMovementBoundaryService _boundaryService;
 
@@ -118,18 +115,15 @@ namespace TankSystem.Manager
         /// 移動処理および衝突判定に必要な外部参照を受け取って初期化する
         /// </summary>
         /// <param name="trackController">キャタピラ入力を管理し、前進量・旋回量を算出するコントローラ</param>
-        /// <param name="collisionService">戦車と障害物の衝突判定および押し戻し量を算出するサービス</param>
         /// <param name="boundaryService">戦車の移動可能範囲を制御する境界判定サービス</param>
         /// <param name="transform">操作対象となる戦車本体の Transform</param>
         public TankMobilityManager(
             in TankTrackController trackController,
-            in TankCollisionService collisionService,
             in TankMovementBoundaryService boundaryService,
             in Transform transform
         )
         {
             _trackController = trackController;
-            _collisionService = collisionService;
             _boundaryService = boundaryService;
 
             // 操作対象の戦車 Transform を保持する
@@ -141,62 +135,135 @@ namespace TankSystem.Manager
         // ======================================================
 
         /// <summary>
-        /// 前進・旋回処理を適用し、移動後に境界制御を行う
+        /// 前進・旋回処理を適用した場合の移動結果を計算し、
+        /// 実際には Transform を変更せず、予定位置と回転を返す
         /// </summary>
         /// <param name="tankStatus">戦車のステータス</param>
         /// <param name="leftInput">左キャタピラ入力値（-1～1）</param>
         /// <param name="rightInput">右キャタピラ入力値（-1～1）</param>
-        public void ApplyMobility(in TankStatus tankStatus, in Vector2 leftInput, in Vector2 rightInput)
+        /// <param name="nextPosition">次フレームでの予定ワールド座標</param>
+        /// <param name="nextRotation">次フレームでの予定回転</param>
+        public void CalculateMobilityResult(
+            in TankStatus tankStatus,
+            in Vector2 leftInput,
+            in Vector2 rightInput,
+            out Vector3 nextPosition,
+            out Quaternion nextRotation
+        )
         {
-            // 機動力関連の倍率を更新
+            // --------------------------------------------------
+            // 機動力パラメータ更新
+            // --------------------------------------------------
             UpdateMobilityParameters(tankStatus);
 
-            // 入力から目標移動量を算出
-            CalculateTargetMovement(leftInput, rightInput, out float targetForward, out float targetTurn);
+            // --------------------------------------------------
+            // 目標移動量を算出
+            // --------------------------------------------------
+            CalculateTargetMovement(
+                leftInput,
+                rightInput,
+                out float targetForward,
+                out float targetTurn
+            );
 
-            // 加減速を適用して現在値を更新
+            // --------------------------------------------------
+            // 加減速処理
+            // --------------------------------------------------
+            // 前フレーム値を元に、現在の前進・旋回速度を更新する
             ApplyAcceleration(targetForward, targetTurn);
 
-            // 前進を適用
-            _tankTransform.Translate(
-                Vector3.forward * _currentForward * Time.deltaTime,
-                Space.Self
+            // --------------------------------------------------
+            // 前進予定位置計算
+            // --------------------------------------------------
+            // 現在の Transform 位置を基準にする
+            Vector3 basePosition = _tankTransform.position;
+
+            // 現在の Transform 回転を基準にする
+            Quaternion baseRotation = _tankTransform.rotation;
+
+            // 前進方向（ローカル forward）をワールド方向に変換する
+            Vector3 forwardDirection = baseRotation * Vector3.forward;
+
+            // 今フレームで進む予定距離を算出する
+            float forwardDistance = _currentForward * Time.deltaTime;
+
+            // 前進後の予定位置を計算する
+            Vector3 movedPosition = basePosition + forwardDirection * forwardDistance;
+
+            // --------------------------------------------------
+            // 旋回予定回転計算
+            // --------------------------------------------------
+            // 今フレームで回転する Y 軸角度を算出する
+            float turnAngle = _currentTurn * Time.deltaTime;
+
+            // Y 軸回転のみを表すクォータニオンを生成する
+            Quaternion turnRotation = Quaternion.Euler(0f, turnAngle, 0f);
+
+            // 基準回転に旋回分を合成する
+            Quaternion rotatedRotation = baseRotation * turnRotation;
+
+            // --------------------------------------------------
+            // 境界制御
+            // --------------------------------------------------
+            // 境界制御後の位置を受け取る
+            Vector3 clampedPosition;
+
+            // 予定位置に対して移動範囲制限を適用する
+            _boundaryService.ClampPlannedPosition(
+                movedPosition,
+                out clampedPosition
             );
 
-            // 旋回を適用
-            _tankTransform.Rotate(
-                0f,
-                _currentTurn * Time.deltaTime,
-                0f,
-                Space.Self
-            );
-
-            // 移動範囲を制限
-            _boundaryService.ClampPosition(_tankTransform);
+            // --------------------------------------------------
+            // 出力
+            // --------------------------------------------------
+            nextPosition = clampedPosition;
+            nextRotation = rotatedRotation;
         }
 
         /// <summary>
-        /// TankCollisionService からの衝突通知を受けて、
-        /// 戦車と障害物のめり込みを解消する
+        /// 計算済みの予定位置・回転を Transform に反映する
+        /// LateUpdate からの呼び出しを前提とする
         /// </summary>
-        /// <param name="obstacle">衝突判定の対象となる障害物の Transform</param>
-        public void CheckObstaclesCollision(in Transform obstacle)
+        /// <param name="plannedPosition">反映する予定ワールド座標</param>
+        /// <param name="plannedRotation">反映する予定回転</param>
+        public void ApplyPlannedTransform(
+            in Vector3 plannedPosition,
+            in Quaternion plannedRotation
+        )
         {
-            // 侵入量を計算
-            CollisionResolveInfo resolveInfo =
-                _collisionService.CalculateObstacleResolveInfo(obstacle);
+            // --------------------------------------------------
+            // 位置反映
+            // --------------------------------------------------
 
-            ApplyCollisionResolve(resolveInfo);
+            // 計算済みの予定位置をそのまま Transform に適用する
+            _tankTransform.position = plannedPosition;
+
+            // --------------------------------------------------
+            // 回転反映
+            // --------------------------------------------------
+
+            // 計算済みの予定回転をそのまま Transform に適用する
+            _tankTransform.rotation = plannedRotation;
         }
 
         /// <summary>
-        /// TankVersusTankCollisionService からの衝突通知を受けて、
-        /// 戦車と戦車のめり込みを解消する
+        /// TankCollisionService からの衝突通知を受けて、戦車のめり込みを解消する
         /// </summary>
-        /// <param name="obstacle">呼び出し側で算出済みの押し戻し情報</param>
-        public void ApplyTankVersusTankCollisionResolve(in CollisionResolveInfo resolveInfo)
+        /// <param name="resolveInfo">呼び出し側で算出済みの押し戻し情報</param>
+        public void ApplyCollisionResolve(in CollisionResolveInfo resolveInfo)
         {
-            ApplyCollisionResolve(resolveInfo);
+            // 有効でなければ何もしない
+            if (!resolveInfo.IsValid || resolveInfo.ResolveDirection == new Vector3(0f, 0f, 0f))
+            {
+                return;
+            }
+
+            _tankTransform.position += resolveInfo.ResolveDirection * resolveInfo.ResolveDistance;
+
+            Debug.Log($"Time {Time.time}" +
+                $"Tank {_tankTransform.name}" +
+                $"Resolve: Direction={resolveInfo.ResolveDirection}");
         }
 
         // ======================================================
@@ -327,25 +394,6 @@ namespace TankSystem.Manager
 
             // 正負の合算で現在旋回量を決定
             _currentTurn = _currentTurnPositive - _currentTurnNegative;
-        }
-
-        /// <summary>
-        /// 衝突解決による押し戻し量をそのまま適用する
-        /// </summary>
-        /// <param name="resolveInfo">呼び出し側で算出済みの押し戻し情報</param>
-        private void ApplyCollisionResolve(in CollisionResolveInfo resolveInfo)
-        {
-            // 有効でなければ何もしない
-            if (!resolveInfo.IsValid || resolveInfo.ResolveDirection == new Vector3(0f, 0f, 0f))
-            {
-                return;
-            }
-
-            _tankTransform.position += resolveInfo.ResolveDirection * resolveInfo.ResolveDistance;
-
-            Debug.Log($"Time {Time.time}" +
-                $"Tank {_tankTransform.name}" +
-                $"Resolve: Direction={resolveInfo.ResolveDirection}");
         }
     }
 }

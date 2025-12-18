@@ -26,18 +26,18 @@ namespace TankSystem.Manager
 
         [Header("メインカメラ")]
         /// <summary>メインカメラ</summary>
-        [SerializeField] private Camera _mainCamera;
+        [SerializeField] private Transform _mainCamera;
 
-        [Header("プレイヤー戦車")]
-        /// <summary>プレイヤー戦車の Transform</summary>
-        [SerializeField] private Transform _playerTankTransform;
+        [Header("戦車")]
+        /// <summary>戦車の Transform 配列</summary>
+        [SerializeField] private Transform[] _tanks;
 
-        [Header("障害物オブジェクト")]
-        /// <summary>障害物オブジェクトの親 Transform</summary>
+        [Header("障害物")]
+        /// <summary>障害物の親 Transform</summary>
         [SerializeField] private Transform _obstacleRoot;
 
-        [Header("アイテムリスト")]
-        /// <summary>アイテムオブジェクトの Transform とデータを併せ持つスロットリスト</summary>
+        [Header("アイテム")]
+        /// <summary>アイテムの Transform とデータを併せ持つスロットリスト</summary>
         [SerializeField] private List<ItemSlot> _itemSlots;
 
         // ======================================================
@@ -52,7 +52,7 @@ namespace TankSystem.Manager
         // ======================================================
 
         /// <summary>障害物オブジェクトの Transform 配列</summary>
-         private Transform[] _obstacleTransforms;
+         private Transform[] _obstacles;
         
         /// <summary>更新対象の弾丸リスト</summary>
         private readonly List<BulletBase> _updatableBullets = new List<BulletBase>();
@@ -64,26 +64,17 @@ namespace TankSystem.Manager
         /// <summary>
         /// プレイヤー戦車 Transform を返す
         /// </summary>
-        public Transform PlayerTankTransform
-        {
-            get { return _playerTankTransform; }
-        }
+        public Transform[] Tanks => _tanks;
 
         /// <summary>
         /// 障害物 Transform 配列を返す
         /// </summary>
-        public Transform[] Obstacles
-        {
-            get { return _obstacleTransforms; }
-        }
+        public Transform[] Obstacles => _obstacles;
 
         /// <summary>
         /// アイテムスロットリストを返す
         /// </summary>
-        public List<ItemSlot> ItemSlots
-        {
-            get { return _itemSlots; }
-        }
+        public List<ItemSlot> ItemSlots => _itemSlots;
 
         // ======================================================
         // イベント
@@ -100,7 +91,7 @@ namespace TankSystem.Manager
 
         public void OnEnter()
         {
-            _itemManager = new ItemManager(_itemSlots, OnItemListChanged, _mainCamera.transform);
+            _itemManager = new ItemManager(_itemSlots, OnItemListChanged, _mainCamera);
 
             // 障害物オブジェクトを取得して登録
             InitializeObstacles();
@@ -184,17 +175,17 @@ namespace TankSystem.Manager
         {
             if (_obstacleRoot == null)
             {
-                _obstacleTransforms = Array.Empty<Transform>();
+                _obstacles = Array.Empty<Transform>();
                 Debug.LogWarning("[SceneObjectRegistry] 障害物親オブジェクトが未設定です。");
                 return;
             }
 
             // 親オブジェクトの子すべてを取得
             int count = _obstacleRoot.childCount;
-            _obstacleTransforms = new Transform[count];
+            _obstacles = new Transform[count];
             for (int i = 0; i < count; i++)
             {
-                _obstacleTransforms[i] = _obstacleRoot.GetChild(i);
+                _obstacles[i] = _obstacleRoot.GetChild(i);
             }
         }
 

@@ -70,6 +70,13 @@ namespace SceneSystem.Utility
                     continue;
                 }
 
+                // TankCollisionManager ‚ðŽæ“¾
+                if (updatable is TankCollisionManager tankCollisionManager)
+                {
+                    context.TankCollisionManager = tankCollisionManager;
+                    continue;
+                }
+
                 // PlayerTank ‚ðŽæ“¾
                 if (updatable is PlayerTankRootManager playerTank)
                 {

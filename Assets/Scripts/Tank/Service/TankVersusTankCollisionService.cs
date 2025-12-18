@@ -1,10 +1,9 @@
 // ======================================================
-// TankVersusTankCollisionService.cs
+// VersusTankCollisionService.cs
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-17
 // 更新日時 : 2025-12-17
-// 概要     : 全戦車の OBB を参照し、
-//            戦車同士の接触判定のみを一元管理するサービス
+// 概要     : TankCollisionContext を用いて戦車同士の衝突判定・解決を行うサービス
 // ======================================================
 
 using CollisionSystem.Calculator;
@@ -12,39 +11,34 @@ using CollisionSystem.Data;
 using System;
 using System.Collections.Generic;
 using TankSystem.Data;
+using TankSystem.Interface;
 using UnityEngine;
-using UnityEngine.Rendering.VirtualTexturing;
 
 namespace TankSystem.Service
 {
     /// <summary>
-    /// 戦車同士の OBB 衝突判定を一元管理するサービス
+    /// 戦車とアイテムの衝突判定を担当する
     /// </summary>
-    public class TankVersusTankCollisionService
+    public sealed class VersusTankCollisionService : ITankCollisionService
     {
         // ======================================================
         // コンポーネント参照
         // ======================================================
 
-        /// <summary>OBB / OBB の距離計算および衝突判定を行う計算器</summary>
-        private readonly BoundingBoxCollisionCalculator _boxCollisionCalculator = new BoundingBoxCollisionCalculator();
+        /// <summary>
+        /// OBB / OBB の衝突判定および MTV 計算を行う計算器
+        /// </summary>
+        private readonly BoundingBoxCollisionCalculator _boxCollisionCalculator;
 
         // ======================================================
         // フィールド
         // ======================================================
 
-        /// <summary>戦車ID一覧キャッシュ配列</summary>
-        private int[] _tankIdBuffer;
-
-        /// <summary>現在キャッシュされている戦車数</summary>
-        private int _cachedTankCount;
-        
-        // ======================================================
-        // 辞書
-        // ======================================================
-
-        /// <summary>戦車IDと衝突判定エントリの対応表</summary>
-        private Dictionary<int, TankCollisionEntry> _tankEntries;
+        /// <summary>
+        /// 衝突判定対象となる戦車コンテキスト一覧
+        /// 登録順は外部で制御される
+        /// </summary>
+        private List<TankCollisionContext> _tanks;
 
         // ======================================================
         // イベント
@@ -52,44 +46,21 @@ namespace TankSystem.Service
 
         /// <summary>
         /// 戦車同士が接触した際に通知されるイベント
+        /// 引数は衝突した 2 台の TankCollisionContext
         /// </summary>
-        public event Action<int, int> OnTankVersusTankHit;
+        public event Action<TankCollisionContext, TankCollisionContext> OnTankHit;
 
         // ======================================================
-        // セッター
+        // コンストラクタ
         // ======================================================
 
-        /// <summary>
-        /// 戦車衝突判定に使用するエントリ辞書を設定し、内部で使用する戦車ID配列キャッシュを構築する
-        /// </summary>
-        /// <param name="tankEntries">戦車固有IDをキー、TankCollisionEntry を値として保持する辞書</param>
-        public void SetTankEntries(
-            in Dictionary<int, TankCollisionEntry> tankEntries
+        public VersusTankCollisionService(
+            in BoundingBoxCollisionCalculator boxCollisionCalculator,
+            in List<TankCollisionContext> tanks
         )
         {
-            // 参照を保持
-            _tankEntries = tankEntries;
-
-            // 戦車数を取得
-            int tankCount = _tankEntries.Count;
-
-            // 数が変わった場合のみ再確保
-            if (_tankIdBuffer == null || _cachedTankCount != tankCount)
-            {
-                // 戦車ID配列を再生成
-                _tankIdBuffer = new int[tankCount];
-
-                // キャッシュ数を更新
-                _cachedTankCount = tankCount;
-            }
-
-            // ID を配列にコピー
-            int index = 0;
-            foreach (int tankId in _tankEntries.Keys)
-            {
-                _tankIdBuffer[index] = tankId;
-                index++;
-            }
+            _boxCollisionCalculator = boxCollisionCalculator;
+            _tanks = tanks;
         }
 
         // ======================================================
@@ -97,43 +68,45 @@ namespace TankSystem.Service
         // ======================================================
 
         /// <summary>
-        /// 全戦車同士の接触判定を行い、
-        /// 接触している組み合わせをイベント通知する
+        /// 全戦車同士の衝突判定を実行し、
+        /// 接触している組み合わせをイベントとして通知する
         /// </summary>
         public void UpdateCollisionChecks()
         {
-            // 判定対象が 2 台未満なら処理しない
-            if (_tankEntries.Count < 2)
+            // コンテキストが未設定、または 2 台未満なら処理しない
+            if (_tanks == null || _tanks.Count < 2)
             {
                 return;
             }
 
-            // --------------------------
+            // --------------------------------------------------
             // 総当たり判定
-            // --------------------------
-            for (int i = 0; i < _cachedTankCount - 1; i++)
+            // --------------------------------------------------
+            for (int i = 0; i < _tanks.Count - 1; i++)
             {
-                // 判定対象戦車AのIDを取得
-                int tankIdA = _tankIdBuffer[i];
+                // 判定対象戦車Aのコンテキストを取得
+                TankCollisionContext contextA = _tanks[i];
 
-                // 戦車Aの OBB を更新
-                _tankEntries[tankIdA].OBB.Update();
+                // 戦車Aの OBB を最新状態に更新
+                contextA.OBB.Update();
 
-                for (int j = i + 1; j < _cachedTankCount; j++)
+                for (int j = i + 1; j < _tanks.Count; j++)
                 {
-                    // 判定対象戦車BのIDを取得
-                    int tankIdB = _tankIdBuffer[j];
+                    // 判定対象戦車Bのコンテキストを取得
+                    TankCollisionContext contextB = _tanks[j];
 
-                    // 戦車Bの OBB を更新
-                    _tankEntries[tankIdB].OBB.Update();
+                    // 戦車Bの OBB を最新状態に更新
+                    contextB.OBB.Update();
 
+                    // 水平方向の OBB 衝突を判定
                     if (_boxCollisionCalculator.IsCollidingHorizontal(
-                            _tankEntries[tankIdA].OBB,
-                            _tankEntries[tankIdB].OBB))
+                        contextA.OBB,
+                        contextB.OBB))
                     {
-                        OnTankVersusTankHit?.Invoke(
-                            tankIdA,
-                            tankIdB
+                        // 衝突している戦車ペアを通知
+                        OnTankHit?.Invoke(
+                            contextA,
+                            contextB
                         );
                     }
                 }
@@ -142,11 +115,17 @@ namespace TankSystem.Service
 
         /// <summary>
         /// 衝突している 2 台の戦車に対して MTV を用いた押し戻し量を計算する
-        /// 軸ロックを最優先に考慮し、ロック軸分を相手に逆向きで付与する
+        /// 軸ロック状態を最優先に考慮し、押し戻し先を決定する
         /// </summary>
-        public void CalculateTankVersusTankResolveInfo(
-            in TankCollisionEntry entryA,
-            in TankCollisionEntry entryB,
+        /// <param name="contextA">戦車Aの衝突コンテキスト</param>
+        /// <param name="contextB">戦車Bの衝突コンテキスト</param>
+        /// <param name="deltaForwardA">戦車Aの前進量</param>
+        /// <param name="deltaForwardB">戦車Bの前進量</param>
+        /// <param name="resolveInfoA">戦車Aに適用する衝突解決情報</param>
+        /// <param name="resolveInfoB">戦車Bに適用する衝突解決情報</param>
+        public void CalculateResolveInfo(
+            in TankCollisionContext contextA,
+            in TankCollisionContext contextB,
             in float deltaForwardA,
             in float deltaForwardB,
             out CollisionResolveInfo resolveInfoA,
@@ -157,18 +136,21 @@ namespace TankSystem.Service
             resolveInfoA = default;
             resolveInfoB = default;
 
-            // フレーム中の軸制限を取得
-            MovementLockAxis lockAxisA = entryA.TankRootManager.CurrentFrameLockAxis;
-            MovementLockAxis lockAxisB = entryB.TankRootManager.CurrentFrameLockAxis;
+            // 現フレームの移動ロック軸を取得
+            MovementLockAxis lockAxisA =
+                contextA.RootManager.CurrentFrameLockAxis;
 
-            // OBB を最新化
-            entryA.OBB.Update();
-            entryB.OBB.Update();
+            MovementLockAxis lockAxisB =
+                contextB.RootManager.CurrentFrameLockAxis;
 
-            // MTV 算出
+            // OBB を最新状態に更新
+            contextA.OBB.Update();
+            contextB.OBB.Update();
+
+            // MTV を算出
             if (!_boxCollisionCalculator.TryCalculateHorizontalMTV(
-                entryA.OBB,
-                entryB.OBB,
+                contextA.OBB,
+                contextB.OBB,
                 out Vector3 resolveAxis,
                 out float resolveDistance
             ))
@@ -176,112 +158,139 @@ namespace TankSystem.Service
                 return;
             }
 
+            // --------------------------------------------------
             // 押し戻し方向補正（中心差）
-            Vector3 centerDelta = entryA.OBB.Center - entryB.OBB.Center;
+            // --------------------------------------------------
+            Vector3 centerDelta =
+                contextA.OBB.Center - contextB.OBB.Center;
+
             centerDelta.y = 0f;
+
             if (Vector3.Dot(resolveAxis, centerDelta) < 0f)
             {
                 resolveAxis = -resolveAxis;
             }
 
-            // 最終押し戻し量
+            // --------------------------------------------------
+            // 最終押し戻しベクトル算出
+            // --------------------------------------------------
             Vector3 finalResolveA = Vector3.zero;
             Vector3 finalResolveB = Vector3.zero;
 
             // --------------------------
-            // X 軸押し戻し
+            // X 軸成分
             // --------------------------
             if ((lockAxisA & MovementLockAxis.X) != 0)
             {
-                // A がロック中なら B に押し返し
                 finalResolveB.x = -resolveAxis.x * resolveDistance;
             }
             else if ((lockAxisB & MovementLockAxis.X) != 0)
             {
-                // B がロック中なら A に押し返し
                 finalResolveA.x = resolveAxis.x * resolveDistance;
             }
             else
             {
-                // 両方動ける場合は DeltaForward による振り分け
-                if (!Mathf.Approximately(deltaForwardA, 0f) && !Mathf.Approximately(deltaForwardB, 0f))
-                {
-                    if (Mathf.Abs(deltaForwardA) <= Mathf.Abs(deltaForwardB))
-                    {
-                        finalResolveA.x = resolveAxis.x * resolveDistance;
-                        finalResolveB.x = 0f;
-                    }
-                    else
-                    {
-                        finalResolveA.x = 0f;
-                        finalResolveB.x = -resolveAxis.x * resolveDistance;
-                    }
-                }
-                else if (!Mathf.Approximately(deltaForwardA, 0f))
-                {
-                    finalResolveB.x = -resolveAxis.x * resolveDistance;
-                }
-                else if (!Mathf.Approximately(deltaForwardB, 0f))
-                {
-                    finalResolveA.x = resolveAxis.x * resolveDistance;
-                }
+                DistributeResolve(
+                    resolveAxis.x * resolveDistance,
+                    deltaForwardA,
+                    deltaForwardB,
+                    out finalResolveA.x,
+                    out finalResolveB.x
+                );
             }
 
             // --------------------------
-            // Z 軸押し戻し
+            // Z 軸成分
             // --------------------------
             if ((lockAxisA & MovementLockAxis.Z) != 0)
             {
-                // A が Z 軸ロック → B に押し返す
-                finalResolveA.z = 0f;
                 finalResolveB.z = -resolveAxis.z * resolveDistance;
             }
             else if ((lockAxisB & MovementLockAxis.Z) != 0)
             {
-                // B が Z 軸ロック → A に押し返す
                 finalResolveA.z = resolveAxis.z * resolveDistance;
-                finalResolveB.z = 0f;
             }
             else
             {
-                // 両方動ける場合は DeltaForward による振り分け
-                if (!Mathf.Approximately(deltaForwardA, 0f) && !Mathf.Approximately(deltaForwardB, 0f))
-                {
-                    if (Mathf.Abs(deltaForwardA) <= Mathf.Abs(deltaForwardB))
-                    {
-                        finalResolveA.z = resolveAxis.z * resolveDistance;
-                        finalResolveB.z = 0f;
-                    }
-                    else
-                    {
-                        finalResolveA.z = 0f;
-                        finalResolveB.z = -resolveAxis.z * resolveDistance;
-                    }
-                }
-                else if (!Mathf.Approximately(deltaForwardA, 0f))
-                {
-                    finalResolveB.z = -resolveAxis.z * resolveDistance;
-                }
-                else if (!Mathf.Approximately(deltaForwardB, 0f))
-                {
-                    finalResolveA.z = resolveAxis.z * resolveDistance;
-                }
+                DistributeResolve(
+                    resolveAxis.z * resolveDistance,
+                    deltaForwardA,
+                    deltaForwardB,
+                    out finalResolveA.z,
+                    out finalResolveB.z
+                );
             }
 
-            // 押し戻し量を CollisionResolveInfo に格納
+            // --------------------------------------------------
+            // CollisionResolveInfo 構築
+            // --------------------------------------------------
             resolveInfoA = new CollisionResolveInfo
             {
                 ResolveDirection = finalResolveA.normalized,
                 ResolveDistance = finalResolveA.magnitude,
-                IsValid = true
+                IsValid = finalResolveA.sqrMagnitude > 0f
             };
 
             resolveInfoB = new CollisionResolveInfo
             {
                 ResolveDirection = finalResolveB.normalized,
                 ResolveDistance = finalResolveB.magnitude,
-                IsValid = true
+                IsValid = finalResolveB.sqrMagnitude > 0f
             };
+        }
+
+        // ======================================================
+        // プライベートメソッド
+        // ======================================================
+
+        /// <summary>
+        /// 前進量を基準として押し戻し量を A / B に分配する
+        /// </summary>
+        /// <param name="resolveValue">軸方向の押し戻し量</param>
+        /// <param name="deltaA">戦車Aの前進量</param>
+        /// <param name="deltaB">戦車Bの前進量</param>
+        /// <param name="outA">戦車Aに割り当てる押し戻し量</param>
+        /// <param name="outB">戦車Bに割り当てる押し戻し量</param>
+        private void DistributeResolve(
+            float resolveValue,
+            float deltaA,
+            float deltaB,
+            out float outA,
+            out float outB
+        )
+        {
+            // 初期化
+            outA = 0f;
+            outB = 0f;
+
+            // 両者が移動している場合は前進量が小さい側を優先
+            if (!Mathf.Approximately(deltaA, 0f) &&
+                !Mathf.Approximately(deltaB, 0f))
+            {
+                if (Mathf.Abs(deltaA) <= Mathf.Abs(deltaB))
+                {
+                    outA = resolveValue;
+                }
+                else
+                {
+                    outB = -resolveValue;
+                }
+
+                return;
+            }
+
+            // A のみ移動している場合
+            if (!Mathf.Approximately(deltaA, 0f))
+            {
+                outB = -resolveValue;
+                return;
+            }
+
+            // B のみ移動している場合
+            if (!Mathf.Approximately(deltaB, 0f))
+            {
+                outA = resolveValue;
+            }
         }
     }
 }
