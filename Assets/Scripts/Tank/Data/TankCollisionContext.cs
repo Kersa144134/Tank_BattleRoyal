@@ -7,10 +7,10 @@
 //            BaseCollisionContext を継承し、移動予定状態を基準に扱う
 // ======================================================
 
+using UnityEngine;
 using CollisionSystem.Data;
 using CollisionSystem.Interface;
 using TankSystem.Manager;
-using UnityEngine;
 
 namespace TankSystem.Data
 {
@@ -21,32 +21,32 @@ namespace TankSystem.Data
     public sealed class TankCollisionContext : BaseCollisionContext
     {
         // ======================================================
-        // 固有情報
+        // 固有プロパティ
         // ======================================================
 
-        /// <summary>
-        /// 戦車を一意に識別する ID
-        /// 戦車同士の衝突対応付けに使用される
-        /// </summary>
+        /// <summary>戦車を一意に識別する ID</summary>
         public int TankId { get; private set; }
 
-        /// <summary>
-        /// 戦車の移動・回転・状態管理を統括するルート管理クラス
-        /// 衝突解決結果の反映先として使用される
-        /// </summary>
+        /// <summary>戦車の移動・回転・状態管理を統括するルート管理クラス</summary>
         public BaseTankRootManager TankRootManager { get; private set; }
 
-        /// <summary>
-        /// 次フレームで適用予定のワールド座標
-        /// 衝突判定はこの座標を基準に行う
-        /// </summary>
-        public override Vector3 PlannedNextPosition => TankRootManager.PlannedNextPosition;
+        // ======================================================
+        // 抽象プロパティ
+        // ======================================================
 
-        /// <summary>
-        /// 次フレームで適用予定の回転
-        /// OBB の向きを決定するために使用される
-        /// </summary>
-        public override Quaternion PlannedNextRotation => TankRootManager.PlannedNextRotation;
+        /// <summary>移動予定ワールド座標</summary>
+        public override Vector3 NextPosition => TankRootManager.NextPosition;
+
+        /// <summary>移動予定ワールド回転</summary>
+        public override Quaternion NextRotation => TankRootManager.NextRotation;
+
+        /// <summary>現フレームにおける移動ロック軸</summary>
+        private MovementLockAxis _lockAxis = MovementLockAxis.None;
+        public override MovementLockAxis LockAxis
+        {
+            get => _lockAxis;
+            protected set => _lockAxis = value;
+        }
 
         // ======================================================
         // コンストラクタ
@@ -74,16 +74,16 @@ namespace TankSystem.Data
         }
 
         // ======================================================
-        // パブリックっメソッド
+        // パブリックメソッド
         // ======================================================
 
         /// <summary>
-        /// 衝突判定用の OBB データを設定する
+        /// 移動ロック軸 を最新の状態に更新する
         /// </summary>
-        /// <param name="obb">設定する IOBBData インスタンス</param>
-        public void SetOBB(IOBBData obb)
+        public override void UpdateLockAxis(MovementLockAxis lockAxis)
         {
-            OBB = obb;
+            _lockAxis = lockAxis;
+            TankRootManager.CurrentFrameLockAxis = lockAxis;
         }
     }
 }

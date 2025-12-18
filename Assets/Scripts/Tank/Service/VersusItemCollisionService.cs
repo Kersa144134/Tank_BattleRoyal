@@ -8,6 +8,8 @@
 
 using CollisionSystem.Calculator;
 using CollisionSystem.Interface;
+using ItemSystem.Data;
+using ObstacleSystem.Data;
 using System;
 using System.Collections.Generic;
 using TankSystem.Data;
@@ -37,20 +39,14 @@ namespace TankSystem.Service
         // ======================================================
 
         /// <summary>
-        /// 衝突判定対象となる戦車コンテキスト一覧
+        /// 衝突判定対象となる戦車コンテキスト配列
         /// </summary>
-        private readonly List<TankCollisionContext> _tanks;
+        private readonly TankCollisionContext[] _tanks;
 
         /// <summary>
-        /// シーン上に存在するアイテムスロット一覧
+        /// シーン上に存在するアイテムコンテキスト一覧
         /// </summary>
-        private List<ItemSlot> _items;
-
-        /// <summary>
-        /// 各アイテムに対応する静的 OBB 配列
-        /// ItemSlot のインデックスと 1 対 1 で対応する
-        /// </summary>
-        private IOBBData[] _itemOBBs;
+        private List<ItemCollisionContext> _items;
 
         // ======================================================
         // イベント
@@ -59,7 +55,7 @@ namespace TankSystem.Service
         /// <summary>
         /// 戦車がアイテムと接触した際に通知されるイベント
         /// </summary>
-        public event Action<TankCollisionContext, ItemSlot> OnItemHit;
+        public event Action<TankCollisionContext, ItemCollisionContext> OnItemHit;
 
         // ======================================================
         // コンストラクタ
@@ -68,52 +64,18 @@ namespace TankSystem.Service
         /// <summary>
         /// 戦車 vs アイテム 衝突判定サービスを生成する
         /// </summary>
+        /// <param name="boxCollisionCalculator">OBB 同士の水平方向衝突判定を行う計算器</param>
+        /// <param name="tanks">戦車コンテキスト</param>
+        /// <param name="items">アイテムコンテキスト</param>
         public VersusItemCollisionService(
             in BoundingBoxCollisionCalculator boxCollisionCalculator,
-            in List<TankCollisionContext> tanks
+            in TankCollisionContext[] tanks,
+            in List<ItemCollisionContext> items
         )
         {
-            // 衝突計算器参照を保持する
             _boxCollisionCalculator = boxCollisionCalculator;
-
-            // 戦車コンテキスト一覧参照を保持する
             _tanks = tanks;
-        }
-
-        // ======================================================
-        // セッター
-        // ======================================================
-
-        /// <summary>
-        /// アイテム一覧から静的 OBB を生成し、内部にキャッシュする
-        /// </summary>
-        public void SetItemOBBs(
-            in OBBFactory obbFactory,
-            in List<ItemSlot> items
-        )
-        {
             _items = items;
-
-            // アイテムが存在しない場合は空配列を設定
-            if (_items == null || _items.Count == 0)
-            {
-                _itemOBBs = Array.Empty<IOBBData>();
-                return;
-            }
-
-            // アイテム数分の OBB 配列を生成
-            _itemOBBs = new IOBBData[_items.Count];
-
-            // 各アイテム Transform から静的 OBB を生成
-            for (int i = 0; i < _items.Count; i++)
-            {
-                _itemOBBs[i] =
-                    obbFactory.CreateStaticOBB(
-                        _items[i].ItemTransform,
-                        Vector3.zero,
-                        Vector3.one
-                    );
-            }
         }
 
         // ======================================================
@@ -132,10 +94,10 @@ namespace TankSystem.Service
             }
 
             // 全戦車の OBB を更新
-            for (int i = 0; i < _tanks.Count; i++)
+            for (int i = 0; i < _tanks.Length; i++)
             {
                 TankCollisionContext context = _tanks[i];
-                context.OBB.Update();
+                context.UpdateOBB();
             }
         }
 
@@ -144,7 +106,7 @@ namespace TankSystem.Service
         /// </summary>
         public void Execute()
         {
-            if (_items == null || _itemOBBs == null)
+            if (_items == null)
             {
                 return;
             }
@@ -152,14 +114,14 @@ namespace TankSystem.Service
             // --------------------------------------------------
             // 戦車 × アイテム 判定ループ
             // --------------------------------------------------
-            for (int i = 0; i < _tanks.Count; i++)
+            for (int i = 0; i < _tanks.Length; i++)
             {
                 // 判定対象戦車を取得する
                 TankCollisionContext tankContext = _tanks[i];
 
-                for (int t = 0; t < _itemOBBs.Length; t++)
+                for (int t = 0; t < _items.Count; t++)
                 {
-                    if (!_items[t].IsEnabled)
+                    if (!_items[t].ItemSlot.IsEnabled)
                     {
                         continue;
                     }
@@ -167,7 +129,7 @@ namespace TankSystem.Service
                     // OBB 衝突判定
                     if (!_boxCollisionCalculator.IsCollidingHorizontal(
                         tankContext.OBB,
-                        _itemOBBs[t]
+                        _items[t].OBB
                     ))
                     {
                         continue;
@@ -179,6 +141,41 @@ namespace TankSystem.Service
                         _items[t]
                     );
                 }
+            }
+        }
+
+        // ======================================================
+        // パブリックメソッド
+        // ======================================================
+
+        /// <summary>
+        /// アイテムコンテキストを設定する
+        /// ゲーム中にアイテムの追加・削除・更新があった場合に呼び出す
+        /// </summary>
+        /// <param name="itemContexts">新しいアイテムコンテキスト一覧</param>
+        public void SetItemContexts(in List<ItemCollisionContext> itemContexts)
+        {
+            if (itemContexts == null)
+            {
+                // null が渡された場合は内部データをクリア
+                _items = null;
+                return;
+            }
+
+            // アイテムコンテキスト一覧を生成
+            _items = new List<ItemCollisionContext>(itemContexts.Count);
+
+            for (int i = 0; i < itemContexts.Count; i++)
+            {
+                ItemCollisionContext context = itemContexts[i];
+
+                if (context == null || context.ItemSlot == null)
+                {
+                    continue;
+                }
+
+                // アイテムコンテキストを追加
+                _items.Add(context);
             }
         }
     }

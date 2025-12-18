@@ -16,7 +16,7 @@ namespace CollisionSystem.Calculator
     /// OBB 衝突処理のユースケース窓口
     /// 数学的処理はすべて OBBCollisionCalculator に委譲する
     /// </summary>
-    public class BoundingBoxCollisionCalculator
+    public sealed class BoundingBoxCollisionCalculator
     {
         // ======================================================
         // コンポーネント参照

@@ -8,12 +8,10 @@
 //            TankCollisionService により移動後の衝突判定を行う。
 // ======================================================
 
-using CollisionSystem.Data;
+using UnityEngine;
 using TankSystem.Controller;
 using TankSystem.Data;
 using TankSystem.Service;
-using UnityEngine;
-using static UnityEngine.EventSystems.EventTrigger;
 
 namespace TankSystem.Manager
 {
@@ -71,7 +69,13 @@ namespace TankSystem.Manager
 
         /// <summary>前フレームの前進量を保持し、移動量計算に使用する</summary>
         private float _previousForward;
-        
+
+        /// <summary>移動予定ワールド座標</summary>
+        private Vector3 _nextPosition;
+
+        /// <summary>移動予定ワールド回転</summary>
+        private Quaternion _nextRotation;
+
         // ======================================================
         // プロパティ
         // ======================================================
@@ -143,7 +147,7 @@ namespace TankSystem.Manager
         /// <param name="rightInput">右キャタピラ入力値（-1～1）</param>
         /// <param name="nextPosition">次フレームでの予定ワールド座標</param>
         /// <param name="nextRotation">次フレームでの予定回転</param>
-        public void CalculateMobilityResult(
+        public void CalculateMobility(
             in TankStatus tankStatus,
             in Vector2 leftInput,
             in Vector2 rightInput,
@@ -219,51 +223,34 @@ namespace TankSystem.Manager
             // --------------------------------------------------
             nextPosition = clampedPosition;
             nextRotation = rotatedRotation;
+
+            // --------------------------------------------------
+            // キャッシュ
+            // --------------------------------------------------
+            _nextPosition = nextPosition;
+            _nextRotation = nextRotation;
         }
 
         /// <summary>
-        /// 計算済みの予定位置・回転を Transform に反映する
-        /// LateUpdate からの呼び出しを前提とする
+        /// 計算済みの予定座標・回転を Transform に反映する
         /// </summary>
-        /// <param name="plannedPosition">反映する予定ワールド座標</param>
-        /// <param name="plannedRotation">反映する予定回転</param>
-        public void ApplyPlannedTransform(
-            in Vector3 plannedPosition,
-            in Quaternion plannedRotation
+        /// <param name="nextPosition">反映する予定ワールド座標</param>
+        /// <param name="nextRotation">反映する予定回転</param>
+        public void ApplyMobility(
+            in Vector3 nextPosition,
+            in Quaternion nextRotation,
+            bool collisionResolve
         )
         {
             // --------------------------------------------------
-            // 位置反映
+            // 座標反映
             // --------------------------------------------------
-
-            // 計算済みの予定位置をそのまま Transform に適用する
-            _tankTransform.position = plannedPosition;
+            _tankTransform.position = nextPosition;
 
             // --------------------------------------------------
             // 回転反映
             // --------------------------------------------------
-
-            // 計算済みの予定回転をそのまま Transform に適用する
-            _tankTransform.rotation = plannedRotation;
-        }
-
-        /// <summary>
-        /// TankCollisionService からの衝突通知を受けて、戦車のめり込みを解消する
-        /// </summary>
-        /// <param name="resolveInfo">呼び出し側で算出済みの押し戻し情報</param>
-        public void ApplyCollisionResolve(in CollisionResolveInfo resolveInfo)
-        {
-            // 有効でなければ何もしない
-            if (!resolveInfo.IsValid || resolveInfo.ResolveDirection == new Vector3(0f, 0f, 0f))
-            {
-                return;
-            }
-
-            _tankTransform.position += resolveInfo.ResolveDirection * resolveInfo.ResolveDistance;
-
-            Debug.Log($"Time {Time.time}" +
-                $"Tank {_tankTransform.name}" +
-                $"Resolve: Direction={resolveInfo.ResolveDirection}");
+            _tankTransform.rotation = _nextRotation;
         }
 
         // ======================================================

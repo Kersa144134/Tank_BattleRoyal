@@ -14,7 +14,7 @@ namespace CollisionSystem.Utility
     /// <summary>
     /// SAT 前提で、指定軸上の侵入量（MTV 成分）を計算するクラス
     /// </summary>
-    public class MTVMath
+    public sealed class MTVMath
     {
         // ======================================================
         // コンポーネント参照

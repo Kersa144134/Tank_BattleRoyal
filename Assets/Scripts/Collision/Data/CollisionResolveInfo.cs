@@ -15,13 +15,22 @@ namespace CollisionSystem.Data
     /// </summary>
     public struct CollisionResolveInfo
     {
-        /// <summary>押し戻し方向</summary>
-        public Vector3 ResolveDirection;
+        /// <summary>押し戻しベクトルそのもの</summary>
+        public readonly Vector3 ResolveVector;
+
+        /// <summary>押し戻し方向（正規化済み）</summary>
+        public Vector3 ResolveDirection => ResolveVector.normalized;
 
         /// <summary>押し戻し距離</summary>
-        public float ResolveDistance;
+        public float ResolveDistance => ResolveVector.magnitude;
 
-        /// <summary>解消情報が有効かどうか</summary>
-        public bool IsValid;
+        /// <summary>
+        /// コンストラクタ
+        /// </summary>
+        /// <param name="resolveVector">押し戻しベクトル</param>
+        public CollisionResolveInfo(Vector3 resolveVector)
+        {
+            ResolveVector = resolveVector;
+        }
     }
 }

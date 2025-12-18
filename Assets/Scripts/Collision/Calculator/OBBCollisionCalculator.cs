@@ -15,7 +15,7 @@ namespace CollisionSystem.Calculator
     /// <summary>
     /// OBB 衝突計算のファサードクラス
     /// </summary>
-    public class OBBCollisionCalculator
+    public sealed class OBBCollisionCalculator
     {
         // ======================================================
         // コンポーネント参照

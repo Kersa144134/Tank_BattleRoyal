@@ -14,7 +14,7 @@ namespace CollisionSystem.Utility
     /// <summary>
     /// OBB に関する純数学的な計算を提供するユーティリティ
     /// </summary>
-    public class OBBMath
+    public sealed class OBBMath
     {
         // ======================================================
         // パブリックメソッド

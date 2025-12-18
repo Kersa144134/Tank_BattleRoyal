@@ -15,7 +15,7 @@ namespace TankSystem.Utility
     /// <summary>
     /// ローカルヒットボックス定義から OBB を生成するファクトリー
     /// </summary>
-    public class OBBFactory
+    public sealed class OBBFactory
     {
         // ======================================================
         // パブリックメソッド
@@ -24,41 +24,35 @@ namespace TankSystem.Utility
         /// <summary>
         /// 静的 OBBData を生成する
         /// </summary>
-        /// <param name="targetTransform">対象 Transform</param>
+        /// <param name="targetPosition">対象のワールド座標</param>
+        /// <param name="targetPosition">対象のワールド回転</param>
         /// <param name="localCenter">ローカル空間での中心位置</param>
         /// <param name="localSize">ローカル空間でのサイズ</param>
         /// <returns>静的 OBBData</returns>
         public StaticOBBData CreateStaticOBB(
-            in Transform targetTransform,
+            in Vector3 targetPosition,
+            in Quaternion targetRotation,
             in Vector3 localCenter,
             in Vector3 localSize
         )
         {
-            // ローカル中心をワールド空間に変換
-            Vector3 worldCenter = targetTransform.TransformPoint(localCenter);
-
-            // Transform のスケールを反映
-            Vector3 scaledSize = Vector3.Scale(localSize, targetTransform.lossyScale);
+            // ローカル中心をワールド座標に変換
+            Vector3 worldCenter = targetPosition + targetRotation * localCenter;
 
             // 半サイズに変換
-            Vector3 halfSize = scaledSize * 0.5f;
+            Vector3 halfSize = localSize * 0.5f;
 
-            // 回転は Transform のワールド回転を使用
-            Quaternion rotation = targetTransform.rotation;
-
-            // StructOBBData を返す
-            return new StaticOBBData(worldCenter, halfSize, rotation);
+            // StaticOBBData を返却
+            return new StaticOBBData(worldCenter, halfSize, targetRotation);
         }
 
         /// <summary>
-        /// 動的 OBBData（DynamicOBBData）を生成する
+        /// 動的 OBBData を生成する
         /// </summary>
-        /// <param name="context">衝突判定および衝突解決処理で使用されるコンテキスト</param>
         /// <param name="localCenter">ローカル空間での中心位置</param>
         /// <param name="localSize">ローカル空間でのサイズ</param>
         /// <returns>動的 OBBData</returns>
         public DynamicOBBData CreateDynamicOBB(
-            in BaseCollisionContext context,
             in Vector3 localCenter,
             in Vector3 localSize
         )
@@ -67,7 +61,7 @@ namespace TankSystem.Utility
             Vector3 halfSize = localSize * 0.5f;
 
             // DynamicOBBData を生成して返す
-            return new DynamicOBBData(context, localCenter, halfSize);
+            return new DynamicOBBData(localCenter, halfSize);
         }
     }
 }

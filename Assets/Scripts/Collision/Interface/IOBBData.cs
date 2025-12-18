@@ -25,7 +25,12 @@ namespace CollisionSystem.Interface
         /// <summary>OBB の回転（ワールド基準）</summary>
         Quaternion Rotation { get; }
 
-        /// <summary>動的OBB用の更新メソッド</summary>
-        void Update() { }
+        /// <summary>
+        /// OBB の状態を更新する
+        /// 動的 OBB は外部座標・回転を渡して更新できる
+        /// </summary>
+        /// <param name="plannedPosition">基準となるワールド座標</param>
+        /// <param name="plannedRotation">基準となる回転</param>
+        void Update(in Vector3 plannedPosition, in Quaternion plannedRotation) { }
     }
 }

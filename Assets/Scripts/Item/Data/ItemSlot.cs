@@ -19,7 +19,7 @@ namespace TankSystem.Data
     public class ItemSlot
     {
         /// <summary>アイテムの Transform</summary>
-        public Transform ItemTransform;
+        public Transform Transform;
 
         /// <summary>登録するアイテムデータベース ScriptableObject</summary>
         public ItemData ItemData;

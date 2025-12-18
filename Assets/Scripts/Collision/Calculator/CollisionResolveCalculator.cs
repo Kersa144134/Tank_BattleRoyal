@@ -3,17 +3,16 @@
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-17
 // 更新日時 : 2025-12-17
-// 概要     : MTV を用いた衝突解決量を計算する責務クラス
+// 概要     : MTV を用いた衝突解決量を計算するクラス
 // ======================================================
 
-using CollisionSystem.Data;
 using UnityEngine;
+using CollisionSystem.Data;
 
 namespace CollisionSystem.Calculator
 {
     /// <summary>
-    /// 衝突している 2 オブジェクト間の押し戻し情報を算出する
-    /// 戦車同士・戦車 vs 障害物の両方に対応する
+    /// 衝突している 2 オブジェクト間の押し戻し情報を算出するクラス
     /// </summary>
     public sealed class CollisionResolveCalculator
     {
@@ -75,11 +74,11 @@ namespace CollisionSystem.Calculator
 
             // B 側は固定物の場合は全軸ロック扱いとする
             MovementLockAxis lockAxisB =
-                isBMovable ? contextB.LockAxis : MovementLockAxis.X | MovementLockAxis.Z;
+                isBMovable ? contextB.LockAxis : MovementLockAxis.All;
 
             // OBB を最新状態に更新する
-            contextA.OBB.Update();
-            contextB.OBB.Update();
+            contextA.UpdateOBB();
+            contextB.UpdateOBB();
 
             // MTV を算出する
             if (!_boxCollisionCalculator.TryCalculateHorizontalMTV(
@@ -119,8 +118,8 @@ namespace CollisionSystem.Calculator
                 resolveDistance,
                 deltaForwardA,
                 deltaForwardB,
-                lockAxisA,
-                lockAxisB,
+                lockAxisA & MovementLockAxis.X,
+                lockAxisB & MovementLockAxis.X,
                 isBMovable,
                 out finalResolveA.x,
                 out finalResolveB.x
@@ -134,8 +133,8 @@ namespace CollisionSystem.Calculator
                 resolveDistance,
                 deltaForwardA,
                 deltaForwardB,
-                lockAxisA,
-                lockAxisB,
+                lockAxisA & MovementLockAxis.Z,
+                lockAxisB & MovementLockAxis.Z,
                 isBMovable,
                 out finalResolveA.z,
                 out finalResolveB.z
@@ -144,19 +143,33 @@ namespace CollisionSystem.Calculator
             // --------------------------------------------------
             // CollisionResolveInfo 構築
             // --------------------------------------------------
-            resolveInfoA = new CollisionResolveInfo
-            {
-                ResolveDirection = finalResolveA.normalized,
-                ResolveDistance = finalResolveA.magnitude,
-                IsValid = finalResolveA.sqrMagnitude > 0f
-            };
+            resolveInfoA = new CollisionResolveInfo(finalResolveA);
+            resolveInfoB = new CollisionResolveInfo(finalResolveB);
 
-            resolveInfoB = new CollisionResolveInfo
+            // --------------------------------------------------
+            // 押し戻しが発生した軸を LockAxis に反映
+            // --------------------------------------------------
+            MovementLockAxis newLockAxis = 0;
+
+            if (!Mathf.Approximately(finalResolveA.x, 0f))
             {
-                ResolveDirection = finalResolveB.normalized,
-                ResolveDistance = finalResolveB.magnitude,
-                IsValid = finalResolveB.sqrMagnitude > 0f
-            };
+                newLockAxis |= MovementLockAxis.X;
+            }
+            if (!Mathf.Approximately(finalResolveA.z, 0f))
+            {
+                newLockAxis |= MovementLockAxis.Z;
+            }
+
+
+            // どちらも押し戻されていれば All、片方なら X/Z
+            contextA.UpdateLockAxis(
+                newLockAxis == (MovementLockAxis.X | MovementLockAxis.Z)
+                ? MovementLockAxis.All
+                : newLockAxis
+            );
+
+            // ログ出力
+            Debug.Log($"ResolveVector:{resolveInfoA.ResolveVector}");
         }
 
         // ======================================================
@@ -183,7 +196,7 @@ namespace CollisionSystem.Calculator
             outB = 0f;
 
             // A がロックされている場合は B のみ押し戻す
-            if ((lockAxisA & MovementLockAxis.X) != 0)
+            if (lockAxisA != 0)
             {
                 if (isBMovable)
                 {
@@ -193,7 +206,7 @@ namespace CollisionSystem.Calculator
             }
 
             // B がロックされている場合は A のみ押し戻す
-            if ((lockAxisB & MovementLockAxis.X) != 0)
+            if (lockAxisB != 0)
             {
                 outA = axisValue * resolveDistance;
                 return;

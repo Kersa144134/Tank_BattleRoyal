@@ -31,26 +31,20 @@ namespace CollisionSystem.Data
         /// <summary>ローカル中心オフセット</summary>
         private readonly Vector3 _localCenter;
 
-        /// <summary>参照する汎用コンテキスト</summary>
-        private readonly BaseCollisionContext _context;
-
         // ======================================================
         // コンストラクタ
         // ======================================================
 
         public DynamicOBBData(
-            in BaseCollisionContext context,
             in Vector3 localCenter,
             in Vector3 halfSize
         )
         {
-            _context = context;
             _localCenter = localCenter;
             HalfSize = halfSize;
 
             Center = Vector3.zero;
             Rotation = Quaternion.identity;
-            Update();
         }
 
         // ======================================================
@@ -60,16 +54,12 @@ namespace CollisionSystem.Data
         /// <summary>
         /// BaseCollisionContext の予定座標・回転を基準に毎フレーム OBB を更新
         /// </summary>
-        public void Update()
+        /// <param name="plannedPosition">基準となるワールド座標</param>
+        /// <param name="plannedRotation">基準となる回転</param>
+        public void Update(in Vector3 plannedPosition, in Quaternion plannedRotation)
         {
-            if (_context == null)
-            {
-                return;
-            }
-
-            // PlannedNextPosition / PlannedNextRotation を基準に OBB 更新
-            Center = _context.PlannedNextPosition + _localCenter;
-            Rotation = _context.PlannedNextRotation;
+            Center = plannedPosition + _localCenter;
+            Rotation = plannedRotation;
         }
     }
 }

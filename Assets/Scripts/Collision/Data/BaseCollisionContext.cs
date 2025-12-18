@@ -21,30 +21,15 @@ namespace CollisionSystem.Data
         // プロパティ
         // ======================================================
 
-        /// <summary>
-        /// 衝突判定に使用する OBB データ
-        /// </summary>
+        /// <summary>衝突判定に使用する OBB データ</summary>
         public IOBBData OBB
         {
             get;
             protected set;
         }
 
-        /// <summary>
-        /// 衝突対象の Transform
-        /// 位置補正の適用先として使用される
-        /// </summary>
+        /// <summary>衝突対象の Transform</summary>
         public Transform Transform
-        {
-            get;
-            protected set;
-        }
-
-        /// <summary>
-        /// 現フレームにおける移動ロック軸
-        /// 固定物の場合は全軸ロックとして扱われる
-        /// </summary>
-        public MovementLockAxis LockAxis
         {
             get;
             protected set;
@@ -54,17 +39,18 @@ namespace CollisionSystem.Data
         // 抽象プロパティ
         // ======================================================
 
-        /// <summary>
-        /// 衝突判定の基準となる「予定ワールド座標」
-        /// OBB 更新や衝突解決計算の参照に使用する
-        /// </summary>
-        public abstract Vector3 PlannedNextPosition { get; }
+        /// <summary>衝突判定の基準となる、移動予定ワールド座標</summary>
+        public abstract Vector3 NextPosition { get; }
 
-        /// <summary>
-        /// 衝突判定の基準となる「予定回転」
-        /// OBB 更新や衝突解決計算の参照に使用する
-        /// </summary>
-        public abstract Quaternion PlannedNextRotation { get; }
+        /// <summary>衝突判定の基準となる、移動予定ワールド回転</summary>
+        public abstract Quaternion NextRotation { get; }
+
+        /// <summary>現フレームにおける移動ロック軸</summary>
+        public abstract MovementLockAxis LockAxis
+        {
+            get;
+            protected set;
+        }
 
         // ======================================================
         // コンストラクタ
@@ -84,6 +70,29 @@ namespace CollisionSystem.Data
         {
             Transform = transform;
             OBB = obb;
+            LockAxis = lockAxis;
+        }
+
+        // ======================================================
+        // パブリックメソッド
+        // ======================================================
+
+        /// <summary>
+        /// OBB を最新の予定座標・回転に更新する
+        /// </summary>
+        public void UpdateOBB()
+        {
+            if (OBB is DynamicOBBData dynamicOBB)
+            {
+                dynamicOBB.Update(NextPosition, NextRotation);
+            }
+        }
+
+        /// <summary>
+        /// 移動ロック軸 を最新の状態に更新する
+        /// </summary>
+        public virtual void UpdateLockAxis(MovementLockAxis lockAxis)
+        {
             LockAxis = lockAxis;
         }
     }

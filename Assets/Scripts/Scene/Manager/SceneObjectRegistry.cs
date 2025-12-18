@@ -196,9 +196,9 @@ namespace TankSystem.Manager
         {
             foreach (ItemSlot slot in _itemSlots)
             {
-                if (slot.ItemTransform != null)
+                if (slot.Transform != null)
                 {
-                    _itemManager.AddItem(slot);
+                    AddItem(slot);
                 }
             }
         }

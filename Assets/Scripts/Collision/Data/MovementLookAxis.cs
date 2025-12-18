@@ -23,6 +23,9 @@ namespace CollisionSystem.Data
         X = 1 << 0,
 
         /// <summary>Z Ž²ˆÚ“®‹ÖŽ~</summary>
-        Z = 1 << 1
+        Z = 1 << 1,
+
+        /// <summary>‘SŽ²ˆÚ“®‹ÖŽ~</summary>
+        All = X | Z
     }
 }

@@ -14,7 +14,7 @@ namespace CollisionSystem.Utility
     /// <summary>
     /// SAT に基づいた OBB の分離判定ロジックを提供
     /// </summary>
-    public class SATMath
+    public sealed class SATMath
     {
         // ======================================================
         // コンポーネント参照

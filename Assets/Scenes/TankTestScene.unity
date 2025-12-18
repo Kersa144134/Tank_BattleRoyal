@@ -4000,7 +4000,7 @@ MonoBehaviour:
     _ammo: 0
     _durability: 0
     _armor: 0
-    _horsePower: 10
+    _horsePower: 0
     _transmission: 10
     _barrelScale: 0
     _projectileMass: 0
@@ -11503,64 +11503,64 @@ MonoBehaviour:
   - {fileID: 52312541}
   _obstacleRoot: {fileID: 1832899783}
   _itemSlots:
-  - ItemTransform: {fileID: 1283861376}
+  - Transform: {fileID: 1283861376}
     ItemData: {fileID: 11400000, guid: 45022dd5602ebf4499205b6f8dc490c3, type: 2}
     IsEnabled: 1
-  - ItemTransform: {fileID: 243524690}
+  - Transform: {fileID: 243524690}
     ItemData: {fileID: 11400000, guid: 45022dd5602ebf4499205b6f8dc490c3, type: 2}
     IsEnabled: 1
-  - ItemTransform: {fileID: 610154193}
+  - Transform: {fileID: 610154193}
     ItemData: {fileID: 11400000, guid: 45022dd5602ebf4499205b6f8dc490c3, type: 2}
     IsEnabled: 1
-  - ItemTransform: {fileID: 1645825906}
+  - Transform: {fileID: 1645825906}
     ItemData: {fileID: 11400000, guid: 45022dd5602ebf4499205b6f8dc490c3, type: 2}
     IsEnabled: 1
-  - ItemTransform: {fileID: 63447528}
+  - Transform: {fileID: 63447528}
     ItemData: {fileID: 11400000, guid: 45022dd5602ebf4499205b6f8dc490c3, type: 2}
     IsEnabled: 1
-  - ItemTransform: {fileID: 740524082}
+  - Transform: {fileID: 740524082}
     ItemData: {fileID: 11400000, guid: 45022dd5602ebf4499205b6f8dc490c3, type: 2}
     IsEnabled: 1
-  - ItemTransform: {fileID: 403203984}
+  - Transform: {fileID: 403203984}
     ItemData: {fileID: 11400000, guid: 45022dd5602ebf4499205b6f8dc490c3, type: 2}
     IsEnabled: 1
-  - ItemTransform: {fileID: 757886289}
+  - Transform: {fileID: 757886289}
     ItemData: {fileID: 11400000, guid: 45022dd5602ebf4499205b6f8dc490c3, type: 2}
     IsEnabled: 1
-  - ItemTransform: {fileID: 1462575169}
+  - Transform: {fileID: 1462575169}
     ItemData: {fileID: 11400000, guid: 45022dd5602ebf4499205b6f8dc490c3, type: 2}
     IsEnabled: 1
-  - ItemTransform: {fileID: 1785222241}
+  - Transform: {fileID: 1785222241}
     ItemData: {fileID: 11400000, guid: 45022dd5602ebf4499205b6f8dc490c3, type: 2}
     IsEnabled: 1
-  - ItemTransform: {fileID: 76110013}
+  - Transform: {fileID: 76110013}
     ItemData: {fileID: 11400000, guid: 45022dd5602ebf4499205b6f8dc490c3, type: 2}
     IsEnabled: 1
-  - ItemTransform: {fileID: 269333387}
+  - Transform: {fileID: 269333387}
     ItemData: {fileID: 11400000, guid: 45022dd5602ebf4499205b6f8dc490c3, type: 2}
     IsEnabled: 1
-  - ItemTransform: {fileID: 742299958}
+  - Transform: {fileID: 742299958}
     ItemData: {fileID: 11400000, guid: 45022dd5602ebf4499205b6f8dc490c3, type: 2}
     IsEnabled: 1
-  - ItemTransform: {fileID: 1567224661}
+  - Transform: {fileID: 1567224661}
     ItemData: {fileID: 11400000, guid: 45022dd5602ebf4499205b6f8dc490c3, type: 2}
     IsEnabled: 1
-  - ItemTransform: {fileID: 104082085}
+  - Transform: {fileID: 104082085}
     ItemData: {fileID: 11400000, guid: 45022dd5602ebf4499205b6f8dc490c3, type: 2}
     IsEnabled: 1
-  - ItemTransform: {fileID: 14325874}
+  - Transform: {fileID: 14325874}
     ItemData: {fileID: 11400000, guid: 45022dd5602ebf4499205b6f8dc490c3, type: 2}
     IsEnabled: 1
-  - ItemTransform: {fileID: 94106260}
+  - Transform: {fileID: 94106260}
     ItemData: {fileID: 11400000, guid: 45022dd5602ebf4499205b6f8dc490c3, type: 2}
     IsEnabled: 1
-  - ItemTransform: {fileID: 1205283747}
+  - Transform: {fileID: 1205283747}
     ItemData: {fileID: 11400000, guid: 45022dd5602ebf4499205b6f8dc490c3, type: 2}
     IsEnabled: 1
-  - ItemTransform: {fileID: 1882067406}
+  - Transform: {fileID: 1882067406}
     ItemData: {fileID: 11400000, guid: 45022dd5602ebf4499205b6f8dc490c3, type: 2}
     IsEnabled: 1
-  - ItemTransform: {fileID: 1644521655}
+  - Transform: {fileID: 1644521655}
     ItemData: {fileID: 11400000, guid: 45022dd5602ebf4499205b6f8dc490c3, type: 2}
     IsEnabled: 1
 --- !u!1 &1546028348

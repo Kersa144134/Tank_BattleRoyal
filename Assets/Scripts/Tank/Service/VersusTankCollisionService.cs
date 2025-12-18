@@ -36,9 +36,9 @@ namespace TankSystem.Service
         // ======================================================
 
         /// <summary>
-        /// 衝突判定対象となる戦車コンテキスト一覧
+        /// 衝突判定対象となる戦車コンテキスト配列
         /// </summary>
-        private readonly List<TankCollisionContext> _tanks;
+        private readonly TankCollisionContext[] _tanks;
 
         // ======================================================
         // イベント
@@ -56,15 +56,14 @@ namespace TankSystem.Service
         /// <summary>
         /// 戦車 vs 戦車 衝突判定サービスを生成する
         /// </summary>
+        /// <param name="boxCollisionCalculator">OBB 同士の水平方向衝突判定を行う計算器</param>
+        /// <param name="tanks">戦車コンテキスト</param>
         public VersusTankCollisionService(
             in BoundingBoxCollisionCalculator boxCollisionCalculator,
-            in List<TankCollisionContext> tanks
+            in TankCollisionContext[] tanks
         )
         {
-            // 衝突計算器参照を保持する
             _boxCollisionCalculator = boxCollisionCalculator;
-
-            // 戦車コンテキスト一覧参照を保持する
             _tanks = tanks;
         }
 
@@ -84,9 +83,10 @@ namespace TankSystem.Service
             }
 
             // 全戦車の OBB を更新
-            for (int i = 0; i < _tanks.Count; i++)
+            for (int i = 0; i < _tanks.Length; i++)
             {
-                _tanks[i].OBB.Update();
+                TankCollisionContext context = _tanks[i];
+                context.UpdateOBB();
             }
         }
 
@@ -95,7 +95,7 @@ namespace TankSystem.Service
         /// </summary>
         public void Execute()
         {
-            if (_tanks == null || _tanks.Count < 2)
+            if (_tanks == null || _tanks.Length < 2)
             {
                 return;
             }
@@ -103,12 +103,12 @@ namespace TankSystem.Service
             // --------------------------------------------------
             // 戦車 × 戦車 判定ループ
             // --------------------------------------------------
-            for (int i = 0; i < _tanks.Count - 1; i++)
+            for (int i = 0; i < _tanks.Length - 1; i++)
             {
                 // 判定基準となる戦車 A
                 TankCollisionContext tankA = _tanks[i];
 
-                for (int j = i + 1; j < _tanks.Count; j++)
+                for (int j = i + 1; j < _tanks.Length; j++)
                 {
                     // 判定対象となる戦車 B
                     TankCollisionContext tankB = _tanks[j];

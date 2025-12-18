@@ -9,14 +9,12 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using CollisionSystem.Calculator;
 using CollisionSystem.Data;
 using InputSystem.Data;
 using SceneSystem.Interface;
 using TankSystem.Controller;
 using TankSystem.Data;
 using TankSystem.Service;
-using TankSystem.Utility;
 using WeaponSystem.Data;
 
 namespace TankSystem.Manager
@@ -79,16 +77,6 @@ namespace TankSystem.Manager
         private TankMovementBoundaryService _boundaryService;
 
         // ======================================================
-        // フィールド
-        // ======================================================
-
-        /// <summary>移動予定ワールド座標</summary>
-        private Vector3 _plannedNextPosition;
-
-        /// <summary>移動予定回転</summary>
-        private Quaternion _plannedNextRotation;
-
-        // ======================================================
         // プロパティ
         // ======================================================
 
@@ -101,20 +89,25 @@ namespace TankSystem.Manager
         /// <summary>弾丸発射ローカル位置</summary>
         public Transform FirePoint => _firePoint;
 
-        /// <summary>移動予定ワールド座標</summary>
-        public Vector3 PlannedNextPosition => _plannedNextPosition;
-
-        /// <summary>移動予定回転</summary>
-        public Quaternion PlannedNextRotation => _plannedNextRotation;
-
         /// <summary>前フレームからの移動量</summary>
         public float DeltaForward => _mobilityManager.DeltaForward;
 
-        /// <summary>
-        /// 今フレーム中に移動を制限すべき軸
-        /// </summary>
-        public MovementLockAxis CurrentFrameLockAxis { get; private set; } = MovementLockAxis.None;
+        /// <summary>移動予定ワールド座標</summary>
+        public Vector3 NextPosition { get; set; }
 
+        /// <summary>移動予定回転</summary>
+        public Quaternion NextRotation { get; set; }
+
+        /// <summary>今フレーム中に移動を制限すべき軸</summary>
+        public MovementLockAxis CurrentFrameLockAxis { get; set; } = MovementLockAxis.None;
+
+        // ======================================================
+        // フィールド
+        // ======================================================
+
+        private Vector3 _collisionResolveThisFrame; // 今フレームの押し戻しベクトル
+        private bool _hasCollisionResolve;          // 今フレーム押し戻しがあったか
+        
         // ======================================================
         // 定数
         // ======================================================
@@ -223,14 +216,20 @@ namespace TankSystem.Manager
             // --------------------------------------------------
             // 機動
             // --------------------------------------------------
-            // 前進・旋回を適用した場合の移動結果を計算し、予定位置と回転を受け取る
-            _mobilityManager.CalculateMobilityResult(
+            // 前進・旋回を適用した場合の移動結果を計算し、移動予定座標と回転を受け取る
+            Vector3 calculatedPosition;
+            Quaternion calculatedRotation;
+
+            _mobilityManager.CalculateMobility(
                 _tankStatus,
                 leftMobility,
                 rightMobility,
-                out _plannedNextPosition,
-                out _plannedNextRotation
+                out calculatedPosition,
+                out calculatedRotation
             );
+
+            NextPosition = calculatedPosition;
+            NextRotation = calculatedRotation;
         }
 
         public virtual void OnLateUpdate()
@@ -239,10 +238,15 @@ namespace TankSystem.Manager
             // 機動
             // --------------------------------------------------
             // 計算済みの移動・回転結果を Transform に適用する
-            _mobilityManager.ApplyPlannedTransform(
-                _plannedNextPosition,
-                _plannedNextRotation
+            _mobilityManager.ApplyMobility(
+                NextPosition,
+                NextRotation,
+                _hasCollisionResolve
             );
+
+            // フラグリセット
+            _collisionResolveThisFrame = Vector3.zero;
+            _hasCollisionResolve = false;
         }
 
         public virtual void OnExit()
@@ -269,7 +273,9 @@ namespace TankSystem.Manager
         /// <param name="resolveInfo">呼び出し側で算出済みの押し戻し情報</param>
         public void ApplyCollisionResolve(in CollisionResolveInfo resolveInfo)
         {
-            _mobilityManager.ApplyCollisionResolve(resolveInfo);
+            NextPosition += resolveInfo.ResolveVector;
+            _collisionResolveThisFrame = resolveInfo.ResolveVector;
+            _hasCollisionResolve = true;
         }
         
         // ======================================================

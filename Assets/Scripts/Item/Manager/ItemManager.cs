@@ -81,7 +81,7 @@ namespace TankSystem.Manager
         public void AddItem(ItemSlot slot)
         {
             // Transform 参照で検索
-            int index = _itemSlots.FindIndex(s => s.ItemTransform == slot.ItemTransform);
+            int index = _itemSlots.FindIndex(s => s.Transform == slot.Transform);
             if (index < 0)
             {
                 return;
@@ -94,13 +94,13 @@ namespace TankSystem.Manager
             // FaceTarget を生成して管理
             if (!_faceTargets.ContainsKey(target))
             {
-                _faceTargets[target] = new FaceTarget(target.ItemTransform, _mainCameraTransform);
+                _faceTargets[target] = new FaceTarget(target.Transform, _mainCameraTransform);
             }
 
             // SpriteRenderer を登録
             if (!_spriteRenderers.ContainsKey(target))
             {
-                SpriteRenderer spriteRenderer = target.ItemTransform.GetComponentInChildren<SpriteRenderer>(true);
+                SpriteRenderer spriteRenderer = target.Transform.GetComponentInChildren<SpriteRenderer>(true);
 
                 if (spriteRenderer != null)
                 {
@@ -109,7 +109,7 @@ namespace TankSystem.Manager
             }
 
             // Renderer の表示切り替え
-            ToggleRenderer(target.ItemTransform, true);
+            ToggleRenderer(target.Transform, true);
 
             // イベント発火
             _onListChanged?.Invoke(_itemSlots);
@@ -122,7 +122,7 @@ namespace TankSystem.Manager
         public void RemoveItem(ItemSlot slot)
         {
             // Transform 参照で検索
-            int index = _itemSlots.FindIndex(s => s.ItemTransform == slot.ItemTransform);
+            int index = _itemSlots.FindIndex(s => s.Transform == slot.Transform);
             if (index < 0)
             {
                 return;
@@ -133,7 +133,7 @@ namespace TankSystem.Manager
             target.IsEnabled = false;
 
             // Renderer の表示切り替え
-            ToggleRenderer(target.ItemTransform, false);
+            ToggleRenderer(target.Transform, false);
 
             // FaceTarget を破棄
             if (_faceTargets.ContainsKey(target))
