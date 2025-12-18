@@ -26,6 +26,13 @@ namespace CollisionSystem.Calculator
         private readonly BoundingBoxCollisionCalculator _boxCollisionCalculator;
 
         // ======================================================
+        // 定数
+        // ======================================================
+
+        /// <summary>微小押し戻し量の下限値</summary>
+        private const float MIN_RESOLVE_DISTANCE = 0.001f;
+
+        // ======================================================
         // コンストラクタ
         // ======================================================
 
@@ -46,20 +53,13 @@ namespace CollisionSystem.Calculator
 
         /// <summary>
         /// 衝突している 2 オブジェクトに対して MTV を用いた押し戻し量を計算する
+        /// 微小量でも Vector3 を保持し、フレームごとの揺れを防ぐ
         /// </summary>
-        /// <param name="contextA">解決対象 A</param>
-        /// <param name="contextB">解決対象 B</param>
-        /// <param name="deltaForwardA">A の前進量</param>
-        /// <param name="deltaForwardB">B の前進量（固定物なら 0）</param>
-        /// <param name="isBMovable">B が移動可能かどうか</param>
-        /// <param name="resolveInfoA">A に適用する解決情報</param>
-        /// <param name="resolveInfoB">B に適用する解決情報</param>
         public void CalculateResolveInfo(
             in BaseCollisionContext contextA,
             in BaseCollisionContext contextB,
             in float deltaForwardA,
             in float deltaForwardB,
-            bool isBMovable,
             out CollisionResolveInfo resolveInfoA,
             out CollisionResolveInfo resolveInfoB
         )
@@ -68,19 +68,15 @@ namespace CollisionSystem.Calculator
             resolveInfoA = default;
             resolveInfoB = default;
 
-            // A 側の移動ロック軸を取得する
-            MovementLockAxis lockAxisA =
-                contextA.LockAxis;
+            // 移動ロック軸取得
+            MovementLockAxis lockAxisA = contextA.LockAxis;
+            MovementLockAxis lockAxisB = contextB.LockAxis;
 
-            // B 側は固定物の場合は全軸ロック扱いとする
-            MovementLockAxis lockAxisB =
-                isBMovable ? contextB.LockAxis : MovementLockAxis.All;
-
-            // OBB を最新状態に更新する
+            // OBB を最新状態に更新
             contextA.UpdateOBB();
             contextB.UpdateOBB();
 
-            // MTV を算出する
+            // MTV を算出
             if (!_boxCollisionCalculator.TryCalculateHorizontalMTV(
                 contextA.OBB,
                 contextB.OBB,
@@ -94,9 +90,7 @@ namespace CollisionSystem.Calculator
             // --------------------------------------------------
             // 押し戻し方向補正（中心差）
             // --------------------------------------------------
-            Vector3 centerDelta =
-                contextA.OBB.Center - contextB.OBB.Center;
-
+            Vector3 centerDelta = contextA.OBB.Center - contextB.OBB.Center;
             centerDelta.y = 0f;
 
             if (Vector3.Dot(resolveAxis, centerDelta) < 0f)
@@ -110,9 +104,7 @@ namespace CollisionSystem.Calculator
             Vector3 finalResolveA = Vector3.zero;
             Vector3 finalResolveB = Vector3.zero;
 
-            // --------------------------
-            // X 軸
-            // --------------------------
+            // X 軸押し戻し量計算
             ResolveAxis(
                 resolveAxis.x,
                 resolveDistance,
@@ -120,14 +112,12 @@ namespace CollisionSystem.Calculator
                 deltaForwardB,
                 lockAxisA & MovementLockAxis.X,
                 lockAxisB & MovementLockAxis.X,
-                isBMovable,
+                contextB.LockAxis == MovementLockAxis.All,
                 out finalResolveA.x,
                 out finalResolveB.x
             );
 
-            // --------------------------
-            // Z 軸
-            // --------------------------
+            // Z 軸押し戻し量計算
             ResolveAxis(
                 resolveAxis.z,
                 resolveDistance,
@@ -135,13 +125,27 @@ namespace CollisionSystem.Calculator
                 deltaForwardB,
                 lockAxisA & MovementLockAxis.Z,
                 lockAxisB & MovementLockAxis.Z,
-                isBMovable,
+                contextB.LockAxis == MovementLockAxis.All,
                 out finalResolveA.z,
                 out finalResolveB.z
             );
 
             // --------------------------------------------------
-            // CollisionResolveInfo 構築
+            // 微小押し戻し量補正
+            // --------------------------------------------------
+            if (finalResolveA.sqrMagnitude > 0f && finalResolveA.sqrMagnitude < MIN_RESOLVE_DISTANCE * MIN_RESOLVE_DISTANCE)
+            {
+                finalResolveA = finalResolveA.normalized * MIN_RESOLVE_DISTANCE;
+                Debug.Log($"[ResolveVector] a {finalResolveA}");
+            }
+
+            if (finalResolveB.sqrMagnitude > 0f && finalResolveB.sqrMagnitude < MIN_RESOLVE_DISTANCE * MIN_RESOLVE_DISTANCE)
+            {
+                finalResolveB = finalResolveB.normalized * MIN_RESOLVE_DISTANCE;
+            }
+
+            // --------------------------------------------------
+            // CollisionResolveInfo 構築（normalized せずそのままベクトル保持）
             // --------------------------------------------------
             resolveInfoA = new CollisionResolveInfo(finalResolveA);
             resolveInfoB = new CollisionResolveInfo(finalResolveB);
@@ -151,25 +155,28 @@ namespace CollisionSystem.Calculator
             // --------------------------------------------------
             MovementLockAxis newLockAxis = 0;
 
-            if (!Mathf.Approximately(finalResolveA.x, 0f))
+            const float EPS = 0.001f; // 微小量判定用
+
+            if (Mathf.Abs(finalResolveA.x) > EPS)
             {
                 newLockAxis |= MovementLockAxis.X;
             }
-            if (!Mathf.Approximately(finalResolveA.z, 0f))
+
+            if (Mathf.Abs(finalResolveA.z) > EPS)
             {
                 newLockAxis |= MovementLockAxis.Z;
             }
 
-
-            // どちらも押し戻されていれば All、片方なら X/Z
             contextA.UpdateLockAxis(
                 newLockAxis == (MovementLockAxis.X | MovementLockAxis.Z)
                 ? MovementLockAxis.All
                 : newLockAxis
             );
 
-            // ログ出力
-            Debug.Log($"ResolveVector:{resolveInfoA.ResolveVector}");
+            // --------------------------------------------------
+            // デバッグログ
+            // --------------------------------------------------
+            Debug.Log($"[ResolveVector] b {finalResolveA}");
         }
 
         // ======================================================

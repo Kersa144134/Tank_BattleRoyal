@@ -245,12 +245,12 @@ namespace TankSystem.Manager
             // --------------------------------------------------
             // 座標反映
             // --------------------------------------------------
-            _tankTransform.position = nextPosition;
+            _tankTransform.position = _nextPosition;
 
             // --------------------------------------------------
             // 回転反映
             // --------------------------------------------------
-            _tankTransform.rotation = _nextRotation;
+            _tankTransform.rotation = nextRotation;
         }
 
         // ======================================================

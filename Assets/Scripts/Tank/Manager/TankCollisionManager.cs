@@ -199,7 +199,6 @@ namespace TankSystem.Manager
                 contextB: obstacle,
                 deltaForwardA: context.TankRootManager.DeltaForward,
                 deltaForwardB: 0f,
-                isBMovable: false,
                 resolveInfoA: out CollisionResolveInfo resolveInfoA,
                 resolveInfoB: out CollisionResolveInfo resolveInfoB
             );
@@ -236,7 +235,6 @@ namespace TankSystem.Manager
                 contextB: contextB,
                 deltaForwardA: contextA.TankRootManager.DeltaForward,
                 deltaForwardB: contextB.TankRootManager.DeltaForward,
-                isBMovable: true,
                 resolveInfoA: out CollisionResolveInfo resolveInfoA,
                 resolveInfoB: out CollisionResolveInfo resolveInfoB
             );
