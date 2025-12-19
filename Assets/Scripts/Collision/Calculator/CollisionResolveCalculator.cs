@@ -82,21 +82,6 @@ namespace CollisionSystem.Calculator
             MovementLockAxis lockAxisA = contextA.LockAxis;
             MovementLockAxis lockAxisB = contextB.LockAxis;
 
-            // --------------------------------------------------
-            // スタックトレース取得
-            // --------------------------------------------------
-            StackTrace stackTrace = new StackTrace();
-
-            var upperCaller = stackTrace.GetFrame(1).GetMethod();
-            string upperCallerClass = upperCaller.DeclaringType?.Name ?? "UnknownClass";
-            string upperCallerMethod = upperCaller.Name;
-
-            if (upperCallerMethod == "HandleTankHit")
-            {
-                UnityEngine.Debug.Log($"lockAxisA: {contextA.LockAxis}");
-                UnityEngine.Debug.Log($"lockAxisB: {contextB.LockAxis}");
-            }
-
             // MTV を算出
             if (!_boxCollisionCalculator.TryCalculateHorizontalMTV(
                 contextA.OBB,
