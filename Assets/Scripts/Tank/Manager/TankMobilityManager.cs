@@ -67,21 +67,12 @@ namespace TankSystem.Manager
         /// <summary>現在フレームでの負方向の旋回量</summary>
         private float _currentTurnNegative;
 
-        /// <summary>前フレームの前進量を保持し、移動量計算に使用する</summary>
-        private float _previousForward;
-
-        /// <summary>移動予定ワールド座標</summary>
-        private Vector3 _nextPosition;
-
-        /// <summary>移動予定ワールド回転</summary>
-        private Quaternion _nextRotation;
-
         // ======================================================
         // プロパティ
         // ======================================================
 
-        /// <summary>前フレームからの移動量</summary>
-        public float DeltaForward => _currentForward - _previousForward;
+        /// <summary>現在の前進移動速度</summary>
+        public float CurrentForwardSpeed => _currentForward;
         
         // ======================================================
         // 定数
@@ -223,12 +214,6 @@ namespace TankSystem.Manager
             // --------------------------------------------------
             nextPosition = clampedPosition;
             nextRotation = rotatedRotation;
-
-            // --------------------------------------------------
-            // キャッシュ
-            // --------------------------------------------------
-            _nextPosition = nextPosition;
-            _nextRotation = nextRotation;
         }
 
         /// <summary>

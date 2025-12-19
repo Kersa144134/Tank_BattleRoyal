@@ -12,7 +12,6 @@ using SceneSystem.Controller;
 using SceneSystem.Data;
 using SceneSystem.Interface;
 using SceneSystem.Utility;
-using TankSystem.Service;
 
 namespace SceneSystem.Manager
 {
@@ -76,8 +75,10 @@ namespace SceneSystem.Manager
 
         private void Awake()
         {
+            // 全 PhaseData アセットを読み込む
             PhaseData[] phaseDataList = Resources.LoadAll<PhaseData>("Phase");
 
+            // 各フェーズ定義データに対して初期化処理
             foreach (PhaseData phaseData in phaseDataList)
             {
                 IUpdatable[] phaseUpdatables =
@@ -101,17 +102,20 @@ namespace SceneSystem.Manager
 
             _updateManager = new UpdateManager(updateController);
 
+            // Bootstrapper を通じてコンポーネント初期化を行いコンテキストを生成
             UpdatableContext context = _bootstrapper.Initialize(_components);
 
             _sceneEventRouter = new SceneEventRouter(context);
 
+            // シーンイベントの購読処理
             _sceneEventRouter.Subscribe();
             _sceneEventRouter.OnOptionButtonPressed += ToggleOptionPhaseChange;
 
+            // 初期フェーズとして Play フェーズを設定する
             _targetPhase = PhaseType.Play;
-            ChangePhase(_targetPhase);
 
-            //_tankCollisionService = new TankCollisionService();
+            // 初期フェーズへの遷移処理を実行する
+            ChangePhase(_targetPhase);
         }
 
         private void Update()

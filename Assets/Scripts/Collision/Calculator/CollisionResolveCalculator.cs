@@ -57,15 +57,15 @@ namespace CollisionSystem.Calculator
         /// </summary>
         /// <param name="contextA">押し戻し対象のオブジェクト A のコンテキスト</param>
         /// <param name="contextB">押し戻し対象のオブジェクト B のコンテキスト</param>
-        /// <param name="deltaForwardA">オブジェクト A の前進量</param>
-        /// <param name="deltaForwardB">オブジェクト B の前進量</param>
+        /// <param name="forwardSpeedA">オブジェクト A の前進速度</param>
+        /// <param name="forwardSpeedB">オブジェクト B の前進速度</param>
         /// <param name="resolveInfoA">計算結果としてのオブジェクト A の押し戻し情報</param>
         /// <param name="resolveInfoB">計算結果としてのオブジェクト B の押し戻し情報</param>
         public void CalculateResolveInfo(
             in BaseCollisionContext contextA,
             in BaseCollisionContext contextB,
-            in float deltaForwardA,
-            in float deltaForwardB,
+            in float forwardSpeedA,
+            in float forwardSpeedB,
             out CollisionResolveInfo resolveInfoA,
             out CollisionResolveInfo resolveInfoB
         )
@@ -114,8 +114,8 @@ namespace CollisionSystem.Calculator
             ResolveAxis(
                 resolveAxis.x,
                 resolveDistance,
-                deltaForwardA,
-                deltaForwardB,
+                forwardSpeedA,
+                forwardSpeedB,
                 lockAxisA & MovementLockAxis.X,
                 lockAxisB & MovementLockAxis.X,
                 contextB.LockAxis == MovementLockAxis.All,
@@ -127,8 +127,8 @@ namespace CollisionSystem.Calculator
             ResolveAxis(
                 resolveAxis.z,
                 resolveDistance,
-                deltaForwardA,
-                deltaForwardB,
+                forwardSpeedA,
+                forwardSpeedB,
                 lockAxisA & MovementLockAxis.Z,
                 lockAxisB & MovementLockAxis.Z,
                 contextB.LockAxis == MovementLockAxis.All,
@@ -165,8 +165,8 @@ namespace CollisionSystem.Calculator
         /// </summary>
         /// <param name="axisValue">押し戻し軸の方向成分</param>
         /// <param name="resolveDistance">押し戻し量</param>
-        /// <param name="deltaA">オブジェクト A の前進量</param>
-        /// <param name="deltaB">オブジェクト B の前進量</param>
+        /// <param name="forwardSpeedA">オブジェクト A の前進速度</param>
+        /// <param name="forwardSpeedB">オブジェクト B の前進速度</param>
         /// <param name="lockAxisA">オブジェクト A のロック軸状態</param>
         /// <param name="lockAxisB">オブジェクト B のロック軸状態</param>
         /// <param name="isBMovable">オブジェクト B が完全にロックされていないか</param>
@@ -175,8 +175,8 @@ namespace CollisionSystem.Calculator
         private void ResolveAxis(
         float axisValue,
             in float resolveDistance,
-            in float deltaA,
-            in float deltaB,
+            in float forwardSpeedA,
+            in float forwardSpeedB,
             in MovementLockAxis lockAxisA,
             in MovementLockAxis lockAxisB,
             in bool isBMovable,
@@ -215,11 +215,11 @@ namespace CollisionSystem.Calculator
                 return;
             }
 
-            // 両者が可動の場合は前進量で分配する
+            // 両者が可動の場合は前進速度で分配する
             DistributeResolve(
                 axisValue * resolveDistance,
-                deltaA,
-                deltaB,
+                forwardSpeedA,
+                forwardSpeedB,
                 out outA,
                 out outB
             );
@@ -229,14 +229,14 @@ namespace CollisionSystem.Calculator
         /// 前進量を基準として押し戻し量を分配する
         /// </summary>
         /// <param name="resolveValue">総押し戻し量</param>
-        /// <param name="deltaA">オブジェクト A の前進量</param>
-        /// <param name="deltaB">オブジェクト B の前進量</param>
+        /// <param name="forwardSpeedA">オブジェクト A の前進速度</param>
+        /// <param name="forwardSpeedB">オブジェクト B の前進速度</param>
         /// <param name="outA">計算結果として出力されるオブジェクト A の押し戻し量</param>
         /// <param name="outB">計算結果として出力されるオブジェクト B の押し戻し量</param>
         private void DistributeResolve(
             in float resolveValue,
-            in float deltaA,
-            in float deltaB,
+            in float forwardSpeedA,
+            in float forwardSpeedB,
             out float outA,
             out float outB
         )
@@ -246,10 +246,10 @@ namespace CollisionSystem.Calculator
             outB = 0f;
 
             // 両者が移動している場合
-            if (!Mathf.Approximately(deltaA, 0f) &&
-                !Mathf.Approximately(deltaB, 0f))
+            if (!Mathf.Approximately(forwardSpeedA, 0f) &&
+                !Mathf.Approximately(forwardSpeedB, 0f))
             {
-                if (Mathf.Abs(deltaA) <= Mathf.Abs(deltaB))
+                if (Mathf.Abs(forwardSpeedA) <= Mathf.Abs(forwardSpeedB))
                 {
                     outA = resolveValue;
                 }
@@ -262,14 +262,14 @@ namespace CollisionSystem.Calculator
             }
 
             // A のみ移動している場合
-            if (!Mathf.Approximately(deltaA, 0f))
+            if (!Mathf.Approximately(forwardSpeedA, 0f))
             {
                 outB = -resolveValue;
                 return;
             }
 
             // B のみ移動している場合
-            if (!Mathf.Approximately(deltaB, 0f))
+            if (!Mathf.Approximately(forwardSpeedB, 0f))
             {
                 outA = resolveValue;
             }

@@ -37,8 +37,11 @@ namespace SceneSystem.Utility
             // シーン内の IUpdatable をすべて収集
             IUpdatable[] updatables = UpdatableCollector.Collect(components);
 
-            // Enemy 一時格納用
+            // EnemyTankRootManager を一時格納するためのキャッシュ
             List<EnemyTankRootManager> enemies = new List<EnemyTankRootManager>();
+
+            // SceneObjectRegistry を他クラスへ注入するためのキャッシュ
+            SceneObjectRegistry cacheSceneObjectRegistry = null;
 
             // コンテキスト生成
             UpdatableContext context = new UpdatableContext();
@@ -46,42 +49,43 @@ namespace SceneSystem.Utility
             // 初期化と参照キャッシュ
             foreach (IUpdatable updatable in updatables)
             {
-                // 各 IUpdatable の初期化処理を実行
-                updatable.OnEnter();
+                // SceneObjectRegistry を取得
+                if (updatable is SceneObjectRegistry sceneObjectRegistry)
+                {
+                    context.SceneObjectRegistry = sceneObjectRegistry;
+                    cacheSceneObjectRegistry = sceneObjectRegistry;
+                }
 
                 // BulletPool を取得
                 if (updatable is BulletPool bulletPool)
                 {
                     context.BulletPool = bulletPool;
-                    continue;
+                    bulletPool.SetSceneRegistry(cacheSceneObjectRegistry);
                 }
 
                 // CameraManager を取得
                 if (updatable is CameraManager cameraManager)
                 {
                     context.CameraManager = cameraManager;
-                    continue;
                 }
 
                 // InputManager を取得
                 if (updatable is InputManager inputManager)
                 {
                     context.InputManager = inputManager;
-                    continue;
                 }
 
                 // TankCollisionManager を取得
                 if (updatable is TankCollisionManager tankCollisionManager)
                 {
                     context.TankCollisionManager = tankCollisionManager;
-                    continue;
+                    tankCollisionManager.SetSceneRegistry(cacheSceneObjectRegistry);
                 }
 
                 // PlayerTank を取得
                 if (updatable is PlayerTankRootManager playerTank)
                 {
                     context.PlayerTank = playerTank;
-                    continue;
                 }
 
                 // EnemyTank を収集
@@ -89,6 +93,9 @@ namespace SceneSystem.Utility
                 {
                     enemies.Add(enemyTank);
                 }
+
+                // 各 IUpdatable の初期化処理を実行
+                updatable.OnEnter();
             }
 
             // Enemy 配列を確定

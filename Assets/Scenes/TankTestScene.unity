@@ -397,7 +397,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 31dfebb602a143d49a6e4236d8d29e7c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _sceneRegistry: {fileID: 1512516192}
   _tankStatus:
     _fuel: 0
     _ammo: 0
@@ -3994,14 +3993,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 806f6da86a3547c4e96c8edc3dfce697, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _sceneRegistry: {fileID: 1512516192}
   _tankStatus:
     _fuel: 0
     _ammo: 0
     _durability: 0
     _armor: 0
-    _horsePower: 10
-    _transmission: 10
+    _horsePower: 0
+    _transmission: 0
     _barrelScale: 0
     _projectileMass: 0
     _reloadTime: 0
@@ -6621,12 +6619,12 @@ MonoBehaviour:
   _components:
   - {fileID: 1512516190}
   - {fileID: 2029526539}
-  - {fileID: 76211782}
   - {fileID: 435110467}
   - {fileID: 1909697141}
   - {fileID: 52312538}
   - {fileID: 1327687266}
   - {fileID: 1749357753}
+  - {fileID: 76211782}
 --- !u!1 &820916603
 GameObject:
   m_ObjectHideFlags: 0
@@ -9680,7 +9678,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a6883faf931ceef46b0600fc20f6c130, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _sceneRegistry: {fileID: 1512516192}
   _tankObjects:
   - {fileID: 435110467}
   - {fileID: 1909697141}
@@ -12942,7 +12939,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6c7a226746e3b5e48a47e38226cea862, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _sceneRegistry: {fileID: 1512516192}
 --- !u!1 &1785222240
 GameObject:
   m_ObjectHideFlags: 0
@@ -14478,7 +14474,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 31dfebb602a143d49a6e4236d8d29e7c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _sceneRegistry: {fileID: 1512516192}
   _tankStatus:
     _fuel: 0
     _ammo: 0

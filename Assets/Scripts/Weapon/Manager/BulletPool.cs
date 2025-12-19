@@ -28,16 +28,12 @@ namespace WeaponSystem.Manager
         // インスペクタ設定
         // ======================================================
 
-        [Header("コンポーネント参照")]
-        /// <summary>シーン上のオブジェクト Transform を保持するレジストリー</summary>
-        [SerializeField] private SceneObjectRegistry _sceneRegistry;
-
         [Header("戦車オブジェクト")]
         /// <summary>プレイヤー戦車や敵戦車の GameObject 配列。TankRootManager 派生がアタッチされている場合、戦車ごとにプールを生成</summary>
         [SerializeField] private GameObject[] _tankObjects;
 
-        [Serializable]
-        public class BulletPoolEntry
+        /// <summary>弾丸プール設定を表すエントリークラス</summary>
+        [Serializable] public class BulletPoolEntry
         {
             /// <summary>弾丸タイプ（識別用）</summary>
             public BulletType Type;
@@ -56,6 +52,13 @@ namespace WeaponSystem.Manager
         [SerializeField] private List<BulletPoolEntry> bulletEntries = new List<BulletPoolEntry>();
 
         // ======================================================
+        // コンポーネント参照
+        // ======================================================
+
+        /// <summary>シーン上のオブジェクト Transform を保持するレジストリー</summary>
+        private SceneObjectRegistry _sceneRegistry;
+
+        // ======================================================
         // 辞書
         // ======================================================
 
@@ -64,6 +67,19 @@ namespace WeaponSystem.Manager
 
         /// <summary>未使用の弾丸を種類ごとに保持</summary>
         private readonly Dictionary<BulletType, List<BulletBase>> _inactivePool = new Dictionary<BulletType, List<BulletBase>>();
+
+        // ======================================================
+        // セッター
+        // ======================================================
+
+        /// <summary>
+        /// シーン内オブジェクト管理用のレジストリ参照を設定する
+        /// </summary>
+        /// <param name="sceneRegistry">シーンに存在する各種オブジェクト情報を一元管理するレジストリー</param>
+        public void SetSceneRegistry(SceneObjectRegistry sceneRegistry)
+        {
+            _sceneRegistry = sceneRegistry;
+        }
 
         // ======================================================
         // IUpdatable イベント

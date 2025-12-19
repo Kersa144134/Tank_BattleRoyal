@@ -6,9 +6,9 @@
 // 概要     : 初期化済み参照をまとめて保持するコンテキスト
 // ======================================================
 
-using SceneSystem.Interface;
 using CameraSystem.Manager;
 using InputSystem.Manager;
+using SceneSystem.Interface;
 using TankSystem.Manager;
 using WeaponSystem.Manager;
 
@@ -31,6 +31,9 @@ namespace SceneSystem.Data
 
         /// <summary>入力管理</summary>
         public InputManager InputManager;
+
+        /// <summary>シーン内のオブジェクトを一元管理するレジストリー</summary>
+        public SceneObjectRegistry SceneObjectRegistry;
 
         /// <summary>カメラ管理</summary>
         public TankCollisionManager TankCollisionManager;

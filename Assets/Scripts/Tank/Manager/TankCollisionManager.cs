@@ -46,31 +46,20 @@ namespace TankSystem.Manager
         }
 
         // ======================================================
-        // インスペクタ設定
-        // ======================================================
-
-        [Header("コンポーネント参照")]
-        /// <summary>
-        /// シーン上の戦車・障害物を一元管理するレジストリ
-        /// </summary>
-        [SerializeField]
-        private SceneObjectRegistry _sceneRegistry;
-
-        // ======================================================
         // コンポーネント参照
         // ======================================================
+
+        /// <summary>シーン上の戦車・障害物を一元管理するレジストリー</summary>
+        private SceneObjectRegistry _sceneRegistry;
 
         /// <summary>OBB の衝突判定および MTV 計算を行う計算器</summary>
         private readonly BoundingBoxCollisionCalculator _boxCollisionCalculator = new BoundingBoxCollisionCalculator();
 
         /// <summary>MTV を用いた衝突解決量を計算するクラス</summary>
-        private CollisionResolveCalculator _collisionResolverCalculator;
+        private  CollisionResolveCalculator _collisionResolverCalculator;
 
         /// <summary>OBB を生成するファクトリー</summary>
         private readonly OBBFactory _obbFactory = new OBBFactory();
-
-        /// <summary>戦車衝突用コンテキストを生成するファクトリー</summary>
-        private CollisionContextFactory _collisionContextFactory;
 
         /// <summary>戦車衝突用コンテキストを生成するビルダー</summary>
         private CollisionContextBuilder _contextBuilder;
@@ -95,6 +84,19 @@ namespace TankSystem.Manager
         /// 衝突判定対象となる戦車コンテキスト配列
         /// </summary>
         private TankCollisionContext[] _tanks;
+
+        // ======================================================
+        // セッター
+        // ======================================================
+
+        /// <summary>
+        /// シーン内オブジェクト管理用のレジストリ参照を設定する
+        /// </summary>
+        /// <param name="sceneRegistry">シーンに存在する各種オブジェクト情報を一元管理するレジストリー</param>
+        public void SetSceneRegistry(SceneObjectRegistry sceneRegistry)
+        {
+            _sceneRegistry = sceneRegistry;
+        }
 
         // ======================================================
         // IUpdatable 実装
@@ -253,12 +255,8 @@ namespace TankSystem.Manager
         /// </summary>
         /// <param name="service">実行対象の衝突判定サービス</param>
         /// <param name="phase">現在の衝突フェーズ</param>
-        private void ExecuteCollisionService(
-            ITankCollisionService service,
-            CollisionPhase phase
-        )
+        private void ExecuteCollisionService(in ITankCollisionService service, in CollisionPhase phase)
         {
-            // サービスが未生成の場合は何もしない
             if (service == null)
             {
                 return;
@@ -282,48 +280,51 @@ namespace TankSystem.Manager
             ObstacleCollisionContext obstacle
         )
         {
+            // --------------------------------------------------
             // 衝突解決計算
+            // --------------------------------------------------
             _collisionResolverCalculator.CalculateResolveInfo(
-                contextA: context,
-                contextB: obstacle,
-                deltaForwardA: context.TankRootManager.DeltaForward,
-                deltaForwardB: 0f,
-                resolveInfoA: out CollisionResolveInfo resolveInfoA,
-                resolveInfoB: out CollisionResolveInfo resolveInfoB
+                context,
+                obstacle,
+                context.TankRootManager.CurrentForwardSpeed,
+                0f,
+                out CollisionResolveInfo resolveInfoA,
+                out CollisionResolveInfo resolveInfoB
             );
 
             // --------------------------------------------------
-            // 押し戻しが発生した軸を LockAxis に反映
+            // LockAxis 反映
             // --------------------------------------------------
             // この衝突によって発生したロック軸
             MovementLockAxis newLockAxis = MovementLockAxis.None;
 
-            // X 方向に有意な押し戻しが発生しているか
+            // X 方向に押し戻しが発生しているか
             if (Mathf.Abs(resolveInfoA.ResolveVector.x) > 0f)
             {
                 newLockAxis |= MovementLockAxis.X;
             }
 
-            // Z 方向に有意な押し戻しが発生しているか
+            // Z 方向に押し戻しが発生しているか
             if (Mathf.Abs(resolveInfoA.ResolveVector.z) > 0f)
             {
                 newLockAxis |= MovementLockAxis.Z;
             }
 
-            // 押し戻しが発生している場合のみ反映
             if (newLockAxis != MovementLockAxis.None)
             {
-                // 両軸ロック時は意味的に All に正規化
+                // 両軸ロック時は All
                 MovementLockAxis resolvedAxisA =
                     newLockAxis == (MovementLockAxis.X | MovementLockAxis.Z)
                         ? MovementLockAxis.All
                         : newLockAxis;
 
-                // フレーム中のロック軸として累積
+                // ロック軸の累積
                 context.AddPendingLockAxis(resolvedAxisA);
             }
 
-            // 戦車の押し戻し反映
+            // --------------------------------------------------
+            // 押し戻し反映
+            // --------------------------------------------------
             context.TankRootManager.ApplyCollisionResolve(resolveInfoA);
 
             // 押し戻した位置で OBB を更新
@@ -349,17 +350,21 @@ namespace TankSystem.Manager
             TankCollisionContext contextB
         )
         {
+            // --------------------------------------------------
             // 衝突解決計算
+            // --------------------------------------------------
             _collisionResolverCalculator.CalculateResolveInfo(
-                contextA: contextA,
-                contextB: contextB,
-                deltaForwardA: contextA.TankRootManager.DeltaForward,
-                deltaForwardB: contextB.TankRootManager.DeltaForward,
-                resolveInfoA: out CollisionResolveInfo resolveInfoA,
-                resolveInfoB: out CollisionResolveInfo resolveInfoB
+                contextA,
+                contextB,
+                contextA.TankRootManager.CurrentForwardSpeed,
+                contextB.TankRootManager.CurrentForwardSpeed,
+                out CollisionResolveInfo resolveInfoA,
+                out CollisionResolveInfo resolveInfoB
             );
 
-            // 戦車の押し戻し反映
+            // --------------------------------------------------
+            // 押し戻し反映
+            // --------------------------------------------------
             contextA.TankRootManager.ApplyCollisionResolve(resolveInfoA);
             contextB.TankRootManager.ApplyCollisionResolve(resolveInfoB);
 

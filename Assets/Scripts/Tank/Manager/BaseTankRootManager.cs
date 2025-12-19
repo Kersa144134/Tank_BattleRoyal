@@ -28,10 +28,6 @@ namespace TankSystem.Manager
         // インスペクタ設定
         // ======================================================
 
-        [Header("コンポーネント参照")]
-        /// <summary>シーン上のオブジェクト Transform を保持するレジストリー</summary>
-        [SerializeField] private SceneObjectRegistry _sceneRegistry;
-
         [Header("ステータス")]
         /// <summary>ゲーム中に変動する戦車のパラメーター</summary>
         [SerializeField] private TankStatus _tankStatus;
@@ -46,7 +42,7 @@ namespace TankSystem.Manager
         [Header("防御設定")]
         /// <summary>戦車本体の BoxCollider</summary>
         [SerializeField] private BoxCollider _tankCollider;
-        
+
         // ======================================================
         // コンポーネント参照
         // ======================================================
@@ -89,8 +85,8 @@ namespace TankSystem.Manager
         /// <summary>弾丸発射ローカル位置</summary>
         public Transform FirePoint => _firePoint;
 
-        /// <summary>前フレームからの移動量</summary>
-        public float DeltaForward => _mobilityManager.DeltaForward;
+        /// <summary>現在の前進移動速度</summary>
+        public float CurrentForwardSpeed => _mobilityManager.CurrentForwardSpeed;
 
         /// <summary>移動予定ワールド座標</summary>
         public Vector3 NextPosition { get; set; }
@@ -143,17 +139,13 @@ namespace TankSystem.Manager
             out ButtonState leftFire,
             out ButtonState rightFire
         );
-        
+
         // ======================================================
         // IUpdatable イベント
         // ======================================================
 
         public virtual void OnEnter()
         {
-            // SceneObjectRegistry から必要なシーン情報を取得
-            Transform[] obstacles = _sceneRegistry.Obstacles;
-            List<ItemSlot> items = _sceneRegistry.ItemSlots;
-
             _attackManager = new TankAttackManager(_firePoint);
             _boundaryService = new TankMovementBoundaryService(MOVEMENT_ALLOWED_RADIUS);
             _mobilityManager = new TankMobilityManager(
