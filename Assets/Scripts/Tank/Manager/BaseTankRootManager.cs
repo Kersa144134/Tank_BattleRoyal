@@ -169,7 +169,7 @@ namespace TankSystem.Manager
         public virtual void OnUpdate()
         {
             // --------------------------------------------------
-            // フレーム開始時に軸制限をリセット
+            // 軸制限をリセット
             // --------------------------------------------------
             CurrentFrameLockAxis = MovementLockAxis.None;
 

@@ -6,6 +6,7 @@
 // 概要     : MTV を用いた衝突解決量を計算するクラス
 // ======================================================
 
+using System.Diagnostics;
 using UnityEngine;
 using CollisionSystem.Data;
 
@@ -53,8 +54,13 @@ namespace CollisionSystem.Calculator
 
         /// <summary>
         /// 衝突している 2 オブジェクトに対して MTV を用いた押し戻し量を計算する
-        /// 微小量でも Vector3 を保持し、フレームごとの揺れを防ぐ
         /// </summary>
+        /// <param name="contextA">押し戻し対象のオブジェクト A のコンテキスト</param>
+        /// <param name="contextB">押し戻し対象のオブジェクト B のコンテキスト</param>
+        /// <param name="deltaForwardA">オブジェクト A の前進量</param>
+        /// <param name="deltaForwardB">オブジェクト B の前進量</param>
+        /// <param name="resolveInfoA">計算結果としてのオブジェクト A の押し戻し情報</param>
+        /// <param name="resolveInfoB">計算結果としてのオブジェクト B の押し戻し情報</param>
         public void CalculateResolveInfo(
             in BaseCollisionContext contextA,
             in BaseCollisionContext contextB,
@@ -68,13 +74,28 @@ namespace CollisionSystem.Calculator
             resolveInfoA = default;
             resolveInfoB = default;
 
+            // OBB 更新
+            contextA.UpdateOBB();
+            contextB.UpdateOBB();
+
             // 移動ロック軸取得
             MovementLockAxis lockAxisA = contextA.LockAxis;
             MovementLockAxis lockAxisB = contextB.LockAxis;
 
-            // OBB を最新状態に更新
-            contextA.UpdateOBB();
-            contextB.UpdateOBB();
+            // --------------------------------------------------
+            // スタックトレース取得
+            // --------------------------------------------------
+            StackTrace stackTrace = new StackTrace();
+
+            var upperCaller = stackTrace.GetFrame(1).GetMethod();
+            string upperCallerClass = upperCaller.DeclaringType?.Name ?? "UnknownClass";
+            string upperCallerMethod = upperCaller.Name;
+
+            if (upperCallerMethod == "HandleTankHit")
+            {
+                UnityEngine.Debug.Log($"lockAxisA: {contextA.LockAxis}");
+                UnityEngine.Debug.Log($"lockAxisB: {contextB.LockAxis}");
+            }
 
             // MTV を算出
             if (!_boxCollisionCalculator.TryCalculateHorizontalMTV(
@@ -88,7 +109,7 @@ namespace CollisionSystem.Calculator
             }
 
             // --------------------------------------------------
-            // 押し戻し方向補正（中心差）
+            // 押し戻し方向補正
             // --------------------------------------------------
             Vector3 centerDelta = contextA.OBB.Center - contextB.OBB.Center;
             centerDelta.y = 0f;
@@ -97,8 +118,6 @@ namespace CollisionSystem.Calculator
             {
                 resolveAxis = -resolveAxis;
             }
-            Debug.Log($"[resolveAxis] {resolveAxis}");
-            Debug.Log($"[resolveDistance] {resolveDistance}");
 
             // --------------------------------------------------
             // 最終押し戻しベクトル算出
@@ -146,33 +165,10 @@ namespace CollisionSystem.Calculator
             }
 
             // --------------------------------------------------
-            // CollisionResolveInfo 構築（normalized せずそのままベクトル保持）
+            // CollisionResolveInfo 生成
             // --------------------------------------------------
             resolveInfoA = new CollisionResolveInfo(finalResolveA);
             resolveInfoB = new CollisionResolveInfo(finalResolveB);
-
-            // --------------------------------------------------
-            // 押し戻しが発生した軸を LockAxis に反映
-            // --------------------------------------------------
-            MovementLockAxis newLockAxis = 0;
-
-            const float EPS = 0.001f; // 微小量判定用
-
-            if (Mathf.Abs(finalResolveA.x) > EPS)
-            {
-                newLockAxis |= MovementLockAxis.X;
-            }
-
-            if (Mathf.Abs(finalResolveA.z) > EPS)
-            {
-                newLockAxis |= MovementLockAxis.Z;
-            }
-
-            contextA.UpdateLockAxis(
-                newLockAxis == (MovementLockAxis.X | MovementLockAxis.Z)
-                ? MovementLockAxis.All
-                : newLockAxis
-            );
         }
 
         // ======================================================
@@ -182,14 +178,23 @@ namespace CollisionSystem.Calculator
         /// <summary>
         /// 単一軸方向の押し戻し量を決定する
         /// </summary>
+        /// <param name="axisValue">押し戻し軸の方向成分</param>
+        /// <param name="resolveDistance">押し戻し量</param>
+        /// <param name="deltaA">オブジェクト A の前進量</param>
+        /// <param name="deltaB">オブジェクト B の前進量</param>
+        /// <param name="lockAxisA">オブジェクト A のロック軸状態</param>
+        /// <param name="lockAxisB">オブジェクト B のロック軸状態</param>
+        /// <param name="isBMovable">オブジェクト B が完全にロックされていないか</param>
+        /// <param name="outA">計算結果として出力されるオブジェクト A の押し戻し量</param>
+        /// <param name="outB">計算結果として出力されるオブジェクト B の押し戻し量</param>
         private void ResolveAxis(
-            float axisValue,
-            float resolveDistance,
-            float deltaA,
-            float deltaB,
-            MovementLockAxis lockAxisA,
-            MovementLockAxis lockAxisB,
-            bool isBMovable,
+        float axisValue,
+            in float resolveDistance,
+            in float deltaA,
+            in float deltaB,
+            in MovementLockAxis lockAxisA,
+            in MovementLockAxis lockAxisB,
+            in bool isBMovable,
             out float outA,
             out float outB
         )
@@ -198,20 +203,30 @@ namespace CollisionSystem.Calculator
             outA = 0f;
             outB = 0f;
 
-            // A がロックされている場合は B のみ押し戻す
+            // A がロックされている場合
             if (lockAxisA != 0)
             {
                 if (isBMovable)
                 {
                     outB = -axisValue * resolveDistance;
                 }
+
+                string lockedAxesA = "";
+                if ((lockAxisA & MovementLockAxis.X) != 0) lockedAxesA += "X ";
+                if ((lockAxisA & MovementLockAxis.Z) != 0) lockedAxesA += "Z ";
+
                 return;
             }
 
-            // B がロックされている場合は A のみ押し戻す
+            // B がロックされている場合
             if (lockAxisB != 0)
             {
                 outA = axisValue * resolveDistance;
+
+                string lockedAxesB = "";
+                if ((lockAxisB & MovementLockAxis.X) != 0) lockedAxesB += "X ";
+                if ((lockAxisB & MovementLockAxis.Z) != 0) lockedAxesB += "Z ";
+
                 return;
             }
 
@@ -228,10 +243,15 @@ namespace CollisionSystem.Calculator
         /// <summary>
         /// 前進量を基準として押し戻し量を分配する
         /// </summary>
+        /// <param name="resolveValue">総押し戻し量</param>
+        /// <param name="deltaA">オブジェクト A の前進量</param>
+        /// <param name="deltaB">オブジェクト B の前進量</param>
+        /// <param name="outA">計算結果として出力されるオブジェクト A の押し戻し量</param>
+        /// <param name="outB">計算結果として出力されるオブジェクト B の押し戻し量</param>
         private void DistributeResolve(
-            float resolveValue,
-            float deltaA,
-            float deltaB,
+            in float resolveValue,
+            in float deltaA,
+            in float deltaB,
             out float outA,
             out float outB
         )

@@ -78,16 +78,41 @@ namespace TankSystem.Data
         // ======================================================
 
         /// <summary>
-        /// 移動ロック軸を最新の状態に更新する
+        /// 戦車用のフレーム初期化処理
+        /// TankRootManager の LockAxis を Context に反映する
         /// </summary>
-        /// <param name="lockAxis">更新する軸。null の場合は前フレームの CurrentFrameLockAxis を使用</param>
-        public override void UpdateLockAxis(MovementLockAxis? lockAxis = null)
+        public override void BeginFrame()
         {
-            // 引数がある場合はそれを使用、ない場合は前フレームの値を使用
-            _lockAxis = lockAxis ?? TankRootManager.CurrentFrameLockAxis;
+            // Base 側の初期化処理を実行する
+            base.BeginFrame();
 
-            // 現フレームの LockAxis を更新
-            TankRootManager.CurrentFrameLockAxis = _lockAxis;
+            // TankRootManager が存在しない場合は何もしない
+            if (TankRootManager == null)
+            {
+                return;
+            }
+
+            // Tank 側で管理されているロック軸を Context に反映する
+            LockAxis = TankRootManager.CurrentFrameLockAxis;
+        }
+
+        /// <summary>
+        /// 戦車用のロック軸確定処理
+        /// Base の確定結果を TankRootManager に反映する
+        /// </summary>
+        public override void FinalizeLockAxis()
+        {
+            // Base 側で LockAxis を確定させる
+            base.FinalizeLockAxis();
+
+            // TankRootManager が存在しない場合は何もしない
+            if (TankRootManager == null)
+            {
+                return;
+            }
+
+            // 現フレーム確定済みの LockAxis を Tank 側に反映する
+            TankRootManager.CurrentFrameLockAxis = LockAxis;
         }
     }
 }

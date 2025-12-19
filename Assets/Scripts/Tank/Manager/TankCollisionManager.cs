@@ -6,17 +6,17 @@
 // 概要     : 各種戦車衝突判定サービスを統括管理するマネージャー
 // ======================================================
 
+using System.Collections.Generic;
+using UnityEngine;
 using CollisionSystem.Calculator;
 using CollisionSystem.Data;
 using ItemSystem.Data;
 using ObstacleSystem.Data;
 using SceneSystem.Interface;
-using System.Collections.Generic;
 using TankSystem.Data;
 using TankSystem.Interface;
 using TankSystem.Service;
 using TankSystem.Utility;
-using UnityEngine;
 
 namespace TankSystem.Manager
 {
@@ -26,6 +26,25 @@ namespace TankSystem.Manager
     /// </summary>
     public sealed class TankCollisionManager : MonoBehaviour, IUpdatable
     {
+        // ======================================================
+        // 列挙体
+        // ======================================================
+
+        /// <summary>
+        /// 衝突判定の実行フェーズを表す列挙体
+        /// </summary>
+        private enum CollisionPhase
+        {
+            /// <summary>障害物との衝突判定フェーズ</summary>
+            Obstacle,
+
+            /// <summary>戦車同士の衝突判定フェーズ</summary>
+            Tank,
+
+            /// <summary>アイテムとの衝突判定フェーズ</summary>
+            Item
+        }
+
         // ======================================================
         // インスペクタ設定
         // ======================================================
@@ -134,25 +153,54 @@ namespace TankSystem.Manager
 
         public void OnUpdate()
         {
+            // ======================================================
+            // フレーム初期化
+            // ======================================================
+            for (int i = 0; i < _tanks.Length; i++)
+            {
+                _tanks[i].BeginFrame();
+            }
+
+            // ======================================================
+            // 障害物
+            // ======================================================
+            ExecuteCollisionService(_versusObstacleService, CollisionPhase.Obstacle);
+
             // --------------------------------------------------
-            // 戦車コンテキスト更新
+            // 障害物由来の LockAxis を確定
             // --------------------------------------------------
             for (int i = 0; i < _tanks.Length; i++)
             {
-                _tanks[i].UpdateOBB();
-                _tanks[i].UpdateLockAxis(_tanks[i].TankRootManager.CurrentFrameLockAxis);
+                _tanks[i].FinalizeLockAxis();
             }
-            
-            // --------------------------------------------------
-            // 衝突判定サービス実行
-            // --------------------------------------------------
-            for (int i = 0; i < _collisionServices.Count; i++)
-            {
-                ITankCollisionService service = _collisionServices[i];
 
-                service.PreUpdate();
-                service.Execute();
+            // ======================================================
+            // 戦車
+            // ======================================================
+            ExecuteCollisionService(_versusTankService, CollisionPhase.Tank);
+
+            // --------------------------------------------------
+            // 戦車衝突解決後に障害物衝突チェック
+            // --------------------------------------------------
+            ExecuteCollisionService(_versusObstacleService, CollisionPhase.Obstacle);
+
+            // --------------------------------------------------
+            // 再度 LockAxis を確定
+            // --------------------------------------------------
+            for (int i = 0; i < _tanks.Length; i++)
+            {
+                _tanks[i].FinalizeLockAxis();
             }
+
+            // --------------------------------------------------
+            // 再び戦車衝突チェック
+            // --------------------------------------------------
+            ExecuteCollisionService(_versusTankService, CollisionPhase.Tank);
+
+            // ======================================================
+            // アイテム
+            // ======================================================
+            ExecuteCollisionService(_versusItemService, CollisionPhase.Item);
         }
 
         public void OnExit()
@@ -200,6 +248,29 @@ namespace TankSystem.Manager
         // プライベートメソッド
         // ======================================================
 
+        /// <summary>
+        /// 指定された衝突判定サービスを 1 フェーズ分実行する
+        /// </summary>
+        /// <param name="service">実行対象の衝突判定サービス</param>
+        /// <param name="phase">現在の衝突フェーズ</param>
+        private void ExecuteCollisionService(
+            ITankCollisionService service,
+            CollisionPhase phase
+        )
+        {
+            // サービスが未生成の場合は何もしない
+            if (service == null)
+            {
+                return;
+            }
+
+            // フェーズ開始前の前処理
+            service.PreUpdate();
+
+            // 衝突判定および解決処理を実行
+            service.Execute();
+        }
+
         // --------------------------------------------------
         // イベントハンドラ
         // --------------------------------------------------
@@ -221,8 +292,42 @@ namespace TankSystem.Manager
                 resolveInfoB: out CollisionResolveInfo resolveInfoB
             );
 
+            // --------------------------------------------------
+            // 押し戻しが発生した軸を LockAxis に反映
+            // --------------------------------------------------
+            // この衝突によって発生したロック軸
+            MovementLockAxis newLockAxis = MovementLockAxis.None;
+
+            // X 方向に有意な押し戻しが発生しているか
+            if (Mathf.Abs(resolveInfoA.ResolveVector.x) > 0f)
+            {
+                newLockAxis |= MovementLockAxis.X;
+            }
+
+            // Z 方向に有意な押し戻しが発生しているか
+            if (Mathf.Abs(resolveInfoA.ResolveVector.z) > 0f)
+            {
+                newLockAxis |= MovementLockAxis.Z;
+            }
+
+            // 押し戻しが発生している場合のみ反映
+            if (newLockAxis != MovementLockAxis.None)
+            {
+                // 両軸ロック時は意味的に All に正規化
+                MovementLockAxis resolvedAxisA =
+                    newLockAxis == (MovementLockAxis.X | MovementLockAxis.Z)
+                        ? MovementLockAxis.All
+                        : newLockAxis;
+
+                // フレーム中のロック軸として累積
+                context.AddPendingLockAxis(resolvedAxisA);
+            }
+
             // 戦車の押し戻し反映
             context.TankRootManager.ApplyCollisionResolve(resolveInfoA);
+
+            // 押し戻した位置で OBB を更新
+            context.UpdateOBB();
         }
 
         /// <summary>
@@ -257,6 +362,10 @@ namespace TankSystem.Manager
             // 戦車の押し戻し反映
             contextA.TankRootManager.ApplyCollisionResolve(resolveInfoA);
             contextB.TankRootManager.ApplyCollisionResolve(resolveInfoB);
+
+            // 押し戻した位置で OBB を更新
+            contextA.UpdateOBB();
+            contextB.UpdateOBB();
         }
     }
 }
