@@ -10,13 +10,13 @@ using System.Collections.Generic;
 using UnityEngine;
 using CollisionSystem.Calculator;
 using CollisionSystem.Data;
+using CollisionSystem.Utility;
 using ItemSystem.Data;
 using ObstacleSystem.Data;
 using SceneSystem.Interface;
 using TankSystem.Data;
 using TankSystem.Interface;
 using TankSystem.Service;
-using TankSystem.Utility;
 
 namespace TankSystem.Manager
 {
@@ -86,6 +86,14 @@ namespace TankSystem.Manager
         private TankCollisionContext[] _tanks;
 
         // ======================================================
+        // 辞書
+        // ======================================================
+
+        /// <summary>ItemSlot と対応する ItemCollisionContext を管理するマップ</summary>
+        private readonly Dictionary<ItemSlot, ItemCollisionContext> _contextMap
+            = new Dictionary<ItemSlot, ItemCollisionContext>();
+
+        // ======================================================
         // セッター
         // ======================================================
 
@@ -150,7 +158,7 @@ namespace TankSystem.Manager
                 _versusTankService.OnTankHit += HandleTankHit;
             }
 
-            UpdateItems(_sceneRegistry.ItemSlots);
+            InitializeItems(_sceneRegistry.ItemSlots);
         }
 
         public void OnUpdate()
@@ -229,21 +237,82 @@ namespace TankSystem.Manager
         // ======================================================
 
         /// <summary>
-        /// アイテム情報を更新する
+        /// シーン開始時に存在するアイテムを衝突判定対象として初期化する
         /// </summary>
-        /// <param name="items">衝突判定対象となるアイテム一覧</param>
-        public void UpdateItems(in List<ItemSlot> items)
+        /// <param name="items">初期登録対象となるアイテム一覧</param>
+        public void InitializeItems(in List<ItemSlot> items)
         {
             if (_contextBuilder == null || _versusItemService == null || items == null)
             {
                 return;
             }
 
-            // アイテムコンテキストを生成
-            List<ItemCollisionContext> itemContexts = _contextBuilder.BuildItemContexts(items);
+            // 既存登録をすべて解除
+            foreach (ItemCollisionContext context in _contextMap.Values)
+            {
+                _versusItemService.RemoveItemContext(context);
+            }
 
-            // VersusItemCollisionService に設定
-            _versusItemService.SetItemContexts(itemContexts);
+            // 内部マップを初期化
+            _contextMap.Clear();
+
+            // 初期アイテムを登録
+            foreach (ItemSlot item in items)
+            {
+                AddItem(item);
+            }
+        }
+
+        /// <summary>
+        /// アイテムを衝突判定対象として追加する
+        /// </summary>
+        /// <param name="item">追加対象となるアイテムスロット</param>
+        public void AddItem(in ItemSlot item)
+        {
+            if (_contextBuilder == null || _versusItemService == null || item == null)
+            {
+                return;
+            }
+
+            // 既に登録済みの場合は何もしない
+            if (_contextMap.ContainsKey(item))
+            {
+                return;
+            }
+
+            // アイテム用衝突コンテキストを生成
+            ItemCollisionContext context =
+                _contextBuilder.BuildItemContext(item);
+
+            // 内部マップに追加
+            _contextMap.Add(item, context);
+
+            // 衝突サービス側にも追加
+            _versusItemService.AddItemContext(context);
+        }
+
+        /// <summary>
+        /// アイテムを衝突判定対象から削除する
+        /// </summary>
+        /// <param name="item">削除対象となるアイテムスロット</param>
+        public void RemoveItem(in ItemSlot item)
+        {
+            if (_versusItemService == null || item == null)
+            {
+                return;
+            }
+
+            // 未登録の場合は何もしない
+            if (_contextMap.TryGetValue(item, out ItemCollisionContext context) == false)
+            {
+                return;
+            }
+
+            // 内部マップから削除
+            _contextMap.Remove(item);
+
+            // 衝突サービス側からも削除
+            _versusItemService.RemoveItemContext(context);
         }
 
         // ======================================================

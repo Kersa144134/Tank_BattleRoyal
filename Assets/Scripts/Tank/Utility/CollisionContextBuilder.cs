@@ -8,6 +8,7 @@
 
 using System.Collections.Generic;
 using UnityEngine;
+using CollisionSystem.Utility;
 using ItemSystem.Data;
 using ObstacleSystem.Data;
 using TankSystem.Data;
@@ -72,6 +73,7 @@ namespace TankSystem.Manager
             for (int i = 0; i < _sceneRegistry.Tanks.Length; i++)
             {
                 Transform tankTransform = _sceneRegistry.Tanks[i];
+
                 if (tankTransform == null)
                 {
                     continue;
@@ -87,7 +89,6 @@ namespace TankSystem.Manager
                     continue;
                 }
 
-                // TankCollisionContext を生成
                 TankCollisionContext context = _contextFactory.CreateTankContext(
                     i,
                     boxCollider,
@@ -113,8 +114,10 @@ namespace TankSystem.Manager
                 return obstacleContexts.ToArray();
             }
 
-            foreach (Transform obstacle in _sceneRegistry.Obstacles)
+            for (int i = 0; i < _sceneRegistry.Obstacles.Length; i++)
             {
+                Transform obstacle = _sceneRegistry.Obstacles[i];
+
                 if (obstacle == null)
                 {
                     continue;
@@ -125,42 +128,62 @@ namespace TankSystem.Manager
                     continue;
                 }
 
-                ObstacleCollisionContext context = _contextFactory.CreateObstacleContext(
-                    obstacle,
-                    boxCollider
-                );
+                ObstacleCollisionContext context =
+                    _contextFactory.CreateObstacleContext(
+                        obstacle,
+                        boxCollider
+                    );
 
-                // リストに追加
                 obstacleContexts.Add(context);
             }
 
-            // 配列に変換して返却
             return obstacleContexts.ToArray();
         }
 
         /// <summary>
         /// アイテム用コンテキスト一覧を生成する
+        /// 初期化用途のみで使用する
         /// </summary>
         /// <param name="items">衝突判定対象となるアイテム一覧</param>
         public List<ItemCollisionContext> BuildItemContexts(in List<ItemSlot> items)
         {
             List<ItemCollisionContext> itemContexts = new List<ItemCollisionContext>();
 
-            foreach (ItemSlot item in items)
+            if (items == null)
             {
+                return itemContexts;
+            }
+
+            for (int i = 0; i < items.Count; i++)
+            {
+                ItemSlot item = items[i];
+
                 if (item == null || item.Transform == null)
                 {
                     continue;
                 }
 
-                ItemCollisionContext context = _contextFactory.CreateItemContext(
-                    item
-                );
+                ItemCollisionContext context = BuildItemContext(item);
 
                 itemContexts.Add(context);
             }
 
             return itemContexts;
+        }
+
+        /// <summary>
+        /// アイテム 1 件分の衝突コンテキストを生成する
+        /// </summary>
+        /// <param name="item">衝突判定対象となるアイテム</param>
+        /// <returns>生成されたアイテム用衝突コンテキスト</returns>
+        public ItemCollisionContext BuildItemContext(in ItemSlot item)
+        {
+            if (item == null || item.Transform == null)
+            {
+                return null;
+            }
+
+            return _contextFactory.CreateItemContext(item);
         }
     }
 }

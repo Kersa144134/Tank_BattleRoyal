@@ -43,11 +43,9 @@ namespace TankSystem.Service
         /// </summary>
         private readonly TankCollisionContext[] _tanks;
 
-        /// <summary>
-        /// シーン上に存在するアイテムコンテキスト一覧
-        /// </summary>
-        private List<ItemCollisionContext> _items;
-
+        /// <summary>衝突判定対象として登録されているアイテムコンテキスト一覧</summary>
+        private readonly List<ItemCollisionContext> _items = new List<ItemCollisionContext>();
+        
         // ======================================================
         // イベント
         // ======================================================
@@ -149,34 +147,73 @@ namespace TankSystem.Service
         // ======================================================
 
         /// <summary>
-        /// アイテムコンテキストを設定する
-        /// ゲーム中にアイテムの追加・削除・更新があった場合に呼び出す
+        /// 初期アイテムコンテキストを一括で登録する
+        /// 既存の登録内容はすべて破棄される
         /// </summary>
-        /// <param name="itemContexts">新しいアイテムコンテキスト一覧</param>
-        public void SetItemContexts(in List<ItemCollisionContext> itemContexts)
+        /// <param name="contexts">初期登録対象となるアイテムコンテキスト一覧</param>
+        public void InitializeItemContexts(in List<ItemCollisionContext> contexts)
         {
-            if (itemContexts == null)
+            // 既存登録をすべて解除する
+            _items.Clear();
+
+            if (contexts == null)
             {
-                // null が渡された場合は内部データをクリア
-                _items = null;
                 return;
             }
 
-            // アイテムコンテキスト一覧を生成
-            _items = new List<ItemCollisionContext>(itemContexts.Count);
-
-            for (int i = 0; i < itemContexts.Count; i++)
+            for (int i = 0; i < contexts.Count; i++)
             {
-                ItemCollisionContext context = itemContexts[i];
+                ItemCollisionContext context = contexts[i];
 
                 if (context == null || context.ItemSlot == null)
                 {
                     continue;
                 }
 
-                // アイテムコンテキストを追加
                 _items.Add(context);
             }
+        }
+        
+        /// <summary>
+        /// アイテムコンテキストを衝突判定対象として追加する
+        /// </summary>
+        /// <param name="context">追加対象となるアイテム衝突コンテキスト</param>
+        public void AddItemContext(in ItemCollisionContext context)
+        {
+            if (context == null || context.ItemSlot == null)
+            {
+                return;
+            }
+
+            // 既に登録済みの場合は追加しない
+            if (_items.Contains(context))
+            {
+                return;
+            }
+
+            // 衝突判定対象として登録する
+            _items.Add(context);
+        }
+
+        /// <summary>
+        /// アイテムコンテキストを衝突判定対象から削除する
+        /// </summary>
+        /// <param name="context">削除対象となるアイテム衝突コンテキスト</param>
+        public void RemoveItemContext(in ItemCollisionContext context)
+        {
+            if (context == null)
+            {
+                return;
+            }
+
+            // 登録されていない場合は何もしない
+            if (_items.Contains(context) == false)
+            {
+                return;
+            }
+
+            // 衝突判定対象から除外する
+            _items.Remove(context);
         }
     }
 }

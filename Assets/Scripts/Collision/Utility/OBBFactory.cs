@@ -10,7 +10,7 @@
 using UnityEngine;
 using CollisionSystem.Data;
 
-namespace TankSystem.Utility
+namespace CollisionSystem.Utility
 {
     /// <summary>
     /// ローカルヒットボックス定義から OBB を生成するファクトリー
