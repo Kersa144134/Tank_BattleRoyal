@@ -69,6 +69,15 @@ namespace TankSystem.Manager
         private VersusTankCollisionService _versusTankService;
 
         // ======================================================
+        // フィールド
+        // ======================================================
+        
+        /// <summary>
+        /// 衝突判定対象となる戦車コンテキスト配列
+        /// </summary>
+        private TankCollisionContext[] _tanks;
+
+        // ======================================================
         // IUpdatable 実装
         // ======================================================
 
@@ -83,16 +92,16 @@ namespace TankSystem.Manager
             // --------------------------------------------------
             // 戦車・障害物・アイテム コンテキスト構築
             // --------------------------------------------------
-            TankCollisionContext[] tankContexts = _contextBuilder.BuildTankContexts();
+            _tanks = _contextBuilder.BuildTankContexts();
             ObstacleCollisionContext[] obstacleContexts = _contextBuilder.BuildObstacleContexts();
             List<ItemCollisionContext> itemContexts = _contextBuilder.BuildItemContexts(_sceneRegistry.ItemSlots);
             
             // --------------------------------------------------
             // 各サービス生成
             // --------------------------------------------------
-            _versusObstacleService = new VersusObstacleCollisionService(_boxCollisionCalculator, tankContexts, obstacleContexts);
-            _versusItemService = new VersusItemCollisionService(_boxCollisionCalculator, tankContexts, itemContexts);
-            _versusTankService = new VersusTankCollisionService(_boxCollisionCalculator, tankContexts);
+            _versusObstacleService = new VersusObstacleCollisionService(_boxCollisionCalculator, _tanks, obstacleContexts);
+            _versusItemService = new VersusItemCollisionService(_boxCollisionCalculator, _tanks, itemContexts);
+            _versusTankService = new VersusTankCollisionService(_boxCollisionCalculator, _tanks);
 
             // --------------------------------------------------
             // 判定順に各衝突判定サービスを登録
@@ -126,11 +135,20 @@ namespace TankSystem.Manager
         public void OnUpdate()
         {
             // --------------------------------------------------
+            // 戦車コンテキスト更新
+            // --------------------------------------------------
+            for (int i = 0; i < _tanks.Length; i++)
+            {
+                _tanks[i].UpdateOBB();
+                _tanks[i].UpdateLockAxis(_tanks[i].TankRootManager.CurrentFrameLockAxis);
+            }
+            
+            // --------------------------------------------------
             // 衝突判定サービス実行
             // --------------------------------------------------
-            for (int s = 0; s < _collisionServices.Count; s++)
+            for (int i = 0; i < _collisionServices.Count; i++)
             {
-                ITankCollisionService service = _collisionServices[s];
+                ITankCollisionService service = _collisionServices[i];
 
                 service.PreUpdate();
                 service.Execute();
@@ -205,9 +223,6 @@ namespace TankSystem.Manager
 
             // 戦車の押し戻し反映
             context.TankRootManager.ApplyCollisionResolve(resolveInfoA);
-
-            // ログ出力
-            Debug.Log($"[ObstacleHit] Tank:{context.TankId} Obstacle:{obstacle.Transform.name} ResolveVector:{resolveInfoA.ResolveVector}");
         }
 
         /// <summary>
@@ -242,8 +257,6 @@ namespace TankSystem.Manager
             // 戦車の押し戻し反映
             contextA.TankRootManager.ApplyCollisionResolve(resolveInfoA);
             contextB.TankRootManager.ApplyCollisionResolve(resolveInfoB);
-
-            Debug.Log($"[TankHit] TankA:{contextA.TankId} TankB:{contextB.TankId}");
         }
     }
 }

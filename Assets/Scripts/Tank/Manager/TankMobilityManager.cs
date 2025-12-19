@@ -238,14 +238,13 @@ namespace TankSystem.Manager
         /// <param name="nextRotation">反映する予定回転</param>
         public void ApplyMobility(
             in Vector3 nextPosition,
-            in Quaternion nextRotation,
-            bool collisionResolve
+            in Quaternion nextRotation
         )
         {
             // --------------------------------------------------
             // 座標反映
             // --------------------------------------------------
-            _tankTransform.position = _nextPosition;
+            _tankTransform.position = nextPosition;
 
             // --------------------------------------------------
             // 回転反映

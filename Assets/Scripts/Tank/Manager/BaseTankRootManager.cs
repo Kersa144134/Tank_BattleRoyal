@@ -102,13 +102,6 @@ namespace TankSystem.Manager
         public MovementLockAxis CurrentFrameLockAxis { get; set; } = MovementLockAxis.None;
 
         // ======================================================
-        // フィールド
-        // ======================================================
-
-        private Vector3 _collisionResolveThisFrame; // 今フレームの押し戻しベクトル
-        private bool _hasCollisionResolve;          // 今フレーム押し戻しがあったか
-        
-        // ======================================================
         // 定数
         // ======================================================
 
@@ -240,13 +233,8 @@ namespace TankSystem.Manager
             // 計算済みの移動・回転結果を Transform に適用する
             _mobilityManager.ApplyMobility(
                 NextPosition,
-                NextRotation,
-                _hasCollisionResolve
+                NextRotation
             );
-
-            // フラグリセット
-            _collisionResolveThisFrame = Vector3.zero;
-            _hasCollisionResolve = false;
         }
 
         public virtual void OnExit()
@@ -274,8 +262,6 @@ namespace TankSystem.Manager
         public void ApplyCollisionResolve(in CollisionResolveInfo resolveInfo)
         {
             NextPosition += resolveInfo.ResolveVector;
-            _collisionResolveThisFrame = resolveInfo.ResolveVector;
-            _hasCollisionResolve = true;
         }
         
         // ======================================================

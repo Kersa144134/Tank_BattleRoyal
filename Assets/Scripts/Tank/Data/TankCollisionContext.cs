@@ -78,12 +78,16 @@ namespace TankSystem.Data
         // ======================================================
 
         /// <summary>
-        /// 移動ロック軸 を最新の状態に更新する
+        /// 移動ロック軸を最新の状態に更新する
         /// </summary>
-        public override void UpdateLockAxis(MovementLockAxis lockAxis)
+        /// <param name="lockAxis">更新する軸。null の場合は前フレームの CurrentFrameLockAxis を使用</param>
+        public override void UpdateLockAxis(MovementLockAxis? lockAxis = null)
         {
-            _lockAxis = lockAxis;
-            TankRootManager.CurrentFrameLockAxis = lockAxis;
+            // 引数がある場合はそれを使用、ない場合は前フレームの値を使用
+            _lockAxis = lockAxis ?? TankRootManager.CurrentFrameLockAxis;
+
+            // 現フレームの LockAxis を更新
+            TankRootManager.CurrentFrameLockAxis = _lockAxis;
         }
     }
 }

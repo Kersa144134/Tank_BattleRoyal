@@ -97,6 +97,8 @@ namespace CollisionSystem.Calculator
             {
                 resolveAxis = -resolveAxis;
             }
+            Debug.Log($"[resolveAxis] {resolveAxis}");
+            Debug.Log($"[resolveDistance] {resolveDistance}");
 
             // --------------------------------------------------
             // 最終押し戻しベクトル算出
@@ -136,7 +138,6 @@ namespace CollisionSystem.Calculator
             if (finalResolveA.sqrMagnitude > 0f && finalResolveA.sqrMagnitude < MIN_RESOLVE_DISTANCE * MIN_RESOLVE_DISTANCE)
             {
                 finalResolveA = finalResolveA.normalized * MIN_RESOLVE_DISTANCE;
-                Debug.Log($"[ResolveVector] a {finalResolveA}");
             }
 
             if (finalResolveB.sqrMagnitude > 0f && finalResolveB.sqrMagnitude < MIN_RESOLVE_DISTANCE * MIN_RESOLVE_DISTANCE)
@@ -172,11 +173,6 @@ namespace CollisionSystem.Calculator
                 ? MovementLockAxis.All
                 : newLockAxis
             );
-
-            // --------------------------------------------------
-            // デバッグログ
-            // --------------------------------------------------
-            Debug.Log($"[ResolveVector] b {finalResolveA}");
         }
 
         // ======================================================

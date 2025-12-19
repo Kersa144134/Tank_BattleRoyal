@@ -89,11 +89,16 @@ namespace CollisionSystem.Data
         }
 
         /// <summary>
-        /// 移動ロック軸 を最新の状態に更新する
+        /// 移動ロック軸を最新の状態に更新する
         /// </summary>
-        public virtual void UpdateLockAxis(MovementLockAxis lockAxis)
+        /// <param name="lockAxis">更新する軸。null の場合は現在の LockAxis を維持</param>
+        public virtual void UpdateLockAxis(MovementLockAxis? lockAxis = null)
         {
-            LockAxis = lockAxis;
+            // 引数がある場合のみ更新、null の場合は現状維持
+            if (lockAxis.HasValue)
+            {
+                LockAxis = lockAxis.Value;
+            }
         }
     }
 }

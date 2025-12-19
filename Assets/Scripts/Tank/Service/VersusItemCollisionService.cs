@@ -98,6 +98,7 @@ namespace TankSystem.Service
             {
                 TankCollisionContext context = _tanks[i];
                 context.UpdateOBB();
+                context.UpdateLockAxis(_tanks[i].TankRootManager.CurrentFrameLockAxis);
             }
         }
 
