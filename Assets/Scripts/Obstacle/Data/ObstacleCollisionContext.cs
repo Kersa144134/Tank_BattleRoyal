@@ -6,9 +6,9 @@
 // 概要     : 障害物用の静的衝突コンテキスト
 // ======================================================
 
+using UnityEngine;
 using CollisionSystem.Data;
 using CollisionSystem.Interface;
-using UnityEngine;
 
 namespace ObstacleSystem.Data
 {
@@ -16,7 +16,9 @@ namespace ObstacleSystem.Data
     /// 障害物 1 個分の衝突判定コンテキスト
     /// 静的物体として扱われ、移動予定座標は Transform から取得する
     /// </summary>
-    public sealed class ObstacleCollisionContext : BaseCollisionContext
+    public sealed class ObstacleCollisionContext
+        : BaseCollisionContext,
+        IStaticCollisionContext
     {
         // ======================================================
         // 抽象プロパティ
@@ -34,6 +36,21 @@ namespace ObstacleSystem.Data
         {
             get => _lockAxis;
             protected set => _lockAxis = value;
+        }
+
+        // ======================================================
+        // IBulletHittable プロパティ
+        // ======================================================
+
+        /// <summary>
+        /// 弾丸の衝突判定に使用する OBB
+        /// </summary>
+        public IOBBData Bounding
+        {
+            get
+            {
+                return OBB;
+            }
         }
 
         // ======================================================

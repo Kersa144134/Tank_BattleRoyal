@@ -13,6 +13,7 @@ using ItemSystem.Data;
 using ObstacleSystem.Data;
 using TankSystem.Data;
 using TankSystem.Utility;
+using WeaponSystem.Data;
 
 namespace TankSystem.Manager
 {
@@ -90,7 +91,7 @@ namespace TankSystem.Manager
                 }
 
                 TankCollisionContext context = _contextFactory.CreateTankContext(
-                    i,
+                    rootManager.TankId,
                     boxCollider,
                     rootManager
                 );
@@ -99,6 +100,29 @@ namespace TankSystem.Manager
             }
 
             return tankContexts.ToArray();
+        }
+
+        /// <summary>
+        /// 弾丸 1 発分の衝突コンテキストを生成する
+        /// </summary>
+        /// <param name="bullet">衝突判定対象となる弾丸ロジック</param>
+        /// <returns>生成された弾丸用衝突コンテキスト</returns>
+        public BulletCollisionContext BuildBulletContext(in BulletBase bullet)
+        {
+            if (bullet == null || bullet.Transform == null)
+            {
+                return null;
+            }
+
+            if (!bullet.Transform.TryGetComponent(out BoxCollider boxCollider))
+            {
+                return null;
+            }
+
+            return _contextFactory.CreateBulletContext(
+                bullet,
+                boxCollider
+            );
         }
 
         /// <summary>

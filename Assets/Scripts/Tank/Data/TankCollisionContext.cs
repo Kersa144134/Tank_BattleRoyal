@@ -18,7 +18,9 @@ namespace TankSystem.Data
     /// 戦車 1 台分の衝突判定コンテキスト
     /// 移動確定前の「予定状態」を基準として判定を行う
     /// </summary>
-    public sealed class TankCollisionContext : BaseCollisionContext
+    public sealed class TankCollisionContext
+        : BaseCollisionContext,
+          IDynamicCollisionContext
     {
         // ======================================================
         // 固有プロパティ
@@ -46,6 +48,21 @@ namespace TankSystem.Data
         {
             get => _lockAxis;
             protected set => _lockAxis = value;
+        }
+
+        // ======================================================
+        // IObstacleHittable, IBulletHittable プロパティ
+        // ======================================================
+
+        /// <summary>
+        /// 弾丸の衝突判定に使用する OBB
+        /// </summary>
+        public IOBBData Bounding
+        {
+            get
+            {
+                return OBB;
+            }
         }
 
         // ======================================================

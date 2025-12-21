@@ -18,7 +18,9 @@ namespace ItemSystem.Data
     /// アイテム 1 個分の衝突判定コンテキスト
     /// 静的物体として扱われ、移動予定座標は Transform から取得する
     /// </summary>
-    public sealed class ItemCollisionContext : BaseCollisionContext
+    public sealed class ItemCollisionContext
+        : BaseCollisionContext,
+        IStaticCollisionContext
     {
         // ======================================================
         // 固有プロパティ

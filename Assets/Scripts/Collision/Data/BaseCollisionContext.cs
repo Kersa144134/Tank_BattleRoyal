@@ -16,6 +16,7 @@ namespace CollisionSystem.Data
     /// OBB を持つ衝突対象の最小単位を定義する
     /// </summary>
     public abstract class BaseCollisionContext
+        : IDynamicCollisionContext
     {
         // ======================================================
         // フィールド

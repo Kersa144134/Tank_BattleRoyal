@@ -7,13 +7,14 @@
 //            戦車、障害物、アイテムの静的・動的 OBB に対応
 // ======================================================
 
-using UnityEngine;
 using CollisionSystem.Interface;
 using CollisionSystem.Utility;
 using ItemSystem.Data;
 using ObstacleSystem.Data;
 using TankSystem.Data;
 using TankSystem.Manager;
+using UnityEngine;
+using WeaponSystem.Data;
 
 namespace TankSystem.Utility
 {
@@ -65,6 +66,27 @@ namespace TankSystem.Utility
 
             // TankCollisionContext を構築して返却
             return new TankCollisionContext(tankId, obb, tankRootManager);
+        }
+
+        /// <summary>
+        /// 弾丸用の動的衝突コンテキストを生成する
+        /// </summary>
+        /// <param name="bullet">衝突判定対象となる弾丸ロジック本体</param>
+        /// <param name="boxCollider">弾丸に設定されている BoxCollider</param>
+        /// <returns>生成された BulletCollisionContext</returns>
+        public BulletCollisionContext CreateBulletContext(
+            BulletBase bullet,
+            BoxCollider boxCollider
+        )
+        {
+            // BoxCollider のローカルサイズに Transform のスケールを反映
+            Vector3 scaledSize = Vector3.Scale(boxCollider.size, bullet.Transform.lossyScale);
+            
+            // 動的 OBB を生成
+            IOBBData obb = _obbFactory.CreateDynamicOBB(boxCollider.center, scaledSize);
+
+            // BulletCollisionContext を構築して返却
+            return new BulletCollisionContext(bullet, obb);
         }
 
         /// <summary>
