@@ -60,7 +60,6 @@ namespace SceneSystem.Utility
                 if (updatable is BulletPool bulletPool)
                 {
                     context.BulletPool = bulletPool;
-                    bulletPool.SetSceneRegistry(cacheSceneObjectRegistry);
                 }
 
                 // CameraManager ‚ðŽæ“¾
@@ -75,11 +74,11 @@ namespace SceneSystem.Utility
                     context.InputManager = inputManager;
                 }
 
-                // TankCollisionManager ‚ðŽæ“¾
-                if (updatable is TankCollisionManager tankCollisionManager)
+                // CollisionManager ‚ðŽæ“¾
+                if (updatable is CollisionManager collisionManager)
                 {
-                    context.TankCollisionManager = tankCollisionManager;
-                    tankCollisionManager.SetSceneRegistry(cacheSceneObjectRegistry);
+                    context.CollisionManager = collisionManager;
+                    collisionManager.SetSceneRegistry(cacheSceneObjectRegistry);
                 }
 
                 // PlayerTank ‚ðŽæ“¾

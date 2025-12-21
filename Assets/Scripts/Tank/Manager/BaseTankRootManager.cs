@@ -7,7 +7,6 @@
 // ======================================================
 
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 using CollisionSystem.Data;
 using InputSystem.Data;
@@ -75,6 +74,9 @@ namespace TankSystem.Manager
         // ======================================================
         // プロパティ
         // ======================================================
+
+        /// <summary>戦車を一意に識別する ID</summary>
+        public int TankId { get; set; }
 
         /// <summary>ゲーム中に変動する戦車のパラメーター</summary>
         public TankStatus TankStatus => _tankStatus;

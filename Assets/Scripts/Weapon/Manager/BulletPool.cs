@@ -9,12 +9,12 @@
 //            戦車ごとのプールも生成可能
 // ======================================================
 
-using SceneSystem.Interface;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
+using SceneSystem.Interface;
 using TankSystem.Data;
 using TankSystem.Manager;
-using UnityEngine;
 using WeaponSystem.Data;
 
 namespace WeaponSystem.Manager
@@ -29,7 +29,7 @@ namespace WeaponSystem.Manager
         // ======================================================
 
         [Header("戦車オブジェクト")]
-        /// <summary>プレイヤー戦車や敵戦車の GameObject 配列。TankRootManager 派生がアタッチされている場合、戦車ごとにプールを生成</summary>
+        /// <summary>プレイヤー戦車や敵戦車の GameObject 配列</summary>
         [SerializeField] private GameObject[] _tankObjects;
 
         /// <summary>弾丸プール設定を表すエントリークラス</summary>
@@ -52,13 +52,6 @@ namespace WeaponSystem.Manager
         [SerializeField] private List<BulletPoolEntry> bulletEntries = new List<BulletPoolEntry>();
 
         // ======================================================
-        // コンポーネント参照
-        // ======================================================
-
-        /// <summary>シーン上のオブジェクト Transform を保持するレジストリー</summary>
-        private SceneObjectRegistry _sceneRegistry;
-
-        // ======================================================
         // 辞書
         // ======================================================
 
@@ -69,17 +62,18 @@ namespace WeaponSystem.Manager
         private readonly Dictionary<BulletType, List<BulletBase>> _inactivePool = new Dictionary<BulletType, List<BulletBase>>();
 
         // ======================================================
-        // セッター
+        // イベント
         // ======================================================
 
         /// <summary>
-        /// シーン内オブジェクト管理用のレジストリ参照を設定する
+        /// 弾丸を更新対象として登録通知するイベント
         /// </summary>
-        /// <param name="sceneRegistry">シーンに存在する各種オブジェクト情報を一元管理するレジストリー</param>
-        public void SetSceneRegistry(SceneObjectRegistry sceneRegistry)
-        {
-            _sceneRegistry = sceneRegistry;
-        }
+        public event Action<BulletBase> OnBulletSpawned;
+
+        /// <summary>
+        /// 弾丸を更新対象から解除通知するイベント
+        /// </summary>
+        public event Action<BulletBase> OnBulletDespawned;
 
         // ======================================================
         // IUpdatable イベント
@@ -158,11 +152,12 @@ namespace WeaponSystem.Manager
         /// 発射位置と進行方向を設定したうえで発射処理を行う
         /// </summary>
         /// <param name="type">発射する弾丸の種類</param>
+        /// <param name="tankStatus">発射元の戦車の ID</param>
         /// <param name="tankStatus">発射元の戦車のパラメーター</param>
         /// <param name="position">弾丸を生成・発射するワールド座標</param>
         /// <param name="direction">弾丸の進行方向を表す正規化済みベクトル</param>
         /// <returns>発射に成功した場合は使用中状態となった弾丸インスタンス</returns>
-        public BulletBase Spawn(BulletType type, TankStatus tankStatus, in Vector3 position, in Vector3 direction)
+        public BulletBase Spawn(BulletType type, in int tankId, in TankStatus tankStatus, in Vector3 position, in Vector3 direction)
         {
             BulletPoolEntry entry = bulletEntries.Find(e => e.Type == type);
             if (entry == null)
@@ -187,7 +182,6 @@ namespace WeaponSystem.Manager
             // 弾丸タイプごとの追加パラメータをセット
             if (bullet is ExplosiveBullet explosive)
             {
-                // direction は Spawn 引数をそのまま使用
                 explosive.SetParams(explosive.ExplosiveRadius);
             }
 
@@ -195,14 +189,14 @@ namespace WeaponSystem.Manager
             bullet.ApplyTankStatus(tankStatus);
 
             // 発射
-            bullet.OnEnter(position, direction);
+            bullet.OnEnter(tankId, position, direction);
 
             // プール管理
             _inactivePool[type].Remove(bullet);
             _activePool[type].Add(bullet);
 
-            // SceneObjectRegistry に登録して更新委譲
-            _sceneRegistry.RegisterBullet(bullet);
+            // 弾丸生成イベントを通知する
+            OnBulletSpawned?.Invoke(bullet);
 
             return bullet;
         }
@@ -234,8 +228,8 @@ namespace WeaponSystem.Manager
                 inactiveList.Add(bullet);
             }
 
-            // SceneObjectRegistry から登録解除
-            _sceneRegistry.UnregisterBullet(bullet);
+            // 弾丸破棄イベントを通知する
+            OnBulletDespawned?.Invoke(bullet);
         }
 
         // ======================================================
@@ -243,9 +237,8 @@ namespace WeaponSystem.Manager
         // ======================================================
 
         /// <summary>
-        /// 指定された弾丸定義エントリと親 Transform を基に、
         /// 新しい弾丸インスタンスを生成し、未使用状態としてプールへ登録する
-        /// 生成された弾丸は指定した親オブジェクト配下に配置される
+        /// 生成された弾丸は指定した親オブジェクト配下に配置する
         /// </summary>
         /// <param name="entry">生成対象となる弾丸のプール定義情報</param>
         /// <param name="parent">生成される弾丸オブジェクトの親となる Transform</param>

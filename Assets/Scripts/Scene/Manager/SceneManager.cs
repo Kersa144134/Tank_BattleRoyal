@@ -93,6 +93,7 @@ namespace SceneSystem.Manager
                 );
             }
 
+            // Update ˆ—ŠÇ—ƒNƒ‰ƒX‚Ì¶¬
             UpdateController updateController = new UpdateController();
 
             _phaseController = new PhaseController(

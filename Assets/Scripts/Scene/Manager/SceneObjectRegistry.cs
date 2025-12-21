@@ -6,12 +6,13 @@
 // 概要     : シーン上の戦車・障害物・アイテムを一元管理するレジストリクラス
 // ======================================================
 
-using SceneSystem.Interface;
 using System;
 using System.Collections.Generic;
-using TankSystem.Data;
 using UnityEngine;
+using SceneSystem.Interface;
+using TankSystem.Data;
 using WeaponSystem.Data;
+using WeaponSystem.Manager;
 
 namespace TankSystem.Manager
 {
@@ -43,6 +44,9 @@ namespace TankSystem.Manager
         // ======================================================
         // コンポーネント参照
         // ======================================================
+
+        /// <summary>弾丸管理マネージャー</summary>
+        private BulletManager _bulletManager = new BulletManager();
 
         /// <summary>アイテム管理担当マネージャー</summary>
         private ItemManager _itemManager;
@@ -93,81 +97,96 @@ namespace TankSystem.Manager
         {
             _itemManager = new ItemManager(_itemSlots, OnItemListChanged, _mainCamera);
 
-            // 障害物オブジェクトを取得して登録
+            InitializeTanks();
             InitializeObstacles();
-
-            // アイテムスロットを有効化して登録
             InitializeItemSlots();
         }
 
         public void OnUpdate()
         {
-            // 登録された弾丸の更新
             float deltaTime = Time.deltaTime;
 
-            for (int i = _updatableBullets.Count - 1; i >= 0; i--)
-            {
-                BulletBase bullet = _updatableBullets[i];
-
-                // 無効な弾丸はスキップ
-                if (bullet == null || !bullet.IsEnabled)
-                {
-                    continue;
-                }
-
-                // 弾丸更新
-                bullet.OnUpdate(deltaTime);
-            }
-
-            // アイテム回転処理
-            _itemManager.UpdateItemRotations();
+            _bulletManager.UpdateBullets(deltaTime);
+            _itemManager.UpdateItems();
         }
 
         // ======================================================
         // パブリックメソッド
         // ======================================================
 
-        /// <summary>弾丸を更新対象として登録する</summary>
+        /// <summary>
+        /// 弾丸を更新対象として登録する
+        /// </summary>
         /// <param name="bullet">登録する弾丸</param>
-        public void RegisterBullet(BulletBase bullet)
+        public void RegisterBullet(in BulletBase bullet)
         {
-            if (!_updatableBullets.Contains(bullet))
-            {
-                _updatableBullets.Add(bullet);
-            }
+            _bulletManager.RegisterBullet(bullet);
         }
 
-        /// <summary>弾丸を更新対象から解除する</summary>
-        /// <param name="bullet">解除する弾丸</param>
-        public void UnregisterBullet(BulletBase bullet)
-        {
-            _updatableBullets.Remove(bullet);
-        }
-        
         /// <summary>
-        /// アイテムスロットを追加しイベントを発火する
+        /// 弾丸を更新対象から解除する
+        /// </summary>
+        /// <param name="bullet">解除する弾丸</param>
+        public void UnregisterBullet(in BulletBase bullet)
+        {
+            _bulletManager.UnregisterBullet(bullet);
+        }
+
+        /// <summary>
+        /// アイテムスロットを更新対象として登録する
         /// </summary>
         /// <param name="slot">追加するスロット</param>
-        public void AddItem(ItemSlot slot)
+        public void RegisterItem(in ItemSlot slot)
         {
-            // スロット追加処理
-            _itemManager.AddItem(slot);
+            _itemManager.RegisterItem(slot);
         }
 
         /// <summary>
-        /// アイテムスロットを削除しイベントを発火する
+        /// アイテムスロットを更新対象から解除する
         /// </summary>
         /// <param name="slot">削除するスロット</param>
-        public void RemoveItem(ItemSlot slot)
+        public void UnregisterItem(in ItemSlot slot)
         {
-            // スロット削除処理
-            _itemManager.RemoveItem(slot);
+            _itemManager.UnregisterItem(slot);
         }
 
         // ======================================================
         // プライベートメソッド
         // ======================================================
 
+        /// <summary>
+        /// 戦車 Transform 配列を初期化し、TankId を自動割り当てする
+        /// </summary>
+        private void InitializeTanks()
+        {
+            if (_tanks == null || _tanks.Length == 0)
+            {
+                Debug.LogWarning("[SceneObjectRegistry] 戦車 Transform 配列が未設定です。");
+                return;
+            }
+
+            // 戦車ごとに TankId を 1 から順に設定
+            for (int i = 0; i < _tanks.Length; i++)
+            {
+                Transform tankTransform = _tanks[i];
+                if (tankTransform == null)
+                {
+                    continue;
+                }
+
+                // TankRootManager 取得
+                BaseTankRootManager tankManager = tankTransform.GetComponent<BaseTankRootManager>();
+                if (tankManager == null)
+                {
+                    Debug.LogWarning($"[SceneObjectRegistry] {_tanks[i].name} に BaseTankRootManager がアタッチされていません。");
+                    continue;
+                }
+
+                // TankId を設定（1スタート）
+                tankManager.TankId = i + 1;
+            }
+        }
+        
         /// <summary>
         /// シーン内の障害物を親オブジェクトから取得して配列に格納
         /// </summary>
@@ -198,7 +217,7 @@ namespace TankSystem.Manager
             {
                 if (slot.Transform != null)
                 {
-                    AddItem(slot);
+                    RegisterItem(slot);
                 }
             }
         }

@@ -20,17 +20,7 @@ namespace TankSystem.Data
     public class TankStatus
     {
         // ======================================================
-        // パラメーター定義
-        // ======================================================
-
-        /// <summary>パラメーター最小値</summary>
-        private const int MIN_PARAMETER_VALUE = 0;
-
-        /// <summary>パラメーター最大値</summary>
-        private const int MAX_PARAMETER_VALUE = 20;
-
-        // ======================================================
-        // パラメーター定義
+        // パラメーター
         // ======================================================
 
         // --------------------------------------------------
@@ -86,7 +76,7 @@ namespace TankSystem.Data
         private int _reloadTime;
 
         // ======================================================
-        // プロパティ定義
+        // プロパティ
         // ======================================================
 
         // --------------------------------------------------
@@ -163,6 +153,16 @@ namespace TankSystem.Data
             get => _reloadTime;
             private set => _reloadTime = Mathf.Clamp(value, MIN_PARAMETER_VALUE, MAX_PARAMETER_VALUE);
         }
+
+        // ======================================================
+        // 定数
+        // ======================================================
+
+        /// <summary>パラメーター最小値</summary>
+        private const int MIN_PARAMETER_VALUE = 0;
+
+        /// <summary>パラメーター最大値</summary>
+        private const int MAX_PARAMETER_VALUE = 20;
 
         // ======================================================
         // 辞書

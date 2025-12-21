@@ -8,8 +8,8 @@
 // ======================================================
 
 using System;
-using TankSystem.Data;
 using UnityEngine;
+using TankSystem.Data;
 
 namespace WeaponSystem.Data
 {
@@ -22,8 +22,11 @@ namespace WeaponSystem.Data
         // フィールド
         // ======================================================
 
-        /// <summary>弾丸が現在有効かどうかを示すフラグ</summary>
-        private bool _isEnabled;
+        /// <summary>弾丸の所有者 ID</summary>
+        protected int _bulletId;
+
+        /// <summary>弾丸が有効かどうか</summary>
+        protected bool _isEnabled;
 
         /// <summary>弾丸の生成座標</summary>
         protected Vector3 _spawnPosition;
@@ -32,7 +35,14 @@ namespace WeaponSystem.Data
         // プロパティ
         // ======================================================
 
-        /// <summary>弾丸が現在有効かどうかを</summary>
+        /// <summary>弾丸の所有者 ID</summary>
+        public int BulletId
+        {
+            get => _bulletId;
+            protected set => _bulletId = value;
+        }
+        
+        /// <summary>弾丸が有効かどうか</summary>
         public bool IsEnabled
         {
             get => _isEnabled;
@@ -59,10 +69,16 @@ namespace WeaponSystem.Data
         public float Mass { get; set; }
 
         /// <summary>弾丸の Transform</summary>
-        public Transform Transform { get; private set; }
+        public Transform Transform { get; protected set; }
 
         /// <summary>弾丸の現在座標</summary>
         public Vector3 CurrentPosition { get; protected set; }
+
+        /// <summary>弾丸の移動予定座標</summary>
+        public Vector3 NextPosition { get; set; }
+
+        /// <summary>弾丸の移動予定回転</summary>
+        public Quaternion NextRotation { get; set; }
 
         // --------------------------------------------------
         // 内部計算用プロパティ
@@ -71,7 +87,7 @@ namespace WeaponSystem.Data
         /// 弾速減衰率
         /// 大きな質量ほど減衰が緩やかになる
         /// </summary>
-        protected virtual float Drag => BASE_BULLET_DRAG / Mass;
+        protected float Drag => BASE_BULLET_DRAG / Mass;
 
         // ======================================================
         // 定数
@@ -110,14 +126,12 @@ namespace WeaponSystem.Data
 
         /// <summary>
         /// 弾丸の飛行方向を設定する抽象メソッド
-        /// 派生クラスで具体的な方向ベクトル処理を実装
         /// </summary>
         /// <param name="direction">初期飛行方向</param>
         protected abstract void SetDirection(Vector3 direction);
 
         /// <summary>
         /// 弾丸の移動・衝突・追尾などの処理を行う抽象メソッド
-        /// 派生クラスで具体的な処理を実装
         /// </summary>
         /// <param name="deltaTime">前フレームからの経過時間</param>
         protected abstract void Tick(float deltaTime);
@@ -126,10 +140,7 @@ namespace WeaponSystem.Data
         // イベント
         // ======================================================
 
-        /// <summary>
-        /// 弾丸が終了したことを通知するイベント
-        /// プール側で Despawn 処理を行うために使用する
-        /// </summary>
+        /// <summary>弾丸が終了したことを通知する</summary>
         public event Action<BulletBase> OnDespawnRequested;
         
         // ======================================================
@@ -147,9 +158,6 @@ namespace WeaponSystem.Data
 
             // 初期状態は非アクティブ
             IsEnabled = false;
-
-            // 現在座標を Transform から取得
-            CurrentPosition = transform.position;
         }
 
         // ======================================================
@@ -178,15 +186,18 @@ namespace WeaponSystem.Data
         }
 
         /// <summary>
-        /// 発射時に Spawn 位置と方向を注入
+        /// 発射時に Spawn 位置・方向・弾丸 ID を注入
         /// </summary>
+        /// <param name="tankId">弾丸の所有者である戦車 ID</param>
         /// <param name="position">発射位置</param>
         /// <param name="direction">飛行方向</param>
-        public virtual void OnEnter(Vector3 position, Vector3 direction)
+        public virtual void OnEnter(int tankId, Vector3 position, Vector3 direction)
         {
-            // 発射位置を保持
             _spawnPosition = position;
             CurrentPosition = position;
+
+            // 弾丸 ID を設定
+            BulletId = tankId;
 
             // 弾丸を有効化
             IsEnabled = true;
@@ -250,12 +261,12 @@ namespace WeaponSystem.Data
 
         /// <summary>
         /// 弾丸の初期位置をセットする
-        /// 発射前に位置のみ変更したい場合に使用
         /// </summary>
         /// <param name="spawnPosition">セットする座標</param>
         public void SetSpawnPosition(in Vector3 spawnPosition)
         {
             CurrentPosition = spawnPosition;
+            NextPosition = CurrentPosition;
         }
 
         // ======================================================
@@ -272,6 +283,7 @@ namespace WeaponSystem.Data
                 return;
             }
 
+            CurrentPosition = NextPosition;
             Transform.position = CurrentPosition;
         }
     }

@@ -36,7 +36,7 @@ namespace SceneSystem.Data
         public SceneObjectRegistry SceneObjectRegistry;
 
         /// <summary>カメラ管理</summary>
-        public TankCollisionManager TankCollisionManager;
+        public CollisionManager CollisionManager;
 
         /// <summary>プレイヤー戦車</summary>
         public PlayerTankRootManager PlayerTank;
