@@ -36,10 +36,10 @@ namespace WeaponSystem.Data
 
         protected override void Tick(float deltaTime)
         {
-            CurrentPosition += direction * BulletSpeed * deltaTime;
+            NextPosition += direction * BulletSpeed * deltaTime;
 
             // çÇìxîªíË
-            if (CurrentPosition.y <= exitHeight)
+            if (NextPosition.y <= exitHeight)
             {
                 OnExit();
             }

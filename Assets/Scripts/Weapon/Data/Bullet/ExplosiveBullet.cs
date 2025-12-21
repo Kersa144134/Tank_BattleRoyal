@@ -24,9 +24,25 @@ namespace WeaponSystem.Data
         /// <summary>弾丸飛行方向ベクトル</summary>
         private Vector3 _shootDirection;
 
+        /// <summary>弾丸発射時の初期弾速</summary>
+        private float _maxSpeed;
+
+        /// <summary>弾丸発射時の初期高度</summary>
+        private float _maxHeight;
+
+        /// <summary>弾丸が地面に接触する最終高度</summary>
+        private float _minHeight;
+
         /// <summary>爆発判定半径</summary>
         private float _explosionRadius;
 
+        // ======================================================
+        // 定数
+        // ======================================================
+
+        /// <summary>弾丸高度の補間用指数</summary>
+        private const float Y_INTERPOLATION_EXPONENT = 2.0f;
+        
         // ======================================================
         // プロパティ
         // ======================================================
@@ -72,11 +88,32 @@ namespace WeaponSystem.Data
         protected override void Tick(float deltaTime)
         {
             // --------------------------------------------------
-            // 移動処理
+            // 水平移動
             // --------------------------------------------------
             NextPosition += _shootDirection * BulletSpeed * deltaTime;
 
+            // --------------------------------------------------
+            // 高度座標補間
+            // BulletSpeed が減少するにつれて Y が下降する
+            // --------------------------------------------------
+            if (BulletSpeed > 0f)
+            {
+                float t = 1f - (BulletSpeed / _maxSpeed);
+                t = Mathf.Pow(t, Y_INTERPOLATION_EXPONENT);
+                Vector3 pos = NextPosition;
+                pos.y = Mathf.Lerp(_maxHeight, _minHeight, t);
+                NextPosition = pos;
+            }
+            else
+            {
+                Vector3 pos = NextPosition;
+                pos.y = _minHeight;
+                NextPosition = pos;
+            }
+
+            // --------------------------------------------------
             // Transform に反映
+            // --------------------------------------------------
             ApplyToTransform();
         }
 
@@ -84,6 +121,22 @@ namespace WeaponSystem.Data
         // BulletBase イベント
         // ======================================================
 
+        /// <summary>
+        /// 弾丸開始時の処理
+        /// 高度座標補間に使用する初期弾速、初期高度を取得
+        /// </summary>
+        public override void OnEnter(int tankId, Vector3 position, Vector3 direction)
+        {
+            base.OnEnter(tankId, position, direction);
+
+            // 初期弾速、初期高度を取得
+            _maxSpeed = BulletSpeed;
+            _maxHeight = position.y;
+
+            // Transform の Y スケールの半分を地面接触時の最終 Y 座標に設定
+            _minHeight = Transform.localScale.y * 0.5f;
+        }
+        
         /// <summary>
         /// 弾丸終了時の処理
         /// 爆発を発生させた後、基底クラスの終了処理を行う
@@ -106,7 +159,7 @@ namespace WeaponSystem.Data
         /// </summary>
         private void Explode()
         {
-            Debug.Log($"[ExplosiveBullet] 爆発発生 at {CurrentPosition}, 半径: {_explosionRadius}");
+            
         }
     }
 }

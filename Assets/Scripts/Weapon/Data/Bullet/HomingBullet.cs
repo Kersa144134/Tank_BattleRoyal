@@ -45,19 +45,19 @@ namespace WeaponSystem.Data
             }
 
             // ターゲット方向ベクトル
-            Vector3 toTarget = (target.position - CurrentPosition).normalized;
+            Vector3 toTarget = (target.position - NextPosition).normalized;
 
             // 補間して旋回
             Vector3 newDir = Vector3.Lerp(
-                (target.position - CurrentPosition).normalized,
+                (target.position - NextPosition).normalized,
                 toTarget,
                 rotateSpeed * deltaTime
             ).normalized;
 
-            CurrentPosition += newDir * BulletSpeed * deltaTime;
+            NextPosition += newDir * BulletSpeed * deltaTime;
 
             // 着弾判定
-            if (Vector3.Distance(CurrentPosition, target.position) <= hitDistance)
+            if (Vector3.Distance(NextPosition, target.position) <= hitDistance)
             {
                 OnExit();
             }

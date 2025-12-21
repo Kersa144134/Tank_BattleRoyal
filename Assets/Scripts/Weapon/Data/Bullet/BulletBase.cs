@@ -71,9 +71,6 @@ namespace WeaponSystem.Data
         /// <summary>弾丸の Transform</summary>
         public Transform Transform { get; protected set; }
 
-        /// <summary>弾丸の現在座標</summary>
-        public Vector3 CurrentPosition { get; protected set; }
-
         /// <summary>弾丸の移動予定座標</summary>
         public Vector3 NextPosition { get; set; }
 
@@ -83,10 +80,7 @@ namespace WeaponSystem.Data
         // --------------------------------------------------
         // 内部計算用プロパティ
         // --------------------------------------------------
-        /// <summary>
-        /// 弾速減衰率
-        /// 大きな質量ほど減衰が緩やかになる
-        /// </summary>
+        /// <summary>弾速減衰率</summary>
         protected float Drag => BASE_BULLET_DRAG / Mass;
 
         // ======================================================
@@ -97,7 +91,7 @@ namespace WeaponSystem.Data
         // 基準値
         // --------------------------------------------------
         /// <summary>基準となる弾速</summary>
-        private const float BASE_BULLET_SPEED = 75f;
+        private const float BASE_BULLET_SPEED = 100f;
 
         /// <summary>基準となる弾丸質量</summary>
         private const float BASE_BULLET_MASS = 1f;
@@ -156,7 +150,7 @@ namespace WeaponSystem.Data
         {
             Transform = transform;
 
-            // 初期状態は非アクティブ
+            // 無効化
             IsEnabled = false;
         }
 
@@ -170,19 +164,11 @@ namespace WeaponSystem.Data
         /// <param name="tankStatus">発射元戦車のステータス</param>
         public virtual void ApplyTankStatus(in TankStatus tankStatus)
         {
-            // 弾速を計算
-            // BASE_BULLET_SPEED: 基準となる弾速
-            // BASE_BARREL_SCALE: 基準砲身倍率
-            // tankStatus.BarrelScale: 戦車ステータスに応じた砲身スケール
-            // BARREL_SCALE_MULTIPLIER: 砲身スケール1あたりの補正係数
-            BulletSpeed = BASE_BULLET_SPEED * (BASE_BARREL_SCALE + tankStatus.BarrelScale * BARREL_SCALE_MULTIPLIER);
-
             // 弾丸の質量を計算
-            // BASE_BULLET_MASS: 基準となる弾丸質量
-            // BASE_PROJECTILE_MASS: 基準質量倍率
-            // tankStatus.ProjectileMass: 戦車ステータスに応じた弾丸質量
-            // PROJECTILE_MASS_MULTIPLIER: 弾丸質量1あたりの補正係数
             Mass = BASE_BULLET_MASS * (BASE_PROJECTILE_MASS + tankStatus.ProjectileMass * PROJECTILE_MASS_MULTIPLIER);
+
+            // 弾速を計算
+            BulletSpeed = BASE_BULLET_SPEED * (BASE_BARREL_SCALE + tankStatus.BarrelScale * BARREL_SCALE_MULTIPLIER) / Mass;
         }
 
         /// <summary>
@@ -194,12 +180,12 @@ namespace WeaponSystem.Data
         public virtual void OnEnter(int tankId, Vector3 position, Vector3 direction)
         {
             _spawnPosition = position;
-            CurrentPosition = position;
+            NextPosition = position;
 
             // 弾丸 ID を設定
             BulletId = tankId;
 
-            // 弾丸を有効化
+            // 有効化
             IsEnabled = true;
 
             // 飛行方向を設定
@@ -249,9 +235,10 @@ namespace WeaponSystem.Data
         /// </summary>
         public virtual void OnExit()
         {
+            // 無効化
             IsEnabled = false;
 
-            // プールへ戻すための通知を発行
+            // プールへ戻す通知
             OnDespawnRequested?.Invoke(this);
         }
 
@@ -265,8 +252,7 @@ namespace WeaponSystem.Data
         /// <param name="spawnPosition">セットする座標</param>
         public void SetSpawnPosition(in Vector3 spawnPosition)
         {
-            CurrentPosition = spawnPosition;
-            NextPosition = CurrentPosition;
+            NextPosition = spawnPosition;
         }
 
         // ======================================================
@@ -283,8 +269,7 @@ namespace WeaponSystem.Data
                 return;
             }
 
-            CurrentPosition = NextPosition;
-            Transform.position = CurrentPosition;
+            Transform.position = NextPosition;
         }
     }
 }
