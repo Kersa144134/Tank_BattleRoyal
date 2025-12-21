@@ -80,21 +80,12 @@ namespace CollisionSystem.Utility
                     continue;
                 }
 
-                if (!tankTransform.TryGetComponent(out BoxCollider boxCollider))
-                {
-                    continue;
-                }
-
                 if (!tankTransform.TryGetComponent(out BaseTankRootManager rootManager))
                 {
                     continue;
                 }
 
-                TankCollisionContext context = _contextFactory.CreateTankContext(
-                    rootManager.TankId,
-                    boxCollider,
-                    rootManager
-                );
+                TankCollisionContext context = _contextFactory.CreateTankContext(rootManager);
 
                 tankContexts.Add(context);
             }
@@ -124,17 +115,8 @@ namespace CollisionSystem.Utility
                     continue;
                 }
 
-                if (!obstacle.TryGetComponent(out BoxCollider boxCollider))
-                {
-                    continue;
-                }
-
                 ObstacleCollisionContext context =
-                    _contextFactory.CreateObstacleContext(
-                        i,
-                        obstacle,
-                        boxCollider
-                    );
+                    _contextFactory.CreateObstacleContext(i, obstacle);
 
                 obstacleContexts.Add(context);
             }
@@ -169,15 +151,7 @@ namespace CollisionSystem.Utility
                 return null;
             }
 
-            if (!bullet.Transform.TryGetComponent(out BoxCollider boxCollider))
-            {
-                return null;
-            }
-
-            return _contextFactory.CreateBulletContext(
-                bullet,
-                boxCollider
-            );
+            return _contextFactory.CreateBulletContext(bullet);
         }
     }
 }

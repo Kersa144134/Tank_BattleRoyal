@@ -14,6 +14,7 @@ using TankSystem.Data;
 using TankSystem.Manager;
 using UnityEngine;
 using WeaponSystem.Data;
+using static UnityEditor.Progress;
 
 namespace CollisionSystem.Utility
 {
@@ -50,39 +51,27 @@ namespace CollisionSystem.Utility
         /// <summary>
         /// 戦車用の動的衝突コンテキストを生成する
         /// </summary>
-        /// <param name="tankId">戦車 ID</param>
-        /// <param name="boxCollider">衝突形状定義に使用する BoxCollider</param>
         /// <param name="tankRootManager">戦車の移動・回転を管理するルート管理クラス</param>
         /// <returns>生成された TankCollisionContext</returns>
-        public TankCollisionContext CreateTankContext(
-            in int tankId,
-            in BoxCollider boxCollider,
-            in BaseTankRootManager tankRootManager
-        )
+        public TankCollisionContext CreateTankContext(in BaseTankRootManager tankRootManager)
         {
             // 動的 OBB を生成
-            IOBBData obb = _obbFactory.CreateDynamicOBB(boxCollider.center, boxCollider.size);
+            IOBBData obb = _obbFactory.CreateDynamicOBB(tankRootManager.HitBoxCenter, tankRootManager.HitBoxScale);
 
             // TankCollisionContext を構築して返却
-            return new TankCollisionContext(tankId, obb, tankRootManager);
+            return new TankCollisionContext(tankRootManager.TankId, obb, tankRootManager);
         }
 
         /// <summary>
         /// 弾丸用の動的衝突コンテキストを生成する
         /// </summary>
         /// <param name="bullet">衝突判定対象となる弾丸ロジック本体</param>
-        /// <param name="boxCollider">弾丸に設定されている BoxCollider</param>
         /// <returns>生成された BulletCollisionContext</returns>
-        public BulletCollisionContext CreateBulletContext(
-            in BulletBase bullet,
-            in BoxCollider boxCollider
+        public BulletCollisionContext CreateBulletContext(in BulletBase bullet
         )
         {
-            // BoxCollider のローカルサイズに Transform のスケールを反映
-            Vector3 scaledSize = Vector3.Scale(boxCollider.size, bullet.Transform.lossyScale);
-            
             // 動的 OBB を生成
-            IOBBData obb = _obbFactory.CreateDynamicOBB(boxCollider.center, scaledSize);
+            IOBBData obb = _obbFactory.CreateDynamicOBB(Vector3.zero, bullet.Transform.lossyScale);
 
             // BulletCollisionContext を構築して返却
             return new BulletCollisionContext(bullet, obb);
@@ -93,23 +82,18 @@ namespace CollisionSystem.Utility
         /// </summary>
         /// <param name="obstacleId">障害物 ID</param>
         /// <param name="obstacleTransform">障害物 Transform</param>
-        /// <param name="boxCollider">障害物の BoxCollider</param>
         /// <returns>生成された ObstacleCollisionContext</returns>
         public ObstacleCollisionContext CreateObstacleContext(
             in int obstacleId,
-            in Transform obstacleTransform,
-            in BoxCollider boxCollider
+            in Transform obstacleTransform
         )
         {
-            // BoxCollider のローカルサイズに Transform のスケールを反映
-            Vector3 scaledSize = Vector3.Scale(boxCollider.size, obstacleTransform.lossyScale);
-
             // 静的 OBB を生成
             IOBBData obb = _obbFactory.CreateStaticOBB(
                 obstacleTransform.position,
                 obstacleTransform.rotation,
-                boxCollider.center,
-                scaledSize
+                Vector3.zero,
+                obstacleTransform.lossyScale
             );
 
             // ObstacleCollisionContext を構築して返却
