@@ -8,9 +8,9 @@
 // ======================================================
 
 using System;
-using TankSystem.Data;
 using UnityEngine;
-using static UnityEngine.GraphicsBuffer;
+using CollisionSystem.Data;
+using TankSystem.Data;
 
 namespace WeaponSystem.Data
 {
@@ -19,6 +19,18 @@ namespace WeaponSystem.Data
     /// </summary>
     public abstract class BulletBase
     {
+        // ======================================================
+        // インターフェース
+        // ======================================================
+
+        /// <summary>
+        /// ダメージを受けることができるインターフェース
+        /// </summary>
+        public interface IDamageable
+        {
+            void TakeDamage(float damage);
+        }
+        
         // ======================================================
         // フィールド
         // ======================================================
@@ -37,6 +49,9 @@ namespace WeaponSystem.Data
 
         /// <summary>弾丸が地面に接触する最終高度</summary>
         private float _minHeight;
+
+        /// <summary>衝突対象</summary>
+        protected IDamageable _damageTarget;
 
         // ======================================================
         // プロパティ
@@ -125,6 +140,9 @@ namespace WeaponSystem.Data
         /// <summary>基準となる弾丸高度の補間指数</summary>
         public const float BASE_BULLET_HEIGHT_INTERPOLATION_EXPONENT = 1.5f;
 
+        /// <summary>基準となる弾丸のダメージ</summary>
+        private const float BASE_BULLET_DAMAGE = 10f;
+
         // --------------------------------------------------
         // パラメーター
         // --------------------------------------------------
@@ -139,7 +157,7 @@ namespace WeaponSystem.Data
 
         /// <summary>質量1あたりの倍率加算値</summary>
         private const float PROJECTILE_MASS_MULTIPLIER = 0.05f;
-        
+
         // ======================================================
         // イベント
         // ======================================================
@@ -162,6 +180,28 @@ namespace WeaponSystem.Data
 
             // 無効化
             IsEnabled = false;
+        }
+
+        // ======================================================
+        // セッター
+        // ======================================================
+
+        /// <summary>
+        /// 弾丸の初期位置をセットする
+        /// </summary>
+        /// <param name="spawnPosition">セットする座標</param>
+        public void SetSpawnPosition(in Vector3 spawnPosition)
+        {
+            NextPosition = spawnPosition;
+        }
+
+        /// <summary>
+        /// ダメージ対象を設定
+        /// </summary>
+        /// <param name="target">ダメージを与える対象</param>
+        public void SetDamageTarget(IDamageable target)
+        {
+            _damageTarget = target;
         }
 
         // ======================================================
@@ -275,10 +315,17 @@ namespace WeaponSystem.Data
 
         /// <summary>
         /// 弾丸の終了処理
-        /// アクティブ状態を解除する
+        /// アクティブ状態を解除し、必要ならダメージを適用
         /// </summary>
-        public virtual void OnExit()
+        /// <param name="immediate">true の場合は即時終了処理を行う</param>
+        public virtual void OnExit(in bool immediate = false)
         {
+            if (!immediate)
+            {
+                // ダメージ適用
+                ApplyDamage();
+            }
+
             // 無効化
             IsEnabled = false;
 
@@ -289,28 +336,16 @@ namespace WeaponSystem.Data
         /// <summary>
         /// 弾丸が何かに衝突した際の共通処理
         /// </summary>
+        /// <param name="collisionContext">衝突対象のコンテキスト</param>
         /// <returns>
         /// true: 弾丸が消える場合
         /// false: 弾丸が消えない場合
         /// </returns>
-        public virtual bool OnHit()
+        public virtual bool OnHit(in BaseCollisionContext collisionContext)
         {
             OnExit();
 
             return true;
-        }
-
-        // ======================================================
-        // パブリックメソッド
-        // ======================================================
-
-        /// <summary>
-        /// 弾丸の初期位置をセットする
-        /// </summary>
-        /// <param name="spawnPosition">セットする座標</param>
-        public void SetSpawnPosition(in Vector3 spawnPosition)
-        {
-            NextPosition = spawnPosition;
         }
 
         // ======================================================
@@ -328,6 +363,20 @@ namespace WeaponSystem.Data
             }
 
             Transform.position = NextPosition;
+        }
+
+        /// <summary>
+        /// 弾丸が対象に与えるダメージ処理
+        /// </summary>
+        protected virtual void ApplyDamage()
+        {
+            if (_damageTarget != null)
+            {
+                float damage = BASE_BULLET_DAMAGE + BulletSpeed * Mass;
+
+                _damageTarget.TakeDamage(damage);
+                _damageTarget = null;
+            }
         }
     }
 }

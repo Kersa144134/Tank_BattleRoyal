@@ -7,6 +7,9 @@
 //            弾丸ヒット時に弾速が一定以上なら弾丸が消えずに貫通する
 // ======================================================
 
+using CollisionSystem.Data;
+using TankSystem.Data;
+
 namespace WeaponSystem.Data
 {
     /// <summary>
@@ -38,7 +41,7 @@ namespace WeaponSystem.Data
         // ======================================================
 
         /// <summary>貫通時に減算する弾速</summary>
-        private const float PENETRATION_SPEED_DECREMENT = 10f;
+        private const float PENETRATION_SPEED_DECREMENT = 25f;
 
         // ======================================================
         // セッター
@@ -76,19 +79,20 @@ namespace WeaponSystem.Data
         /// 貫通判定速度を超えている場合は弾速を減算して消滅せず、
         /// それ以下なら通常通り弾丸を消滅させる
         /// </summary>
-        public override bool OnHit()
+        /// <param name="collisionContext">衝突対象のコンテキスト</param>
+        public override bool OnHit(in BaseCollisionContext collisionContext)
         {
             // 弾速が貫通速度以上なら貫通処理
             if (BulletSpeed >= _penetrationSpeed)
             {
-                Penetrate(); // 弾速減衰を行う
+                Penetrate(collisionContext);
 
                 // 弾丸は消滅せず残す
                 return false;
             }
 
-            // 弾速が貫通速度未満なら通常処理で消滅
-            return base.OnHit();
+            // 通常処理で消滅
+            return base.OnHit(collisionContext);
         }
 
         // ======================================================
@@ -98,10 +102,23 @@ namespace WeaponSystem.Data
         /// <summary>
         /// 貫通処理
         /// 弾速を減算して残弾を残す
+        /// 減算値は衝突対象の種類によって変化する
         /// </summary>
-        private void Penetrate()
+        /// <param name="collisionContext">衝突対象のコンテキスト</param>
+        private void Penetrate(in BaseCollisionContext collisionContext)
         {
-            BulletSpeed -= PENETRATION_SPEED_DECREMENT;
+            // 減算値
+            float decrement = PENETRATION_SPEED_DECREMENT;
+
+            // 衝突対象が戦車なら減算値を変更
+            if (collisionContext is TankCollisionContext)
+            {
+                const float TANK_DECREMENT_MULTIPLIER = 2f;
+                decrement *= TANK_DECREMENT_MULTIPLIER;
+            }
+
+            // 弾速を減算
+            BulletSpeed -= decrement / Mass;
 
             // BulletSpeed が 0 未満にならないように補正
             if (BulletSpeed < 0f)

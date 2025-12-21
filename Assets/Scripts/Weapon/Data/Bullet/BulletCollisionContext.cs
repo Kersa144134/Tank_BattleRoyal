@@ -68,21 +68,6 @@ namespace WeaponSystem.Data
             }
             protected set { }
         }
-
-        // ======================================================
-        // IObstacleHittable イベント
-        // ======================================================
-
-        /// <summary>
-        /// 障害物衝突判定に使用する弾丸の OBB
-        /// </summary>
-        public IOBBData Bounding
-        {
-            get
-            {
-                return OBB;
-            }
-        }
         
         // ======================================================
         // コンストラクタ
@@ -94,8 +79,8 @@ namespace WeaponSystem.Data
         /// <param name="bullet">衝突判定対象となる弾丸ロジック</param>
         /// <param name="obb">弾丸に対応する OBB データ</param>
         public BulletCollisionContext(
-            BulletBase bullet,
-            IOBBData obb
+            in BulletBase bullet,
+            in IOBBData obb
         )
             : base(
                 bullet.Transform,

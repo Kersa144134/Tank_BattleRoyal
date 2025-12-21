@@ -7,6 +7,7 @@
 //            衝突または一定時間経過で爆発する
 // ======================================================
 
+using CollisionSystem.Data;
 using UnityEngine;
 
 namespace WeaponSystem.Data
@@ -70,10 +71,14 @@ namespace WeaponSystem.Data
         /// 弾丸終了時の処理
         /// 爆発を発生させた後、基底クラスの終了処理を行う
         /// </summary>
-        public override void OnExit()
+        /// <param name="immediate">true の場合は即時終了処理を行う</param>
+        public override void OnExit(in bool immediate = false)
         {
-            // 爆発処理
-            Explode();
+            if (!immediate)
+            {
+                // 爆発処理
+                Explode();
+            }
 
             // 基底クラスの終了処理
             base.OnExit();
@@ -83,13 +88,14 @@ namespace WeaponSystem.Data
         /// 弾丸ヒット時の処理
         /// 爆発を発生させた後、基底クラスの終了処理を行う
         /// </summary>
-        public override bool OnHit()
+        /// <param name="collisionContext">衝突対象のコンテキスト</param>
+        public override bool OnHit(in BaseCollisionContext collisionContext)
         {
             // 爆発処理
             Explode();
 
             // 弾丸消滅
-            return base.OnHit();
+            return base.OnHit(collisionContext);
         }
         
         // ======================================================
