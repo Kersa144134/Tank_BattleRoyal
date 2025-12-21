@@ -188,8 +188,8 @@ namespace CollisionSystem.Utility
 
             BulletBase bullet = bulletContext.Bullet;
 
-            // 弾丸終了処理
-            bullet.OnExit();
+            // 弾丸ヒット処理
+            bullet.OnHit();
 
             // 衝突イベント通知
             OnBulletHit?.Invoke(bullet);
@@ -214,8 +214,8 @@ namespace CollisionSystem.Utility
                 return;
             }
 
-            // 弾丸終了処理
-            bullet.OnExit();
+            // 弾丸ヒット処理
+            bullet.OnHit();
 
             // 衝突イベント通知
             OnBulletHit?.Invoke(bullet);

@@ -2,14 +2,15 @@
 // BulletBase.cs
 // 作成者   : 高橋一翔
 // 作成日   : 2025-12-12
-// 更新日   : 2025-12-14
+// 更新日   : 2025-12-21
 // 概要     : 弾丸ロジックの抽象基底クラス
 //            弾速・質量に基づく減衰処理を行い、生存時間を判定する
 // ======================================================
 
 using System;
-using UnityEngine;
 using TankSystem.Data;
+using UnityEngine;
+using static UnityEngine.GraphicsBuffer;
 
 namespace WeaponSystem.Data
 {
@@ -28,8 +29,14 @@ namespace WeaponSystem.Data
         /// <summary>弾丸が有効かどうか</summary>
         protected bool _isEnabled;
 
-        /// <summary>弾丸の生成座標</summary>
-        protected Vector3 _spawnPosition;
+        /// <summary>弾丸発射時の初期弾速</summary>
+        private float _maxSpeed;
+
+        /// <summary>弾丸発射時の初期高度</summary>
+        private float _maxHeight;
+
+        /// <summary>弾丸が地面に接触する最終高度</summary>
+        private float _minHeight;
 
         // ======================================================
         // プロパティ
@@ -74,8 +81,24 @@ namespace WeaponSystem.Data
         /// <summary>弾丸の移動予定座標</summary>
         public Vector3 NextPosition { get; set; }
 
+        /// <summary>弾丸の移動予定方向</summary>
+        public Vector3 NextDirection { get; set; }
+
         /// <summary>弾丸の移動予定回転</summary>
-        public Quaternion NextRotation { get; set; }
+        public Quaternion NextRotation
+        {
+            get
+            {
+                // NextDirection がゼロベクトルの場合は現在の Transform.rotation を返す
+                if (NextDirection.sqrMagnitude < 1e-6f && Transform != null)
+                {
+                    return Transform.rotation;
+                }
+
+                // 上方向ベクトルを基準にして LookRotation を計算
+                return Quaternion.LookRotation(NextDirection.normalized, Vector3.up);
+            }
+        }
 
         // --------------------------------------------------
         // 内部計算用プロパティ
@@ -99,6 +122,9 @@ namespace WeaponSystem.Data
         /// <summary>基準となる弾速減衰値</summary>
         private const float BASE_BULLET_DRAG = 50f;
 
+        /// <summary>基準となる弾丸高度の補間指数</summary>
+        public const float BASE_BULLET_HEIGHT_INTERPOLATION_EXPONENT = 1.5f;
+
         // --------------------------------------------------
         // パラメーター
         // --------------------------------------------------
@@ -114,22 +140,6 @@ namespace WeaponSystem.Data
         /// <summary>質量1あたりの倍率加算値</summary>
         private const float PROJECTILE_MASS_MULTIPLIER = 0.05f;
         
-        // ======================================================
-        // 抽象メソッド
-        // ======================================================
-
-        /// <summary>
-        /// 弾丸の飛行方向を設定する抽象メソッド
-        /// </summary>
-        /// <param name="direction">初期飛行方向</param>
-        protected abstract void SetDirection(Vector3 direction);
-
-        /// <summary>
-        /// 弾丸の移動・衝突・追尾などの処理を行う抽象メソッド
-        /// </summary>
-        /// <param name="deltaTime">前フレームからの経過時間</param>
-        protected abstract void Tick(float deltaTime);
-
         // ======================================================
         // イベント
         // ======================================================
@@ -179,17 +189,27 @@ namespace WeaponSystem.Data
         /// <param name="direction">飛行方向</param>
         public virtual void OnEnter(int tankId, Vector3 position, Vector3 direction)
         {
-            _spawnPosition = position;
             NextPosition = position;
+            NextDirection = direction.normalized;
+
+            // 初期弾速、初期高度を取得
+            _maxSpeed = BulletSpeed;
+            _maxHeight = position.y;
+
+            // Transform の Y スケールの半分を地面接触時の最終高度に設定
+            _minHeight = Transform.localScale.y * 0.5f;
 
             // 弾丸 ID を設定
             BulletId = tankId;
 
+            // 弾丸移動方向を設定
+            if (Transform != null)
+            {
+                Transform.rotation = Quaternion.LookRotation(NextDirection, Vector3.up);
+            }
+
             // 有効化
             IsEnabled = true;
-
-            // 飛行方向を設定
-            SetDirection(direction);
 
             // Transform に反映
             ApplyToTransform();
@@ -202,7 +222,21 @@ namespace WeaponSystem.Data
         /// <param name="deltaTime">前フレームからの経過時間</param>
         public virtual void OnUpdate(float deltaTime)
         {
-            if (!IsEnabled)
+            if (!IsEnabled || Transform == null)
+            {
+                return;
+            }
+
+            Tick(deltaTime);
+        }
+
+        /// <summary>
+        /// 弾丸の移動・衝突・追尾などの処理を行う抽象メソッド
+        /// </summary>
+        /// <param name="deltaTime">前フレームからの経過時間</param>
+        public virtual void Tick(float deltaTime)
+        {
+            if (Transform == null)
             {
                 return;
             }
@@ -211,8 +245,6 @@ namespace WeaponSystem.Data
             // 弾速減衰
             // --------------------------------------------------
             BulletSpeed -= Drag * deltaTime;
-
-            // 弾速がゼロ以下になった場合は非アクティブ化
             if (BulletSpeed <= 0f)
             {
                 BulletSpeed = 0f;
@@ -221,11 +253,23 @@ namespace WeaponSystem.Data
             }
 
             // --------------------------------------------------
-            // 弾丸固有処理
+            // 水平移動
             // --------------------------------------------------
-            Tick(deltaTime);
+            Vector3 move = NextDirection.normalized * BulletSpeed * deltaTime;
+            NextPosition += move;
 
-            // 座標を Transform に反映
+            // --------------------------------------------------
+            // 高度座標補間
+            // --------------------------------------------------
+            float t = 1f - (BulletSpeed / _maxSpeed);
+            t = Mathf.Pow(t, BASE_BULLET_HEIGHT_INTERPOLATION_EXPONENT);
+            Vector3 pos = NextPosition;
+            pos.y = Mathf.Lerp(_maxHeight, _minHeight, t);
+            NextPosition = pos;
+
+            // --------------------------------------------------
+            // Transform 反映
+            // --------------------------------------------------
             ApplyToTransform();
         }
 
@@ -240,6 +284,20 @@ namespace WeaponSystem.Data
 
             // プールへ戻す通知
             OnDespawnRequested?.Invoke(this);
+        }
+
+        /// <summary>
+        /// 弾丸が何かに衝突した際の共通処理
+        /// </summary>
+        /// <returns>
+        /// true: 弾丸が消える場合
+        /// false: 弾丸が消えない場合
+        /// </returns>
+        public virtual bool OnHit()
+        {
+            OnExit();
+
+            return true;
         }
 
         // ======================================================

@@ -17,4 +17,4 @@ MonoBehaviour:
   Mass: 0.5
   ExplosiveRadius: 0
   PenetrationSpeed: 0
-  RotateSpeed: 0
+  RotateSpeed: 10

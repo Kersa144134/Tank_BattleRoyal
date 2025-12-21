@@ -16,5 +16,5 @@ MonoBehaviour:
   BulletSpeed: 0.75
   Mass: 2
   ExplosiveRadius: 0
-  PenetrationSpeed: 0
+  PenetrationSpeed: 20
   RotateSpeed: 0

@@ -59,7 +59,7 @@ namespace WeaponSystem.Manager
         private readonly Dictionary<BulletType, List<BulletBase>> _activePool = new Dictionary<BulletType, List<BulletBase>>();
 
         /// <summary>未使用の弾丸を種類ごとに保持</summary>
-        private readonly Dictionary<BulletType, List<BulletBase>> _inactivePool = new Dictionary<BulletType, List<BulletBase>>();
+        private readonly Dictionary<BulletType, Queue<BulletBase>> _inactivePool = new Dictionary<BulletType, Queue<BulletBase>>();
 
         // ======================================================
         // イベント
@@ -106,7 +106,7 @@ namespace WeaponSystem.Manager
                     // 未使用プールが未生成の場合は作成
                     if (!_inactivePool.ContainsKey(entry.Type))
                     {
-                        _inactivePool[entry.Type] = new List<BulletBase>();
+                        _inactivePool[entry.Type] = new Queue<BulletBase>();
                     }
 
                     // 使用中プールが未生成の場合は作成
@@ -134,7 +134,7 @@ namespace WeaponSystem.Manager
                 }
             }
 
-            foreach (List<BulletBase> list in _inactivePool.Values)
+            foreach (Queue<BulletBase> list in _inactivePool.Values)
             {
                 foreach (BulletBase bullet in list)
                 {
@@ -156,8 +156,15 @@ namespace WeaponSystem.Manager
         /// <param name="tankStatus">発射元の戦車のパラメーター</param>
         /// <param name="position">弾丸を生成・発射するワールド座標</param>
         /// <param name="direction">弾丸の進行方向を表す正規化済みベクトル</param>
+        /// <param name="target">弾丸の回転方向に指定するターゲット Transform</param>
         /// <returns>発射に成功した場合は使用中状態となった弾丸インスタンス</returns>
-        public BulletBase Spawn(BulletType type, in int tankId, in TankStatus tankStatus, in Vector3 position, in Vector3 direction)
+        public BulletBase Spawn(
+            BulletType type,
+            in int tankId,
+            in TankStatus tankStatus,
+            in Vector3 position,
+            in Vector3 direction,
+            in Transform target = null)
         {
             BulletPoolEntry entry = bulletEntries.Find(e => e.Type == type);
             if (entry == null)
@@ -166,8 +173,14 @@ namespace WeaponSystem.Manager
                 return null;
             }
 
-            // 未使用の弾丸を IsEnabled で検索
-            BulletBase bullet = _inactivePool[type].Find(b => !b.IsEnabled);
+            // 未使用弾丸を取り出す
+            if (_inactivePool[type].Count == 0)
+            {
+                Debug.LogWarning($"[BulletPool] 弾丸発射中止: {type} (未使用弾丸なし)");
+                return null;
+            }
+
+            BulletBase bullet = _inactivePool[type].Dequeue();
 
             // 未使用の弾丸が存在しなければ発射中止
             if (bullet == null)
@@ -184,6 +197,14 @@ namespace WeaponSystem.Manager
             {
                 explosive.SetParams(explosive.ExplosiveRadius);
             }
+            if (bullet is PenetrationBullet penetration)
+            {
+                penetration.SetParams(penetration.PenetrationSpeed);
+            }
+            if (bullet is HomingBullet homing)
+            {
+                homing.SetParams(target, homing.RotateSpeed);
+            }
 
             // 戦車ステータスを反映
             bullet.ApplyTankStatus(tankStatus);
@@ -192,7 +213,7 @@ namespace WeaponSystem.Manager
             bullet.OnEnter(tankId, position, direction);
 
             // プール管理
-            _inactivePool[type].Remove(bullet);
+            _inactivePool[type].Enqueue(bullet);
             _activePool[type].Add(bullet);
 
             // 弾丸生成イベントを通知する
@@ -223,9 +244,9 @@ namespace WeaponSystem.Manager
             }
 
             // 非アクティブプールへ戻す
-            if (_inactivePool.TryGetValue(type, out List<BulletBase> inactiveList))
+            if (_inactivePool.TryGetValue(type, out Queue<BulletBase> inactiveQueue))
             {
-                inactiveList.Add(bullet);
+                inactiveQueue.Enqueue(bullet);
             }
 
             // 弾丸破棄イベントを通知する
@@ -258,7 +279,7 @@ namespace WeaponSystem.Manager
             bulletBase.OnDespawnRequested += Despawn;
 
             // 未使用リストへ追加
-            _inactivePool[entry.Type].Add(bulletBase);
+            _inactivePool[entry.Type].Enqueue(bulletBase);
 
             return bulletBase;
         }

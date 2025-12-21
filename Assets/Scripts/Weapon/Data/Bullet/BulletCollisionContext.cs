@@ -42,19 +42,17 @@ namespace WeaponSystem.Data
         {
             get
             {
-                // BulletBase が保持する次フレーム位置を返す
                 return Bullet.NextPosition;
             }
         }
 
         /// <summary>
-        /// 弾丸の次フレーム回転（基本的には進行方向向き）
+        /// 弾丸の次フレーム回転
         /// </summary>
         public override Quaternion NextRotation
         {
             get
             {
-                // BulletBase が保持する次フレーム回転を返す
                 return Bullet.NextRotation;
             }
         }
@@ -68,10 +66,7 @@ namespace WeaponSystem.Data
             {
                 return MovementLockAxis.None;
             }
-            protected set
-            {
-                // 弾丸では LockAxis を使用しないため何もしない
-            }
+            protected set { }
         }
 
         // ======================================================

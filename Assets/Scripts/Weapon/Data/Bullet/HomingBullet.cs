@@ -1,3 +1,12 @@
+// ======================================================
+// HomingBullet.cs
+// 作成者   : 高橋一翔
+// 作成日   : 2025-12-21
+// 更新日   : 2025-12-21
+// 概要     : 誘導弾ロジッククラス
+//            発射時に設定されたターゲットに追従する
+// ======================================================
+
 using UnityEngine;
 
 namespace WeaponSystem.Data
@@ -11,56 +20,68 @@ namespace WeaponSystem.Data
         // フィールド
         // ======================================================
 
-        /// <summary>弾丸飛行方向ベクトル</summary>
-        private Vector3 _shootDirection;
+        /// <summary>追従対象ターゲット</summary>
+        private Transform _target;
 
-        private Transform target;
-        private float rotateSpeed;
-        private float hitDistance;
+        /// <summary>旋回速度</summary>
+        private float _rotateSpeed;
 
-        public float RotateSpeed { get; set; }
+        // ======================================================
+        // プロパティ
+        // ======================================================
 
-        public void SetParams(Transform tgt, float rotSpeed, float hitDist)
+        /// <summary>爆発半径の外部設定用プロパティ</summary>
+        public float RotateSpeed
         {
-            target = tgt;
-            rotateSpeed = rotSpeed;
-            hitDistance = hitDist;
+            get => _rotateSpeed;
+            set => _rotateSpeed = value;
         }
+
+        // ======================================================
+        // セッター
+        // ======================================================
 
         /// <summary>
-        /// 弾丸の飛行方向を設定する
+        /// 誘導弾パラメータを設定する
         /// </summary>
-        /// <param name="direction">弾丸の飛行方向ベクトル</param>
-        protected override void SetDirection(Vector3 direction)
+        /// <param name="target">追従ターゲット</param>
+        /// <param name="rotateSpeed">旋回速度</param>
+        public void SetParams(Transform target, float rotateSpeed)
         {
-            _shootDirection = direction.normalized;
+            _target = target;
+            _rotateSpeed = rotateSpeed;
         }
 
-        protected override void Tick(float deltaTime)
+        // ======================================================
+        // BulletBase イベント
+        // ======================================================
+
+        /// <summary>
+        /// 毎フレーム呼び出される弾丸更新処理
+        /// ターゲット方向への移動方向を補間しながら更新する
+        /// </summary>
+        /// <param name="deltaTime">前フレームからの経過時間</param>
+        public override void Tick(float deltaTime)
         {
-            if (target == null)
+            if (Transform == null)
             {
-                OnExit();
                 return;
             }
 
-            // ターゲット方向ベクトル
-            Vector3 toTarget = (target.position - NextPosition).normalized;
-
-            // 補間して旋回
-            Vector3 newDir = Vector3.Lerp(
-                (target.position - NextPosition).normalized,
-                toTarget,
-                rotateSpeed * deltaTime
-            ).normalized;
-
-            NextPosition += newDir * BulletSpeed * deltaTime;
-
-            // 着弾判定
-            if (Vector3.Distance(NextPosition, target.position) <= hitDistance)
+            if (_target != null)
             {
-                OnExit();
+                // HomingBullet.Tick 内
+                Vector3 targetDir = (_target.position - Transform.position).normalized;
+
+                // NextDirection を補間してターゲット方向へ向ける
+                NextDirection = Vector3.RotateTowards(NextDirection, targetDir, _rotateSpeed * deltaTime * Mathf.Deg2Rad, 0f);
+
+                // Transform.rotation を NextDirection に沿って回転
+                Transform.rotation = Quaternion.LookRotation(NextDirection, Vector3.up);
             }
+
+            // 移動・高度補間は基底クラスに任せる
+            base.Tick(deltaTime);
         }
     }
 }
