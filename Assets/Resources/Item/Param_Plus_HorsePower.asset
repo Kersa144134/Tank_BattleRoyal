@@ -12,5 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 63e41bbb783877e4b9760752bc6e7ab0, type: 3}
   m_Name: Param_Plus_HorsePower
   m_EditorClassIdentifier: 
-  Type: 4
+  itemType: 0
+  ParamType: 4
   Value: 1

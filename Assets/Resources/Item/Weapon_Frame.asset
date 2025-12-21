@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 30c41142b6e66214bb894bf118887211, type: 3}
   m_Name: Weapon_Frame
   m_EditorClassIdentifier: 
-  Type: 0
+  itemType: 2
+  WeaponType: 0
   Damage: 0
   ReloadTime: 0
