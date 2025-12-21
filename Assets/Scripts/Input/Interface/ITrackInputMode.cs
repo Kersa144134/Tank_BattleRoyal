@@ -7,7 +7,7 @@
 
 using UnityEngine;
 
-namespace TankSystem.Interface
+namespace InputSystem.Interface
 {
     /// <summary>
     /// キャタピラ入力モードの計算責務を定義するインターフェース

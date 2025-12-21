@@ -7,10 +7,10 @@
 // ==============================================================================
 
 using UnityEngine;
+using InputSystem.Interface;
 using TankSystem.Controller;
-using TankSystem.Interface;
 
-namespace TankSystem.Data
+namespace InputSystem.Data
 {
     /// <summary>
     /// 左右キャタピラ独立操作用入力モード

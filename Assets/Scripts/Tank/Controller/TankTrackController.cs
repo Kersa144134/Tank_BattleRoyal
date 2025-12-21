@@ -7,8 +7,8 @@
 // ==============================================================================
 
 using UnityEngine;
-using TankSystem.Data;
-using TankSystem.Interface;
+using InputSystem.Data;
+using InputSystem.Interface;
 using TankSystem.Utility;
 
 namespace TankSystem.Controller

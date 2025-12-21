@@ -707,7 +707,7 @@ GameObject:
   - component: {fileID: 74160800}
   m_Layer: 0
   m_Name: Base (3)
-  m_TagString: Untagged
+  m_TagString: Base
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
@@ -1512,7 +1512,7 @@ GameObject:
   - component: {fileID: 145487952}
   m_Layer: 0
   m_Name: Tower (1)
-  m_TagString: Untagged
+  m_TagString: Tower
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
@@ -3226,7 +3226,7 @@ GameObject:
   - component: {fileID: 337151598}
   m_Layer: 0
   m_Name: Base (6)
-  m_TagString: Untagged
+  m_TagString: Base
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
@@ -8399,7 +8399,7 @@ GameObject:
   - component: {fileID: 1080862326}
   m_Layer: 0
   m_Name: Base (8)
-  m_TagString: Untagged
+  m_TagString: Base
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
@@ -9724,7 +9724,7 @@ GameObject:
   - component: {fileID: 1341810989}
   m_Layer: 0
   m_Name: Base (2)
-  m_TagString: Untagged
+  m_TagString: Base
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
@@ -10415,7 +10415,7 @@ GameObject:
   - component: {fileID: 1387259782}
   m_Layer: 0
   m_Name: Base (5)
-  m_TagString: Untagged
+  m_TagString: Base
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
@@ -10847,7 +10847,7 @@ GameObject:
   - component: {fileID: 1462017324}
   m_Layer: 0
   m_Name: Base (7)
-  m_TagString: Untagged
+  m_TagString: Base
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
@@ -11867,7 +11867,7 @@ GameObject:
   - component: {fileID: 1577865574}
   m_Layer: 0
   m_Name: Base (1)
-  m_TagString: Untagged
+  m_TagString: Base
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
@@ -12694,7 +12694,7 @@ GameObject:
   - component: {fileID: 1709870120}
   m_Layer: 0
   m_Name: Tower (3)
-  m_TagString: Untagged
+  m_TagString: Tower
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
@@ -13541,7 +13541,7 @@ GameObject:
   - component: {fileID: 1835489285}
   m_Layer: 0
   m_Name: Tower (5)
-  m_TagString: Untagged
+  m_TagString: Tower
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
@@ -14335,7 +14335,7 @@ GameObject:
   - component: {fileID: 1900329010}
   m_Layer: 0
   m_Name: Tower (2)
-  m_TagString: Untagged
+  m_TagString: Tower
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
@@ -14784,7 +14784,7 @@ GameObject:
   - component: {fileID: 2010483870}
   m_Layer: 0
   m_Name: Base (4)
-  m_TagString: Untagged
+  m_TagString: Base
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
@@ -14892,7 +14892,7 @@ GameObject:
   - component: {fileID: 2028605702}
   m_Layer: 0
   m_Name: Tower (4)
-  m_TagString: Untagged
+  m_TagString: Tower
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647

@@ -6,7 +6,7 @@
 // 概要     : ゲーム内で使用する入力キー名を一元管理する定数クラス
 // ======================================================
 
-namespace TankSystem.Data
+namespace InputSystem.Data
 {
     /// <summary>
     /// 入力キー名を定数で管理

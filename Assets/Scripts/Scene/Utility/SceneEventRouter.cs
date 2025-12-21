@@ -6,14 +6,14 @@
 // 概要     : シーン内イベントの仲介を行う
 // ======================================================
 
+using System;
+using UnityEngine;
+using InputSystem.Data;
 using ItemSystem.Data;
 using SceneSystem.Data;
-using System;
 using TankSystem.Data;
 using TankSystem.Manager;
-using UnityEngine;
 using WeaponSystem.Data;
-using static UnityEditor.Progress;
 
 namespace SceneSystem.Utility
 {
@@ -108,8 +108,8 @@ namespace SceneSystem.Utility
             // --------------------------------------------------
             if (_context.CollisionManager != null)
             {
-                _context.CollisionManager.OnBulletHit += HandleHitBullet;
-                _context.CollisionManager.OnItemGet += HandleGetItem;
+                _context.CollisionManager.EventRouter.OnBulletHit += HandleHitBullet;
+                _context.CollisionManager.EventRouter.OnItemGet += HandleGetItem;
             }
 
            // 購読完了フラグを更新
@@ -162,8 +162,8 @@ namespace SceneSystem.Utility
             // --------------------------------------------------
             if (_context.CollisionManager != null)
             {
-                _context.CollisionManager.OnBulletHit -= HandleHitBullet;
-                _context.CollisionManager.OnItemGet -= HandleGetItem;
+                _context.CollisionManager.EventRouter.OnBulletHit -= HandleHitBullet;
+                _context.CollisionManager.EventRouter.OnItemGet -= HandleGetItem;
             }
 
             // 購読完了フラグを更新

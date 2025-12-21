@@ -18,7 +18,6 @@ using ItemSystem.Data;
 using ObstacleSystem.Data;
 using SceneSystem.Interface;
 using TankSystem.Data;
-using TankSystem.Service;
 using WeaponSystem.Data;
 
 namespace TankSystem.Manager
@@ -33,27 +32,42 @@ namespace TankSystem.Manager
         // コンポーネント参照
         // ======================================================
 
-        /// <summary>シーン上の戦車・障害物を一元管理するレジストリー</summary>
+        // --------------------------------------------------
+        // Transform 関連
+        // --------------------------------------------------
+        /// <summary>シーン上オブジェクトの Transform を一元管理するレジストリー</summary>
         private SceneObjectRegistry _sceneRegistry;
 
-        /// <summary>OBB の衝突判定および MTV 計算を行う計算器</summary>
+        // --------------------------------------------------
+        // 計算関連
+        // --------------------------------------------------
+        /// <summary>OBB の衝突判定および MTV を計算するクラス</summary>
         private readonly BoundingBoxCollisionCalculator _boxCollisionCalculator = new BoundingBoxCollisionCalculator();
 
         /// <summary>MTV を用いた衝突解決量を計算するクラス</summary>
         private  CollisionResolveCalculator _collisionResolverCalculator;
 
+        // --------------------------------------------------
+        // 衝突イベント関連
+        // --------------------------------------------------
+        /// <summary>衝突イベントの発火を担当するクラス</summary>
+        private CollisionEventRouter _eventRouter;
+
+        // --------------------------------------------------
+        // コンテキスト関連
+        // --------------------------------------------------
         /// <summary>OBB を生成するファクトリー</summary>
         private readonly OBBFactory _obbFactory = new OBBFactory();
 
         /// <summary>戦車衝突用コンテキストを生成するビルダー</summary>
         private CollisionContextBuilder _contextBuilder;
 
+        // --------------------------------------------------
+        // 衝突判定サービス関連
+        // --------------------------------------------------
         /// <summary>衝突判定サービス一覧</summary>
         private readonly List<ICollisionService> _collisionServices = new List<ICollisionService>();
 
-        // --------------------------------------------------
-        // 静的衝突判定サービス
-        // --------------------------------------------------
         /// <summary>戦車と障害物の OBB 衝突判定を担当するサービス</summary>
         private VersusStaticCollisionService<TankCollisionContext, ObstacleCollisionContext> _tankVsObstacleService;
 
@@ -63,9 +77,6 @@ namespace TankSystem.Manager
         /// <summary>弾丸と障害物の OBB 衝突判定を担当するサービス</summary>
         private VersusStaticCollisionService<BulletCollisionContext, ObstacleCollisionContext> _bulletVsObstacleService;
 
-        // --------------------------------------------------
-        // 動的衝突判定サービス
-        // --------------------------------------------------
         /// <summary>戦車同士の OBB 衝突判定を担当するサービス</summary>
         private VersusDynamicCollisionService<TankCollisionContext, TankCollisionContext> _tankVsTankService;
 
@@ -76,39 +87,38 @@ namespace TankSystem.Manager
         // フィールド
         // ======================================================
 
-        /// <summary>
-        /// 衝突判定対象となる戦車コンテキスト配列
-        /// </summary>
+        /// <summary>戦車コンテキスト配列</summary>
         private TankCollisionContext[] _tanks;
 
-        /// <summary>
-        /// 衝突判定対象となる障害物コンテキスト配列
-        /// </summary>
+        /// <summary>障害物コンテキスト配列</summary>
         private ObstacleCollisionContext[] _obstacles;
+
+        /// <summary>アイテムコンテキストの配列</summary>
+        private ItemCollisionContext[] _items;
+
+        /// <summary>弾丸コンテキストの配列</summary>
+        private BulletCollisionContext[] _bullets;
 
         // ======================================================
         // 辞書
         // ======================================================
+
+        /// <summary>ItemSlot と対応する ItemCollisionContext を管理するマップ</summary>
+        private readonly Dictionary<ItemSlot, ItemCollisionContext> _itemContextMap
+            = new Dictionary<ItemSlot, ItemCollisionContext>();
 
         /// <summary>
         /// Bullet と対応する BulletCollisionContext を管理するマップ
         /// </summary>
         private readonly Dictionary<BulletBase, BulletCollisionContext> _bulletContextMap
             = new Dictionary<BulletBase, BulletCollisionContext>();
-        
-        /// <summary>ItemSlot と対応する ItemCollisionContext を管理するマップ</summary>
-        private readonly Dictionary<ItemSlot, ItemCollisionContext> _itemContextMap
-            = new Dictionary<ItemSlot, ItemCollisionContext>();
 
         // ======================================================
-        // イベント
+        // プロパティ
         // ======================================================
 
-        /// <summary>戦車がアイテムを取得した際に通知されるイベント</summary>
-        public event Action<BaseTankRootManager, ItemSlot> OnItemGet;
-
-        /// <summary>弾丸が衝突した際に通知されるイベント</summary>
-        public event Action<BulletBase> OnBulletHit;
+        /// <summary>衝突イベントの発火を担当するクラス</summary>
+        public CollisionEventRouter EventRouter => _eventRouter;
 
         // ======================================================
         // セッター
@@ -134,6 +144,7 @@ namespace TankSystem.Manager
             // --------------------------------------------------
             _contextBuilder = new CollisionContextBuilder(_sceneRegistry, _obbFactory);
             _collisionResolverCalculator = new CollisionResolveCalculator(_boxCollisionCalculator);
+            _eventRouter = new CollisionEventRouter(_collisionResolverCalculator);
 
             // --------------------------------------------------
             // 戦車・障害物 コンテキスト構築
@@ -182,26 +193,11 @@ namespace TankSystem.Manager
             // --------------------------------------------------
             // イベント購読
             // --------------------------------------------------
-            if (_tankVsObstacleService != null)
-            {
-                _tankVsObstacleService.OnStaticHit += HandleTankHitObstacle;
-            }
-            if (_tankVsTankService != null)
-            {
-                _tankVsTankService.OnDynamicHit += HandleTankHitTank;
-            }
-            if (_tankVsItemService != null)
-            {
-                _tankVsItemService.OnStaticHit += HandleTankHitItem;
-            }
-            if (_bulletVsObstacleService != null)
-            {
-                _bulletVsObstacleService.OnStaticHit += HandleBulletHitObstacle;
-            }
-            if (_bulletVsTankService != null)
-            {
-                _bulletVsTankService.OnDynamicHit += HandleBulletHitTank;
-            }
+            _tankVsObstacleService.OnStaticHit += _eventRouter.HandleTankHitObstacle;
+            _tankVsTankService.OnDynamicHit += _eventRouter.HandleTankHitTank;
+            _tankVsItemService.OnStaticHit += _eventRouter.HandleTankHitItem;
+            _bulletVsObstacleService.OnStaticHit += _eventRouter.HandleBulletHitObstacle;
+            _bulletVsTankService.OnDynamicHit += _eventRouter.HandleBulletHitTank;
 
             InitializeItems(_sceneRegistry.ItemSlots);
         }
@@ -247,21 +243,13 @@ namespace TankSystem.Manager
             // --------------------------------------------------
             // アイテム
             // --------------------------------------------------
-            // ItemCollisionContext 配列を生成して Dictionary からコピー
-            ItemCollisionContext[] items = new ItemCollisionContext[_itemContextMap.Count];
-            _itemContextMap.Values.CopyTo(items, 0);
-
-            ExecuteCollisionService(_tankVsItemService, _tanks, items);
+            ExecuteCollisionService(_tankVsItemService, _tanks, _items);
 
             // --------------------------------------------------
             // 弾丸
             // --------------------------------------------------
-            // BulletCollisionContext 配列を生成して Dictionary からコピー
-            BulletCollisionContext[] bullets = new BulletCollisionContext[_bulletContextMap.Count];
-            _bulletContextMap.Values.CopyTo(bullets, 0);
-
-            ExecuteCollisionService(_bulletVsObstacleService, bullets, _obstacles);
-            ExecuteCollisionService(_bulletVsTankService, bullets, _tanks);
+            ExecuteCollisionService(_bulletVsObstacleService, _bullets, _obstacles);
+            ExecuteCollisionService(_bulletVsTankService, _bullets, _tanks);
         }
 
         public void OnExit()
@@ -269,80 +257,16 @@ namespace TankSystem.Manager
             // --------------------------------------------------
             // イベント購読解除
             // --------------------------------------------------
-            if (_tankVsObstacleService != null)
-            {
-                _tankVsObstacleService.OnStaticHit += HandleTankHitObstacle;
-            }
-            if (_tankVsTankService != null)
-            {
-                _tankVsTankService.OnDynamicHit += HandleTankHitTank;
-            }
-            if (_tankVsItemService != null)
-            {
-                _tankVsItemService.OnStaticHit += HandleTankHitItem;
-            }
-            if (_bulletVsObstacleService != null)
-            {
-                _bulletVsObstacleService.OnStaticHit += HandleBulletHitObstacle;
-            }
-            if (_bulletVsTankService != null)
-            {
-                _bulletVsTankService.OnDynamicHit += HandleBulletHitTank;
-            }
+            _tankVsObstacleService.OnStaticHit -= _eventRouter.HandleTankHitObstacle;
+            _tankVsTankService.OnDynamicHit -= _eventRouter.HandleTankHitTank;
+            _tankVsItemService.OnStaticHit -= _eventRouter.HandleTankHitItem;
+            _bulletVsObstacleService.OnStaticHit -= _eventRouter.HandleBulletHitObstacle;
+            _bulletVsTankService.OnDynamicHit -= _eventRouter.HandleBulletHitTank;
         }
 
         // ======================================================
         // パブリックメソッド
         // ======================================================
-
-        /// <summary>
-        /// 弾丸を衝突判定対象として追加する
-        /// </summary>
-        /// <param name="bullet">追加対象となる弾丸ロジック</param>
-        public void RegisterBullet(in BulletBase bullet)
-        {
-            if (_contextBuilder == null || bullet == null)
-            {
-                return;
-            }
-
-            // 既に登録済みの場合は何もしない
-            if (_bulletContextMap.ContainsKey(bullet))
-            {
-                return;
-            }
-
-            // 弾丸用衝突コンテキストを生成
-            BulletCollisionContext context =
-                _contextBuilder.BuildBulletContext(bullet);
-
-            // 内部マップに追加
-            _bulletContextMap.Add(bullet, context);
-        }
-
-        /// <summary>
-        /// 弾丸を衝突判定対象から削除する
-        /// </summary>
-        /// <param name="bullet">削除対象となる弾丸ロジック</param>
-        public void UnregisterBullet(in BulletBase bullet)
-        {
-            if (bullet == null)
-            {
-                return;
-            }
-
-            // 未登録の場合は何もしない
-            if (_bulletContextMap.TryGetValue(
-                bullet,
-                out BulletCollisionContext context
-            ) == false)
-            {
-                return;
-            }
-
-            // 内部マップから削除
-            _bulletContextMap.Remove(bullet);
-        }
 
         /// <summary>
         /// アイテムを衝突判定対象として追加する
@@ -355,18 +279,20 @@ namespace TankSystem.Manager
                 return;
             }
 
-            // 既に登録済みの場合は何もしない
+            // 既に登録済みの場合は処理しない
             if (_itemContextMap.ContainsKey(item))
             {
                 return;
             }
 
-            // アイテム用衝突コンテキストを生成
-            ItemCollisionContext context =
-                _contextBuilder.BuildItemContext(item);
+            // アイテム用の衝突コンテキストを生成
+            ItemCollisionContext context = _contextBuilder.BuildItemContext(item);
 
             // 内部マップに追加
             _itemContextMap.Add(item, context);
+
+            // キャッシュ配列を更新
+            UpdateItems();
         }
 
         /// <summary>
@@ -380,14 +306,68 @@ namespace TankSystem.Manager
                 return;
             }
 
-            // 未登録の場合は何もしない
-            if (_itemContextMap.TryGetValue(item, out ItemCollisionContext context) == false)
+            // 未登録の場合は処理しない
+            if (!_itemContextMap.ContainsKey(item))
             {
                 return;
             }
 
             // 内部マップから削除
             _itemContextMap.Remove(item);
+
+            // キャッシュ配列を更新
+            UpdateItems();
+        }
+
+        /// <summary>
+        /// 弾丸を衝突判定対象として追加する
+        /// </summary>
+        /// <param name="bullet">追加対象となる弾丸ロジック</param>
+        public void RegisterBullet(in BulletBase bullet)
+        {
+            if (_contextBuilder == null || bullet == null)
+            {
+                return;
+            }
+
+            // 既に登録済みの場合は処理しない
+            if (_bulletContextMap.ContainsKey(bullet))
+            {
+                return;
+            }
+
+            // 弾丸用衝突コンテキストを生成
+            BulletCollisionContext context = _contextBuilder.BuildBulletContext(bullet);
+
+            // 内部マップに追加
+            _bulletContextMap.Add(bullet, context);
+
+            // キャッシュ配列を更新
+            UpdateBullets();
+        }
+
+        /// <summary>
+        /// 弾丸を衝突判定対象から削除する
+        /// </summary>
+        /// <param name="bullet">削除対象となる弾丸ロジック</param>
+        public void UnregisterBullet(in BulletBase bullet)
+        {
+            if (bullet == null)
+            {
+                return;
+            }
+
+            // 未登録の場合は処理しない
+            if (!_bulletContextMap.ContainsKey(bullet))
+            {
+                return;
+            }
+
+            // 内部マップから削除
+            _bulletContextMap.Remove(bullet);
+
+            // キャッシュ配列を更新
+            UpdateBullets();
         }
 
         // ======================================================
@@ -412,6 +392,52 @@ namespace TankSystem.Manager
             foreach (ItemSlot item in items)
             {
                 RegisterItem(item);
+            }
+        }
+
+        /// <summary>
+        /// アイテム用キャッシュ配列を更新する
+        /// </summary>
+        private void UpdateItems()
+        {
+            if (_itemContextMap.Count == 0)
+            {
+                // アイテムがない場合は空配列を割り当て
+                _items = Array.Empty<ItemCollisionContext>();
+            }
+            else
+            {
+                // 配列サイズが不足している場合は再生成
+                if (_items == null || _items.Length != _itemContextMap.Count)
+                {
+                    _items = new ItemCollisionContext[_itemContextMap.Count];
+                }
+
+                // Dictionary の値をキャッシュ配列にコピー
+                _itemContextMap.Values.CopyTo(_items, 0);
+            }
+        }
+
+        /// <summary>
+        /// 弾丸用キャッシュ配列を更新する
+        /// </summary>
+        private void UpdateBullets()
+        {
+            if (_bulletContextMap.Count == 0)
+            {
+                // 弾丸がない場合は空配列を割り当て
+                _bullets = Array.Empty<BulletCollisionContext>();
+            }
+            else
+            {
+                // 配列サイズが不足している場合は再生成
+                if (_bullets == null || _bullets.Length != _bulletContextMap.Count)
+                {
+                    _bullets = new BulletCollisionContext[_bulletContextMap.Count];
+                }
+
+                // Dictionary の値をキャッシュ配列にコピー
+                _bulletContextMap.Values.CopyTo(_bullets, 0);
             }
         }
 
@@ -478,162 +504,6 @@ namespace TankSystem.Manager
 
             // 衝突判定および解決処理を実行
             service.Execute();
-        }
-
-
-        // ======================================================
-        // イベントハンドラ
-        // ======================================================
-
-        // --------------------------------------------------
-        // 戦車
-        // --------------------------------------------------
-        /// <summary>
-        /// 戦車が障害物に衝突した際の処理
-        /// </summary>
-        private void HandleTankHitObstacle(
-            TankCollisionContext context,
-            ObstacleCollisionContext obstacle
-        )
-        {
-            // --------------------------------------------------
-            // 衝突解決計算
-            // --------------------------------------------------
-            _collisionResolverCalculator.CalculateResolveInfo(
-                context,
-                obstacle,
-                context.TankRootManager.CurrentForwardSpeed,
-                0f,
-                out CollisionResolveInfo resolveInfoA,
-                out CollisionResolveInfo resolveInfoB
-            );
-
-            // --------------------------------------------------
-            // LockAxis 反映
-            // --------------------------------------------------
-            // この衝突によって発生したロック軸
-            MovementLockAxis newLockAxis = MovementLockAxis.None;
-
-            // X 方向に押し戻しが発生しているか
-            if (Mathf.Abs(resolveInfoA.ResolveVector.x) > 0f)
-            {
-                newLockAxis |= MovementLockAxis.X;
-            }
-
-            // Z 方向に押し戻しが発生しているか
-            if (Mathf.Abs(resolveInfoA.ResolveVector.z) > 0f)
-            {
-                newLockAxis |= MovementLockAxis.Z;
-            }
-
-            if (newLockAxis != MovementLockAxis.None)
-            {
-                // 両軸ロック時は All
-                MovementLockAxis resolvedAxisA =
-                    newLockAxis == (MovementLockAxis.X | MovementLockAxis.Z)
-                        ? MovementLockAxis.All
-                        : newLockAxis;
-
-                // ロック軸の累積
-                context.AddPendingLockAxis(resolvedAxisA);
-            }
-
-            // --------------------------------------------------
-            // 押し戻し反映
-            // --------------------------------------------------
-            context.TankRootManager.ApplyCollisionResolve(resolveInfoA);
-
-            // 押し戻した位置で OBB を更新
-            context.UpdateOBB();
-        }
-
-        /// <summary>
-        /// 戦車がアイテムに接触した際の処理
-        /// </summary>
-        private void HandleTankHitItem(
-            TankCollisionContext context,
-            ItemCollisionContext item
-        )
-        {
-            BaseTankRootManager tankRootManager = context.TankRootManager;
-            ItemSlot itemSlot = item.ItemSlot;
-
-            // アイテム取得イベントを通知
-            OnItemGet?.Invoke(tankRootManager, itemSlot);
-        }
-
-        /// <summary>
-        /// 戦車同士が接触した際の処理
-        /// </summary>
-        private void HandleTankHitTank(
-            TankCollisionContext contextA,
-            TankCollisionContext contextB
-        )
-        {
-            // --------------------------------------------------
-            // 衝突解決計算
-            // --------------------------------------------------
-            _collisionResolverCalculator.CalculateResolveInfo(
-                contextA,
-                contextB,
-                contextA.TankRootManager.CurrentForwardSpeed,
-                contextB.TankRootManager.CurrentForwardSpeed,
-                out CollisionResolveInfo resolveInfoA,
-                out CollisionResolveInfo resolveInfoB
-            );
-
-            // --------------------------------------------------
-            // 押し戻し反映
-            // --------------------------------------------------
-            contextA.TankRootManager.ApplyCollisionResolve(resolveInfoA);
-            contextB.TankRootManager.ApplyCollisionResolve(resolveInfoB);
-
-            // 押し戻した位置で OBB を更新
-            contextA.UpdateOBB();
-            contextB.UpdateOBB();
-        }
-
-        // --------------------------------------------------
-        // 弾丸
-        // --------------------------------------------------
-        /// <summary>
-        /// 弾丸が障害物に接触した際の処理
-        /// </summary>
-        private void HandleBulletHitObstacle(
-            BulletCollisionContext bulletContext,
-            ObstacleCollisionContext obstacle
-        )
-        {
-            BulletBase bullet = bulletContext.Bullet;
-
-            // 弾丸ロジック側に衝突を通知
-            bullet.OnExit();
-
-            // 弾丸衝突イベントを通知
-            OnBulletHit?.Invoke(bullet);
-        }
-
-        /// <summary>
-        /// 弾丸が戦車に接触した際の処理
-        /// </summary>
-        private void HandleBulletHitTank(
-            BulletCollisionContext bulletContext,
-            TankCollisionContext tank
-        )
-        {
-            BulletBase bullet = bulletContext.Bullet;
-
-            // 発射元戦車なら処理をスキップ
-            if (bullet.BulletId == tank.TankRootManager.TankId)
-            {
-                return;
-            }
-
-            // 弾丸ロジック側に衝突を通知
-            bullet.OnExit();
-
-            // 弾丸衝突イベントを通知
-            OnBulletHit?.Invoke(bullet);
         }
     }
 }

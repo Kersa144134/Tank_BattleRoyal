@@ -8,7 +8,7 @@
 
 using System;
 
-namespace TankSystem.Data
+namespace InputSystem.Data
 {
     /// <summary>
     /// キャタピラ入力モードの状態を一元管理する
