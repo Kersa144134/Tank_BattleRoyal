@@ -22,12 +22,25 @@ namespace ItemSystem.Data
         // ======================================================
 
         /// <summary>武装種別</summary>
-        public WeaponType Type;
+        public WeaponType WeaponType;
 
         /// <summary>武装の攻撃力</summary>
         public float Damage;
 
         /// <summary>再装填時間</summary>
         public float ReloadTime;
+
+        // ======================================================
+        // Unityイベント
+        // ======================================================
+
+        /// <summary>
+        /// ScriptableObject が有効化された際に呼ばれる
+        /// </summary>
+        private void OnEnable()
+        {
+            // 武装アイテムとして種別を固定設定する
+            itemType = ItemType.Weapon;
+        }
     }
 }

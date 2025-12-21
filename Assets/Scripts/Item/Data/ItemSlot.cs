@@ -15,8 +15,7 @@ namespace TankSystem.Data
     /// <summary>
     /// インスペクタで ScriptableObject を登録するためのクラス
     /// </summary>
-    [Serializable]
-    public class ItemSlot
+    [Serializable] public class ItemSlot
     {
         /// <summary>アイテムの Transform</summary>
         public Transform Transform;

@@ -78,7 +78,7 @@ namespace TankSystem.Manager
         /// アイテムを有効化
         /// </summary>
         /// <param name="slot">対象の ItemSlot</param>
-        public void AddItem(ItemSlot slot)
+        public void RegisterItem(ItemSlot slot)
         {
             // Transform 参照で検索
             int index = _itemSlots.FindIndex(s => s.Transform == slot.Transform);
@@ -119,7 +119,7 @@ namespace TankSystem.Manager
         /// アイテムを無効化
         /// </summary>
         /// <param name="slot">対象の ItemSlot</param>
-        public void RemoveItem(ItemSlot slot)
+        public void UnregisterItem(ItemSlot slot)
         {
             // Transform 参照で検索
             int index = _itemSlots.FindIndex(s => s.Transform == slot.Transform);
@@ -146,23 +146,25 @@ namespace TankSystem.Manager
         }
 
         // --------------------------------------------------
-        // アイテム回転
+        // アイテム更新
         // --------------------------------------------------
         /// <summary>
-        /// 有効なアイテムをカメラ方向に向ける
+        /// 有効なアイテムを更新する
         /// </summary>
-        public void UpdateItemRotations()
+        public void UpdateItems()
         {
             foreach (KeyValuePair<ItemSlot, FaceTarget> kvp in _faceTargets)
             {
                 ItemSlot slot = kvp.Key;
-                FaceTarget faceTarget = kvp.Value;
 
-                // IsEnabled のみ回転
-                if (slot.IsEnabled)
+                // 有効なアイテムのみ回転処理を行う
+                if (!slot.IsEnabled)
                 {
-                    faceTarget.UpdateRotation();
+                    continue;
                 }
+
+                // 個別アイテムの回転処理に委譲する
+                ItemRotation(slot);
             }
         }
 
@@ -175,7 +177,7 @@ namespace TankSystem.Manager
         /// </summary>
         /// <param name="target">SpriteRenderer を操作する対象の Transform</param>
         /// <param name="enabled">有効化する場合は true、無効化する場合は false</param>
-        private void ToggleRenderer(Transform target, bool enabled)
+        private void ToggleRenderer(in Transform target, in bool enabled)
         {
             if (target == null)
             {
@@ -188,6 +190,27 @@ namespace TankSystem.Manager
             {
                 spriteRenderer.enabled = enabled;
             }
+        }
+
+        /// <summary>
+        /// 指定されたアイテムをカメラ方向に向ける
+        /// </summary>
+        /// <param name="slot">回転対象の ItemSlot</param>
+        private void ItemRotation(in ItemSlot slot)
+        {
+            if (slot == null)
+            {
+                return;
+            }
+
+            // FaceTarget が登録されていない場合は処理しない
+            if (!_faceTargets.TryGetValue(slot, out FaceTarget faceTarget))
+            {
+                return;
+            }
+
+            // カメラ方向へ回転させる
+            faceTarget.UpdateRotation();
         }
     }
 }
