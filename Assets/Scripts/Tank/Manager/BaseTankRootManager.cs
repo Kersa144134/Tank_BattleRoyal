@@ -31,6 +31,13 @@ namespace TankSystem.Manager
         /// <summary>ゲーム中に変動する戦車のパラメーター</summary>
         [SerializeField] private TankStatus _tankStatus;
 
+        [Header("衝突設定")]
+        /// <summary>戦車の衝突設定 Box のローカル中心座標</summary>
+        [SerializeField] private Vector3 _hitBoxCenter;
+
+        /// <summary>戦車の衝突設定 Boxのローカルスケール</summary>
+        [SerializeField] private Vector3 _hitBoxScale;
+
         [Header("攻撃設定")]
         /// <summary>砲身の Transform</summary>
         [SerializeField] private Transform _turret;
@@ -83,6 +90,12 @@ namespace TankSystem.Manager
 
         /// <summary>キャタピラ入力モード</summary>
         public TrackInputMode InputMode => _trackController.InputMode;
+
+        /// <summary>戦車の衝突設定 Box のローカル中心座標</summary>
+        public Vector3 HitBoxCenter => _hitBoxCenter;
+
+        /// <summary>戦車の衝突設定 Boxのローカルスケール</summary>
+        public Vector3 HitBoxScale => _hitBoxScale;
 
         /// <summary>弾丸発射ローカル位置</summary>
         public Transform FirePoint => _firePoint;

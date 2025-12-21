@@ -11,6 +11,7 @@ using System;
 using UnityEngine;
 using CollisionSystem.Data;
 using TankSystem.Data;
+using WeaponSystem.Interface;
 
 namespace WeaponSystem.Data
 {
@@ -19,18 +20,6 @@ namespace WeaponSystem.Data
     /// </summary>
     public abstract class BulletBase
     {
-        // ======================================================
-        // インターフェース
-        // ======================================================
-
-        /// <summary>
-        /// ダメージを受けることができるインターフェース
-        /// </summary>
-        public interface IDamageable
-        {
-            void TakeDamage(float damage);
-        }
-        
         // ======================================================
         // フィールド
         // ======================================================
@@ -50,7 +39,7 @@ namespace WeaponSystem.Data
         /// <summary>弾丸が地面に接触する最終高度</summary>
         private float _minHeight;
 
-        /// <summary>衝突対象</summary>
+        /// <summary>ダメージ対象</summary>
         protected IDamageable _damageTarget;
 
         // ======================================================
@@ -196,12 +185,22 @@ namespace WeaponSystem.Data
         }
 
         /// <summary>
-        /// ダメージ対象を設定
+        /// 衝突対象からダメージ対象を設定
         /// </summary>
-        /// <param name="target">ダメージを与える対象</param>
-        public void SetDamageTarget(IDamageable target)
+        /// <param name="collisionContext">衝突コンテキスト</param>
+        private void SetDamageTarget(in BaseCollisionContext collisionContext)
         {
-            _damageTarget = target;
+            if (collisionContext.Transform == null)
+            {
+                _damageTarget = null;
+                return;
+            }
+
+            // Transform から IDamageable を取得
+            IDamageable damageable = collisionContext.Transform.GetComponent<IDamageable>();
+
+            // 取得できた場合のみターゲットに設定
+            _damageTarget = damageable;
         }
 
         // ======================================================
@@ -343,6 +342,8 @@ namespace WeaponSystem.Data
         /// </returns>
         public virtual bool OnHit(in BaseCollisionContext collisionContext)
         {
+            SetDamageTarget(collisionContext);
+            
             OnExit();
 
             return true;

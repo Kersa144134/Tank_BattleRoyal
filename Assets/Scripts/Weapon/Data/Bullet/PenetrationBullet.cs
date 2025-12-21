@@ -7,7 +7,9 @@
 //            弾丸ヒット時に弾速が一定以上なら弾丸が消えずに貫通する
 // ======================================================
 
+using UnityEngine;
 using CollisionSystem.Data;
+using ObstacleSystem.Data;
 using TankSystem.Data;
 
 namespace WeaponSystem.Data
@@ -40,8 +42,29 @@ namespace WeaponSystem.Data
         // 定数
         // ======================================================
 
-        /// <summary>貫通時に減算する弾速</summary>
-        private const float PENETRATION_SPEED_DECREMENT = 25f;
+        // --------------------------------------------------
+        // 基準値
+        // --------------------------------------------------
+        /// <summary>基準となる弾速減算値</summary>
+        private const float BASE_PENETRATION_SPEED_DECREMENT = 25f;
+
+        /// <summary>障害物貫通時の基準となる弾速減算値</summary>
+        private const float BASE_OBSTACLE_DECREMENT = 2f;
+
+        // --------------------------------------------------
+        // 補正値
+        // --------------------------------------------------
+        /// <summary>障害物スケールに応じた減算値倍率加算値</summary>
+        private const float OBSTACLE_SCALE_MULTIPLIER = 0.05f;
+
+        // --------------------------------------------------
+        // パラメーター
+        // --------------------------------------------------
+        /// <summary>基準となる装甲ステータス</summary>
+        private const float BASE_ARMOR = 1f;
+
+        /// <summary>装甲1あたりの倍率加算値</summary>
+        private const float ARMOR_MULTIPLIER = 0.05f;
 
         // ======================================================
         // セッター
@@ -108,13 +131,18 @@ namespace WeaponSystem.Data
         private void Penetrate(in BaseCollisionContext collisionContext)
         {
             // 減算値
-            float decrement = PENETRATION_SPEED_DECREMENT;
+            float decrement = BASE_PENETRATION_SPEED_DECREMENT;
 
-            // 衝突対象が戦車なら減算値を変更
-            if (collisionContext is TankCollisionContext)
+            // 衝突対象に応じて処理を分岐
+            if (collisionContext is TankCollisionContext tank)
             {
-                const float TANK_DECREMENT_MULTIPLIER = 2f;
-                decrement *= TANK_DECREMENT_MULTIPLIER;
+                int tankArmor = tank.TankRootManager.TankStatus.Armor;
+                decrement *= BASE_ARMOR + tankArmor * ARMOR_MULTIPLIER;
+            }
+            if (collisionContext is ObstacleCollisionContext obstacle)
+            {
+                float obstacleScale = Mathf.Min(obstacle.Transform.lossyScale.x, obstacle.Transform.lossyScale.z);
+                decrement *= BASE_OBSTACLE_DECREMENT + obstacleScale * OBSTACLE_SCALE_MULTIPLIER;
             }
 
             // 弾速を減算
