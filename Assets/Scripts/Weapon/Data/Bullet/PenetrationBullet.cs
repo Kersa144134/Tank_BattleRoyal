@@ -46,25 +46,25 @@ namespace WeaponSystem.Data
         // 基準値
         // --------------------------------------------------
         /// <summary>基準となる弾速減算値</summary>
-        private const float BASE_PENETRATION_SPEED_DECREMENT = 25f;
+        private const float BASE_PENETRATION_SPEED_DECREMENT = 20f;
 
-        /// <summary>障害物貫通時の基準となる弾速減算値</summary>
+        // --------------------------------------------------
+        // 障害物
+        // --------------------------------------------------
+        /// <summary>基準となる障害物貫通時の弾速減算値</summary>
         private const float BASE_OBSTACLE_DECREMENT = 2f;
 
-        // --------------------------------------------------
-        // 補正値
-        // --------------------------------------------------
         /// <summary>障害物スケールに応じた減算値倍率加算値</summary>
-        private const float OBSTACLE_SCALE_MULTIPLIER = 0.05f;
+        private const float OBSTACLE_SCALE_MULTIPLIER = 0.2f;
 
         // --------------------------------------------------
         // パラメーター
         // --------------------------------------------------
         /// <summary>基準となる装甲ステータス</summary>
-        private const float BASE_ARMOR = 1f;
+        private const float BASE_ARMOR = 1.5f;
 
         /// <summary>装甲1あたりの倍率加算値</summary>
-        private const float ARMOR_MULTIPLIER = 0.05f;
+        private const float ARMOR_MULTIPLIER = 0.075f;
 
         // ======================================================
         // セッター
