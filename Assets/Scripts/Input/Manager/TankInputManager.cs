@@ -10,10 +10,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using InputSystem.Data;
-using InputSystem.Manager;
-using TankSystem.Data;
 
-namespace TankSystem.Manager
+namespace InputSystem.Manager
 {
     /// <summary>
     /// êÌé‘ëÄçÏópì¸óÕä«óùÉNÉâÉX
@@ -59,6 +57,7 @@ namespace TankSystem.Manager
                 RightStick = InputManager.Instance.RightStick;
 
                 ButtonMap[TankInputKeys.INPUT_MODE_CHANGE] = InputManager.Instance.LeftStickButton;
+                ButtonMap[TankInputKeys.FIRE_MODE_CHANGE] = InputManager.Instance.RightStickButton;
 
                 ButtonMap[TankInputKeys.INPUT_LEFT_FIRE] = InputManager.Instance.LeftTrigger;
                 ButtonMap[TankInputKeys.INPUT_RIGHT_FIRE] = InputManager.Instance.RightTrigger;
@@ -72,6 +71,7 @@ namespace TankSystem.Manager
                 RightStick = Vector2.zero;
 
                 ButtonMap[TankInputKeys.INPUT_MODE_CHANGE] = null;
+                ButtonMap[TankInputKeys.FIRE_MODE_CHANGE] = null;
 
                 ButtonMap[TankInputKeys.INPUT_LEFT_FIRE] = null;
                 ButtonMap[TankInputKeys.INPUT_RIGHT_FIRE] = null;

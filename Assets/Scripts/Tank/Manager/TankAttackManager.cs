@@ -23,8 +23,16 @@ namespace TankSystem.Manager
         // フィールド
         // ======================================================
 
-        /// <summary>弾丸を発射する発射位置の Transform</summary>
-        private readonly Transform _firePoint;
+        /// <summary>弾丸タイプの順序</summary>
+        private readonly BulletType[] _bulletCycle = new BulletType[]
+        {
+            BulletType.Explosive,
+            BulletType.Penetration,
+            BulletType.Homing
+        };
+        
+        // 現在の弾丸インデックス
+        private int _currentBulletIndex = 0;
 
         /// <summary>攻撃クールタイムの残り時間（秒）</summary>
         private float _cooldownTime = 0f;
@@ -54,20 +62,6 @@ namespace TankSystem.Manager
         /// </summary>
         public event Action<BulletType> OnFireBullet;
         
-        // ======================================================
-        // コンストラクタ
-        // ======================================================
-
-        /// <summary>
-        /// 攻撃処理に必要な発射位置を設定し、クールタイムを初期化する
-        /// </summary>
-        /// <param name="firePoint">弾丸発射位置の Transform</param>
-        public TankAttackManager(Transform firePoint)
-        {
-            _firePoint = firePoint;
-            _cooldownTime = 0f;
-        }
-
         // ======================================================
         // パブリックメソッド
         // ======================================================
@@ -127,17 +121,25 @@ namespace TankSystem.Manager
             // 個別攻撃はタイマーが入力受付遅延を超えた場合に実行
             if (_leftInputTimer >= 0f && _leftInputTimer > INPUT_DECISION_DELAY)
             {
-                FireExplosive();
+                FireCurrentBullet();
                 _leftInputTimer = -1f;
                 _cooldownTime = ATTACK_COOLDOWN;
             }
 
             if (_rightInputTimer >= 0f && _rightInputTimer > INPUT_DECISION_DELAY)
             {
-                FireExplosive();
+                FireCurrentBullet();
                 _rightInputTimer = -1f;
                 _cooldownTime = ATTACK_COOLDOWN;
             }
+        }
+
+        /// <summary>
+        /// 次に発射する弾丸タイプを切り替える
+        /// </summary>
+        public void NextBulletType()
+        {
+            _currentBulletIndex = (_currentBulletIndex + 1) % _bulletCycle.Length;
         }
 
         // ======================================================
@@ -145,30 +147,12 @@ namespace TankSystem.Manager
         // ======================================================
 
         /// <summary>
-        /// 榴弾攻撃を実行する
+        /// 現在の弾丸タイプで発射する
         /// </summary>
-        private void FireExplosive()
+        private void FireCurrentBullet()
         {
-            // イベントを発火し、弾丸タイプを通知
-            OnFireBullet?.Invoke(BulletType.Explosive);
-        }
-
-        /// <summary>
-        /// 徹甲弾攻撃を実行する
-        /// </summary>
-        private void FirePenetration()
-        {
-            // イベントを発火し、弾丸タイプを通知
-            OnFireBullet?.Invoke(BulletType.Penetration);
-        }
-
-        /// <summary>
-        /// 誘導弾攻撃を実行する
-        /// </summary>
-        private void FireHoming()
-        {
-            // イベントを発火し、弾丸タイプを通知
-            OnFireBullet?.Invoke(BulletType.Homing);
+            BulletType typeToFire = _bulletCycle[_currentBulletIndex];
+            OnFireBullet?.Invoke(typeToFire);
         }
 
         /// <summary>

@@ -50,7 +50,7 @@ namespace TankSystem.Manager
         // 攻撃力
         // --------------------------------------------------
         /// <summary>戦車の攻撃管理クラス</summary>
-        private TankAttackManager _attackManager;
+        private TankAttackManager _attackManager = new TankAttackManager();
 
         // --------------------------------------------------
         // 防御力
@@ -111,7 +111,10 @@ namespace TankSystem.Manager
         // ======================================================
 
         /// <summary>入力モード切替ボタン押下時に発火するイベント</summary>
-        public event Action OnModeChangeButtonPressed;
+        public event Action OnInputModeChangeButtonPressed;
+
+        /// <summary>攻撃モード切替ボタン押下時に発火するイベント</summary>
+        public event Action OnFireModeChangeButtonPressed;
 
         /// <summary>オプションボタン押下時に発火するイベント</summary>
         public event Action OnOptionButtonPressed;
@@ -129,14 +132,16 @@ namespace TankSystem.Manager
         /// </summary>
         /// <param name="leftMobility">左キャタピラ入力から算出される前進/旋回量</param>
         /// <param name="rightMobility">右キャタピラ入力から算出される前進/旋回量</param>
-        /// <param name="modeChange">入力モード切替ボタン押下フラグ</param>
+        /// <param name="inputModeChange">入力モード切替ボタン押下フラグ</param>
+        /// <param name="fireModeChange">攻撃モード切替ボタン押下フラグ</param>
         /// <param name="option">オプションボタン押下フラグ</param>
         /// <param name="leftFire">左攻撃ボタンの状態</param>
         /// <param name="rightFire">右攻撃ボタンの状態</param>
         protected abstract void UpdateInput(
             out Vector2 leftMobility,
             out Vector2 rightMobility,
-            out bool modeChange,
+            out bool inputModeChange,
+            out bool fireModeChange,
             out bool option,
             out ButtonState leftFire,
             out ButtonState rightFire
@@ -148,7 +153,6 @@ namespace TankSystem.Manager
 
         public virtual void OnEnter()
         {
-            _attackManager = new TankAttackManager(_firePoint);
             _boundaryService = new TankMovementBoundaryService(MOVEMENT_ALLOWED_RADIUS);
             _mobilityManager = new TankMobilityManager(
                 _trackController,
@@ -172,18 +176,25 @@ namespace TankSystem.Manager
             // --------------------------------------------------
             UpdateInput(out Vector2 leftMobility,
                 out Vector2 rightMobility,
-                out bool modeChange,
+                out bool inputModeChange,
+                out bool fireModeChange,
                 out bool option,
                 out ButtonState leftFire,
                 out ButtonState rightFire
             );
 
             // --------------------------------------------------
-            // 入力モード切替
+            // モード切替
             // --------------------------------------------------
-            if (modeChange)
+            if (inputModeChange)
             {
-                OnModeChangeButtonPressed?.Invoke();
+                OnInputModeChangeButtonPressed?.Invoke();
+            }
+            if (fireModeChange)
+            {
+                _attackManager.NextBulletType();
+
+                OnFireModeChangeButtonPressed?.Invoke();
             }
 
             // --------------------------------------------------

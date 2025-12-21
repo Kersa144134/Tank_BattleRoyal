@@ -14,8 +14,11 @@ namespace InputSystem.Data
     public class TankInputKeys
     {
         /// <summary>入力切り替えボタンキー</summary>
-        public const string INPUT_MODE_CHANGE = "ModeChange";
+        public const string INPUT_MODE_CHANGE = "InputModeChange";
 
+        /// <summary>攻撃切り替えボタンキー</summary>
+        public const string FIRE_MODE_CHANGE = "FireModeChange";
+        
         /// <summary>オプションボタンキー</summary>
         public const string INPUT_OPTION = "Option";
 
