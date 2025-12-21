@@ -61,8 +61,8 @@ namespace ItemSystem.Data
         /// <param name="item">アイテム情報（Transform やデータを含む）</param>
         /// <param name="obb">衝突判定用 OBB</param>
         public ItemCollisionContext(
-            ItemSlot item,
-            IOBBData obb
+            in ItemSlot item,
+            in IOBBData obb
         )
             : base(
                 item.Transform,

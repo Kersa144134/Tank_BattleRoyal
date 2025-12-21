@@ -8,10 +8,10 @@
 
 using UnityEngine;
 
-namespace TankSystem.Utility
+namespace InputSystem.Utility
 {
     /// <summary>
-    /// キャタピラ入力の丸めおよび段階補正を行う静的ユーティリティクラス
+    /// キャタピラ入力の丸めおよび段階補正を行うユーティリティクラス
     /// </summary>
     public class InputCorrectionUtility
     {

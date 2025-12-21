@@ -17,6 +17,7 @@ using CollisionSystem.Utility;
 using ItemSystem.Data;
 using ObstacleSystem.Data;
 using SceneSystem.Interface;
+using SceneSystem.Manager;
 using TankSystem.Data;
 using WeaponSystem.Data;
 
@@ -365,6 +366,9 @@ namespace TankSystem.Manager
 
             // 内部マップから削除
             _bulletContextMap.Remove(bullet);
+
+            // ヒット履歴を削除
+            _eventRouter.ClearHitHistory(bullet);
 
             // キャッシュ配列を更新
             UpdateBullets();

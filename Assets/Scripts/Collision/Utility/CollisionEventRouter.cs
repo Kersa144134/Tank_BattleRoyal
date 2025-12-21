@@ -6,6 +6,7 @@
 // ======================================================
 
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using CollisionSystem.Calculator;
 using CollisionSystem.Data;
@@ -29,6 +30,9 @@ namespace CollisionSystem.Utility
 
         /// <summary>MTV を用いた衝突解決量を計算するクラス</summary>
         private CollisionResolveCalculator _collisionResolverCalculator;
+
+        /// <summary>弾丸と対象の衝突履歴</summary>
+        private readonly HashSet<(int bulletId, int targetId)> _hitHistory = new HashSet<(int, int)>();
 
         // ======================================================
         // イベント
@@ -187,9 +191,16 @@ namespace CollisionSystem.Utility
             }
 
             BulletBase bullet = bulletContext.Bullet;
+            int obstacleId = obstacle.ObstacleId;
+
+            // すでにヒット済みならスキップ
+            if (!_hitHistory.Add((bullet.BulletId, obstacleId)))
+            {
+                return;
+            }
 
             // 弾丸ヒット処理
-            bullet.OnHit();
+            bullet.OnHit(obstacle);
 
             // 衝突イベント通知
             OnBulletHit?.Invoke(bullet);
@@ -214,11 +225,27 @@ namespace CollisionSystem.Utility
                 return;
             }
 
+            int tankId = tank.TankRootManager.TankId;
+
+            // すでにヒット済みならスキップ
+            if (!_hitHistory.Add((bullet.BulletId, tankId)))
+            {
+                return;
+            }
+            
             // 弾丸ヒット処理
-            bullet.OnHit();
+            bullet.OnHit(tank);
 
             // 衝突イベント通知
             OnBulletHit?.Invoke(bullet);
+        }
+
+        /// <summary>
+        /// 弾丸がプールに戻る際に履歴をクリア
+        /// </summary>
+        public void ClearHitHistory(BulletBase bullet)
+        {
+            _hitHistory.RemoveWhere(pair => pair.bulletId == bullet.BulletId);
         }
     }
 }

@@ -11,10 +11,11 @@ using System.Collections.Generic;
 using UnityEngine;
 using SceneSystem.Interface;
 using TankSystem.Data;
+using TankSystem.Manager;
 using WeaponSystem.Data;
 using WeaponSystem.Manager;
 
-namespace TankSystem.Manager
+namespace SceneSystem.Manager
 {
     /// <summary>
     /// シーン内の当たり判定対象オブジェクトを一元管理するレジストリ

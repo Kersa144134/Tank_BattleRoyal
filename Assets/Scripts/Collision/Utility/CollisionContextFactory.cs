@@ -8,7 +8,6 @@
 // ======================================================
 
 using CollisionSystem.Interface;
-using CollisionSystem.Utility;
 using ItemSystem.Data;
 using ObstacleSystem.Data;
 using TankSystem.Data;
@@ -16,7 +15,7 @@ using TankSystem.Manager;
 using UnityEngine;
 using WeaponSystem.Data;
 
-namespace TankSystem.Utility
+namespace CollisionSystem.Utility
 {
     /// <summary>
     /// 衝突判定用コンテキストを生成する汎用ファクトリー
@@ -51,14 +50,14 @@ namespace TankSystem.Utility
         /// <summary>
         /// 戦車用の動的衝突コンテキストを生成する
         /// </summary>
-        /// <param name="tankId">戦車固有 ID</param>
+        /// <param name="tankId">戦車 ID</param>
         /// <param name="boxCollider">衝突形状定義に使用する BoxCollider</param>
         /// <param name="tankRootManager">戦車の移動・回転を管理するルート管理クラス</param>
         /// <returns>生成された TankCollisionContext</returns>
         public TankCollisionContext CreateTankContext(
-            int tankId,
-            BoxCollider boxCollider,
-            BaseTankRootManager tankRootManager
+            in int tankId,
+            in BoxCollider boxCollider,
+            in BaseTankRootManager tankRootManager
         )
         {
             // 動的 OBB を生成
@@ -75,8 +74,8 @@ namespace TankSystem.Utility
         /// <param name="boxCollider">弾丸に設定されている BoxCollider</param>
         /// <returns>生成された BulletCollisionContext</returns>
         public BulletCollisionContext CreateBulletContext(
-            BulletBase bullet,
-            BoxCollider boxCollider
+            in BulletBase bullet,
+            in BoxCollider boxCollider
         )
         {
             // BoxCollider のローカルサイズに Transform のスケールを反映
@@ -92,12 +91,14 @@ namespace TankSystem.Utility
         /// <summary>
         /// 静的障害物用の衝突コンテキストを生成する
         /// </summary>
+        /// <param name="obstacleId">障害物 ID</param>
         /// <param name="obstacleTransform">障害物 Transform</param>
         /// <param name="boxCollider">障害物の BoxCollider</param>
         /// <returns>生成された ObstacleCollisionContext</returns>
         public ObstacleCollisionContext CreateObstacleContext(
-            Transform obstacleTransform,
-            BoxCollider boxCollider
+            in int obstacleId,
+            in Transform obstacleTransform,
+            in BoxCollider boxCollider
         )
         {
             // BoxCollider のローカルサイズに Transform のスケールを反映
@@ -112,7 +113,7 @@ namespace TankSystem.Utility
             );
 
             // ObstacleCollisionContext を構築して返却
-            return new ObstacleCollisionContext(obstacleTransform, obb);
+            return new ObstacleCollisionContext(obstacleId, obstacleTransform, obb);
         }
 
         /// <summary>

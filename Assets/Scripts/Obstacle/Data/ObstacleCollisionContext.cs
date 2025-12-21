@@ -21,6 +21,13 @@ namespace ObstacleSystem.Data
         IStaticCollisionContext
     {
         // ======================================================
+        // 固有プロパティ
+        // ======================================================
+
+        /// <summary>障害物を一意に識別する ID</summary>
+        public int ObstacleId { get; private set; }
+        
+        // ======================================================
         // 抽象プロパティ
         // ======================================================
 
@@ -39,32 +46,19 @@ namespace ObstacleSystem.Data
         }
 
         // ======================================================
-        // IBulletHittable プロパティ
-        // ======================================================
-
-        /// <summary>
-        /// 弾丸の衝突判定に使用する OBB
-        /// </summary>
-        public IOBBData Bounding
-        {
-            get
-            {
-                return OBB;
-            }
-        }
-
-        // ======================================================
         // コンストラクタ
         // ======================================================
 
         /// <summary>
         /// 障害物用の衝突コンテキストを生成する
         /// </summary>
+        /// <param name="obstacleId">障害物 ID</param>
         /// <param name="transform">障害物 Transform</param>
         /// <param name="obb">衝突判定用 OBB</param>
         public ObstacleCollisionContext(
-            Transform transform,
-            IOBBData obb
+            in int obstacleId,
+            in Transform transform,
+            in IOBBData obb
         )
             : base(
                 transform,
@@ -72,6 +66,7 @@ namespace ObstacleSystem.Data
                 MovementLockAxis.All
             )
         {
+            ObstacleId = obstacleId;
         }
     }
 }

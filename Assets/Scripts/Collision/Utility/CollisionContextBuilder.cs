@@ -8,14 +8,14 @@
 
 using System.Collections.Generic;
 using UnityEngine;
-using CollisionSystem.Utility;
 using ItemSystem.Data;
 using ObstacleSystem.Data;
+using SceneSystem.Manager;
 using TankSystem.Data;
-using TankSystem.Utility;
+using TankSystem.Manager;
 using WeaponSystem.Data;
 
-namespace TankSystem.Manager
+namespace CollisionSystem.Utility
 {
     /// <summary>
     /// SceneObjectRegistry から各衝突コンテキストを生成する専用ビルダー
@@ -103,29 +103,6 @@ namespace TankSystem.Manager
         }
 
         /// <summary>
-        /// 弾丸 1 発分の衝突コンテキストを生成する
-        /// </summary>
-        /// <param name="bullet">衝突判定対象となる弾丸ロジック</param>
-        /// <returns>生成された弾丸用衝突コンテキスト</returns>
-        public BulletCollisionContext BuildBulletContext(in BulletBase bullet)
-        {
-            if (bullet == null || bullet.Transform == null)
-            {
-                return null;
-            }
-
-            if (!bullet.Transform.TryGetComponent(out BoxCollider boxCollider))
-            {
-                return null;
-            }
-
-            return _contextFactory.CreateBulletContext(
-                bullet,
-                boxCollider
-            );
-        }
-
-        /// <summary>
         /// 障害物用コンテキスト一覧を生成する
         /// </summary>
         public ObstacleCollisionContext[] BuildObstacleContexts()
@@ -154,6 +131,7 @@ namespace TankSystem.Manager
 
                 ObstacleCollisionContext context =
                     _contextFactory.CreateObstacleContext(
+                        i,
                         obstacle,
                         boxCollider
                     );
@@ -162,37 +140,6 @@ namespace TankSystem.Manager
             }
 
             return obstacleContexts.ToArray();
-        }
-
-        /// <summary>
-        /// アイテム用コンテキスト一覧を生成する
-        /// 初期化用途のみで使用する
-        /// </summary>
-        /// <param name="items">衝突判定対象となるアイテム一覧</param>
-        public List<ItemCollisionContext> BuildItemContexts(in List<ItemSlot> items)
-        {
-            List<ItemCollisionContext> itemContexts = new List<ItemCollisionContext>();
-
-            if (items == null)
-            {
-                return itemContexts;
-            }
-
-            for (int i = 0; i < items.Count; i++)
-            {
-                ItemSlot item = items[i];
-
-                if (item == null || item.Transform == null)
-                {
-                    continue;
-                }
-
-                ItemCollisionContext context = BuildItemContext(item);
-
-                itemContexts.Add(context);
-            }
-
-            return itemContexts;
         }
 
         /// <summary>
@@ -208,6 +155,29 @@ namespace TankSystem.Manager
             }
 
             return _contextFactory.CreateItemContext(item);
+        }
+
+        /// <summary>
+        /// 弾丸 1 発分の衝突コンテキストを生成する
+        /// </summary>
+        /// <param name="bullet">衝突判定対象となる弾丸ロジック</param>
+        /// <returns>生成された弾丸用衝突コンテキスト</returns>
+        public BulletCollisionContext BuildBulletContext(in BulletBase bullet)
+        {
+            if (bullet == null || bullet.Transform == null)
+            {
+                return null;
+            }
+
+            if (!bullet.Transform.TryGetComponent(out BoxCollider boxCollider))
+            {
+                return null;
+            }
+
+            return _contextFactory.CreateBulletContext(
+                bullet,
+                boxCollider
+            );
         }
     }
 }

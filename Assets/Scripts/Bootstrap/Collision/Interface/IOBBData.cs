@@ -3,8 +3,8 @@
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-16
 // 更新日時 : 2025-12-16
-// 概要     : OBB データの共通インターフェイス
-//            静的・動的の OBBData を共通で扱うためのインターフェイス
+// 概要     : OBB データの共通インターフェース
+//            静的・動的の OBBData を共通で扱うためのインターフェース
 // ======================================================
 
 using UnityEngine;
@@ -12,7 +12,7 @@ using UnityEngine;
 namespace CollisionSystem.Interface
 {
     /// <summary>
-    /// OBB データ共通インターフェイス
+    /// OBB データ共通インターフェース
     /// </summary>
     public interface IOBBData
     {

@@ -77,7 +77,8 @@ namespace SceneSystem.Utility
             // --------------------------------------------------
             if (_context.PlayerTank != null)
             {
-                _context.PlayerTank.OnModeChangeButtonPressed += HandleModeChangeButtonPressed;
+                _context.PlayerTank.OnInputModeChangeButtonPressed += HandleInputModeChangeButtonPressed;
+                _context.PlayerTank.OnFireModeChangeButtonPressed += HandleFireModeChangeButtonPressed;
                 _context.PlayerTank.OnOptionButtonPressed += HandleOptionButtonPressed;
                 _context.PlayerTank.OnFireBullet += HandleFireBullet;
             }
@@ -133,7 +134,8 @@ namespace SceneSystem.Utility
             // --------------------------------------------------
             if (_context.PlayerTank != null)
             {
-                _context.PlayerTank.OnModeChangeButtonPressed -= HandleModeChangeButtonPressed;
+                _context.PlayerTank.OnInputModeChangeButtonPressed -= HandleInputModeChangeButtonPressed;
+                _context.PlayerTank.OnFireModeChangeButtonPressed -= HandleFireModeChangeButtonPressed;
                 _context.PlayerTank.OnOptionButtonPressed -= HandleOptionButtonPressed;
                 _context.PlayerTank.OnFireBullet -= HandleFireBullet;
             }
@@ -181,7 +183,7 @@ namespace SceneSystem.Utility
         /// 入力モード切り替えボタン押下時の処理を行うハンドラ
         /// 現在の入力モードに応じて、次の入力モードへ切り替える
         /// </summary>
-        private void HandleModeChangeButtonPressed()
+        private void HandleInputModeChangeButtonPressed()
         {
             // プレイヤー戦車のキャタピラ入力モードをトグル切替
             _context.PlayerTank?.ChangeInputMode();
@@ -197,6 +199,14 @@ namespace SceneSystem.Utility
 
             // カメラの追従ターゲットを切り替え
             _context.CameraManager?.SetTargetByIndex(cameraTargetIndex);
+        }
+
+        /// <summary>
+        /// 攻撃モード切り替えボタン押下時の処理を行うハンドラ
+        /// </summary>
+        private void HandleFireModeChangeButtonPressed()
+        {
+            
         }
 
         /// <summary>
