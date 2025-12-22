@@ -201,6 +201,8 @@ namespace TankSystem.Manager
             _bulletVsTankService.OnDynamicHit += _eventRouter.HandleBulletHitTank;
 
             InitializeItems(_sceneRegistry.ItemSlots);
+
+            SendContextData();
         }
 
         public void OnUpdate()
@@ -396,6 +398,50 @@ namespace TankSystem.Manager
             foreach (ItemSlot item in items)
             {
                 RegisterItem(item);
+            }
+        }
+
+        /// <summary>
+        /// 戦車の Transform 配列と障害物の OBB 配列を
+        /// 各戦車マネージャーにセットする
+        /// </summary>
+        private void SendContextData()
+        {
+            if (_tanks == null || _obstacles == null)
+            {
+                return;
+            }
+
+            // 戦車ごとに Transform と OBB 配列をセット
+            Transform[] tankTransforms = new Transform[_tanks.Length];
+            IOBBData[] tankOBBs = new IOBBData[_tanks.Length];
+
+            for (int i = 0; i < _tanks.Length; i++)
+            {
+                TankCollisionContext tank = _tanks[i];
+                tankTransforms[i] = tank.TankRootManager.Transform;
+            }
+
+            // 障害物 Transform と OBB 配列をキャッシュ
+            Transform[] obstacleTransforms = new Transform[_obstacles.Length];
+            IOBBData[] obstacleOBBs = new IOBBData[_obstacles.Length];
+            for (int i = 0; i < _obstacles.Length; i++)
+            {
+                ObstacleCollisionContext obstacle = _obstacles[i];
+                obstacleOBBs[i] = obstacle.OBB;
+            }
+
+            // 各戦車マネージャーにセット
+            for (int i = 0; i < _tanks.Length; i++)
+            {
+                BaseTankRootManager tankManager = _tanks[i].TankRootManager;
+                if (tankManager != null)
+                {
+                    tankManager.SetContextData(
+                        tankTransforms,
+                        obstacleOBBs
+                    );
+                }
             }
         }
 

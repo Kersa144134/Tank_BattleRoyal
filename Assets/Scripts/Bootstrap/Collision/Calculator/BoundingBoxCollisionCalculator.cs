@@ -3,7 +3,7 @@
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-11
 // 更新日時 : 2025-12-13
-// 概要     : OBB 衝突計算を OBBCollisionCalculator に委譲する調停クラス
+// 概要     : OBB 衝突計算を OBBCollisionCalculator に委譲するクラス
 // ======================================================
 
 using UnityEngine;
@@ -13,8 +13,8 @@ using CollisionSystem.Utility;
 namespace CollisionSystem.Calculator
 {
     /// <summary>
-    /// OBB 衝突処理のユースケース窓口
-    /// 数学的処理はすべて OBBCollisionCalculator に委譲する
+    /// OBB 衝突処理のユースケースクラス
+    /// 処理はすべて OBBCollisionCalculator に委譲する
     /// </summary>
     public sealed class BoundingBoxCollisionCalculator
     {

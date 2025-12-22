@@ -259,9 +259,12 @@ namespace SceneSystem.Utility
         /// </summary>
         /// <param name="tank">”­ËŒ³‚Æ‚È‚éíÔ‚Ì RootManager</param>
         /// <param name="bulletType">”­Ë‚·‚é’eŠÛ‚Ìí—Ş</param>
+        /// <param name="target">”­Ë‚·‚é’eŠÛ‚Ìí—Ş</param>
+        /// <param name="target">’eŠÛ‚Ì‰ñ“]•ûŒü‚Éw’è‚·‚éƒ^[ƒQƒbƒg Transform</param>
         private void HandleFireBullet(
             BaseTankRootManager tank,
-            BulletType bulletType
+            BulletType bulletType,
+            Transform target = null
         )
         {
             if (tank == null)
@@ -280,7 +283,8 @@ namespace SceneSystem.Utility
                 tank.TankId,
                 tank.TankStatus,
                 firePosition,
-                fireDirection
+                fireDirection,
+                target
             );
         }
 

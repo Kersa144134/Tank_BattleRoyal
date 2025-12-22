@@ -9,11 +9,13 @@
 using System;
 using UnityEngine;
 using CollisionSystem.Data;
+using CollisionSystem.Interface;
 using InputSystem.Data;
 using SceneSystem.Interface;
 using TankSystem.Controller;
 using TankSystem.Data;
 using TankSystem.Service;
+using VisionSystem.Calculator;
 using WeaponSystem.Data;
 
 namespace TankSystem.Manager
@@ -38,16 +40,16 @@ namespace TankSystem.Manager
         /// <summary>戦車の衝突設定 Boxのローカルスケール</summary>
         [SerializeField] private Vector3 _hitBoxScale;
 
+        [Header("視界判定設定")]
+        /// <summary>戦車の視界判定に侵入した際に表示するターゲットアイコン</summary>
+        [SerializeField] private MeshRenderer _targetIcon;
+
         [Header("攻撃設定")]
         /// <summary>砲身の Transform</summary>
         [SerializeField] private Transform _turret;
 
         /// <summary>弾丸発射ローカル位置</summary>
         [SerializeField] private Transform _firePoint;
-
-        [Header("防御設定")]
-        /// <summary>戦車本体の BoxCollider</summary>
-        [SerializeField] private BoxCollider _tankCollider;
 
         // ======================================================
         // コンポーネント参照
@@ -57,7 +59,10 @@ namespace TankSystem.Manager
         // 攻撃力
         // --------------------------------------------------
         /// <summary>戦車の攻撃管理クラス</summary>
-        private TankAttackManager _attackManager = new TankAttackManager();
+        private TankAttackManager _attackManager;
+
+        /// <summary>視界判定のユースケースクラス</summary>
+        private FieldOfViewCalculator _fieldOfViewCalculator = new FieldOfViewCalculator();
 
         // --------------------------------------------------
         // 防御力
@@ -97,6 +102,9 @@ namespace TankSystem.Manager
         /// <summary>戦車の衝突設定 Boxのローカルスケール</summary>
         public Vector3 HitBoxScale => _hitBoxScale;
 
+        /// <summary>自身の Transform</summary>
+        public Transform Transform => transform;
+
         /// <summary>弾丸発射ローカル位置</summary>
         public Transform FirePoint => _firePoint;
 
@@ -133,7 +141,7 @@ namespace TankSystem.Manager
         public event Action OnOptionButtonPressed;
 
         /// <summary>弾丸が発射された際に発火するイベント</summary>
-        public event Action<BaseTankRootManager, BulletType> OnFireBullet;
+        public event Action<BaseTankRootManager, BulletType, Transform> OnFireBullet;
 
         // ======================================================
         // 抽象メソッド
@@ -161,11 +169,29 @@ namespace TankSystem.Manager
         );
 
         // ======================================================
+        // セッター
+        // ======================================================
+
+        /// <summary>
+        /// 戦車の Transform 配列と遮蔽物の OBB 配列を AttackManager に送る
+        /// </summary>
+        /// <param name="tankTransforms">戦車自身の Transform 配列</param>
+        /// <param name="obstacleOBBs">遮蔽物 OBB 配列</param>
+        public void SetContextData(
+            in Transform[] tankTransforms,
+            in IOBBData[] obstacleOBBs
+        )
+        {
+            _attackManager.SetContextData(tankTransforms, obstacleOBBs);
+        }
+        
+        // ======================================================
         // IUpdatable イベント
         // ======================================================
 
         public virtual void OnEnter()
         {
+            _attackManager = new TankAttackManager(_fieldOfViewCalculator, transform);
             _boundaryService = new TankMovementBoundaryService(MOVEMENT_ALLOWED_RADIUS);
             _mobilityManager = new TankMobilityManager(
                 _trackController,
@@ -274,6 +300,18 @@ namespace TankSystem.Manager
         }
 
         /// <summary>
+        /// ターゲットアイコンの表示を切り替える
+        /// </summary>
+        /// <param name="isActive">true で表示、false で非表示</param>
+        public void ChangeTargetIcon(bool isActive)
+        {
+            if (_targetIcon != null)
+            {
+                _targetIcon.enabled = isActive;
+            }
+        }
+
+        //// <summary>
         /// TankCollisionService からの衝突通知を受けて、戦車のめり込みを解消する
         /// </summary>
         /// <param name="resolveInfo">呼び出し側で算出済みの押し戻し情報</param>
@@ -281,7 +319,7 @@ namespace TankSystem.Manager
         {
             NextPosition += resolveInfo.ResolveVector;
         }
-        
+
         // ======================================================
         // イベントハンドラ
         // ======================================================
@@ -290,7 +328,9 @@ namespace TankSystem.Manager
         /// 左右トリガー入力を元に攻撃を実行し、
         /// 弾丸タイプを通知する処理を行うハンドラ
         /// </summary>
-        private void HandleFireBullet(BulletType type)
+        /// <param name="type">発射する弾丸の種類</param>
+        /// <param name="target">弾丸の回転方向に指定するターゲット Transform</param>
+        private void HandleFireBullet(BulletType type, Transform target = null)
         {
             // 発射位置を取得
             Vector3 firePosition = _firePoint.position;
@@ -299,7 +339,7 @@ namespace TankSystem.Manager
             Vector3 fireDirection = transform.forward;
 
             // イベントを外部に通知
-            OnFireBullet?.Invoke(this, type);
+            OnFireBullet?.Invoke(this, type, target);
         }
     }
 }

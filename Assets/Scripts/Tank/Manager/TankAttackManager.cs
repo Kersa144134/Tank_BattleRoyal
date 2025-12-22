@@ -7,9 +7,12 @@
 //            榴弾・徹甲弾・同時押し特殊攻撃をサポート
 // ======================================================
 
-using InputSystem.Data;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
+using CollisionSystem.Interface;
+using InputSystem.Data;
+using VisionSystem.Calculator;
 using WeaponSystem.Data;
 
 namespace TankSystem.Manager
@@ -20,9 +23,20 @@ namespace TankSystem.Manager
     public class TankAttackManager
     {
         // ======================================================
+        // コンポーネント参照
+        // ======================================================
+
+        /// <summary>視界判定のユースケースクラス</summary>
+        private readonly FieldOfViewCalculator _fieldOfViewCalculator;
+
+        // ======================================================
         // フィールド
         // ======================================================
 
+        // --------------------------------------------------
+        // 攻撃関連
+        // --------------------------------------------------
+        /// <summary>入力を受けて攻撃を決定するまでの待機時間（秒）</summary>
         /// <summary>弾丸タイプの順序</summary>
         private readonly BulletType[] _bulletCycle = new BulletType[]
         {
@@ -43,15 +57,42 @@ namespace TankSystem.Manager
         /// <summary>右攻撃ボタンが押されてからの経過時間（同時押し判定用、未押下時は -1）</summary>
         private float _rightInputTimer = -1f;
 
+        // --------------------------------------------------
+        // 視界判定関連
+        // --------------------------------------------------
+        /// <summary>自身の戦車の Transform</summary>
+        private Transform _transform;
+
+        /// <summary>ターゲットの Transform 配列</summary>
+        private Transform[] _targetTransforms = new Transform[0];
+
+        /// <summary>遮蔽物の OBB 配列</summary>
+        private IOBBData[] _shieldOBBs = new IOBBData[0];
+
+        /// <summary>現在のターゲットとして保持する戦車マネージャー </summary>
+        private BaseTankRootManager _targetTankManager;
+
         // ======================================================
         // 定数
         // ======================================================
 
+        // --------------------------------------------------
+        // 攻撃関連
+        // --------------------------------------------------
         /// <summary>入力を受けて攻撃を決定するまでの待機時間（秒）</summary>
         private const float INPUT_DECISION_DELAY = 0.1f;
 
         /// <summary>攻撃クールタイム（秒）</summary>
         private const float ATTACK_COOLDOWN = 1.0f;
+
+        // --------------------------------------------------
+        // 視界判定関連
+        // --------------------------------------------------
+        /// <summary>視界角</summary>
+        private const float FOV_ANGLE = 30f;
+
+        /// <summary>視界距離</summary>
+        private const float VIEW_DISTANCE = 100f;
 
         // ======================================================
         // イベント
@@ -60,7 +101,39 @@ namespace TankSystem.Manager
         /// <summary>
         /// 弾丸発射時に発火するイベント。引数で弾丸タイプを通知する
         /// </summary>
-        public event Action<BulletType> OnFireBullet;
+        public event Action<BulletType, Transform> OnFireBullet;
+
+        // ======================================================
+        // コンストラクタ
+        // ======================================================
+
+        /// <summary>
+        /// 視界判定コンポーネントを注入して初期化する
+        /// </summary>
+        /// <param name="fieldOfViewCalculator">視界判定のユースケースクラス</param>
+        public TankAttackManager(in FieldOfViewCalculator fieldOfViewCalculator, in Transform transform)
+        {
+            _fieldOfViewCalculator = fieldOfViewCalculator;
+            _transform = transform;
+        }
+
+        // ======================================================
+        // セッター
+        // ======================================================
+
+        /// <summary>
+        /// ターゲットと遮蔽物の Transform 配列と OBB 配列を AttackManager に送る
+        /// </summary>
+        /// <param name="targetTransforms">ターゲットの Transform 配列</param>
+        /// <param name="shieldOBBs">遮蔽物の OBB 配列</param>
+        public void SetContextData(
+            in Transform[] targetTransforms,
+            in IOBBData[] shieldOBBs
+        )
+        {
+            _targetTransforms = targetTransforms;
+            _shieldOBBs = shieldOBBs;
+        }
         
         // ======================================================
         // パブリックメソッド
@@ -73,12 +146,23 @@ namespace TankSystem.Manager
         /// <param name="rightInput">徹甲弾ボタン入力</param>
         public void UpdateAttack(in ButtonState leftInput, in ButtonState rightInput)
         {
-            // 引数が null の場合は処理をスキップ
             if (leftInput == null || rightInput == null)
             {
                 return;
             }
-            
+
+            // 視界内ターゲットを距離順に取得
+            List<Transform> visibleTargets = _fieldOfViewCalculator.GetVisibleTargets(
+                _transform,
+                _targetTransforms,
+                _shieldOBBs,
+                FOV_ANGLE,
+                VIEW_DISTANCE
+            );
+
+            // 自身以外で最も近いターゲットを取得
+            Transform closestTarget = GetClosestTargetExcludingSelf(visibleTargets);
+
             // クールタイム中は何もしない
             if (_cooldownTime > 0f)
             {
@@ -121,14 +205,14 @@ namespace TankSystem.Manager
             // 個別攻撃はタイマーが入力受付遅延を超えた場合に実行
             if (_leftInputTimer >= 0f && _leftInputTimer > INPUT_DECISION_DELAY)
             {
-                FireCurrentBullet();
+                FireCurrentBullet(closestTarget);
                 _leftInputTimer = -1f;
                 _cooldownTime = ATTACK_COOLDOWN;
             }
 
             if (_rightInputTimer >= 0f && _rightInputTimer > INPUT_DECISION_DELAY)
             {
-                FireCurrentBullet();
+                FireCurrentBullet(closestTarget);
                 _rightInputTimer = -1f;
                 _cooldownTime = ATTACK_COOLDOWN;
             }
@@ -147,12 +231,78 @@ namespace TankSystem.Manager
         // ======================================================
 
         /// <summary>
+        /// 視界内ターゲットの中から自身以外で最も近いターゲットを取得し、
+        /// ターゲットアイコン表示を切り替える
+        /// </summary>
+        /// <param name="visibleTargets">視界内ターゲットのリスト（距離順）</param>
+        /// <returns>最も近いターゲット Transform。存在しなければ null</returns>
+        private Transform GetClosestTargetExcludingSelf(List<Transform> visibleTargets)
+        {
+            if (visibleTargets == null || visibleTargets.Count == 0)
+            {
+                UpdateCachedTarget(null);
+                return null;
+            }
+
+            // 自身の Transform を除外して最も近いターゲットを取得
+            Transform closestTarget = null;
+            for (int i = 0; i < visibleTargets.Count; i++)
+            {
+                if (visibleTargets[i] != _transform)
+                {
+                    closestTarget = visibleTargets[i];
+                    break;
+                }
+            }
+
+            // ターゲットの BaseTankRootManager を取得できる場合
+            BaseTankRootManager targetManager = null;
+            if (closestTarget != null)
+            {
+                targetManager = closestTarget.GetComponent<BaseTankRootManager>();
+            }
+
+            // ターゲットを更新してアイコン表示を切り替える
+            UpdateCachedTarget(targetManager);
+
+            return closestTarget;
+        }
+
+        /// <summary>
+        /// ターゲットを更新し、ターゲットアイコンの表示を切り替える
+        /// </summary>
+        /// <param name="newTarget">新しいターゲットの BaseTankRootManager。null の場合はアイコンオフ</param>
+        private void UpdateCachedTarget(BaseTankRootManager newTarget)
+        {
+            if (_targetTankManager == newTarget)
+            {
+                return;
+            }
+
+            // 既存のターゲットがある場合はアイコンオフ
+            if (_targetTankManager != null)
+            {
+                _targetTankManager.ChangeTargetIcon(false);
+            }
+
+            // 新しいターゲットが存在すればアイコンオン
+            if (newTarget != null)
+            {
+                newTarget.ChangeTargetIcon(true);
+            }
+
+            // ターゲットを更新
+            _targetTankManager = newTarget;
+        }
+
+        /// <summary>
         /// 現在の弾丸タイプで発射する
         /// </summary>
-        private void FireCurrentBullet()
+        /// <param name="target">弾丸の回転方向に指定するターゲット Transform</param>
+        private void FireCurrentBullet(Transform target = null)
         {
             BulletType typeToFire = _bulletCycle[_currentBulletIndex];
-            OnFireBullet?.Invoke(typeToFire);
+            OnFireBullet?.Invoke(typeToFire, target);
         }
 
         /// <summary>
