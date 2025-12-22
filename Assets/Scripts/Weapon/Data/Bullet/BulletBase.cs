@@ -124,7 +124,7 @@ namespace WeaponSystem.Data
         private const float BASE_BULLET_MASS = 1f;
 
         /// <summary>Šî€‚Æ‚È‚é’e‘¬Œ¸Š’l</summary>
-        private const float BASE_BULLET_DRAG = 50f;
+        private const float BASE_BULLET_DRAG = 75f;
 
         /// <summary>Šî€‚Æ‚È‚é’eŠÛ‚“x‚Ì•âŠÔw”</summary>
         public const float BASE_BULLET_HEIGHT_INTERPOLATION_EXPONENT = 1.5f;

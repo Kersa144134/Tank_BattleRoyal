@@ -62,6 +62,13 @@ namespace WeaponSystem.Manager
         private readonly Dictionary<BulletType, Queue<BulletBase>> _inactivePool = new Dictionary<BulletType, Queue<BulletBase>>();
 
         // ======================================================
+        // 定数
+        // ======================================================
+
+        // 戦車専用の弾丸ルートオブジェクトを生成
+        private const string BULLET_ROOT_NAME = "_BulletRoot";
+
+        // ======================================================
         // イベント
         // ======================================================
 
@@ -92,7 +99,7 @@ namespace WeaponSystem.Manager
                 }
 
                 // 戦車専用の弾丸ルートオブジェクトを生成
-                GameObject bulletRootObject = new GameObject($"{tankObj.name}_BulletRoot");
+                GameObject bulletRootObject = new GameObject($"{tankObj.name}" + BULLET_ROOT_NAME);
 
                 // BulletPool 配下にまとめて配置（Hierarchy 整理用）
                 bulletRootObject.transform.SetParent(transform);

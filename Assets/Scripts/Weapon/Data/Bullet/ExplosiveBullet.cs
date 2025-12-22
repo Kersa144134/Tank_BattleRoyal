@@ -8,7 +8,6 @@
 // ======================================================
 
 using CollisionSystem.Data;
-using UnityEngine;
 
 namespace WeaponSystem.Data
 {
