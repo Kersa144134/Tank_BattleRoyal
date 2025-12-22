@@ -103,7 +103,16 @@ namespace SceneSystem.Utility
                 _context.BulletPool.OnBulletSpawned += HandleSpawnedBullet;
                 _context.BulletPool.OnBulletDespawned += HandleDespawnedBullet;
             }
-            
+
+            // --------------------------------------------------
+            // アイテムプール
+            // --------------------------------------------------
+            if (_context.ItemPool != null)
+            {
+                _context.ItemPool.OnItemActivated += HandleActivatedItem;
+                _context.ItemPool.OnItemDeactivated += HandleDeactivatedItem;
+            }
+
             // --------------------------------------------------
             // 衝突判定
             // --------------------------------------------------
@@ -157,6 +166,7 @@ namespace SceneSystem.Utility
             if (_context.BulletPool != null)
             {
                 _context.BulletPool.OnBulletSpawned -= HandleSpawnedBullet;
+                _context.BulletPool.OnBulletDespawned -= HandleDespawnedBullet;
             }
 
             // --------------------------------------------------
@@ -306,7 +316,7 @@ namespace SceneSystem.Utility
         /// アイテムを Scene 管理対象として登録する
         /// </summary>
         /// <param name="item">生成されたアイテムスロット</param>
-        private void HandleSpawnedItem(ItemSlot item)
+        private void HandleActivatedItem(ItemSlot item)
         {
             if (item == null)
             {
@@ -321,7 +331,7 @@ namespace SceneSystem.Utility
         /// アイテムを Scene 管理対象から解除する
         /// </summary>
         /// <param name="item">使用終了または取得済みのアイテムスロット</param>
-        private void HandleDespawnedItem(ItemSlot item)
+        private void HandleDeactivatedItem(ItemSlot item)
         {
             if (item == null)
             {
@@ -343,7 +353,7 @@ namespace SceneSystem.Utility
         )
         {
             // アイテム除外処理
-            HandleDespawnedItem(itemSlot);
+            HandleDeactivatedItem(itemSlot);
 
             // パラメーターアイテム
             if (itemSlot.ItemData is ParamItemData param)

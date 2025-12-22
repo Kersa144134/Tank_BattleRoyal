@@ -9,8 +9,8 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using ItemSystem.Data;
 using SceneSystem.Interface;
-using TankSystem.Data;
 using TankSystem.Manager;
 using WeaponSystem.Data;
 using WeaponSystem.Manager;
@@ -38,10 +38,6 @@ namespace SceneSystem.Manager
         /// <summary>障害物の親 Transform</summary>
         [SerializeField] private Transform _obstacleRoot;
 
-        [Header("アイテム")]
-        /// <summary>アイテムの Transform とデータを併せ持つスロットリスト</summary>
-        [SerializeField] private List<ItemSlot> _itemSlots;
-
         // ======================================================
         // コンポーネント参照
         // ======================================================
@@ -62,6 +58,9 @@ namespace SceneSystem.Manager
         /// <summary>更新対象の弾丸リスト</summary>
         private readonly List<BulletBase> _updatableBullets = new List<BulletBase>();
 
+        /// <summary>アイテムの Transform とデータを併せ持つスロットリスト</summary>
+        private readonly List<ItemSlot> _updatableItemSlots;
+
         // ======================================================
         // プロパティ
         // ======================================================
@@ -79,7 +78,7 @@ namespace SceneSystem.Manager
         /// <summary>
         /// アイテムスロットリストを返す
         /// </summary>
-        public List<ItemSlot> ItemSlots => _itemSlots;
+        public List<ItemSlot> ItemSlots => _updatableItemSlots;
 
         // ======================================================
         // イベント
@@ -96,11 +95,10 @@ namespace SceneSystem.Manager
 
         public void OnEnter()
         {
-            _itemManager = new ItemManager(_itemSlots, OnItemListChanged, _mainCamera);
+            _itemManager = new ItemManager(_updatableItemSlots, OnItemListChanged, _mainCamera);
 
             InitializeTanks();
             InitializeObstacles();
-            InitializeItemSlots();
         }
 
         public void OnUpdate()
@@ -206,20 +204,6 @@ namespace SceneSystem.Manager
             for (int i = 0; i < count; i++)
             {
                 _obstacles[i] = _obstacleRoot.GetChild(i);
-            }
-        }
-
-        /// <summary>
-        /// 登録済みアイテムスロットを初期化して ItemManager に追加
-        /// </summary>
-        private void InitializeItemSlots()
-        {
-            foreach (ItemSlot slot in _itemSlots)
-            {
-                if (slot.Transform != null)
-                {
-                    RegisterItem(slot);
-                }
             }
         }
     }

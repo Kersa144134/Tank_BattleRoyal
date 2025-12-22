@@ -9,7 +9,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using TankSystem.Data;
+using ItemSystem.Data;
 using TransformSystem.Utility;
 
 namespace TankSystem.Manager
@@ -87,29 +87,13 @@ namespace TankSystem.Manager
                 return;
             }
 
-            // 有効化
             ItemSlot target = _itemSlots[index];
-            target.IsEnabled = true;
 
             // FaceTarget を生成して管理
             if (!_faceTargets.ContainsKey(target))
             {
                 _faceTargets[target] = new FaceTarget(target.Transform, _mainCameraTransform);
             }
-
-            // SpriteRenderer を登録
-            if (!_spriteRenderers.ContainsKey(target))
-            {
-                SpriteRenderer spriteRenderer = target.Transform.GetComponentInChildren<SpriteRenderer>(true);
-
-                if (spriteRenderer != null)
-                {
-                    _spriteRenderers[target] = spriteRenderer;
-                }
-            }
-
-            // Renderer の表示切り替え
-            ToggleRenderer(target.Transform, true);
 
             // イベント発火
             _onListChanged?.Invoke(_itemSlots);
@@ -128,12 +112,7 @@ namespace TankSystem.Manager
                 return;
             }
 
-            // 無効化
             ItemSlot target = _itemSlots[index];
-            target.IsEnabled = false;
-
-            // Renderer の表示切り替え
-            ToggleRenderer(target.Transform, false);
 
             // FaceTarget を破棄
             if (_faceTargets.ContainsKey(target))
@@ -157,13 +136,14 @@ namespace TankSystem.Manager
             {
                 ItemSlot slot = kvp.Key;
 
-                // 有効なアイテムのみ回転処理を行う
+                // 有効なアイテムのみ更新処理を行う
                 if (!slot.IsEnabled)
                 {
                     continue;
                 }
 
-                // 個別アイテムの回転処理に委譲する
+                slot.Update();
+                
                 ItemRotation(slot);
             }
         }
@@ -171,26 +151,6 @@ namespace TankSystem.Manager
         // ======================================================
         // プライベートメソッド
         // ======================================================
-
-        /// <summary>
-        /// 指定オブジェクトの子オブジェクトにある SpriteRenderer の enabled を切り替える
-        /// </summary>
-        /// <param name="target">SpriteRenderer を操作する対象の Transform</param>
-        /// <param name="enabled">有効化する場合は true、無効化する場合は false</param>
-        private void ToggleRenderer(in Transform target, in bool enabled)
-        {
-            if (target == null)
-            {
-                return;
-            }
-
-            // 子オブジェクトにある SpriteRenderer を取得
-            SpriteRenderer spriteRenderer = target.GetComponentInChildren<SpriteRenderer>(true);
-            if (spriteRenderer != null)
-            {
-                spriteRenderer.enabled = enabled;
-            }
-        }
 
         /// <summary>
         /// 指定されたアイテムをカメラ方向に向ける

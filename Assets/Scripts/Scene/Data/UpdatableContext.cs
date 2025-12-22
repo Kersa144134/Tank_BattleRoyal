@@ -8,6 +8,7 @@
 
 using CameraSystem.Manager;
 using InputSystem.Manager;
+using ItemSystem.Manager;
 using SceneSystem.Interface;
 using SceneSystem.Manager;
 using TankSystem.Manager;
@@ -26,6 +27,9 @@ namespace SceneSystem.Data
 
         /// <summary>弾丸プール</summary>
         public BulletPool BulletPool;
+
+        /// <summary>アイテムプール</summary>
+        public ItemPool ItemPool;
 
         /// <summary>カメラ管理</summary>
         public CameraManager CameraManager;
