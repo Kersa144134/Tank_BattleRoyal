@@ -103,7 +103,7 @@ namespace SceneSystem.Manager
 
             _updateManager = new UpdateManager(updateController);
 
-            // Bootstrapper を通じてコンポーネント初期化を行いコンテキストを生成
+            // Bootstrapper を通じてコンポーネント初期化
             UpdatableContext context = _bootstrapper.Initialize(_components);
 
             _sceneEventRouter = new SceneEventRouter(context);

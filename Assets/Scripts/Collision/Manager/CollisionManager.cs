@@ -200,8 +200,6 @@ namespace TankSystem.Manager
             _bulletVsObstacleService.OnStaticHit += _eventRouter.HandleBulletHitObstacle;
             _bulletVsTankService.OnDynamicHit += _eventRouter.HandleBulletHitTank;
 
-            InitializeItems(_sceneRegistry.ItemSlots);
-
             SendContextData();
         }
 
@@ -379,27 +377,6 @@ namespace TankSystem.Manager
         // ======================================================
         // プライベートメソッド
         // ======================================================
-
-        /// <summary>
-        /// シーン開始時に存在するアイテムを衝突判定対象として初期化する
-        /// </summary>
-        /// <param name="items">初期登録対象となるアイテム一覧</param>
-        private void InitializeItems(in List<ItemSlot> items)
-        {
-            if (_contextBuilder == null || items == null)
-            {
-                return;
-            }
-
-            // 内部マップを初期化
-            _itemContextMap.Clear();
-
-            // 初期アイテムを登録
-            foreach (ItemSlot item in items)
-            {
-                RegisterItem(item);
-            }
-        }
 
         /// <summary>
         /// 戦車の Transform 配列と障害物の OBB 配列を

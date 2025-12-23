@@ -18,7 +18,7 @@ namespace TankSystem.Data
         Durability,     // ‘Ï‹v
         Armor,          // ‘•b
         HorsePower,     // ”n—Í
-        Acceleration,   // •Ï‘¬
+        Transmission,   // •Ï‘¬
         BarrelScale,    // –Cg
         ProjectileMass, // ¿—Ê
         ReloadTime      // ‘•“U

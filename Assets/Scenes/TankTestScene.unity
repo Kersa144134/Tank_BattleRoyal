@@ -4745,6 +4745,7 @@ MonoBehaviour:
   - {fileID: 52312538}
   - {fileID: 1327687266}
   - {fileID: 2109405611}
+  - {fileID: 1749357753}
   - {fileID: 76211782}
 --- !u!1 &820916603
 GameObject:
@@ -11837,8 +11838,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _itemSlots:
-  - _transform: {fileID: 6453188094619372843, guid: d636e7eaf1a5ebd4883aaeb10439fffa, type: 3}
+  - _transform: {fileID: 6453188094619372843, guid: 2c8f75c7296bfff499095f446e290b88, type: 3}
     _itemData: {fileID: 11400000, guid: 45022dd5602ebf4499205b6f8dc490c3, type: 2}
+  - _transform: {fileID: 6453188094619372843, guid: d636e7eaf1a5ebd4883aaeb10439fffa, type: 3}
+    _itemData: {fileID: 11400000, guid: 8e48fa8d7761593499367a2817ec0ab5, type: 2}
   _spawnPointsRoot: {fileID: 1379793714}
 --- !u!1 &2146657995
 GameObject:

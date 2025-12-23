@@ -170,6 +170,15 @@ namespace SceneSystem.Utility
             }
 
             // --------------------------------------------------
+            // アイテムプール
+            // --------------------------------------------------
+            if (_context.ItemPool != null)
+            {
+                _context.ItemPool.OnItemActivated -= HandleActivatedItem;
+                _context.ItemPool.OnItemDeactivated -= HandleDeactivatedItem;
+            }
+
+            // --------------------------------------------------
             // 衝突判定
             // --------------------------------------------------
             if (_context.CollisionManager != null)
@@ -333,6 +342,8 @@ namespace SceneSystem.Utility
         /// <param name="item">使用終了または取得済みのアイテムスロット</param>
         private void HandleDeactivatedItem(ItemSlot item)
         {
+            Debug.Log($"Deactive {item.ItemData}");
+            
             if (item == null)
             {
                 return;

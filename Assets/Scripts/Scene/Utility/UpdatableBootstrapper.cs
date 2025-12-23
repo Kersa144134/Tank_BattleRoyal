@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using CameraSystem.Manager;
 using InputSystem.Manager;
+using ItemSystem.Manager;
 using SceneSystem.Data;
 using SceneSystem.Interface;
 using SceneSystem.Manager;
@@ -61,6 +62,12 @@ namespace SceneSystem.Utility
                 if (updatable is BulletPool bulletPool)
                 {
                     context.BulletPool = bulletPool;
+                }
+                
+                // ItemPool ‚ðŽæ“¾
+                if (updatable is ItemPool itemPool)
+                {
+                    context.ItemPool = itemPool;
                 }
 
                 // CameraManager ‚ðŽæ“¾

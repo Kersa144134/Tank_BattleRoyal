@@ -190,7 +190,7 @@ namespace TankSystem.Data
                 { TankParam.Durability,     amount => Durability += amount },
                 { TankParam.Armor,          amount => Armor += amount },
                 { TankParam.HorsePower,     amount => HorsePower += amount },
-                { TankParam.Acceleration,   amount => Transmission += amount },
+                { TankParam.Transmission,   amount => Transmission += amount },
                 { TankParam.BarrelScale,    amount => BarrelScale += amount },
                 { TankParam.ProjectileMass, amount => ProjectileMass += amount },
                 { TankParam.ReloadTime,     amount => ReloadTime += amount },

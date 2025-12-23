@@ -2,8 +2,9 @@
 // ItemManager.cs
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-12
-// 更新日時 : 2025-12-14
+// 更新日時 : 2025-12-23
 // 概要     : アイテム ON/OFF 管理と Renderer 表示切替を担当する
+//            遅延登録/解除に対応
 // ======================================================
 
 using System;
@@ -16,6 +17,7 @@ namespace TankSystem.Manager
 {
     /// <summary>
     /// アイテム ON/OFF 管理および表示切替を担当するマネージャ
+    /// Deferred 操作対応版
     /// </summary>
     public class ItemManager
     {
@@ -25,7 +27,7 @@ namespace TankSystem.Manager
 
         /// <summary>アイテムリスト</summary>
         private List<ItemSlot> _itemSlots;
-        
+
         /// <summary>メインカメラの Transform</summary>
         private readonly Transform _mainCameraTransform;
 
@@ -38,6 +40,16 @@ namespace TankSystem.Manager
 
         /// <summary>ItemSlot ごとの SpriteRenderer 管理用辞書</summary>
         private Dictionary<ItemSlot, SpriteRenderer> _spriteRenderers = new Dictionary<ItemSlot, SpriteRenderer>();
+
+        // ======================================================
+        // Deferred（遅延）操作用リスト
+        // ======================================================
+
+        /// <summary>遅延登録対象リスト</summary>
+        private readonly List<ItemSlot> _slotsToRegister = new List<ItemSlot>();
+
+        /// <summary>遅延解除対象リスト</summary>
+        private readonly List<ItemSlot> _slotsToUnregister = new List<ItemSlot>();
 
         // ======================================================
         // イベント
@@ -75,53 +87,39 @@ namespace TankSystem.Manager
         // アイテム登録
         // --------------------------------------------------
         /// <summary>
-        /// アイテムを有効化
+        /// アイテムを遅延登録する
         /// </summary>
         /// <param name="slot">対象の ItemSlot</param>
         public void RegisterItem(ItemSlot slot)
         {
-            // Transform 参照で検索
-            int index = _itemSlots.FindIndex(s => s.Transform == slot.Transform);
-            if (index < 0)
+            if (slot == null)
             {
+                Debug.LogWarning("RegisterItemDeferred: slot が null です。");
                 return;
             }
 
-            ItemSlot target = _itemSlots[index];
-
-            // FaceTarget を生成して管理
-            if (!_faceTargets.ContainsKey(target))
+            if (!_slotsToRegister.Contains(slot))
             {
-                _faceTargets[target] = new FaceTarget(target.Transform, _mainCameraTransform);
+                _slotsToRegister.Add(slot);
             }
-
-            // イベント発火
-            _onListChanged?.Invoke(_itemSlots);
         }
 
         /// <summary>
-        /// アイテムを無効化
+        /// アイテムを遅延解除する
         /// </summary>
         /// <param name="slot">対象の ItemSlot</param>
         public void UnregisterItem(ItemSlot slot)
         {
-            // Transform 参照で検索
-            int index = _itemSlots.FindIndex(s => s.Transform == slot.Transform);
-            if (index < 0)
+            if (slot == null)
             {
+                Debug.LogWarning("UnregisterItemDeferred: slot が null です。");
                 return;
             }
 
-            ItemSlot target = _itemSlots[index];
-
-            // FaceTarget を破棄
-            if (_faceTargets.ContainsKey(target))
+            if (!_slotsToUnregister.Contains(slot))
             {
-                _faceTargets.Remove(target);
+                _slotsToUnregister.Add(slot);
             }
-
-            // イベント発火
-            _onListChanged?.Invoke(_itemSlots);
         }
 
         // --------------------------------------------------
@@ -132,20 +130,24 @@ namespace TankSystem.Manager
         /// </summary>
         public void UpdateItems()
         {
-            foreach (KeyValuePair<ItemSlot, FaceTarget> kvp in _faceTargets)
+            // FaceTarget をコピーして列挙することでコレクション変更による例外を回避
+            foreach (KeyValuePair<ItemSlot, FaceTarget> kvp in new Dictionary<ItemSlot, FaceTarget>(_faceTargets))
             {
                 ItemSlot slot = kvp.Key;
 
-                // 有効なアイテムのみ更新処理を行う
+                // 有効なアイテムのみ更新処理
                 if (!slot.IsEnabled)
                 {
                     continue;
                 }
 
                 slot.Update();
-                
+
                 ItemRotation(slot);
             }
+
+            // 遅延登録/解除処理を反映
+            ProcessDeferred();
         }
 
         // ======================================================
@@ -169,8 +171,47 @@ namespace TankSystem.Manager
                 return;
             }
 
-            // カメラ方向へ回転させる
+            // カメラ方向へ回転
             faceTarget.UpdateRotation();
+        }
+
+        /// <summary>
+        /// 遅延登録・解除の反映
+        /// </summary>
+        private void ProcessDeferred()
+        {
+            // 登録処理
+            foreach (ItemSlot slot in _slotsToRegister)
+            {
+                if (slot == null)
+                {
+                    continue;
+                }
+
+                if (!_faceTargets.ContainsKey(slot))
+                {
+                    _faceTargets[slot] = new FaceTarget(slot.Transform, _mainCameraTransform);
+                }
+            }
+            _slotsToRegister.Clear();
+
+            // 解除処理
+            foreach (ItemSlot slot in _slotsToUnregister)
+            {
+                if (slot == null)
+                {
+                    continue;
+                }
+
+                if (_faceTargets.ContainsKey(slot))
+                {
+                    _faceTargets.Remove(slot);
+                }
+            }
+            _slotsToUnregister.Clear();
+
+            // 更新後のイベント通知
+            _onListChanged?.Invoke(_itemSlots);
         }
     }
 }

@@ -132,7 +132,7 @@ namespace ItemSystem.Manager
         /// <summary>
         /// ランダムに未使用スロットを取得して有効化し、生成ポイントに配置する
         /// </summary>
-        /// <returns>生成可能な ItemSlot。存在しない場合は null</returns>
+        /// <returns>生成可能な ItemSlot</returns>
         public ItemSlot Activate()
         {
             if (_itemPickController == null)
@@ -154,7 +154,6 @@ namespace ItemSystem.Manager
 
             if (selectedQueue == null)
             {
-                // 在庫なし
                 return null;
             }
 
@@ -177,8 +176,6 @@ namespace ItemSystem.Manager
 
             // スロットを有効化
             slot.IsEnabled = true;
-
-            Debug.Log(slot.ItemData);
 
             return slot;
         }
@@ -218,28 +215,27 @@ namespace ItemSystem.Manager
         /// <summary>ItemSlot プールを構築する</summary>
         private void InitializePool()
         {
+            // 全プレハブを共通のキューにまとめるためのリスト
+            List<ItemSlot> allInactiveSlots = new List<ItemSlot>();
+
             // プレハブ配列を走査
             foreach (ItemSlot sourceSlot in _itemSlots)
             {
+                Debug.Log(sourceSlot.ItemData);
+
                 // ItemData / Transform 未設定は対象外
                 if (sourceSlot.ItemData == null || sourceSlot.Transform == null)
                 {
                     continue;
                 }
 
-                // 未使用・使用中管理用辞書の初期化
-                if (!_inactiveItems.ContainsKey(sourceSlot.ItemData))
-                {
-                    _inactiveItems.Add(sourceSlot.ItemData, new Queue<ItemSlot>());
-                    _activeItems.Add(sourceSlot.ItemData, new List<ItemSlot>());
-                }
-
                 // 初期インスタンス生成
                 for (int i = 0; i < INITIAL_ITEM_COUNT; i++)
                 {
-                    // GameObject を Instantiate
                     GameObject instanceGO = Instantiate(
                         sourceSlot.Transform.gameObject,
+                        Vector3.zero,
+                        Quaternion.identity,
                         transform
                     );
 
@@ -249,12 +245,25 @@ namespace ItemSystem.Manager
                     // 初期状態は無効
                     instance.IsEnabled = false;
 
-                    // 未使用キューに追加
-                    _inactiveItems[sourceSlot.ItemData].Enqueue(instance);
+                    // 共通リストに追加
+                    allInactiveSlots.Add(instance);
 
                     // イベント購読
                     instance.OnDeactivateRequested += Deactivate;
                 }
+            }
+
+            // すべての未使用スロットを _inactiveItems にまとめる
+            _inactiveItems.Clear();
+            _activeItems.Clear();
+            foreach (ItemSlot slot in allInactiveSlots)
+            {
+                if (!_inactiveItems.ContainsKey(slot.ItemData))
+                {
+                    _inactiveItems[slot.ItemData] = new Queue<ItemSlot>();
+                    _activeItems[slot.ItemData] = new List<ItemSlot>();
+                }
+                _inactiveItems[slot.ItemData].Enqueue(slot);
             }
         }
 

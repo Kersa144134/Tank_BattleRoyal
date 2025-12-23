@@ -196,7 +196,7 @@ namespace ItemSystem.Controller
 
         /// <summary>
         /// 生成ポイントの XZ スケールを基準とした
-        /// 長方形範囲内の生成座標を取得
+        /// 長方形範囲内の生成座標を取得（1.0刻み）
         /// </summary>
         /// <param name="state">生成ポイント管理ステート</param>
         /// <param name="spawnPosition">取得した生成座標</param>
@@ -213,11 +213,11 @@ namespace ItemSystem.Controller
 
             Vector3 basePos = state.SpawnPoint.position;
 
-            float range = 1.0f;
-            float offsetX = UnityEngine.Random.Range(-range, range);
-            float offsetZ = UnityEngine.Random.Range(-range, range);
+            int rangeInt = 1; // ±1 の整数範囲
+            int offsetXInt = UnityEngine.Random.Range(-rangeInt, rangeInt + 1); // -1,0,1 のいずれか
+            int offsetZInt = UnityEngine.Random.Range(-rangeInt, rangeInt + 1);
 
-            spawnPosition = new Vector3(basePos.x + offsetX, SPAWN_HEIGHT, basePos.z + offsetZ);
+            spawnPosition = new Vector3(basePos.x + offsetXInt * 1.0f, SPAWN_HEIGHT, basePos.z + offsetZInt * 1.0f);
             return true;
         }
     }

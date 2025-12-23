@@ -114,6 +114,20 @@ namespace ItemSystem.Data
             _isEnabled = false;
             _lifeTime = 0.0f;
             _spawnTime = 0.0f;
+
+            // Renderer éÊìæ
+            if (_transform != null)
+            {
+                Renderer renderer = _transform.GetComponentInChildren<Renderer>(true);
+                if (renderer == null)
+                {
+                    Debug.LogWarning($"ItemSlot ÇÃ Transform ({_transform.name}) Ç… Renderer Ç™ë∂ç›ÇµÇ‹ÇπÇÒÅB");
+                }
+            }
+            else
+            {
+                Debug.LogWarning("ItemSlot ÇÃ Transform Ç™ null Ç≈Ç∑ÅB");
+            }
         }
 
         // ======================================================
