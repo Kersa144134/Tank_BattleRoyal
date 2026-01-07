@@ -53,7 +53,10 @@ namespace SceneSystem.Manager
         // ======================================================
 
         /// <summary>障害物オブジェクトの Transform 配列</summary>
-         private Transform[] _obstacles;
+        private Transform[] _obstacles;
+
+        /// <summary>ゲームの経過時間</summary>
+        private float _playTime;
 
         // ======================================================
         // プロパティ
@@ -81,12 +84,13 @@ namespace SceneSystem.Manager
             InitializeObstacles();
         }
 
-        public void OnUpdate()
+        public void OnUpdate(float playTime)
         {
             float deltaTime = Time.deltaTime;
+            _playTime = playTime;
 
             _bulletManager.UpdateBullets(deltaTime);
-            _itemManager.UpdateItems();
+            _itemManager.UpdateItems(playTime);
         }
 
         // ======================================================
@@ -117,7 +121,7 @@ namespace SceneSystem.Manager
         /// <param name="slot">追加するスロット</param>
         public void RegisterItem(in ItemSlot slot)
         {
-            _itemManager.RegisterItem(slot);
+            _itemManager.RegisterItem(slot, _playTime);
         }
 
         /// <summary>

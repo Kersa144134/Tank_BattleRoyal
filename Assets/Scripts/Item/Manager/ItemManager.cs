@@ -25,12 +25,29 @@ namespace TankSystem.Manager
         /// <summary>更新対象のアイテムスロット</summary>
         private readonly List<ItemSlot> _activeSlots = new List<ItemSlot>();
 
-        /// <summary>FaceTarget 管理辞書</summary>
+        /// <summary>メインカメラ Transform</summary>
+        private readonly Transform _mainCameraTransform;
+
+        // ======================================================
+        // 辞書
+        // ======================================================
+
+        /// <summary>
+        /// アイテム生成時の PlayTime を管理する辞書
+        /// </summary>
+        private readonly Dictionary<ItemSlot, float> _spawnTimes
+            = new Dictionary<ItemSlot, float>();
+
+        /// <summary>指定方向へ向ける FaceTarget の実行対象管理辞書</summary>
         private readonly Dictionary<ItemSlot, FaceTarget> _faceTargets
             = new Dictionary<ItemSlot, FaceTarget>();
 
-        /// <summary>メインカメラ Transform</summary>
-        private readonly Transform _mainCameraTransform;
+        // ======================================================
+        // 定数
+        // ======================================================
+
+        /// <summary>アイテムの生存時間（秒）</summary>
+        private const float ITEM_LIFE_TIME = 15.0f;
 
         // ======================================================
         // コンストラクタ
@@ -51,14 +68,15 @@ namespace TankSystem.Manager
         /// <summary>
         /// 更新対象としてアイテムスロットを登録する
         /// </summary>
-        public void RegisterItem(ItemSlot slot)
+        public void RegisterItem(in ItemSlot slot, in float playTime)
         {
+            // null ガード
             if (slot == null)
             {
                 return;
             }
 
-            // 既に登録済みなら処理しない
+            // 重複登録防止
             if (_activeSlots.Contains(slot))
             {
                 return;
@@ -67,6 +85,9 @@ namespace TankSystem.Manager
             // 更新対象に追加
             _activeSlots.Add(slot);
 
+            // 生成時の PlayTime を記録
+            _spawnTimes.Add(slot, playTime);
+
             // FaceTarget を生成して管理
             _faceTargets.Add(
                 slot,
@@ -74,7 +95,7 @@ namespace TankSystem.Manager
             );
 
             // スロットを有効化
-            slot.Activate(15f);
+            slot.Activate(ITEM_LIFE_TIME);
         }
 
         /// <summary>
@@ -82,32 +103,44 @@ namespace TankSystem.Manager
         /// </summary>
         public void UnregisterItem(ItemSlot slot)
         {
+            // null ガード
             if (slot == null)
             {
                 return;
             }
 
             // 管理対象でなければ終了
-            if (_activeSlots.Contains(slot) == false)
+            if (!_activeSlots.Contains(slot))
             {
                 return;
             }
 
-            // 管理対象から除外
+            // 更新対象から除外
             _activeSlots.Remove(slot);
 
-            // FaceTarget を破棄
+            // 生成時間管理から除外
+            _spawnTimes.Remove(slot);
+
+            // FaceTarget の実行管理から除外
             _faceTargets.Remove(slot);
         }
-
+        
         /// <summary>
         /// 全アイテムを更新する
         /// </summary>
-        public void UpdateItems()
+        /// <param name="playTime">Play フェーズ中のみ進行する経過時間</param>
+        public void UpdateItems(float playTime)
         {
+            // 時間が進まないフレームは処理なし
+            if (playTime <= 0.0f)
+            {
+                return;
+            }
+
             // 後ろから走査
             for (int i = _activeSlots.Count - 1; i >= 0; i--)
             {
+                // 更新対象スロットを取得
                 ItemSlot slot = _activeSlots[i];
 
                 // 無効スロットは更新しない
@@ -116,11 +149,11 @@ namespace TankSystem.Manager
                     continue;
                 }
 
-                // 経過時間を算出
-                float elapsed = Time.time - slot.SpawnTime;
+                // 生成からの経過時間を算出
+                float elapsed = playTime - _spawnTimes[slot];
 
                 // 生存時間超過判定
-                if (elapsed >= slot.LifeTime)
+                if (elapsed >= ITEM_LIFE_TIME)
                 {
                     DeactivateItem(slot);
                     continue;
@@ -142,12 +175,6 @@ namespace TankSystem.Manager
         {
             // スロットを無効化
             slot.Deactivate();
-
-            // 更新対象から除外
-            _activeSlots.Remove(slot);
-
-            // FaceTarget を破棄
-            _faceTargets.Remove(slot);
         }
     }
 }

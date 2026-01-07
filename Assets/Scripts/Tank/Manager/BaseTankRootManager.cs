@@ -203,7 +203,7 @@ namespace TankSystem.Manager
             _attackManager.OnFireBullet += HandleFireBullet;
         }
 
-        public virtual void OnUpdate()
+        public virtual void OnUpdate(float playTime)
         {
             // --------------------------------------------------
             // ²§ŒÀ‚ğƒŠƒZƒbƒg

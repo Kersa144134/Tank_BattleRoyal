@@ -48,11 +48,6 @@ namespace CameraSystem.Manager
             _followController = new CameraFollowController(cameraTransform, cameraTargets);
         }
 
-        public void OnUpdate()
-        {
-            
-        }
-
         public void OnLateUpdate()
         {
             // ターゲット追従

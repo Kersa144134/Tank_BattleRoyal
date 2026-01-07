@@ -70,6 +70,15 @@ namespace SceneSystem.Manager
         private PhaseType _targetPhase = PhaseType.None;
 
         // ======================================================
+        // プロパティ
+        // ======================================================
+
+        /// <summary>
+        /// ゲームの経過時間
+        /// </summary>
+        public float ElapsedTime => _updateManager.ElapsedTime;
+
+        // ======================================================
         // Unityイベント
         // ======================================================
 

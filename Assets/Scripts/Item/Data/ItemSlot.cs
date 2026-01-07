@@ -23,11 +23,11 @@ namespace ItemSystem.Data
         /// <summary>有効状態フラグ</summary>
         private bool _isEnabled;
 
-        /// <summary>紐づく ItemData</summary>
-        private readonly ItemData _itemData;
-
-        /// <summary>表示用 Transform</summary>
+        /// <summary>アイテム表示用 Transform</summary>
         private readonly Transform _transform;
+
+        /// <summary>アイテムの詳細データを保持する ItemData</summary>
+        private readonly ItemData _itemData;
 
         /// <summary>表示制御用 Renderer</summary>
         private readonly Renderer _renderer;

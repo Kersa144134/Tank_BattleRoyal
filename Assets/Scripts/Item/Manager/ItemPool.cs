@@ -104,7 +104,7 @@ namespace ItemSystem.Manager
             InitializePool();
         }
 
-        public void OnUpdate()
+        public void OnUpdate(float playTime)
         {
             // 生成制御コントローラーを更新
             _spawnController.Update();

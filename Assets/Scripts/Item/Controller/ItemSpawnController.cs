@@ -36,9 +36,12 @@ namespace ItemSystem.Controller
         /// <summary>生成時の Y 座標</summary>
         private const float SPAWN_HEIGHT = 1.5f;
 
-        /// <summary>XZ 方向のオフセット範囲</summary>
-        private const int OFFSET_RANGE = 10;
+        /// <summary>生成座標オフセットの刻み幅</summary>
+        private const int SPAWN_OFFSET_STEP = 3;
 
+        /// <summary>生成座標オフセット段数</summary>
+        private const int SPAWN_OFFSET_LEVEL_COUNT = 3;
+        
         // ======================================================
         // イベント
         // ======================================================
@@ -83,13 +86,13 @@ namespace ItemSystem.Controller
         public void Update()
         {
             // 生成可能でなければ終了
-            if (CanSpawn() == false)
+            if (!CanSpawn())
             {
                 return;
             }
 
             // 生成座標を取得
-            if (TryGetRandomSpawnPosition(out Vector3 position) == false)
+            if (!TryGetRandomSpawnPosition(out Vector3 position))
             {
                 return;
             }
@@ -124,27 +127,43 @@ namespace ItemSystem.Controller
         /// <returns>取得成功なら true</returns>
         private bool TryGetRandomSpawnPosition(out Vector3 position)
         {
+            // 初期化
             position = Vector3.zero;
 
+            // 生成ポイントが存在しない場合は失敗
             if (_spawnPoints.Length == 0)
             {
                 return false;
             }
 
-            Transform basePoint =
-                _spawnPoints[UnityEngine.Random.Range(0, _spawnPoints.Length)];
+            // 基準となる生成ポイントをランダムに選択
+            Transform basePoint = _spawnPoints[UnityEngine.Random.Range(0, _spawnPoints.Length)];
 
+            // Transform が無効なら処理なし
             if (basePoint == null)
             {
                 return false;
             }
 
-            // XZ オフセットを整数単位で算出
-            int offsetX = UnityEngine.Random.Range(-OFFSET_RANGE, OFFSET_RANGE + 1);
-            int offsetZ = UnityEngine.Random.Range(-OFFSET_RANGE, OFFSET_RANGE + 1);
+            // ----------------------------------------------
+            // オフセット段数を抽選
+            // ----------------------------------------------
+            int offsetIndexX =
+                UnityEngine.Random.Range(-SPAWN_OFFSET_LEVEL_COUNT, SPAWN_OFFSET_LEVEL_COUNT + 1);
 
+            int offsetIndexZ =
+                UnityEngine.Random.Range(-SPAWN_OFFSET_LEVEL_COUNT, SPAWN_OFFSET_LEVEL_COUNT + 1);
+
+            // ----------------------------------------------
+            // 刻み幅を掛けて実際のオフセット値を算出
+            // ----------------------------------------------
+            int offsetX = offsetIndexX * SPAWN_OFFSET_STEP;
+            int offsetZ = offsetIndexZ * SPAWN_OFFSET_STEP;
+
+            // 基準座標を取得
             Vector3 basePos = basePoint.position;
 
+            // 生成座標を構築
             position = new Vector3(
                 basePos.x + offsetX,
                 SPAWN_HEIGHT,
