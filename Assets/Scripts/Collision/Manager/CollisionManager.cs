@@ -135,7 +135,7 @@ namespace TankSystem.Manager
         }
 
         // ======================================================
-        // IUpdatable ŽÀ‘•
+        // IUpdatable ƒCƒxƒ“ƒg
         // ======================================================
 
         public void OnEnter()

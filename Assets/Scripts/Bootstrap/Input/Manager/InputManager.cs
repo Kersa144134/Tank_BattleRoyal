@@ -103,7 +103,7 @@ namespace InputSystem.Manager
         public ButtonState SelectButton => _buttonStateManager.SelectButton;
 
         // ======================================================
-        // IUpdatableイベント
+        // IUpdatable イベント
         // ======================================================
 
         public void OnEnter()

@@ -54,12 +54,6 @@ namespace SceneSystem.Manager
 
         /// <summary>障害物オブジェクトの Transform 配列</summary>
          private Transform[] _obstacles;
-        
-        /// <summary>更新対象の弾丸リスト</summary>
-        private readonly List<BulletBase> _updatableBullets = new List<BulletBase>();
-
-        /// <summary>アイテムの Transform とデータを併せ持つスロットリスト</summary>
-        private readonly List<ItemSlot> _updatableItemSlots;
 
         // ======================================================
         // プロパティ
@@ -75,27 +69,13 @@ namespace SceneSystem.Manager
         /// </summary>
         public Transform[] Obstacles => _obstacles;
 
-        /// <summary>
-        /// アイテムスロットリストを返す
-        /// </summary>
-        public List<ItemSlot> ItemSlots => _updatableItemSlots;
-
         // ======================================================
-        // イベント
-        // ======================================================
-
-        /// <summary>
-        /// アイテムスロットの数が変化したときに発火するイベント
-        /// </summary>
-        public event Action<List<ItemSlot>> OnItemListChanged;
-
-        // ======================================================
-        // IUpdatableイベント
+        // IUpdatable イベント
         // ======================================================
 
         public void OnEnter()
         {
-            _itemManager = new ItemManager(_updatableItemSlots, OnItemListChanged, _mainCamera);
+            _itemManager = new ItemManager(_mainCamera);
 
             InitializeTanks();
             InitializeObstacles();

@@ -39,7 +39,7 @@ namespace CameraSystem.Manager
         private CameraFollowController _followController;
 
         // ======================================================
-        // IUpdatableイベント
+        // IUpdatable イベント
         // ======================================================
 
         public void OnEnter()

@@ -342,8 +342,6 @@ namespace SceneSystem.Utility
         /// <param name="item">使用終了または取得済みのアイテムスロット</param>
         private void HandleDeactivatedItem(ItemSlot item)
         {
-            Debug.Log($"Deactive {item.ItemData}");
-            
             if (item == null)
             {
                 return;
@@ -363,9 +361,9 @@ namespace SceneSystem.Utility
             ItemSlot itemSlot
         )
         {
-            // アイテム除外処理
-            HandleDeactivatedItem(itemSlot);
-
+            // 無効化
+            itemSlot.Deactivate();
+            
             // パラメーターアイテム
             if (itemSlot.ItemData is ParamItemData param)
             {

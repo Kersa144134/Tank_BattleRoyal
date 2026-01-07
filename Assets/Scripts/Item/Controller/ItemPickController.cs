@@ -33,13 +33,6 @@ namespace ItemSystem.Manager
             {
                 return null;
             }
-
-            // キューの中身をログ表示
-            Debug.Log("PickRandom: Queue 内のスロット一覧:");
-            foreach (var slot in inactiveQueue)
-            {
-                Debug.Log($" - ItemData: {slot.ItemData}, Transform: {slot.Transform}");
-            }
             
             // ランダムな抽選位置を生成
             int pickIndex = Random.Range(0, inactiveQueue.Count);
@@ -47,7 +40,7 @@ namespace ItemSystem.Manager
             // Queue をループして pickIndex 番目の要素を取得
             int currentIndex = 0;
             ItemSlot pickedSlot = null;
-            foreach (var slot in inactiveQueue)
+            foreach (ItemSlot slot in inactiveQueue)
             {
                 if (currentIndex == pickIndex)
                 {

@@ -2,9 +2,9 @@
 // ItemPool.cs
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-22
-// 更新日時 : 2025-12-22
-// 概要     : ItemSlot を単位として管理するアイテムプール
-//            使用中 / 未使用中を Dictionary で管理する
+// 更新日時 : 2026-01-07
+// 概要     : ItemSlot を管理するプールクラス
+//            取得 / 返却をイベントで通知する
 // ======================================================
 
 using System;
@@ -17,45 +17,53 @@ using SceneSystem.Interface;
 namespace ItemSystem.Manager
 {
     /// <summary>
-    /// ItemSlot を基準にアイテムを管理するプールクラス
+    /// ItemSlot を管理するプールクラス
     /// </summary>
     public sealed class ItemPool : MonoBehaviour, IUpdatable
     {
         // ======================================================
-        // インスペクタ設定
+        // プライベートクラス
         // ======================================================
 
-        [Header("アイテムスロット")]
-        /// <summary>使用対象となるアイテムスロット配列</summary>
-        [SerializeField] private ItemSlot[] _itemSlots;
+        /// <summary>
+        /// ItemData と Prefab の定義
+        /// </summary>
+        [Serializable]
+        private sealed class ItemEntry
+        {
+            /// <summary>アイテムデータ定義</summary>
+            [SerializeField] public ItemData ItemData;
 
-        [Header("生成ポイント")]
-        /// <summary>生成ポイント Transform 配列</summary>
-        [SerializeField] private Transform _spawnPointsRoot;
+            /// <summary>表示用プレハブ</summary>
+            [SerializeField] public GameObject ItemModel;
+        }
+
+        // ======================================================
+        // インスペクタ
+        // ======================================================
+
+        /// <summary>アイテム定義配列</summary>
+        [SerializeField]
+        private ItemEntry[] _itemEntries;
+
+        /// <summary>生成ポイントの親 Transform</summary>
+        [SerializeField]
+        private Transform _spawnPointsRoot;
 
         // ======================================================
         // コンポーネント参照
         // ======================================================
 
-        /// <summary>
-        /// ランダム抽選・再抽選・上限管理を行うコントローラークラス
-        /// </summary>
-        private ItemPickController _itemPickController = new ItemPickController();
-
-        /// <summary>
-        /// アイテムの生成・生存管理を制御するコントローラークラス
-        /// </summary>
-        private ItemSpawnController _itemSpawnController;
+        /// <summary>アイテム生成を自動制御するコントローラー</summary>
+        private ItemSpawnController _spawnController;
 
         // ======================================================
         // 辞書
         // ======================================================
 
-        /// <summary>現在使用中の ItemSlot を ItemData 単位で管理</summary>
-        private readonly Dictionary<ItemData, List<ItemSlot>> _activeItems
-            = new Dictionary<ItemData, List<ItemSlot>>();
-
-        /// <summary>未使用状態の ItemSlot を ItemData 単位で管理</summary>
+        /// <summary>
+        /// 未使用 ItemSlot を ItemData 単位で管理する辞書
+        /// </summary>
         private readonly Dictionary<ItemData, Queue<ItemSlot>> _inactiveItems
             = new Dictionary<ItemData, Queue<ItemSlot>>();
 
@@ -65,64 +73,50 @@ namespace ItemSystem.Manager
 
         /// <summary>各 ItemData ごとの初期生成数</summary>
         private const int INITIAL_ITEM_COUNT = 5;
-        
+
         // ======================================================
         // イベント
         // ======================================================
 
-        /// <summary>アイテムが使用状態になった通知イベント</summary>
+        /// <summary>
+        /// ItemSlot が有効化（取得）された際の通知イベント
+        /// </summary>
         public event Action<ItemSlot> OnItemActivated;
 
-        /// <summary>アイテムが未使用状態に戻った通知イベント</summary>
+        /// <summary>
+        /// ItemSlot が無効化（返却）された際の通知イベント
+        /// </summary>
         public event Action<ItemSlot> OnItemDeactivated;
 
         // ======================================================
-        // IUpdatable 実装
+        // IUpdatable イベント
         // ======================================================
 
         public void OnEnter()
         {
-            _itemSpawnController = new ItemSpawnController(_spawnPointsRoot);
-
-            // プール初期化処理を委譲
-            InitializePool();
+            // 生成制御コントローラーを生成
+            _spawnController = new ItemSpawnController(_spawnPointsRoot);
 
             // イベント購読
-            _itemSpawnController.OnSpawnTimingReached += HandleSpawnTimingReached;
-            _itemSpawnController.OnItemSpawned += HandleItemSpawned;
+            _spawnController.OnSpawnPositionDetermined += HandleSpawnPositionDetermined;
+
+            // プールを初期化
+            InitializePool();
         }
 
         public void OnUpdate()
         {
-            _itemSpawnController.Update();
+            // 生成制御コントローラーを更新
+            _spawnController.Update();
         }
 
         public void OnExit()
         {
-            // 使用中スロットの全無効化
-            foreach (List<ItemSlot> list in _activeItems.Values)
-            {
-                foreach (ItemSlot slot in list)
-                {
-                    slot.IsEnabled = false;
-                }
-            }
-            
-            // 管理データを全消去
-            _activeItems.Clear();
+            // 未使用プールをクリア
             _inactiveItems.Clear();
-            
-            // イベント購読解除
-            _itemSpawnController.OnSpawnTimingReached -= HandleSpawnTimingReached;
-            _itemSpawnController.OnItemSpawned -= HandleItemSpawned;
 
-            foreach (List<ItemSlot> list in _activeItems.Values)
-            {
-                foreach (ItemSlot slot in list)
-                {
-                    slot.OnDeactivateRequested -= Deactivate;
-                }
-            }
+            // イベント購読解除
+            _spawnController.OnSpawnPositionDetermined -= HandleSpawnPositionDetermined;
         }
 
         // ======================================================
@@ -130,81 +124,58 @@ namespace ItemSystem.Manager
         // ======================================================
 
         /// <summary>
-        /// ランダムに未使用スロットを取得して有効化し、生成ポイントに配置する
+        /// 未使用プールから ItemSlot を取り出す
         /// </summary>
-        /// <returns>生成可能な ItemSlot</returns>
-        public ItemSlot Activate()
+        /// <param name="spawnPosition">生成座標</param>
+        /// <returns>取得した ItemSlot</returns>
+        public ItemSlot Activate(Vector3 spawnPosition)
         {
-            if (_itemPickController == null)
+            // ItemData 単位でキューを走査
+            foreach (Queue<ItemSlot> queue in _inactiveItems.Values)
             {
-                return null;
-            }
-
-            // 未使用スロットが存在する Queue をランダムに選択
-            Queue<ItemSlot> selectedQueue = null;
-
-            foreach (KeyValuePair<ItemData, Queue<ItemSlot>> kvp in _inactiveItems)
-            {
-                if (kvp.Value.Count > 0)
+                // 未使用スロットが存在しない場合はスキップ
+                if (queue.Count == 0)
                 {
-                    selectedQueue = kvp.Value;
-                    break;
+                    continue;
                 }
+
+                // 未使用キューから取得
+                ItemSlot slot = queue.Dequeue();
+
+                // イベント購読
+                slot.OnDeactivated += HandleSlotDeactivated;
+
+                // 生成位置へ移動
+                slot.Transform.position = spawnPosition;
+
+                // 有効化イベントを通知
+                OnItemActivated?.Invoke(slot);
+
+                return slot;
             }
 
-            if (selectedQueue == null)
-            {
-                return null;
-            }
-
-            // Queue を PickRandom に渡して抽選
-            ItemSlot slot = _itemPickController.PickRandom(selectedQueue);
-            if (slot == null)
-            {
-                return null;
-            }
-
-            // 使用中リストに登録
-            if (!_activeItems.ContainsKey(slot.ItemData))
-            {
-                _activeItems.Add(slot.ItemData, new List<ItemSlot>());
-            }
-            _activeItems[slot.ItemData].Add(slot);
-
-            // 生成ポイントに配置
-            _itemSpawnController.SpawnItemAtRandomPoint(slot);
-
-            // スロットを有効化
-            slot.IsEnabled = true;
-
-            return slot;
+            // 取得可能なスロットが存在しない
+            return null;
         }
 
         /// <summary>
-        /// 指定した ItemSlot を未使用状態へ戻す
+        /// ItemSlot を未使用状態としてプールへ返却する
         /// </summary>
-        /// <param name="slot">非アクティブ化する ItemSlot</param>
+        /// <param name="slot">返却対象の ItemSlot</param>
         public void Deactivate(ItemSlot slot)
         {
-            // ItemData を取得
-            ItemData itemData = slot.ItemData;
-
-            // 使用中管理に存在しない場合は処理不可
-            if (!_activeItems.TryGetValue(itemData, out List<ItemSlot> list))
+            if (slot == null || slot.Transform == null)
             {
                 return;
             }
 
-            // 使用中リストから削除
-            list.Remove(slot);
+            // イベント購読解除
+            slot.OnDeactivated -= HandleSlotDeactivated;
 
-            // スロットを無効化
-            slot.IsEnabled = false;
+            // プールへ返却
+            _inactiveItems[slot.ItemData].Enqueue(slot);
 
-            // 未使用キューへ戻す
-            _inactiveItems[itemData].Enqueue(slot);
-
-            // 使用終了イベント通知
+            // 無効化イベント通知
             OnItemDeactivated?.Invoke(slot);
         }
 
@@ -212,85 +183,80 @@ namespace ItemSystem.Manager
         // プライベートメソッド
         // ======================================================
 
-        /// <summary>ItemSlot プールを構築する</summary>
+        // --------------------------------------------------
+        // 初期化
+        // --------------------------------------------------
+        /// <summary>
+        /// プールを初期化する
+        /// </summary>
         private void InitializePool()
         {
-            // 全プレハブを共通のキューにまとめるためのリスト
-            List<ItemSlot> allInactiveSlots = new List<ItemSlot>();
+            // 管理辞書を初期化
+            _inactiveItems.Clear();
 
-            // プレハブ配列を走査
-            foreach (ItemSlot sourceSlot in _itemSlots)
+            // アイテム定義を走査
+            foreach (ItemEntry entry in _itemEntries)
             {
-                Debug.Log(sourceSlot.ItemData);
-
-                // ItemData / Transform 未設定は対象外
-                if (sourceSlot.ItemData == null || sourceSlot.Transform == null)
+                // 不正定義は除外
+                if (entry.ItemData == null || entry.ItemModel == null)
                 {
                     continue;
                 }
 
-                // 初期インスタンス生成
+                // ItemData 単位の未使用キューを生成
+                Queue<ItemSlot> queue = new Queue<ItemSlot>();
+                _inactiveItems.Add(entry.ItemData, queue);
+
+                // 初期数分の ItemSlot を生成
                 for (int i = 0; i < INITIAL_ITEM_COUNT; i++)
                 {
-                    GameObject instanceGO = Instantiate(
-                        sourceSlot.Transform.gameObject,
+                    // モデルをインスタンス化
+                    GameObject instance = Instantiate(
+                        entry.ItemModel,
                         Vector3.zero,
                         Quaternion.identity,
                         transform
                     );
 
-                    // ItemSlot インスタンス生成
-                    ItemSlot instance = new ItemSlot(instanceGO.transform, sourceSlot.ItemData);
+                    // ItemSlot を生成
+                    ItemSlot slot = new ItemSlot(
+                        instance.transform,
+                        entry.ItemData
+                    );
 
-                    // 初期状態は無効
-                    instance.IsEnabled = false;
-
-                    // 共通リストに追加
-                    allInactiveSlots.Add(instance);
-
-                    // イベント購読
-                    instance.OnDeactivateRequested += Deactivate;
+                    // 未使用キューへ登録
+                    queue.Enqueue(slot);
                 }
-            }
-
-            // すべての未使用スロットを _inactiveItems にまとめる
-            _inactiveItems.Clear();
-            _activeItems.Clear();
-            foreach (ItemSlot slot in allInactiveSlots)
-            {
-                if (!_inactiveItems.ContainsKey(slot.ItemData))
-                {
-                    _inactiveItems[slot.ItemData] = new Queue<ItemSlot>();
-                    _activeItems[slot.ItemData] = new List<ItemSlot>();
-                }
-                _inactiveItems[slot.ItemData].Enqueue(slot);
             }
         }
 
-        // ======================================================
+        // --------------------------------------------------
         // イベントハンドラ
-        // ======================================================
-
+        // --------------------------------------------------
         /// <summary>
-        /// 生成タイミング到達時に呼ばれるハンドラ
+        /// 生成座標確定時の処理
         /// </summary>
-        private void HandleSpawnTimingReached()
+        /// <param name="spawnPosition">生成座標</param>
+        private void HandleSpawnPositionDetermined(Vector3 spawnPosition)
         {
-            ItemSlot slot = Activate();
+            // 未使用スロットを取得
+            ItemSlot slot = Activate(spawnPosition);
         }
 
         /// <summary>
-        /// アイテムが実際に生成されたときに呼ばれるハンドラ
+        /// ItemSlot から無効化通知を受け取った際の処理
         /// </summary>
-        /// <param name="slot">生成された ItemSlot</param>
-        private void HandleItemSpawned(ItemSlot slot)
+        /// <param name="slot">無効化された ItemSlot</param>
+        private void HandleSlotDeactivated(ItemSlot slot)
         {
+            // null ガード
             if (slot == null)
             {
                 return;
             }
 
-            OnItemActivated?.Invoke(slot);
+            // Pool 側の返却処理を実行
+            Deactivate(slot);
         }
     }
 }
