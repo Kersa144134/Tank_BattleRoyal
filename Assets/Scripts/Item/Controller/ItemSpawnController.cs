@@ -37,10 +37,10 @@ namespace ItemSystem.Controller
         private const float SPAWN_HEIGHT = 1.5f;
 
         /// <summary>生成座標オフセットの刻み幅</summary>
-        private const int SPAWN_OFFSET_STEP = 3;
+        private const int SPAWN_OFFSET_STEP = 10;
 
         /// <summary>生成座標オフセット段数</summary>
-        private const int SPAWN_OFFSET_LEVEL_COUNT = 3;
+        private const int SPAWN_OFFSET_LEVEL_COUNT = 2;
         
         // ======================================================
         // イベント

@@ -32,15 +32,23 @@ namespace TankSystem.Manager
         // 辞書
         // ======================================================
 
-        /// <summary>
-        /// アイテム生成時の PlayTime を管理する辞書
-        /// </summary>
+        /// <summary>アイテム生成時の PlayTime を管理する辞書</summary>
         private readonly Dictionary<ItemSlot, float> _spawnTimes
             = new Dictionary<ItemSlot, float>();
 
         /// <summary>指定方向へ向ける FaceTarget の実行対象管理辞書</summary>
         private readonly Dictionary<ItemSlot, FaceTarget> _faceTargets
             = new Dictionary<ItemSlot, FaceTarget>();
+
+        // ======================================================
+        // 遅延削除
+        // ======================================================
+
+        /// <summary>
+        /// 無効化対象のアイテムを一時的に保持するキュー
+        /// </summary>
+        private readonly Queue<ItemSlot> _pendingDeactivateSlots
+            = new Queue<ItemSlot>();
 
         // ======================================================
         // 定数
@@ -124,7 +132,7 @@ namespace TankSystem.Manager
             // FaceTarget の実行管理から除外
             _faceTargets.Remove(slot);
         }
-        
+
         /// <summary>
         /// 全アイテムを更新する
         /// </summary>
@@ -155,7 +163,8 @@ namespace TankSystem.Manager
                 // 生存時間超過判定
                 if (elapsed >= ITEM_LIFE_TIME)
                 {
-                    DeactivateItem(slot);
+                    // 遅延削除キューに積む
+                    _pendingDeactivateSlots.Enqueue(slot);
                     continue;
                 }
 
@@ -164,17 +173,34 @@ namespace TankSystem.Manager
             }
         }
 
-        // ======================================================
-        // プライベートメソッド
-        // ======================================================
-
         /// <summary>
-        /// アイテムを無効化する
+        /// アイテム無効化処理を実行する
         /// </summary>
-        private void DeactivateItem(ItemSlot slot)
+        public void DeactivateItems()
         {
-            // スロットを無効化
-            slot.Deactivate();
+            // キューが空になるまで処理
+            while (_pendingDeactivateSlots.Count > 0)
+            {
+                ItemSlot slot = _pendingDeactivateSlots.Dequeue();
+
+                // 既に管理外なら処理しない
+                if (!_activeSlots.Contains(slot))
+                {
+                    continue;
+                }
+
+                // スロットを無効化
+                slot.Deactivate();
+
+                // 管理対象から除外
+                _activeSlots.Remove(slot);
+
+                // 生成時間管理から除外
+                _spawnTimes.Remove(slot);
+
+                // FaceTarget 管理から除外
+                _faceTargets.Remove(slot);
+            }
         }
     }
 }

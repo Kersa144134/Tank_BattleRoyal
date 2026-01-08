@@ -72,7 +72,7 @@ namespace ItemSystem.Manager
         // ======================================================
 
         /// <summary>各 ItemData ごとの初期生成数</summary>
-        private const int INITIAL_ITEM_COUNT = 5;
+        private const int INITIAL_ITEM_COUNT = 20;
 
         // ======================================================
         // イベント

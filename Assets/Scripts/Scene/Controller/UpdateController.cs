@@ -8,7 +8,6 @@
 
 using System.Collections.Generic;
 using SceneSystem.Interface;
-using Unity.VisualScripting;
 
 namespace SceneSystem.Controller
 {
@@ -27,74 +26,17 @@ namespace SceneSystem.Controller
         /// </summary>
         private readonly HashSet<IUpdatable> _updateSet = new HashSet<IUpdatable>();
 
-        /// <summary>
-        /// 毎フレーム実行用の Updatable 配列キャッシュ
-        /// </summary>
+        /// <summary>毎フレーム実行用の Updatable 配列キャッシュ</summary>
         private IUpdatable[] _updateArray = new IUpdatable[0];
 
-        /// <summary>
-        /// 登録内容に変更があったかどうかを示すフラグ
-        /// true の場合のみ配列キャッシュを再構築する
-        /// </summary>
+        /// <summary>登録内容に変更があったかどうかを示すフラグ</summary>
         private bool _isDirty = true;
 
         // ======================================================
-        // プロパティ
-        // ======================================================
-
-        /// <summary>
-        /// 現在登録されている Updatable を読み取り専用コレクションとして返す
-        /// </summary>
-        public IReadOnlyCollection<IUpdatable> GetRegisteredUpdatables()
-        {
-            return _updateSet;
-        }
-
-        // ======================================================
-        // パブリックメソッド
-        // ======================================================
-
-        // --------------------------------------------------
-        // 登録処理
-        // --------------------------------------------------
-        /// <summary>
-        /// 更新対象を追加する
-        /// </summary>
-        /// <param name="updatable">登録する IUpdatable</param>
-        public void Add(in IUpdatable updatable)
-        {
-            // null の場合は登録しない
-            if (updatable == null)
-            {
-                return;
-            }
-
-            // 新規追加に成功した場合のみ Dirty を立てる
-            if (_updateSet.Add(updatable))
-            {
-                _isDirty = true;
-            }
-        }
-
-        /// <summary>
-        /// 登録されている全 Updatable を削除する
-        /// </summary>
-        public void Clear()
-        {
-            // 登録情報を全削除
-            _updateSet.Clear();
-
-            // 実行配列を空にする
-            _updateArray = new IUpdatable[0];
-
-            // キャッシュ再構築が不要になるよう Dirty を解除
-            _isDirty = false;
-        }
-
-        // --------------------------------------------------
         // IUpdatable イベント
         // OnEnter / OnExit はシーン上のすべての Updatable を対象にするため記載なし
-        // --------------------------------------------------
+        // ======================================================
+
         /// <summary>
         /// OnUpdate を毎フレーム実行
         /// </summary>
@@ -153,6 +95,44 @@ namespace SceneSystem.Controller
         }
 
         // ======================================================
+        // パブリックメソッド
+        // ======================================================
+
+        /// <summary>
+        /// 更新対象を追加する
+        /// </summary>
+        /// <param name="updatable">登録する IUpdatable</param>
+        public void Add(in IUpdatable updatable)
+        {
+            // null の場合は登録しない
+            if (updatable == null)
+            {
+                return;
+            }
+
+            // 新規追加に成功した場合のみ Dirty を立てる
+            if (_updateSet.Add(updatable))
+            {
+                _isDirty = true;
+            }
+        }
+
+        /// <summary>
+        /// 登録されている全 Updatable を削除する
+        /// </summary>
+        public void Clear()
+        {
+            // 登録情報を全削除
+            _updateSet.Clear();
+
+            // 実行配列を空にする
+            _updateArray = new IUpdatable[0];
+
+            // Dirty を解除
+            _isDirty = false;
+        }
+
+        // ======================================================
         // プライベートメソッド
         // ======================================================
 
@@ -180,7 +160,7 @@ namespace SceneSystem.Controller
                 index++;
             }
 
-            // 再構築完了のため Dirty を解除する
+            // Dirty を解除
             _isDirty = false;
         }
     }

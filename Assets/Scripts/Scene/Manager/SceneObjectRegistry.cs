@@ -93,6 +93,11 @@ namespace SceneSystem.Manager
             _itemManager.UpdateItems(playTime);
         }
 
+        public void OnLateUpdate()
+        {
+            _itemManager.DeactivateItems();
+        }
+
         // ======================================================
         // パブリックメソッド
         // ======================================================
