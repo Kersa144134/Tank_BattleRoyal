@@ -7,6 +7,7 @@
 // ======================================================
 
 using System;
+using System.Diagnostics;
 using CollisionSystem.Calculator;
 using CollisionSystem.Interface;
 
@@ -98,12 +99,15 @@ namespace CollisionSystem.Service
             for (int i = 0; i < _contextsA.Length; i++)
             {
                 TDynamicA a = _contextsA[i];
-                for (int j = 0; j < _contextsB.Length; j++)
+
+                for (int j = i + 1; j < _contextsB.Length; j++)
                 {
                     TDynamicB b = _contextsB[j];
 
                     if (!_boxCollisionCalculator.IsCollidingHorizontal(a.OBB, b.OBB))
+                    {
                         continue;
+                    }
 
                     OnDynamicHit?.Invoke(a, b);
                 }

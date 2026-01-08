@@ -227,7 +227,7 @@ namespace TankSystem.Manager
             // --------------------------------------------------
             // 戦車
             // --------------------------------------------------
-            ExecuteCollisionService(_tankVsTankService, _tanks);
+            ExecuteCollisionService(_tankVsTankService, _tanks, _tanks);
 
             // 戦車衝突解決後に障害物衝突チェック
             ExecuteCollisionService(_tankVsObstacleService, _tanks, _obstacles);
@@ -239,7 +239,7 @@ namespace TankSystem.Manager
             }
 
             // 再び戦車衝突チェック
-            ExecuteCollisionService(_tankVsTankService, _tanks);
+            ExecuteCollisionService(_tankVsTankService, _tanks, _tanks);
 
             // --------------------------------------------------
             // アイテム
