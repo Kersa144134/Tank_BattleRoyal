@@ -168,5 +168,14 @@ namespace InputSystem.Manager
             // 適用中のインデックスを更新
             CurrentMappingIndex = index;
         }
+
+        /// <summary>
+        /// 現在適用中の入力マッピングインデックスを取得する
+        /// </summary>
+        /// <returns>入力マッピング配列のインデックス</returns>
+        public int GetCurrentMappingIndex()
+        {
+            return CurrentMappingIndex;
+        }
     }
 }

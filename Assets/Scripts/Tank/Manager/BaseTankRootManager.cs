@@ -6,15 +6,16 @@
 // 概要     : 戦車の各種制御を統合管理する
 // ======================================================
 
-using System;
-using UnityEngine;
 using CollisionSystem.Data;
 using CollisionSystem.Interface;
 using InputSystem.Data;
+using InputSystem.Manager;
 using SceneSystem.Interface;
+using System;
 using TankSystem.Controller;
 using TankSystem.Data;
 using TankSystem.Service;
+using UnityEngine;
 using VisionSystem.Calculator;
 using WeaponSystem.Data;
 
@@ -213,6 +214,7 @@ namespace TankSystem.Manager
             // --------------------------------------------------
             // 入力
             // --------------------------------------------------
+            // 各種入力状態をまとめて取得
             UpdateInput(out Vector2 leftMobility,
                 out Vector2 rightMobility,
                 out bool inputModeChange,
@@ -222,9 +224,7 @@ namespace TankSystem.Manager
                 out ButtonState rightFire
             );
 
-            // --------------------------------------------------
             // モード切替
-            // --------------------------------------------------
             if (inputModeChange)
             {
                 OnInputModeChangeButtonPressed?.Invoke();
@@ -236,14 +236,18 @@ namespace TankSystem.Manager
                 OnFireModeChangeButtonPressed?.Invoke();
             }
 
-            // --------------------------------------------------
-            // オプション
-            // --------------------------------------------------
+            // オプション入力
             if (option)
             {
                 OnOptionButtonPressed?.Invoke();
             }
 
+            // 入力マッピングが UI 用の場合は処理を中断
+            if (InputManager.Instance.CurrentMappingIndex == 1)
+            {
+                return;
+            }
+            
             // --------------------------------------------------
             // 攻撃
             // --------------------------------------------------
@@ -271,6 +275,15 @@ namespace TankSystem.Manager
 
         public virtual void OnLateUpdate()
         {
+            // --------------------------------------------------
+            // 入力
+            // --------------------------------------------------
+            // 入力マッピングが UI 用の場合は処理を中断
+            if (InputManager.Instance.CurrentMappingIndex == 1)
+            {
+                return;
+            }
+            
             // --------------------------------------------------
             // 機動
             // --------------------------------------------------

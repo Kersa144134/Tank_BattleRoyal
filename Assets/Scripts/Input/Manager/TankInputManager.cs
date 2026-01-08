@@ -20,6 +20,13 @@ namespace InputSystem.Manager
     public class TankInputManager
     {
         // ======================================================
+        // フィールド
+        // ======================================================
+
+        /// <summary>無入力ボタン</summary>
+        private readonly ButtonState _none = new ButtonState();
+        
+        // ======================================================
         // プロパティ
         // ======================================================
 
@@ -70,17 +77,17 @@ namespace InputSystem.Manager
                 LeftStick = Vector2.zero;
                 RightStick = Vector2.zero;
 
-                ButtonMap[TankInputKeys.INPUT_MODE_CHANGE] = null;
-                ButtonMap[TankInputKeys.FIRE_MODE_CHANGE] = null;
+                ButtonMap[TankInputKeys.INPUT_MODE_CHANGE] = _none;
+                ButtonMap[TankInputKeys.FIRE_MODE_CHANGE] = _none;
 
-                ButtonMap[TankInputKeys.INPUT_LEFT_FIRE] = null;
-                ButtonMap[TankInputKeys.INPUT_RIGHT_FIRE] = null;
+                ButtonMap[TankInputKeys.INPUT_LEFT_FIRE] = _none;
+                ButtonMap[TankInputKeys.INPUT_RIGHT_FIRE] = _none;
             }
         }
 
         /// <summary>
         /// 指定の文字列キーでボタン状態を取得
-        /// 存在しない場合は null を返す
+        /// 存在しない場合は none を返す
         /// </summary>
         public ButtonState GetButtonState(in string key)
         {
@@ -89,7 +96,7 @@ namespace InputSystem.Manager
                 return state;
             }
 
-            return null;
+            return _none;
         }
     }
 }

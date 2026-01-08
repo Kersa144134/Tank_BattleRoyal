@@ -66,7 +66,7 @@ namespace SceneSystem.Utility
         /// </summary>
         public void Subscribe()
         {
-            // すでに購読済みであれば何もしない
+            // すでに購読済みであれば処理なし
             if (_isSubscribed)
             {
                 return;
@@ -132,7 +132,7 @@ namespace SceneSystem.Utility
         /// </summary>
         public void Dispose()
         {
-            // 未購読状態であれば何もしない
+            // 未購読状態であれば処理なし
             if (!_isSubscribed)
             {
                 return;
@@ -234,6 +234,16 @@ namespace SceneSystem.Utility
         /// </summary>
         private void HandleOptionButtonPressed()
         {
+            // 現在適用中の入力マッピングインデックスを取得
+            int current = _context.InputManager.GetCurrentMappingIndex();
+
+            // 次のインデックスを算出
+            int next = (current == 0) ? 1 : 0;
+
+            // 入力マッピングを切り替え
+            _context.InputManager.SwitchInputMapping(next);
+
+            // オプションボタン押下イベントを通知
             OnOptionButtonPressed?.Invoke();
         }
 
@@ -291,12 +301,15 @@ namespace SceneSystem.Utility
                 return;
             }
 
+            // 発射位置を設定
             Vector3 firePosition =
                 tank.FirePoint.position;
 
+            // 発射方向を設定
             Vector3 fireDirection =
-                tank.transform.forward;
+                tank.FirePoint.forward;
 
+            // 弾丸をプールから取り出し生成
             _context.BulletPool?.Spawn(
                 bulletType,
                 tank.TankId,
