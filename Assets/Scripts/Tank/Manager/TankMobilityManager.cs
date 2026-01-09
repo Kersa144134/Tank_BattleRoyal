@@ -110,10 +110,12 @@ namespace TankSystem.Manager
         /// <summary>
         /// 移動処理および衝突判定に必要な外部参照を受け取って初期化する
         /// </summary>
+        /// <param name="tankStatus">馬力、変速算出に使用する戦車ステータス</param>
         /// <param name="trackController">キャタピラ入力を管理し、前進量・旋回量を算出するコントローラ</param>
         /// <param name="boundaryService">戦車の移動可能範囲を制御する境界判定サービス</param>
         /// <param name="transform">操作対象となる戦車本体の Transform</param>
         public TankMobilityManager(
+            in TankStatus tankStatus,
             in TankTrackController trackController,
             in TankMovementBoundaryService boundaryService,
             in Transform transform
@@ -121,6 +123,8 @@ namespace TankSystem.Manager
         {
             _trackController = trackController;
             _boundaryService = boundaryService;
+
+            UpdateMobilityParameters(tankStatus);
 
             // 操作対象の戦車 Transform を保持する
             _tankTransform = transform;
@@ -131,27 +135,43 @@ namespace TankSystem.Manager
         // ======================================================
 
         /// <summary>
+        /// HorsePower・Transmission を元に
+        /// 最高速倍率と前進・旋回の加減速倍率を算出する
+        /// </summary>
+        /// <param name="tankStatus">機動力算出に使用する戦車ステータス情報</param>
+        public void UpdateMobilityParameters(in TankStatus tankStatus)
+        {
+            // 最高速度・旋回速度に影響する機動倍率を算出
+            _mobilityMultiplier =
+                BASE_MOBILITY_MULTIPLIER
+                + tankStatus.HorsePower * HORSEPOWER_MULTIPLIER;
+
+            // 前進加減速性能に影響する倍率を算出
+            _forwardAccelerationMultiplier =
+                BASE_FORWARD_ACCELERATION_MULTIPLIER
+                + tankStatus.Transmission * TRANSMISSION_FORWARD_ACCELERATION_MULTIPLIER;
+
+            // 旋回加減速性能に影響する倍率を算出
+            _turnAccelerationMultiplier =
+                BASE_TURN_ACCELERATION_MULTIPLIER
+                + tankStatus.Transmission * TRANSMISSION_TURN_ACCELERATION_MULTIPLIER;
+        }
+
+        /// <summary>
         /// 前進・旋回処理を適用した場合の移動結果を計算し、
         /// 実際には Transform を変更せず、予定位置と回転を返す
         /// </summary>
-        /// <param name="tankStatus">戦車のステータス</param>
         /// <param name="leftInput">左キャタピラ入力値（-1～1）</param>
         /// <param name="rightInput">右キャタピラ入力値（-1～1）</param>
         /// <param name="nextPosition">次フレームでの予定ワールド座標</param>
         /// <param name="nextRotation">次フレームでの予定回転</param>
         public void CalculateMobility(
-            in TankStatus tankStatus,
             in Vector2 leftInput,
             in Vector2 rightInput,
             out Vector3 nextPosition,
             out Quaternion nextRotation
         )
         {
-            // --------------------------------------------------
-            // 機動力パラメータ更新
-            // --------------------------------------------------
-            UpdateMobilityParameters(tankStatus);
-
             // --------------------------------------------------
             // 目標移動量を算出
             // --------------------------------------------------
@@ -241,29 +261,6 @@ namespace TankSystem.Manager
         // ======================================================
         // プライベートメソッド
         // ======================================================
-
-        /// <summary>
-        /// HorsePower・Transmission を元に
-        /// 最高速倍率と前進・旋回の加減速倍率を算出する
-        /// </summary>
-        /// <param name="tankStatus">機動力算出に使用する戦車ステータス情報</param>
-        private void UpdateMobilityParameters(in TankStatus tankStatus)
-        {
-            // 最高速度・旋回速度に影響する機動倍率を算出
-            _mobilityMultiplier =
-                BASE_MOBILITY_MULTIPLIER
-                + tankStatus.HorsePower * HORSEPOWER_MULTIPLIER;
-
-            // 前進加減速性能に影響する倍率を算出
-            _forwardAccelerationMultiplier =
-                BASE_FORWARD_ACCELERATION_MULTIPLIER
-                + tankStatus.Transmission * TRANSMISSION_FORWARD_ACCELERATION_MULTIPLIER;
-
-            // 旋回加減速性能に影響する倍率を算出
-            _turnAccelerationMultiplier =
-                BASE_TURN_ACCELERATION_MULTIPLIER
-                + tankStatus.Transmission * TRANSMISSION_TURN_ACCELERATION_MULTIPLIER;
-        }
 
         /// <summary>
         /// キャタピラ入力から前進・旋回の目標値を算出する

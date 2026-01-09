@@ -22,12 +22,34 @@ namespace TankSystem.Manager
         /// <summary>現在の装甲値</summary>
         private float _currentDefense;
 
+        /// <summary>ステータスから算出される装甲の最大値</summary>
+        private float _maxDefense;
+
         // ======================================================
         // プロパティ
         // ======================================================
 
         /// <summary>現在の装甲値</summary>
         public float CurrentDefense => _currentDefense;
+
+        /// <summary>装甲の最大値</summary>
+        public float MaxDefense => _maxDefense;
+
+        // ======================================================
+        // 定数
+        // ======================================================
+
+        // --------------------------------------------------
+        // 基準値
+        // --------------------------------------------------
+        /// <summary>装甲ステータス 0 のときの基準装甲最大値</summary>
+        private const float BASE_DEFENSE_MAX_VALUE = 20.0f;
+
+        // --------------------------------------------------
+        // パラメーター
+        // --------------------------------------------------
+        /// <summary>装甲ステータス 1 あたりの装甲最大値加算量</summary>
+        private const float DEFENSE_MAX_VALUE_PER_STATUS = 9.0f;
 
         // ======================================================
         // コンストラクタ
@@ -39,13 +61,49 @@ namespace TankSystem.Manager
         /// <param name="tankStatus">戦車のステータス</param>
         public TankDefenseManager(in TankStatus tankStatus)
         {
-            // TankStatus から装甲値を取得
-            _currentDefense = tankStatus.Armor;
+            // 初回はステータスから装甲最大値を算出
+            UpdateDefenseParameter(tankStatus);
+
+            // 初期装甲値は最大値に合わせる
+            _currentDefense = _maxDefense;
         }
 
         // ======================================================
         // パブリックメソッド
         // ======================================================
+
+        /// <summary>
+        /// Armor ステータスを元に装甲の最大値を再計算する
+        /// </summary>
+        /// <param name="tankStatus">装甲算出に使用する戦車ステータス</param>
+        public void UpdateDefenseParameter(in TankStatus tankStatus)
+        {
+            // TankStatus から装甲ステータス値を取得
+            int armorStatus = tankStatus.Armor;
+
+            // 変更前の最大装甲値を保持
+            float previousMaxDefense = _maxDefense;
+
+            // 基準値 + ステータス加算で装甲最大値を算出
+            _maxDefense =
+                BASE_DEFENSE_MAX_VALUE
+                + armorStatus * DEFENSE_MAX_VALUE_PER_STATUS;
+
+            // 最大値が増加した分だけ現在装甲も加算
+            float increasedValue = _maxDefense - previousMaxDefense;
+
+            // 強化による増加時のみ現在値を補正
+            if (increasedValue > 0f)
+            {
+                _currentDefense += increasedValue;
+            }
+
+            // 現在装甲が最大値を超えないよう補正
+            if (_currentDefense > _maxDefense)
+            {
+                _currentDefense = _maxDefense;
+            }
+        }
 
         /// <summary>
         /// 装甲値を考慮してダメージを軽減する
@@ -54,7 +112,7 @@ namespace TankSystem.Manager
         /// <returns>軽減後のダメージ量</returns>
         public float CalculateReducedDamage(in float rawDamage)
         {
-            // 無効なダメージはそのまま返す
+            // 無効なダメージは処理なし
             if (rawDamage <= 0f)
             {
                 return 0f;
@@ -72,13 +130,29 @@ namespace TankSystem.Manager
             // 軽減後ダメージを算出
             float reducedDamage = rawDamage * (1f - reductionRate);
 
-            // 最低 1 ダメージ保証（必要なければ削除可）
-            if (reducedDamage < 1f)
+            return reducedDamage;
+        }
+
+        /// <summary>
+        /// 装甲に直接ダメージを与える
+        /// </summary>
+        /// <param name="damage">装甲へのダメージ量</param>
+        public void ApplyArmorDamage(in float damage)
+        {
+            // 無効な値は処理なし
+            if (damage <= 0f)
             {
-                reducedDamage = 1f;
+                return;
             }
 
-            return reducedDamage;
+            // 装甲値を減算
+            _currentDefense -= damage;
+
+            // 0 未満にならないよう補正
+            if (_currentDefense < 0f)
+            {
+                _currentDefense = 0f;
+            }
         }
     }
 }

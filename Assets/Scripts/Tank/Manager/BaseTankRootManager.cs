@@ -12,6 +12,7 @@ using InputSystem.Data;
 using InputSystem.Manager;
 using SceneSystem.Interface;
 using System;
+using System.Threading.Tasks;
 using TankSystem.Controller;
 using TankSystem.Data;
 using TankSystem.Service;
@@ -203,6 +204,7 @@ namespace TankSystem.Manager
             _defenseManager = new TankDefenseManager(_tankStatus);
             _durabilityManager = new TankDurabilityManager(_tankStatus);
             _mobilityManager = new TankMobilityManager(
+                _tankStatus,
                 _trackController,
                 _boundaryService,
                 transform
@@ -270,7 +272,6 @@ namespace TankSystem.Manager
             Quaternion calculatedRotation;
 
             _mobilityManager.CalculateMobility(
-                _tankStatus,
                 leftMobility,
                 rightMobility,
                 out calculatedPosition,
@@ -327,6 +328,16 @@ namespace TankSystem.Manager
             _durabilityManager.ApplyDamage(reducedDamage);
         }
 
+        /// <summary>
+        /// 装甲にダメージを与える
+        /// </summary>
+        /// <param name="armorDamage">装甲へのダメージ量</param>
+        public void TakeArmorDamage(in float armorDamage)
+        {
+            // 防御力管理クラスに装甲ダメージを委譲
+            _defenseManager.ApplyArmorDamage(armorDamage);
+        }
+
         // ======================================================
         // パブリックメソッド
         // ======================================================
@@ -358,6 +369,21 @@ namespace TankSystem.Manager
         public void ApplyCollisionResolve(in CollisionResolveInfo resolveInfo)
         {
             NextPosition += resolveInfo.ResolveVector;
+        }
+
+        /// <summary>
+        /// 任意のパラメーターを指定量だけ増加
+        /// </summary>
+        /// <param name="param">増加させるパラメーター</param>
+        /// <param name="amount">増加量</param>
+        public void IncreaseParameter(in TankParam param, in int amount)
+        {
+            _tankStatus.IncreaseParameter(param, amount);
+
+            // パラメーター更新処理
+            _defenseManager.UpdateDefenseParameter(_tankStatus);
+            _durabilityManager.UpdateDurabilityParameter(_tankStatus);
+            _mobilityManager.UpdateMobilityParameters(_tankStatus);
         }
 
         // ======================================================
