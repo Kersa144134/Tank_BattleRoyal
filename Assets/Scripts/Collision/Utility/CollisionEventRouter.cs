@@ -42,7 +42,7 @@ namespace CollisionSystem.Utility
         public event Action<BaseTankRootManager, ItemSlot> OnItemGet;
 
         /// <summary>弾丸が衝突した際に通知されるイベント</summary>
-        public event Action<BulletBase> OnBulletHit;
+        public event Action<BulletBase, BaseCollisionContext> OnBulletHit;
 
         // ======================================================
         // コンストラクタ
@@ -199,11 +199,8 @@ namespace CollisionSystem.Utility
                 return;
             }
 
-            // 弾丸ヒット処理
-            bullet.OnHit(obstacle);
-
             // 衝突イベント通知
-            OnBulletHit?.Invoke(bullet);
+            OnBulletHit?.Invoke(bullet, obstacle);
         }
 
         /// <summary>
@@ -232,12 +229,9 @@ namespace CollisionSystem.Utility
             {
                 return;
             }
-            
-            // 弾丸ヒット処理
-            bullet.OnHit(tank);
 
             // 衝突イベント通知
-            OnBulletHit?.Invoke(bullet);
+            OnBulletHit?.Invoke(bullet, tank);
         }
 
         /// <summary>

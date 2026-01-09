@@ -1,8 +1,8 @@
 // ======================================================
-// TankRootManager.cs
+// BaseTankRootManager.cs
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-04
-// 更新日時 : 2025-12-05
+// 更新日時 : 2026-01-09
 // 概要     : 戦車の各種制御を統合管理する
 // ======================================================
 
@@ -18,13 +18,14 @@ using TankSystem.Service;
 using UnityEngine;
 using VisionSystem.Calculator;
 using WeaponSystem.Data;
+using WeaponSystem.Interface;
 
 namespace TankSystem.Manager
 {
     /// <summary>
     /// 戦車の各種制御を統括するクラス
     /// </summary>
-    public abstract class BaseTankRootManager : MonoBehaviour, IUpdatable
+    public abstract class BaseTankRootManager : MonoBehaviour, IUpdatable, IDamageable
     {
         // ======================================================
         // インスペクタ設定
@@ -68,6 +69,11 @@ namespace TankSystem.Manager
         // --------------------------------------------------
         // 防御力
         // --------------------------------------------------
+        /// <summary>戦車の耐久力管理クラス</summary>
+        private TankDurabilityManager _durabilityManager;
+
+        /// <summary>戦車の防御力管理クラス</summary>
+        private TankDefenseManager _defenseManager;
 
         // --------------------------------------------------
         // 機動力
@@ -194,6 +200,8 @@ namespace TankSystem.Manager
         {
             _attackManager = new TankAttackManager(_fieldOfViewCalculator, transform);
             _boundaryService = new TankMovementBoundaryService(MOVEMENT_ALLOWED_RADIUS);
+            _defenseManager = new TankDefenseManager(_tankStatus);
+            _durabilityManager = new TankDurabilityManager(_tankStatus);
             _mobilityManager = new TankMobilityManager(
                 _trackController,
                 _boundaryService,
@@ -204,7 +212,7 @@ namespace TankSystem.Manager
             _attackManager.OnFireBullet += HandleFireBullet;
         }
 
-        public virtual void OnUpdate(float playTime)
+        public virtual void OnUpdate(in float playTime)
         {
             // --------------------------------------------------
             // 軸制限をリセット
@@ -301,6 +309,25 @@ namespace TankSystem.Manager
         }
 
         // ======================================================
+        // IDamageable イベント
+        // ======================================================
+
+        /// <summary>
+        /// ダメージを受ける処理
+        /// </summary>
+        /// <param name="damage">受けるダメージ量</param>
+        public void TakeDamage(in float damage)
+        {
+            Debug.Log(damage);
+            
+            // 防御力を考慮した軽減後ダメージを算出
+            float reducedDamage = _defenseManager.CalculateReducedDamage(damage);
+
+            // 耐久力管理クラスに最終ダメージを適用
+            _durabilityManager.ApplyDamage(reducedDamage);
+        }
+
+        // ======================================================
         // パブリックメソッド
         // ======================================================
 
@@ -325,7 +352,7 @@ namespace TankSystem.Manager
         }
 
         //// <summary>
-        /// TankCollisionService からの衝突通知を受けて、戦車のめり込みを解消する
+        /// CollisionManager からの衝突通知を受けて、戦車のめり込みを解消する
         /// </summary>
         /// <param name="resolveInfo">呼び出し側で算出済みの押し戻し情報</param>
         public void ApplyCollisionResolve(in CollisionResolveInfo resolveInfo)

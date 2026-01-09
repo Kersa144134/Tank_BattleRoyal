@@ -2,7 +2,7 @@
 // BulletBase.cs
 // 作成者   : 高橋一翔
 // 作成日   : 2025-12-12
-// 更新日   : 2025-12-21
+// 更新日   : 2026-01-21
 // 概要     : 弾丸ロジックの抽象基底クラス
 //            弾速・質量に基づく減衰処理を行い、生存時間を判定する
 // ======================================================
@@ -371,13 +371,15 @@ namespace WeaponSystem.Data
         /// </summary>
         protected virtual void ApplyDamage()
         {
-            if (_damageTarget != null)
+            if (_damageTarget == null)
             {
-                float damage = BASE_BULLET_DAMAGE + BulletSpeed * Mass;
-
-                _damageTarget.TakeDamage(damage);
-                _damageTarget = null;
+                return;
             }
+
+            float damage = BASE_BULLET_DAMAGE + BulletSpeed * Mass;
+
+            _damageTarget.TakeDamage(damage);
+            _damageTarget = null;
         }
     }
 }

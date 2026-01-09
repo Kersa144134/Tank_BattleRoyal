@@ -11,9 +11,9 @@ using UnityEngine;
 using InputSystem.Data;
 using ItemSystem.Data;
 using SceneSystem.Data;
-using TankSystem.Data;
 using TankSystem.Manager;
 using WeaponSystem.Data;
+using CollisionSystem.Data;
 
 namespace SceneSystem.Utility
 {
@@ -323,12 +323,15 @@ namespace SceneSystem.Utility
         /// <summary>
         /// </summary>
         /// <param name=""></param>
-        private void HandleHitBullet(BulletBase bullet)
+        private void HandleHitBullet(BulletBase bullet, BaseCollisionContext context)
         {
             if (bullet == null)
             {
                 return;
             }
+
+            // íeä€ÉqÉbÉgèàóù
+            bullet.OnHit(context);
         }
 
         // --------------------------------------------------

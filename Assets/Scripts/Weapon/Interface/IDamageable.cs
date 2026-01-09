@@ -19,9 +19,9 @@ namespace WeaponSystem.Interface
 
         /// <summary>
         /// ダメージを受ける処理
-        /// 実装側で HP 減算やエフェクト発火などを行う
+        /// HP 減算やエフェクト発火などを行う
         /// </summary>
         /// <param name="damage">受けるダメージ量</param>
-        void TakeDamage(float damage);
+        void TakeDamage(in float damage);
     }
 }
