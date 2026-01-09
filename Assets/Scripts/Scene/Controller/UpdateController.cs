@@ -41,7 +41,7 @@ namespace SceneSystem.Controller
         /// OnUpdate を毎フレーム実行
         /// </summary>
         /// <param name="playTime">ゲームの経過時間</param>
-        public void OnUpdate(float playTime)
+        public void OnUpdate(in float playTime)
         {
             // 実行前にキャッシュを最新化する
             RebuildCache();

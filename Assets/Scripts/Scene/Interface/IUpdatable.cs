@@ -27,7 +27,7 @@ namespace SceneSystem.Interface
         /// 毎フレーム実行される更新処理
         /// </summary>
         /// <param name="playTime">ゲームの経過時間</param>
-        void OnUpdate(float playTime) { }
+        void OnUpdate(in float playTime) { }
 
         /// <summary>
         /// LateUpdate 相当で毎フレーム実行される処理

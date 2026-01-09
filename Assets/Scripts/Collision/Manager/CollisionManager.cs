@@ -203,7 +203,7 @@ namespace TankSystem.Manager
             SendContextData();
         }
 
-        public void OnUpdate(float playTime)
+        public void OnUpdate(in float playTime)
         {
             // --------------------------------------------------
             // ‰Šú‰»

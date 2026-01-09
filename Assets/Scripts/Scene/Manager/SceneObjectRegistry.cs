@@ -84,7 +84,7 @@ namespace SceneSystem.Manager
             InitializeObstacles();
         }
 
-        public void OnUpdate(float playTime)
+        public void OnUpdate(in float playTime)
         {
             float deltaTime = Time.deltaTime;
             _playTime = playTime;
