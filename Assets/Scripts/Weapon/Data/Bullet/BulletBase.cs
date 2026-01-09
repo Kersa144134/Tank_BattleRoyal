@@ -117,8 +117,8 @@ namespace WeaponSystem.Data
         // --------------------------------------------------
         // 基準値
         // --------------------------------------------------
-        /// <summary>基準となる弾速</summary>
-        private const float BASE_BULLET_SPEED = 100f;
+        /// <summary>基準となる弾速倍率</summary>
+        private const float BASE_BULLET_SPEED_MULTIPLIER = 100f;
 
         /// <summary>基準となる弾丸質量</summary>
         private const float BASE_BULLET_MASS = 1f;
@@ -131,6 +131,18 @@ namespace WeaponSystem.Data
 
         /// <summary>基準となる弾丸のダメージ</summary>
         private const float BASE_BULLET_DAMAGE = 10f;
+
+        /// <summary>基準となる弾丸のダメージ倍率</summary>
+        private const float BASE_BULLET_DAMAGE_MULTIPLIER = 0.1f;
+
+        /// <summary>弾速計算時の質量影響基準値</summary>
+        private const float BASE_MASS_INFLUENCE = 1.0f;
+
+        /// <summary>弾速によるダメージへの増幅係数</summary>
+        private const float SPEED_DAMAGE_POWER = 1.5f;
+
+        /// <summary>弾丸の質量によるダメージへの増幅係数</summary>
+        private const float MASS_DAMAGE_POWER = 1.25f;
 
         // --------------------------------------------------
         // パラメーター
@@ -146,6 +158,9 @@ namespace WeaponSystem.Data
 
         /// <summary>質量1あたりの倍率加算値</summary>
         private const float PROJECTILE_MASS_MULTIPLIER = 0.05f;
+
+        /// <summary>質量 1 あたりの弾速減衰影響率</summary>
+        private const float MASS_SPEED_INFLUENCE_MULTIPLIER = 0.15f;
 
         // ======================================================
         // イベント
@@ -213,11 +228,32 @@ namespace WeaponSystem.Data
         /// <param name="tankStatus">発射元戦車のステータス</param>
         public virtual void ApplyTankStatus(in TankStatus tankStatus)
         {
-            // 弾丸の質量を計算
-            Mass = BASE_BULLET_MASS * (BASE_PROJECTILE_MASS + tankStatus.ProjectileMass * PROJECTILE_MASS_MULTIPLIER);
+            // --------------------------------------------------
+            // 質量計算
+            // --------------------------------------------------
+            // 基準質量 + ステータス補正で弾丸の質量を算出
+            Mass =
+                BASE_BULLET_MASS
+                * (BASE_PROJECTILE_MASS
+                + tankStatus.ProjectileMass * PROJECTILE_MASS_MULTIPLIER);
 
-            // 弾速を計算
-            BulletSpeed = BASE_BULLET_SPEED * (BASE_BARREL_SCALE + tankStatus.BarrelScale * BARREL_SCALE_MULTIPLIER) / Mass;
+            // --------------------------------------------------
+            // 質量影響係数算出
+            // --------------------------------------------------
+            // 質量が増えるほど弾速への影響が強くなる
+            float massInfluence =
+                BASE_MASS_INFLUENCE
+                + Mass * MASS_SPEED_INFLUENCE_MULTIPLIER;
+
+            // --------------------------------------------------
+            // 弾速計算
+            // --------------------------------------------------
+            // 砲身スケールを元にした基礎弾速を質量影響係数で減衰させる
+            BulletSpeed =
+                BASE_BULLET_SPEED_MULTIPLIER
+                * (BASE_BARREL_SCALE
+                + tankStatus.BarrelScale * BARREL_SCALE_MULTIPLIER)
+                / massInfluence;
         }
 
         /// <summary>
@@ -323,6 +359,7 @@ namespace WeaponSystem.Data
             {
                 // ダメージ適用
                 ApplyDamage();
+                _damageTarget = null;
             }
 
             // 無効化
@@ -349,6 +386,33 @@ namespace WeaponSystem.Data
             return true;
         }
 
+        /// <summary>
+        /// 弾丸が対象に与えるダメージ処理
+        /// </summary>
+        public virtual void ApplyDamage()
+        {
+            // ダメージ対象が存在しない場合は処理なし
+            if (_damageTarget == null)
+            {
+                return;
+            }
+
+            // 弾速、質量が高いほど、ダメージへの影響が段階的に大きくなるよう補正する
+            float speedFactor =
+                Mathf.Pow(BulletSpeed, SPEED_DAMAGE_POWER);
+
+            float massFactor =
+                Mathf.Pow(Mass, MASS_DAMAGE_POWER);
+
+            // 最終ダメージ算出
+            float damage =
+                (BASE_BULLET_DAMAGE + speedFactor * massFactor)
+                * BASE_BULLET_DAMAGE_MULTIPLIER;
+
+            // ダメージ適用
+            _damageTarget.TakeDamage(damage);
+        }
+
         // ======================================================
         // プライベートメソッド
         // ======================================================
@@ -364,22 +428,6 @@ namespace WeaponSystem.Data
             }
 
             Transform.position = NextPosition;
-        }
-
-        /// <summary>
-        /// 弾丸が対象に与えるダメージ処理
-        /// </summary>
-        protected virtual void ApplyDamage()
-        {
-            if (_damageTarget == null)
-            {
-                return;
-            }
-
-            float damage = BASE_BULLET_DAMAGE + BulletSpeed * Mass;
-
-            _damageTarget.TakeDamage(damage);
-            _damageTarget = null;
         }
     }
 }

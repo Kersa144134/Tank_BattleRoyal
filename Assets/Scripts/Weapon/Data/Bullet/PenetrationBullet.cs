@@ -45,12 +45,21 @@ namespace WeaponSystem.Data
         // --------------------------------------------------
         // 基準値
         // --------------------------------------------------
+        /// <summary>基準となる装甲へのダメージ</summary>
+        private const float BASE_ARMOR_DAMAGE = 10f;
+
+        /// <summary>基準となる装甲へのダメージ倍率</summary>
+        private const float BASE_ARMOR_DAMAGE_MULTIPLIER = 0.01f;
+
+        /// <summary>弾速による装甲ダメージへの増幅係数</summary>
+        private const float ARMOR_SPEED_DAMAGE_POWER = 1.25f;
+
+        /// <summary>弾丸の質量による装甲ダメージへの増幅係数</summary>
+        private const float ARMOR_MASS_DAMAGE_POWER = 1.5f;
+
         /// <summary>基準となる弾速減算値</summary>
         private const float BASE_PENETRATION_SPEED_DECREMENT = 20f;
 
-        // --------------------------------------------------
-        // 障害物
-        // --------------------------------------------------
         /// <summary>基準となる障害物貫通時の弾速減算値</summary>
         private const float BASE_OBSTACLE_DECREMENT = 2f;
 
@@ -116,6 +125,30 @@ namespace WeaponSystem.Data
 
             // 通常処理で消滅
             return base.OnHit(collisionContext);
+        }
+
+        /// <summary>
+        /// 弾丸が対象に与えるダメージ処理
+        /// </summary>
+        public override void ApplyDamage()
+        {
+            // 通常ダメージ処理を先に実行
+            base.ApplyDamage();
+
+            // 弾速、質量が高いほど、ダメージへの影響が段階的に大きくなるよう補正する
+            float speedFactor =
+                Mathf.Pow(BulletSpeed, ARMOR_SPEED_DAMAGE_POWER);
+
+            float massFactor =
+                Mathf.Pow(Mass, ARMOR_MASS_DAMAGE_POWER);
+
+            // 最終ダメージ算出
+            float damage =
+                (BASE_ARMOR_DAMAGE + speedFactor * massFactor)
+                * BASE_ARMOR_DAMAGE_MULTIPLIER;
+
+            // 装甲ダメージを適用
+            _damageTarget.TakeArmorDamage(damage);
         }
 
         // ======================================================

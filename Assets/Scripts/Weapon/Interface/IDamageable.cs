@@ -19,9 +19,16 @@ namespace WeaponSystem.Interface
 
         /// <summary>
         /// ダメージを受ける処理
-        /// HP 減算やエフェクト発火などを行う
+        /// 耐久の減算を行う
         /// </summary>
         /// <param name="damage">受けるダメージ量</param>
         void TakeDamage(in float damage);
+
+        /// <summary>
+        /// 装甲がダメージを受ける処理
+        /// 徹甲弾に使用
+        /// </summary>
+        /// <param name="damage">装甲へのダメージ量</param>
+        void TakeArmorDamage(in float damage) { }
     }
 }

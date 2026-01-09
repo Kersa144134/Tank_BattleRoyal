@@ -384,7 +384,7 @@ namespace SceneSystem.Utility
             if (itemSlot.ItemData is ParamItemData param)
             {
                 // 戦車のパラメーターを増減させる
-                tankRootManager.TankStatus.IncreaseParameter(
+                tankRootManager.IncreaseParameter(
                     param.ParamType,
                     param.Value
                 );
