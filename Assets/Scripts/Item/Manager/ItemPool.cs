@@ -104,7 +104,7 @@ namespace ItemSystem.Manager
             InitializePool();
         }
 
-        public void OnUpdate(float playTime)
+        public void OnUpdate(in float playTime)
         {
             // 生成制御コントローラーを更新
             _spawnController.Update();
@@ -128,7 +128,7 @@ namespace ItemSystem.Manager
         /// </summary>
         /// <param name="spawnPosition">生成座標</param>
         /// <returns>取得した ItemSlot</returns>
-        public ItemSlot Activate(Vector3 spawnPosition)
+        public ItemSlot Activate(in Vector3 spawnPosition)
         {
             // ItemData 単位でキューを走査
             foreach (Queue<ItemSlot> queue in _inactiveItems.Values)
@@ -162,7 +162,7 @@ namespace ItemSystem.Manager
         /// ItemSlot を未使用状態としてプールへ返却する
         /// </summary>
         /// <param name="slot">返却対象の ItemSlot</param>
-        public void Deactivate(ItemSlot slot)
+        public void Deactivate(in ItemSlot slot)
         {
             if (slot == null || slot.Transform == null)
             {

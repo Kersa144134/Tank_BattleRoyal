@@ -75,7 +75,7 @@ namespace ItemSystem.Data
         /// </summary>
         /// <param name="transform">•\¦—p Transform</param>
         /// <param name="itemData">ItemData</param>
-        public ItemSlot(Transform transform, ItemData itemData)
+        public ItemSlot(in Transform transform, in ItemData itemData)
         {
             // Transform ‚ğ•Û
             _transform = transform;
@@ -155,7 +155,7 @@ namespace ItemSystem.Data
         /// <summary>
         /// —LŒøó‘Ô‚ğ Renderer ‚É”½‰f‚·‚é
         /// </summary>
-        private void SetEnabled(bool isEnabled)
+        private void SetEnabled(in bool isEnabled)
         {
             // ó‘Ô•Ï‰»‚ª‚È‚¢ê‡‚Íˆ—‚È‚µ
             if (_isEnabled == isEnabled)
