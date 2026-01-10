@@ -46,10 +46,10 @@ namespace WeaponSystem.Data
         // 基準値
         // --------------------------------------------------
         /// <summary>基準となる装甲へのダメージ</summary>
-        private const float BASE_ARMOR_DAMAGE = 10f;
+        private const float BASE_ARMOR_DAMAGE = 2f;
 
         /// <summary>基準となる装甲へのダメージ倍率</summary>
-        private const float BASE_ARMOR_DAMAGE_MULTIPLIER = 0.01f;
+        private const float BASE_ARMOR_DAMAGE_MULTIPLIER = 0.05f;
 
         /// <summary>弾速による装甲ダメージへの増幅係数</summary>
         private const float ARMOR_SPEED_DAMAGE_POWER = 1.25f;
@@ -119,6 +119,10 @@ namespace WeaponSystem.Data
             {
                 Penetrate(collisionContext);
 
+                // ダメージ処理
+                SetDamageTarget(collisionContext);
+                ApplyDamage();
+
                 // 弾丸は消滅せず残す
                 return false;
             }
@@ -135,6 +139,12 @@ namespace WeaponSystem.Data
             // 通常ダメージ処理を先に実行
             base.ApplyDamage();
 
+            // ダメージ対象が存在しない場合は処理なし
+            if (_damageTarget == null)
+            {
+                return;
+            }
+            
             // 弾速、質量が高いほど、ダメージへの影響が段階的に大きくなるよう補正する
             float speedFactor =
                 Mathf.Pow(BulletSpeed, ARMOR_SPEED_DAMAGE_POWER);
@@ -143,12 +153,12 @@ namespace WeaponSystem.Data
                 Mathf.Pow(Mass, ARMOR_MASS_DAMAGE_POWER);
 
             // 最終ダメージ算出
-            float damage =
-                (BASE_ARMOR_DAMAGE + speedFactor * massFactor)
-                * BASE_ARMOR_DAMAGE_MULTIPLIER;
+            float damage = BASE_ARMOR_DAMAGE + speedFactor * massFactor * BASE_ARMOR_DAMAGE_MULTIPLIER;
 
             // 装甲ダメージを適用
             _damageTarget.TakeArmorDamage(damage);
+
+            _damageTarget = null;
         }
 
         // ======================================================

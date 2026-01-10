@@ -26,16 +26,6 @@ namespace TankSystem.Manager
         private float _maxDefense;
 
         // ======================================================
-        // プロパティ
-        // ======================================================
-
-        /// <summary>現在の装甲値</summary>
-        public float CurrentDefense => _currentDefense;
-
-        /// <summary>装甲の最大値</summary>
-        public float MaxDefense => _maxDefense;
-
-        // ======================================================
         // 定数
         // ======================================================
 
@@ -118,7 +108,7 @@ namespace TankSystem.Manager
                 return 0f;
             }
 
-            // 装甲が存在しない場合は軽減しない
+            // 装甲が存在しない場合はそのまま返す
             if (_currentDefense <= 0f)
             {
                 return rawDamage;
@@ -135,8 +125,9 @@ namespace TankSystem.Manager
 
         /// <summary>
         /// 装甲に直接ダメージを与える
+        /// 装甲が少なくなるほど実際の減少量が小さくなる
         /// </summary>
-        /// <param name="damage">装甲へのダメージ量</param>
+        /// <param name="damage">装甲への基礎ダメージ量</param>
         public void ApplyArmorDamage(in float damage)
         {
             // 無効な値は処理なし
@@ -145,8 +136,20 @@ namespace TankSystem.Manager
                 return;
             }
 
+            // 装甲が存在しない場合は処理なし
+            if (_currentDefense <= 0f)
+            {
+                return;
+            }
+
+            // 現在装甲の割合を算出
+            float armorRatio = _currentDefense / _maxDefense;
+
+            // 装甲割合に応じて実際の装甲ダメージを減衰
+            float actualDamage = damage * armorRatio;
+
             // 装甲値を減算
-            _currentDefense -= damage;
+            _currentDefense -= actualDamage;
 
             // 0 未満にならないよう補正
             if (_currentDefense < 0f)

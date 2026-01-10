@@ -319,8 +319,6 @@ namespace TankSystem.Manager
         /// <param name="damage">受けるダメージ量</param>
         public void TakeDamage(in float damage)
         {
-            Debug.Log(damage);
-            
             // 防御力を考慮した軽減後ダメージを算出
             float reducedDamage = _defenseManager.CalculateReducedDamage(damage);
 

@@ -30,6 +30,16 @@ namespace TankSystem.Manager
         private bool _isBroken => _currentDurability <= 0f;
 
         // ======================================================
+        // プロパティ
+        // ======================================================
+
+        /// <summary>現在の耐久値</summary>
+        public float CurrentDurability => _currentDurability;
+
+        /// <summary>ステータスから算出される耐久の最大値</summary>
+        public float MaxDurability => _maxDurability;
+
+        // ======================================================
         // 定数
         // ======================================================
 
@@ -119,7 +129,7 @@ namespace TankSystem.Manager
                 return;
             }
 
-            // すでに破壊されている場合は処理しない
+            // すでに破壊されている場合は処理なし
             if (_isBroken)
             {
                 return;
@@ -138,6 +148,7 @@ namespace TankSystem.Manager
             if (_isBroken)
             {
                 OnBroken?.Invoke();
+                UnityEngine.Debug.Log("Break");
             }
         }
     }

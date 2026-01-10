@@ -133,7 +133,7 @@ namespace WeaponSystem.Data
         private const float BASE_BULLET_DAMAGE = 10f;
 
         /// <summary>基準となる弾丸のダメージ倍率</summary>
-        private const float BASE_BULLET_DAMAGE_MULTIPLIER = 0.1f;
+        private const float BASE_BULLET_DAMAGE_MULTIPLIER = 0.01f;
 
         /// <summary>弾速計算時の質量影響基準値</summary>
         private const float BASE_MASS_INFLUENCE = 1.0f;
@@ -197,25 +197,6 @@ namespace WeaponSystem.Data
         public void SetSpawnPosition(in Vector3 spawnPosition)
         {
             NextPosition = spawnPosition;
-        }
-
-        /// <summary>
-        /// 衝突対象からダメージ対象を設定
-        /// </summary>
-        /// <param name="collisionContext">衝突コンテキスト</param>
-        private void SetDamageTarget(in BaseCollisionContext collisionContext)
-        {
-            if (collisionContext.Transform == null)
-            {
-                _damageTarget = null;
-                return;
-            }
-
-            // Transform から IDamageable を取得
-            IDamageable damageable = collisionContext.Transform.GetComponent<IDamageable>();
-
-            // 取得できた場合のみターゲットに設定
-            _damageTarget = damageable;
         }
 
         // ======================================================
@@ -359,6 +340,7 @@ namespace WeaponSystem.Data
             {
                 // ダメージ適用
                 ApplyDamage();
+
                 _damageTarget = null;
             }
 
@@ -405,9 +387,7 @@ namespace WeaponSystem.Data
                 Mathf.Pow(Mass, MASS_DAMAGE_POWER);
 
             // 最終ダメージ算出
-            float damage =
-                (BASE_BULLET_DAMAGE + speedFactor * massFactor)
-                * BASE_BULLET_DAMAGE_MULTIPLIER;
+            float damage = BASE_BULLET_DAMAGE + speedFactor * massFactor * BASE_BULLET_DAMAGE_MULTIPLIER;
 
             // ダメージ適用
             _damageTarget.TakeDamage(damage);
@@ -428,6 +408,25 @@ namespace WeaponSystem.Data
             }
 
             Transform.position = NextPosition;
+        }
+
+        /// <summary>
+        /// 衝突対象からダメージ対象を設定
+        /// </summary>
+        /// <param name="collisionContext">衝突コンテキスト</param>
+        protected void SetDamageTarget(in BaseCollisionContext collisionContext)
+        {
+            if (collisionContext.Transform == null)
+            {
+                _damageTarget = null;
+                return;
+            }
+
+            // Transform から IDamageable を取得
+            IDamageable damageable = collisionContext.Transform.GetComponent<IDamageable>();
+
+            // 取得できた場合のみターゲットに設定
+            _damageTarget = damageable;
         }
     }
 }
