@@ -81,6 +81,7 @@ namespace SceneSystem.Utility
                 _context.PlayerTank.OnFireModeChangeButtonPressed += HandleFireModeChangeButtonPressed;
                 _context.PlayerTank.OnOptionButtonPressed += HandleOptionButtonPressed;
                 _context.PlayerTank.OnFireBullet += HandleFireBullet;
+                _context.PlayerTank.DurabilityManager.OnDurabilityChanged += HandleDurabilityChanged;
             }
 
             // --------------------------------------------------
@@ -147,6 +148,7 @@ namespace SceneSystem.Utility
                 _context.PlayerTank.OnFireModeChangeButtonPressed -= HandleFireModeChangeButtonPressed;
                 _context.PlayerTank.OnOptionButtonPressed -= HandleOptionButtonPressed;
                 _context.PlayerTank.OnFireBullet -= HandleFireBullet;
+                _context.PlayerTank.DurabilityManager.OnDurabilityChanged -= HandleDurabilityChanged;
             }
 
             // --------------------------------------------------
@@ -225,7 +227,7 @@ namespace SceneSystem.Utility
         /// </summary>
         private void HandleFireModeChangeButtonPressed()
         {
-            
+            _context.UIManager.UpdateBulletIcons();
         }
 
         /// <summary>
@@ -245,6 +247,14 @@ namespace SceneSystem.Utility
 
             // オプションボタン押下イベントを通知
             OnOptionButtonPressed?.Invoke();
+        }
+
+        /// <summary>
+        /// 耐久値変更時の処理を行うハンドラ
+        /// </summary>
+        private void HandleDurabilityChanged()
+        {
+            _context.UIManager.HandleDurabilityChanged();
         }
 
         // --------------------------------------------------
