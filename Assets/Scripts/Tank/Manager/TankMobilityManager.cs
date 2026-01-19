@@ -9,7 +9,6 @@
 // ======================================================
 
 using UnityEngine;
-using InputSystem.Data;
 using TankSystem.Controller;
 using TankSystem.Data;
 using TankSystem.Service;
@@ -34,9 +33,6 @@ namespace TankSystem.Manager
         // ======================================================
         // フィールド
         // ======================================================
-
-        /// <summary>キャタピラ入力モード</summary>
-        private readonly TrackInputMode _inputMode;
 
         /// <summary>戦車本体の Transform</summary>
         private readonly Transform _tankTransform;
@@ -276,7 +272,7 @@ namespace TankSystem.Manager
             out float targetTurn)
         {
             // キャタピラ入力を前進量・旋回量に変換
-            _trackController.UpdateTrack(_inputMode, leftInput, rightInput, out float forwardInput, out float turnInput);
+            _trackController.UpdateTrack(leftInput, rightInput, out float forwardInput, out float turnInput);
 
             // 機動力倍率を掛けて最終的な目標値を算出
             targetForward = forwardInput * _mobilityMultiplier;

@@ -12,6 +12,7 @@ using ItemSystem.Manager;
 using SceneSystem.Interface;
 using SceneSystem.Manager;
 using TankSystem.Manager;
+using UISystem.Manager;
 using WeaponSystem.Manager;
 
 namespace SceneSystem.Data
@@ -25,23 +26,26 @@ namespace SceneSystem.Data
         /// <summary>シーン内の全 IUpdatable</summary>
         public IUpdatable[] Updatables;
 
+        /// <summary>シーン内のオブジェクトを一元管理するレジストリー</summary>
+        public SceneObjectRegistry SceneObjectRegistry;
+
         /// <summary>弾丸プール</summary>
         public BulletPool BulletPool;
-
-        /// <summary>アイテムプール</summary>
-        public ItemPool ItemPool;
 
         /// <summary>カメラ管理</summary>
         public CameraManager CameraManager;
 
+        /// <summary>カメラ管理</summary>
+        public CollisionManager CollisionManager;
+
         /// <summary>入力管理</summary>
         public InputManager InputManager;
 
-        /// <summary>シーン内のオブジェクトを一元管理するレジストリー</summary>
-        public SceneObjectRegistry SceneObjectRegistry;
+        /// <summary>アイテムプール</summary>
+        public ItemPool ItemPool;
 
-        /// <summary>カメラ管理</summary>
-        public CollisionManager CollisionManager;
+        /// <summary>UI管理</summary>
+        public UIManager UIManager;
 
         /// <summary>プレイヤー戦車</summary>
         public PlayerTankRootManager PlayerTank;

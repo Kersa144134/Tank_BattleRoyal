@@ -7,9 +7,11 @@
 //            BaseTankRootManager を継承し、入力処理をプレイヤー操作に差し替える
 // ======================================================
 
-using UnityEngine;
 using InputSystem.Data;
 using InputSystem.Manager;
+using TankSystem.Service;
+using UnityEngine;
+using VisionSystem.Calculator;
 
 namespace TankSystem.Manager
 {
@@ -28,6 +30,16 @@ namespace TankSystem.Manager
 
         /// <summary>無入力ボタン</summary>
         private readonly ButtonState _none = new ButtonState();
+
+        // ======================================================
+        // プロパティ
+        // ======================================================
+
+        /// <summary>現在の耐久値</summary>
+        public float CurrentDurability => DurabilityManager.CurrentDurability;
+
+        /// <summary>ステータスから算出される耐久の最大値</summary>
+        public float MaxDurability => DurabilityManager.MaxDurability;
 
         // ======================================================
         // 抽象メソッド

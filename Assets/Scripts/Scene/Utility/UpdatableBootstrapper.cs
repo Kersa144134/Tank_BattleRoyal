@@ -6,15 +6,16 @@
 // 概要     : IUpdatable の収集・初期化・参照キャッシュを行う
 // ======================================================
 
-using System.Collections.Generic;
-using UnityEngine;
 using CameraSystem.Manager;
 using InputSystem.Manager;
 using ItemSystem.Manager;
 using SceneSystem.Data;
 using SceneSystem.Interface;
 using SceneSystem.Manager;
+using System.Collections.Generic;
 using TankSystem.Manager;
+using UISystem.Manager;
+using UnityEngine;
 using WeaponSystem.Manager;
 
 namespace SceneSystem.Utility
@@ -63,17 +64,18 @@ namespace SceneSystem.Utility
                 {
                     context.BulletPool = bulletPool;
                 }
-                
-                // ItemPool を取得
-                if (updatable is ItemPool itemPool)
-                {
-                    context.ItemPool = itemPool;
-                }
 
                 // CameraManager を取得
                 if (updatable is CameraManager cameraManager)
                 {
                     context.CameraManager = cameraManager;
+                }
+
+                // CollisionManager を取得
+                if (updatable is CollisionManager collisionManager)
+                {
+                    context.CollisionManager = collisionManager;
+                    collisionManager.SetSceneRegistry(cacheSceneObjectRegistry);
                 }
 
                 // InputManager を取得
@@ -82,11 +84,16 @@ namespace SceneSystem.Utility
                     context.InputManager = inputManager;
                 }
 
-                // CollisionManager を取得
-                if (updatable is CollisionManager collisionManager)
+                // ItemPool を取得
+                if (updatable is ItemPool itemPool)
                 {
-                    context.CollisionManager = collisionManager;
-                    collisionManager.SetSceneRegistry(cacheSceneObjectRegistry);
+                    context.ItemPool = itemPool;
+                }
+
+                // UIManager を取得
+                if (updatable is UIManager uiManager)
+                {
+                    context.UIManager = uiManager;
                 }
 
                 // PlayerTank を取得

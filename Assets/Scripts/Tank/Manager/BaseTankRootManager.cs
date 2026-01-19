@@ -6,17 +6,16 @@
 // 概要     : 戦車の各種制御を統合管理する
 // ======================================================
 
+using System;
+using UnityEngine;
 using CollisionSystem.Data;
 using CollisionSystem.Interface;
 using InputSystem.Data;
 using InputSystem.Manager;
 using SceneSystem.Interface;
-using System;
-using System.Threading.Tasks;
 using TankSystem.Controller;
 using TankSystem.Data;
 using TankSystem.Service;
-using UnityEngine;
 using VisionSystem.Calculator;
 using WeaponSystem.Data;
 using WeaponSystem.Interface;
@@ -100,6 +99,9 @@ namespace TankSystem.Manager
 
         /// <summary>ゲーム中に変動する戦車のパラメーター</summary>
         public TankStatus TankStatus => _tankStatus;
+
+        /// <summary>戦車の耐久力管理クラス</summary>
+        public TankDurabilityManager DurabilityManager => _durabilityManager;
 
         /// <summary>キャタピラ入力モード</summary>
         public TrackInputMode InputMode => _trackController.InputMode;
@@ -216,6 +218,12 @@ namespace TankSystem.Manager
 
         public virtual void OnUpdate(in float playTime)
         {
+            // --------------------------------------------------
+            // デバッグ用（いずれ削除予定）
+            // --------------------------------------------------
+            if (Input.GetKeyDown(KeyCode.Backspace)) _durabilityManager.DebugDamage();
+            _durabilityManager.DebugHP(_tankStatus);
+
             // --------------------------------------------------
             // 軸制限をリセット
             // --------------------------------------------------

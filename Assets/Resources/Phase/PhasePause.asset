@@ -16,3 +16,4 @@ MonoBehaviour:
   _updatableScripts:
   - {fileID: 11500000, guid: 6d0c2d0a83717d740bf578904191d9f9, type: 3}
   - {fileID: 11500000, guid: 1cd6590539a9e604e8c2d02a2e1f37e4, type: 3}
+  - {fileID: 11500000, guid: 19aee8684b0b7ff43b11b92b6880f93c, type: 3}

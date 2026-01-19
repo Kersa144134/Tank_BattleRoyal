@@ -87,13 +87,11 @@ namespace TankSystem.Controller
         /// <summary>
         /// 指定された入力モードで前進量と旋回量を算出する
         /// </summary>
-        /// <param name="inputMode">使用するキャタピラ入力モード</param>
         /// <param name="leftInput">左スティックの入力値</param>
-        /// <param name="right">右スティックの入力値</param>
+        /// <param name="rightInput">右スティックの入力値</param>
         /// <param name="forwardAmount">算出された前進／後退量</param>
         /// <param name="turnAmount">算出された旋回量</param>
         public void UpdateTrack(
-            in TrackInputMode inputMode,
             in Vector2 leftInput,
             in Vector2 rightInput,
             out float forwardAmount,
