@@ -91,6 +91,13 @@ namespace TankSystem.Manager
         private TankMovementBoundaryService _boundaryService;
 
         // ======================================================
+        // フィールド
+        // ======================================================
+
+        /// <summary>戦車が破壊され、機能停止状態かどうか</summary>
+        private bool _isBroken;
+
+        // ======================================================
         // プロパティ
         // ======================================================
 
@@ -153,6 +160,9 @@ namespace TankSystem.Manager
         /// <summary>弾丸が発射された際に発火するイベント</summary>
         public event Action<BaseTankRootManager, BulletType, Transform> OnFireBullet;
 
+        /// <summary>耐久力が 0 になった際に発火するイベント</summary>
+        public event Action<int> OnBroken;
+
         // ======================================================
         // 抽象メソッド
         // ======================================================
@@ -214,15 +224,25 @@ namespace TankSystem.Manager
 
             // イベント購読
             _attackManager.OnFireBullet += HandleFireBullet;
+            _durabilityManager.OnBroken += HandleBroken;
         }
 
         public virtual void OnUpdate(in float playTime)
         {
+            // 破壊済みの場合は処理なし
+            if (_isBroken)
+            {
+                return;
+            }
+
             // --------------------------------------------------
             // デバッグ用（いずれ削除予定）
             // --------------------------------------------------
-            if (Input.GetKeyDown(KeyCode.Backspace)) _durabilityManager.DebugDamage();
-            _durabilityManager.DebugHP(_tankStatus);
+            if (TankId == 1)
+            {
+                if (Input.GetKeyDown(KeyCode.Backspace)) _durabilityManager.DebugDamage();
+                _durabilityManager.DebugHP(_tankStatus);
+            }
 
             // --------------------------------------------------
             // 軸制限をリセット
@@ -292,6 +312,12 @@ namespace TankSystem.Manager
 
         public virtual void OnLateUpdate()
         {
+            // 破壊済みの場合は処理なし
+            if (_isBroken)
+            {
+                return;
+            }
+
             // --------------------------------------------------
             // 入力
             // --------------------------------------------------
@@ -315,6 +341,7 @@ namespace TankSystem.Manager
         {
             // イベント購読の解除
             _attackManager.OnFireBullet -= HandleFireBullet;
+            _durabilityManager.OnBroken -= HandleBroken;
         }
 
         // ======================================================
@@ -327,6 +354,12 @@ namespace TankSystem.Manager
         /// <param name="damage">受けるダメージ量</param>
         public void TakeDamage(in float damage)
         {
+            // 破壊済みの場合は処理なし
+            if (_isBroken)
+            {
+                return;
+            }
+            
             // 防御力を考慮した軽減後ダメージを算出
             float reducedDamage = _defenseManager.CalculateReducedDamage(damage);
 
@@ -340,6 +373,12 @@ namespace TankSystem.Manager
         /// <param name="armorDamage">装甲へのダメージ量</param>
         public void TakeArmorDamage(in float armorDamage)
         {
+            // 破壊済みの場合は処理なし
+            if (_isBroken)
+            {
+                return;
+            }
+
             // 防御力管理クラスに装甲ダメージを委譲
             _defenseManager.ApplyArmorDamage(armorDamage);
         }
@@ -353,6 +392,12 @@ namespace TankSystem.Manager
         /// </summary>
         public void ChangeInputMode()
         {
+            // 破壊済みの場合は処理なし
+            if (_isBroken)
+            {
+                return;
+            }
+
             _trackController.ChangeInputMode();
         }
 
@@ -364,7 +409,15 @@ namespace TankSystem.Manager
         {
             if (_targetIcon != null)
             {
-                _targetIcon.enabled = isActive;
+                // 破壊済みの場合は強制非表示
+                if (_isBroken)
+                {
+                    _targetIcon.enabled = false;
+                }
+                else
+                {
+                    _targetIcon.enabled = isActive;
+                }
             }
         }
 
@@ -374,6 +427,12 @@ namespace TankSystem.Manager
         /// <param name="resolveInfo">呼び出し側で算出済みの押し戻し情報</param>
         public void ApplyCollisionResolve(in CollisionResolveInfo resolveInfo)
         {
+            // 破壊済みの場合は処理なし
+            if (_isBroken)
+            {
+                return;
+            }
+
             NextPosition += resolveInfo.ResolveVector;
         }
 
@@ -384,6 +443,12 @@ namespace TankSystem.Manager
         /// <param name="amount">増加量</param>
         public void IncreaseParameter(in TankParam param, in int amount)
         {
+            // 破壊済みの場合は処理なし
+            if (_isBroken)
+            {
+                return;
+            }
+
             _tankStatus.IncreaseParameter(param, amount);
 
             // パラメーター更新処理
@@ -404,6 +469,12 @@ namespace TankSystem.Manager
         /// <param name="target">弾丸の回転方向に指定するターゲット Transform</param>
         private void HandleFireBullet(BulletType type, Transform target = null)
         {
+            // 破壊済みの場合は処理なし
+            if (_isBroken)
+            {
+                return;
+            }
+
             // 発射位置を取得
             Vector3 firePosition = _firePoint.position;
 
@@ -412,6 +483,31 @@ namespace TankSystem.Manager
 
             // イベントを外部に通知
             OnFireBullet?.Invoke(this, type, target);
+        }
+
+        /// <summary>
+        /// 戦車が破壊された際に呼ばれる処理
+        /// 入力・攻撃・移動を完全に停止する
+        /// </summary>
+        private void HandleBroken()
+        {
+            // 破壊済みの場合は処理なし
+            if (_isBroken)
+            {
+                return;
+            }
+
+            // 機能停止フラグを立てる
+            _isBroken = true;
+
+            // 移動予定を現在位置に固定
+            NextPosition = transform.position;
+            NextRotation = transform.rotation;
+
+            // ターゲットアイコンを非表示
+            ChangeTargetIcon(false);
+
+            OnBroken?.Invoke(TankId);
         }
     }
 }

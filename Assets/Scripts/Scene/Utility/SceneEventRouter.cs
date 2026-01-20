@@ -6,14 +6,15 @@
 // 概要     : シーン内イベントの仲介を行う
 // ======================================================
 
-using System;
-using UnityEngine;
+using CollisionSystem.Data;
 using InputSystem.Data;
 using ItemSystem.Data;
 using SceneSystem.Data;
+using System;
 using TankSystem.Manager;
+using UnityEngine;
 using WeaponSystem.Data;
-using CollisionSystem.Data;
+using static UnityEngine.Rendering.VirtualTexturing.Debugging;
 
 namespace SceneSystem.Utility
 {
@@ -82,6 +83,7 @@ namespace SceneSystem.Utility
                 _context.PlayerTank.OnOptionButtonPressed += HandleOptionButtonPressed;
                 _context.PlayerTank.OnFireBullet += HandleFireBullet;
                 _context.PlayerTank.DurabilityManager.OnDurabilityChanged += HandleDurabilityChanged;
+                _context.PlayerTank.OnBroken += HandleBroken;
             }
 
             // --------------------------------------------------
@@ -93,6 +95,7 @@ namespace SceneSystem.Utility
                 for (int i = 0; i < _context.EnemyTanks.Length; i++)
                 {
                     _context.EnemyTanks[i].OnFireBullet += HandleFireBullet;
+                    _context.EnemyTanks[i].OnBroken += HandleBroken;
                 }
             }
 
@@ -149,6 +152,7 @@ namespace SceneSystem.Utility
                 _context.PlayerTank.OnOptionButtonPressed -= HandleOptionButtonPressed;
                 _context.PlayerTank.OnFireBullet -= HandleFireBullet;
                 _context.PlayerTank.DurabilityManager.OnDurabilityChanged -= HandleDurabilityChanged;
+                _context.PlayerTank.OnBroken -= HandleBroken;
             }
 
             // --------------------------------------------------
@@ -159,6 +163,7 @@ namespace SceneSystem.Utility
                 for (int i = 0; i < _context.EnemyTanks.Length; i++)
                 {
                     _context.EnemyTanks[i].OnFireBullet -= HandleFireBullet;
+                    _context.EnemyTanks[i].OnBroken -= HandleBroken;
                 }
             }
 
@@ -255,6 +260,14 @@ namespace SceneSystem.Utility
         private void HandleDurabilityChanged()
         {
             _context.UIManager.NotifyDurabilityChanged();
+        }
+
+        /// <summary>
+        /// 戦車破壊時の処理を行うハンドラ
+        /// </summary>
+        private void HandleBroken(int TankId)
+        {
+            _context.UIManager.NotifyBrokenTanks(TankId);
         }
 
         // --------------------------------------------------

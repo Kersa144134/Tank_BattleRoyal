@@ -200,9 +200,40 @@ namespace UISystem.Manager
         public void NotifyItemAcquired(in string itemName)
         {
             // ログに表示するメッセージを作成
-            string logMessage = $"{itemName}を獲得";
+            string logMessage = $"{itemName} を獲得";
 
             // ログ表示
+            _logRotationUIController.AddLog(logMessage);
+        }
+
+        /// <summary>
+        /// 戦車撃破時のログ表示を行う
+        /// </summary>
+        /// <param name="tankId">撃破された戦車の ID</param>
+        public void NotifyBrokenTanks(in int tankId)
+        {
+            int displayTankId;
+            string logMessage;
+
+            // 自身の戦車（ID = 1）の場合
+            if (tankId == 1)
+            {
+                displayTankId = tankId;
+
+                // ログに表示するメッセージを生成
+                logMessage = $"撃破された";
+            }
+            // 敵戦車の場合
+            else
+            {
+                // 自身を除外するため -1
+                displayTankId = tankId - 1;
+
+                // ログに表示するメッセージを生成
+                logMessage = $"戦車{displayTankId} を撃破";
+            }
+
+            // ログ UI に追加
             _logRotationUIController.AddLog(logMessage);
         }
     }

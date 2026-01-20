@@ -7,11 +7,9 @@
 //            BaseTankRootManager を継承し、入力処理をプレイヤー操作に差し替える
 // ======================================================
 
+using UnityEngine;
 using InputSystem.Data;
 using InputSystem.Manager;
-using TankSystem.Service;
-using UnityEngine;
-using VisionSystem.Calculator;
 
 namespace TankSystem.Manager
 {
