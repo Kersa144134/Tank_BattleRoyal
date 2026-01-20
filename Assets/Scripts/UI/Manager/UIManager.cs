@@ -25,6 +25,14 @@ namespace UISystem.Manager
         // ======================================================
 
         // --------------------------------------------------
+        // フェード
+        // --------------------------------------------------
+        [Header("画面フェード")]
+        /// <summary>画面フェード実行クラス</summary>
+        [SerializeField]
+        private Fade fade;
+
+        // --------------------------------------------------
         // プレイヤー参照
         // --------------------------------------------------
         [Header("プレイヤー戦車")]
@@ -160,13 +168,23 @@ namespace UISystem.Manager
             {
                 _bulletIconSlotRotationUIController.StartRouletteRotation();
             }
-            if (Input.GetKeyUp(KeyCode.Space))
+            else if (Input.GetKeyUp(KeyCode.Space))
             {
                 _bulletIconSlotRotationUIController.StopRouletteRotation();
             }
+
             if (Input.GetKeyUp(KeyCode.Return))
             {
                 _logRotationUIController.AddLog("デバッグ");
+            }
+
+            if (Input.GetKeyDown(KeyCode.Tab))
+            {
+                fade.FadeIn(0.5f);
+            }
+            else if (Input.GetKeyUp(KeyCode.Tab))
+            {
+                fade.FadeOut(0.5f);
             }
         }
 
