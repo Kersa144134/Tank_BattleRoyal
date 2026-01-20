@@ -17,6 +17,22 @@ namespace UISystem.Controller
     public sealed class LogRotationUIController
     {
         // ======================================================
+        // プライベートクラス
+        // ======================================================
+
+        /// <summary>
+        /// 表示中ログの管理情報
+        /// </summary>
+        private sealed class LogEntry
+        {
+            /// <summary>表示対象の RectTransform</summary>
+            public RectTransform Rect;
+
+            /// <summary>キューに追加された時刻</summary>
+            public float AddedTime;
+        }
+        
+        // ======================================================
         // 列挙体
         // ======================================================
 
@@ -56,6 +72,9 @@ namespace UISystem.Controller
         /// <summary>ログの移動速度</summary>
         private const float MOVE_SPEED = 2000.0f;
 
+        /// <summary>ログが表示され続ける秒数</summary>
+        private const float LOG_VISIBLE_DURATION = 5.0f;
+
         // ======================================================
         // フィールド
         // ======================================================
@@ -72,8 +91,8 @@ namespace UISystem.Controller
         /// <summary>ログ表示用ターゲット座標配列（0 は非表示行）</summary>
         private Vector2[] _targetPositions;
 
-        /// <summary>表示中ログの RectTransform キュー</summary>
-        private readonly Queue<RectTransform> _logQueue;
+        /// <summary>表示中ログの管理キュー</summary>
+        private readonly Queue<LogEntry> _logQueue;
 
         /// <summary>次に使用する TextMeshPro の循環インデックス</summary>
         private int _currentTextIndex;
@@ -94,7 +113,7 @@ namespace UISystem.Controller
             _verticalDirection = verticalDirection;
             _insertDirection = insertDirection;
 
-            _logQueue = new Queue<RectTransform>();
+            _logQueue = new Queue<LogEntry>();
 
             _currentTextIndex = 0;
             _logSerialNumber = 0;
@@ -113,7 +132,8 @@ namespace UISystem.Controller
         /// <summary>
         /// 新しいログを追加する
         /// </summary>
-        public void AddLog()
+        /// <param name="logMessage">表示するログ内容</param>
+        public void AddLog(in string logMessage)
         {
             // 循環利用する TextMeshPro を取得
             TextMeshProUGUI logText = GetNextLogText();
@@ -121,8 +141,8 @@ namespace UISystem.Controller
             // ログ番号を更新
             _logSerialNumber++;
 
-            // 仮表示としてログ番号を設定
-            logText.text = $"Log {_logSerialNumber}";
+            // ログ内容を設定
+            logText.text = $"{_logSerialNumber}: {logMessage}";
 
             // RectTransform を取得
             RectTransform rect = logText.rectTransform;
@@ -142,7 +162,6 @@ namespace UISystem.Controller
 
             int targetLineIndex = _logQueue.Count + 1;
 
-            // 念のため最大表示行数でクランプ
             if (targetLineIndex > VISIBLE_LINE_COUNT)
             {
                 targetLineIndex = VISIBLE_LINE_COUNT;
@@ -154,24 +173,17 @@ namespace UISystem.Controller
             // X は画面外、Y は目標行へ瞬間移動
             rect.anchoredPosition = new Vector2(startX, startY);
 
-            // ログキューに追加
-            _logQueue.Enqueue(rect);
-
             // --------------------------------------------------
-            // 表示可能行数を超えた場合の排出処理
+            // ログエントリを生成してキューに追加
             // --------------------------------------------------
 
-            while (_logQueue.Count > VISIBLE_LINE_COUNT)
+            LogEntry entry = new LogEntry
             {
-                RectTransform removed = _logQueue.Dequeue();
+                Rect = rect,
+                AddedTime = Time.time
+            };
 
-                // 現在の X 座標を保持
-                float currentX = removed.anchoredPosition.x;
-
-                // Y のみ非表示行へ瞬間移動
-                removed.anchoredPosition =
-                    new Vector2(currentX, _targetPositions[0].y);
-            }
+            _logQueue.Enqueue(entry);
         }
 
         /// <summary>
@@ -180,11 +192,41 @@ namespace UISystem.Controller
         public void Update(in float deltaTime)
         {
             float moveDelta = MOVE_SPEED * deltaTime;
+            float currentTime = Time.time;
+
+            // --------------------------------------------------
+            // 表示時間超過ログの自動排出
+            // --------------------------------------------------
+
+            while (_logQueue.Count > 0)
+            {
+                LogEntry oldest = _logQueue.Peek();
+
+                if (currentTime - oldest.AddedTime < LOG_VISIBLE_DURATION)
+                {
+                    break;
+                }
+
+                LogEntry removed = _logQueue.Dequeue();
+
+                // 現在の X 座標を保持
+                float currentX = removed.Rect.anchoredPosition.x;
+
+                // Y のみ非表示行へ瞬間移動
+                removed.Rect.anchoredPosition =
+                    new Vector2(currentX, _targetPositions[0].y);
+            }
+
+            // --------------------------------------------------
+            // 表示中ログの補間移動
+            // --------------------------------------------------
 
             int index = 1;
 
-            foreach (RectTransform rect in _logQueue)
+            foreach (LogEntry entry in _logQueue)
             {
+                RectTransform rect = entry.Rect;
+
                 // 対応するターゲット座標を取得
                 Vector2 target = _targetPositions[index];
 

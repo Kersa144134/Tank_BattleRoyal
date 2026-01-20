@@ -167,7 +167,7 @@ namespace UISystem.Manager
 
             if (Input.GetKeyUp(KeyCode.Return))
             {
-                _logRotationUIController.AddLog();
+                _logRotationUIController.AddLog("XXXXX");
             }
         }
 

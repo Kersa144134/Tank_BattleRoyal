@@ -34,6 +34,9 @@ namespace ItemSystem.Data
         // フィールド
         // ======================================================
 
+        /// <summary>アイテム名</summary>
+        [SerializeField] protected string itemName;
+
         /// <summary>アイテム種別</summary>
         [SerializeField] protected ItemType itemType;
 
@@ -41,6 +44,18 @@ namespace ItemSystem.Data
         // プロパティ
         // ======================================================
 
+        /// <summary>
+        /// アイテム名
+        /// </summary>
+        public string Name
+        {
+            get
+            {
+                // アイテム名を返す
+                return itemName;
+            }
+        }
+        
         /// <summary>
         /// アイテム種別
         /// </summary>
