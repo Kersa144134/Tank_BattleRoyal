@@ -164,10 +164,9 @@ namespace UISystem.Manager
             {
                 _bulletIconSlotRotationUIController.StopRouletteRotation();
             }
-
             if (Input.GetKeyUp(KeyCode.Return))
             {
-                _logRotationUIController.AddLog("XXXXX");
+                _logRotationUIController.AddLog("デバッグ");
             }
         }
 
@@ -186,12 +185,25 @@ namespace UISystem.Manager
         /// <summary>
         /// 耐久値変更時の処理を行うハンドラ
         /// </summary>
-        public void HandleDurabilityChanged()
+        public void NotifyDurabilityChanged()
         {
             _durabilityBarWidthUIController.NotifyValueChanged(
                 _playerTankRootManager.DurabilityManager.MaxDurability,
                 _playerTankRootManager.DurabilityManager.CurrentDurability
             );
+        }
+
+        /// <summary>
+        /// アイテム獲得時のログ表示を行う
+        /// </summary>
+        /// <param name="itemName">獲得したアイテム名</param>
+        public void NotifyItemAcquired(in string itemName)
+        {
+            // ログに表示するメッセージを作成
+            string logMessage = $"{itemName}を獲得";
+
+            // ログ表示
+            _logRotationUIController.AddLog(logMessage);
         }
     }
 }

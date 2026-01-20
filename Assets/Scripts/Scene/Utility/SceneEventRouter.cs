@@ -254,7 +254,7 @@ namespace SceneSystem.Utility
         /// </summary>
         private void HandleDurabilityChanged()
         {
-            _context.UIManager.HandleDurabilityChanged();
+            _context.UIManager.NotifyDurabilityChanged();
         }
 
         // --------------------------------------------------
@@ -398,15 +398,14 @@ namespace SceneSystem.Utility
                     param.ParamType,
                     param.Value
                 );
-
-                return;
             }
 
             // ïêëïÉAÉCÉeÉÄ
             if (itemSlot.ItemData is WeaponItemData weapon)
             {
-                return;
             }
+
+            _context.UIManager.NotifyItemAcquired(itemSlot.ItemData.Name);
         }
     }
 }

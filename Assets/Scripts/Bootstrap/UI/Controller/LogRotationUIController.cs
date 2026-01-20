@@ -31,7 +31,7 @@ namespace UISystem.Controller
             /// <summary>キューに追加された時刻</summary>
             public float AddedTime;
         }
-        
+
         // ======================================================
         // 列挙体
         // ======================================================
@@ -73,7 +73,7 @@ namespace UISystem.Controller
         private const float MOVE_SPEED = 2000.0f;
 
         /// <summary>ログが表示され続ける秒数</summary>
-        private const float LOG_VISIBLE_DURATION = 5.0f;
+        private const float LOG_VISIBLE_DURATION = 3.0f;
 
         // ======================================================
         // フィールド
@@ -93,12 +93,12 @@ namespace UISystem.Controller
 
         /// <summary>表示中ログの管理キュー</summary>
         private readonly Queue<LogEntry> _logQueue;
+        
+        /// <summary>非表示行へ補間移動中のログ管理リスト</summary>
+        private readonly List<RectTransform> _exitingLogs = new List<RectTransform>();
 
         /// <summary>次に使用する TextMeshPro の循環インデックス</summary>
         private int _currentTextIndex;
-
-        /// <summary>ログ通し番号（仮表示用）</summary>
-        private int _logSerialNumber;
 
         // ======================================================
         // コンストラクタ
@@ -116,12 +116,11 @@ namespace UISystem.Controller
             _logQueue = new Queue<LogEntry>();
 
             _currentTextIndex = 0;
-            _logSerialNumber = 0;
 
             // ターゲット座標を初期化
             InitializeTargetPositions();
 
-            // すべてのログテキストを非表示行へ初期配置
+            // 全ログを非表示行へ初期配置
             InitializeLogTextPositions();
         }
 
@@ -132,94 +131,90 @@ namespace UISystem.Controller
         /// <summary>
         /// 新しいログを追加する
         /// </summary>
-        /// <param name="logMessage">表示するログ内容</param>
         public void AddLog(in string logMessage)
         {
-            // 循環利用する TextMeshPro を取得
             TextMeshProUGUI logText = GetNextLogText();
-
-            // ログ番号を更新
-            _logSerialNumber++;
-
-            // ログ内容を設定
-            logText.text = $"{_logSerialNumber}: {logMessage}";
-
-            // RectTransform を取得
             RectTransform rect = logText.rectTransform;
 
-            // --------------------------------------------------
-            // 挿入方向に応じた初期 X 座標を算出
-            // --------------------------------------------------
-
-            float startX =
-                (_insertDirection == InsertDirection.Left)
-                    ? LOG_BASE_POSITION_X - INSERT_OFFSET_X
-                    : LOG_BASE_POSITION_X + INSERT_OFFSET_X;
+            // 表示テキストを設定
+            logText.text = logMessage;
 
             // --------------------------------------------------
+            // 挿入方向に応じた初期座標を算出、配置
+            // --------------------------------------------------
+            float startX = GetInsertStartX();
+
             // 追加後に配置される表示行インデックスを算出
-            // --------------------------------------------------
-
-            int targetLineIndex = _logQueue.Count + 1;
-
-            if (targetLineIndex > VISIBLE_LINE_COUNT)
-            {
-                targetLineIndex = VISIBLE_LINE_COUNT;
-            }
-
-            // 対応する目標 Y 座標を取得
+            int targetLineIndex = GetTargetLineIndex();
             float startY = _targetPositions[targetLineIndex].y;
 
-            // X は画面外、Y は目標行へ瞬間移動
+            // 初期位置へ配置
             rect.anchoredPosition = new Vector2(startX, startY);
 
             // --------------------------------------------------
-            // ログエントリを生成してキューに追加
+            // 管理情報を生成してキューに追加
             // --------------------------------------------------
-
-            LogEntry entry = new LogEntry
-            {
-                Rect = rect,
-                AddedTime = Time.time
-            };
-
-            _logQueue.Enqueue(entry);
+            _logQueue.Enqueue(
+                new LogEntry
+                {
+                    Rect = rect,
+                    AddedTime = Time.time
+                });
         }
 
         /// <summary>
-        /// 毎フレーム呼び出してログを線形補間移動させる
+        /// 毎フレーム呼び出してログを制御する
         /// </summary>
         public void Update(in float deltaTime)
         {
-            float moveDelta = MOVE_SPEED * deltaTime;
-            float currentTime = Time.time;
+            ProcessLogRemoval();
+            UpdateLogPositions(deltaTime);
+            UpdateExitingLogPositions(deltaTime);
+        }
 
-            // --------------------------------------------------
-            // 表示時間超過ログの自動排出
-            // --------------------------------------------------
+        // ======================================================
+        // プライベートメソッド
+        // ======================================================
+
+        /// <summary>
+        /// ログ排出条件を満たす要素を非表示行へ移動させる
+        /// </summary>
+        private void ProcessLogRemoval()
+        {
+            float currentTime = Time.time;
 
             while (_logQueue.Count > 0)
             {
                 LogEntry oldest = _logQueue.Peek();
 
-                if (currentTime - oldest.AddedTime < LOG_VISIBLE_DURATION)
+                // 表示時間超過判定
+                bool isExpiredByTime =
+                    currentTime - oldest.AddedTime >= LOG_VISIBLE_DURATION;
+
+                // 行数超過判定
+                bool isExpiredByLineCount =
+                    _logQueue.Count > VISIBLE_LINE_COUNT;
+
+                // 排出条件を満たさない場合は終了
+                if (!isExpiredByTime && !isExpiredByLineCount)
                 {
                     break;
                 }
 
+                // 排出対象を取得
                 LogEntry removed = _logQueue.Dequeue();
 
-                // 現在の X 座標を保持
-                float currentX = removed.Rect.anchoredPosition.x;
-
-                // Y のみ非表示行へ瞬間移動
-                removed.Rect.anchoredPosition =
-                    new Vector2(currentX, _targetPositions[0].y);
+                // 非表示行へ補間移動させるため退場リストへ追加
+                _exitingLogs.Add(removed.Rect);
             }
+        }
 
-            // --------------------------------------------------
-            // 表示中ログの補間移動
-            // --------------------------------------------------
+        /// <summary>
+        /// 表示中ログをターゲット座標へ補間移動させる
+        /// </summary>
+        private void UpdateLogPositions(in float deltaTime)
+        {
+            float moveDelta = MOVE_SPEED * deltaTime;
 
             int index = 1;
 
@@ -230,57 +225,109 @@ namespace UISystem.Controller
                 // 対応するターゲット座標を取得
                 Vector2 target = _targetPositions[index];
 
-                // 現在位置を取得
-                Vector2 current = rect.anchoredPosition;
-
-                // X方向は固定位置へ線形補間
-                float nextX = Mathf.MoveTowards(current.x, LOG_BASE_POSITION_X, moveDelta);
-
-                // Y方向はターゲット行へ線形補間
-                float nextY = Mathf.MoveTowards(current.y, target.y, moveDelta);
-
-                // 座標を更新
-                rect.anchoredPosition = new Vector2(nextX, nextY);
+                // 補間移動処理
+                MoveTowardsTarget(rect, target, moveDelta);
 
                 index++;
             }
         }
 
-        // ======================================================
-        // プライベートメソッド
-        // ======================================================
+        /// <summary>
+        /// 非表示行へ移動中のログを補間更新する
+        /// </summary>
+        private void UpdateExitingLogPositions(in float deltaTime)
+        {
+            float moveDelta = MOVE_SPEED * deltaTime;
+            Vector2 hiddenTarget = _targetPositions[0];
+
+            for (int i = _exitingLogs.Count - 1; i >= 0; i--)
+            {
+                RectTransform rect = _exitingLogs[i];
+
+                Vector2 current = rect.anchoredPosition;
+
+                float nextY =
+                    Mathf.MoveTowards(current.y, hiddenTarget.y, moveDelta);
+
+                rect.anchoredPosition =
+                    new Vector2(current.x, nextY);
+
+                // 非表示行に到達したら管理対象から除外
+                if (Mathf.Approximately(nextY, hiddenTarget.y))
+                {
+                    _exitingLogs.RemoveAt(i);
+                }
+            }
+        }
 
         /// <summary>
-        /// ターゲット座標配列を初期化する
-        /// 0 番は非表示行
+        /// 指定 RectTransform をターゲット座標へ線形補間移動させる
+        /// </summary>
+        private void MoveTowardsTarget(
+            in RectTransform rect,
+            in Vector2 target,
+            in float moveDelta)
+        {
+            Vector2 current = rect.anchoredPosition;
+
+            float nextX =
+                Mathf.MoveTowards(current.x, target.x, moveDelta);
+
+            float nextY =
+                Mathf.MoveTowards(current.y, target.y, moveDelta);
+
+            rect.anchoredPosition = new Vector2(nextX, nextY);
+        }
+
+        /// <summary>
+        /// ログ挿入時に使用する初期 X 座標を取得する
+        /// </summary>
+        private float GetInsertStartX()
+        {
+            // --------------------------------------------------
+            // 左挿入の場合、負方向にオフセットした位置を初期位置に設定
+            // 右挿入の場合、正方向にオフセットした位置を初期位置に設定
+            // --------------------------------------------------
+            return
+                (_insertDirection == InsertDirection.Left)
+                    ? LOG_BASE_POSITION_X - INSERT_OFFSET_X
+                    : LOG_BASE_POSITION_X + INSERT_OFFSET_X;
+        }
+
+        /// <summary>
+        /// 現在のキュー状態から表示行インデックスを算出する
+        /// </summary>
+        private int GetTargetLineIndex()
+        {
+            int index = _logQueue.Count + 1;
+
+            if (index > VISIBLE_LINE_COUNT)
+            {
+                index = VISIBLE_LINE_COUNT;
+            }
+
+            return index;
+        }
+
+        /// <summary>
+        /// ログ表示に使用するターゲット座標配列を初期化する
         /// </summary>
         private void InitializeTargetPositions()
         {
-            // 非表示行 + 表示行数分の要素数を算出
             int totalLineCount = VISIBLE_LINE_COUNT + 1;
-
-            // ターゲット座標配列を生成
             _targetPositions = new Vector2[totalLineCount];
 
-            // --------------------------------------------------
-            // 非表示行（退場用）の Y 座標を決定
-            // 表示方向と逆側に 1 行分ずらす
-            // --------------------------------------------------
-
+            // 非表示行の Y 座標を算出
             float hiddenLineY =
                 (_verticalDirection == VerticalDirection.Negative)
                     ? LOG_BASE_FIRST_POSITION_Y + LINE_SPACING_Y
                     : LOG_BASE_FIRST_POSITION_Y - LINE_SPACING_Y;
 
-            // 非表示行（index 0）
-            _targetPositions[0] = new Vector2(
-                LOG_BASE_POSITION_X,
-                hiddenLineY);
+            // 非表示行のターゲット座標を設定
+            _targetPositions[0] =
+                new Vector2(LOG_BASE_POSITION_X, hiddenLineY);
 
-            // --------------------------------------------------
-            // 表示行（index 1 ～）
-            // --------------------------------------------------
-
+            // 表示行（index 1 ～）のターゲット座標を設定
             for (int i = 1; i < totalLineCount; i++)
             {
                 // 表示1行目からのオフセット量を算出
@@ -292,32 +339,30 @@ namespace UISystem.Controller
                         ? LOG_BASE_FIRST_POSITION_Y - offset
                         : LOG_BASE_FIRST_POSITION_Y + offset;
 
-                // ターゲット座標を設定
-                _targetPositions[i] = new Vector2(
-                    LOG_BASE_POSITION_X,
-                    y);
+                // 表示行のターゲット座標を設定
+                _targetPositions[i] =
+                    new Vector2(LOG_BASE_POSITION_X, y);
             }
         }
+
 
         /// <summary>
         /// すべてのログテキストを非表示行へ初期配置する
         /// </summary>
         private void InitializeLogTextPositions()
         {
+            // 非表示行のターゲット座標を取得
             Vector2 hiddenPosition = _targetPositions[0];
 
+            // すべての TextMeshPro を非表示行へ瞬間移動
             for (int i = 0; i < _logTexts.Length; i++)
             {
-                // RectTransform を取得
-                RectTransform rect = _logTexts[i].rectTransform;
-
-                // X / Y ともに非表示行へ瞬間移動
-                rect.anchoredPosition = hiddenPosition;
+                _logTexts[i].rectTransform.anchoredPosition = hiddenPosition;
             }
         }
 
         /// <summary>
-        /// 次に使用する TextMeshPro を循環取得する
+        /// 次に使用する TextMeshPro を取得する
         /// </summary>
         private TextMeshProUGUI GetNextLogText()
         {
@@ -325,6 +370,7 @@ namespace UISystem.Controller
 
             _currentTextIndex++;
 
+            // 循環処理
             if (_currentTextIndex >= _logTexts.Length)
             {
                 _currentTextIndex = 0;
