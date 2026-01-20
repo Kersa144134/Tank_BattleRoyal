@@ -8,6 +8,7 @@
 
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 using SceneSystem.Interface;
 using TankSystem.Manager;
 using UISystem.Controller;
@@ -63,16 +64,41 @@ namespace UISystem.Manager
         [SerializeField]
         private SlotRotationUIController.RotationSign _bulletIconRotationSign;
 
+        // --------------------------------------------------
+        // ログ
+        // --------------------------------------------------
+        [Header("ログ")]
+        /// <summary>弾丸アイコン Image 配列</summary>
+        [SerializeField]
+        private TextMeshProUGUI[] _logTexts;
+        
+        /// <summary>ログの縦方向表示方向</summary>
+        [SerializeField]
+        private LogRotationUIController.VerticalDirection _logVerticalDirection;
+
+        /// <summary>ログの挿入方向</summary>
+        [SerializeField]
+        private LogRotationUIController.InsertDirection _logInsertDirection;
+
         // ======================================================
         // コンポーネント参照
         // ======================================================
 
-        /// <summary>耐久値バー横幅制御コントローラー</summary>
-        private ValueBarWidthUIController _durabilityBarWidthUIController;
+        // --------------------------------------------------
+        // UI
+        // --------------------------------------------------
+        /// <summary>ログ表示 UI コントローラー</summary>
+        private LogRotationUIController _logRotationUIController;
 
-        /// <summary>弾丸アイコンスロット回転 UI コントローラー</summary>
+        /// <summary>弾丸アイコンスロット UI コントローラー</summary>
         private SlotRotationUIController _bulletIconSlotRotationUIController;
 
+        /// <summary>耐久値バー横幅 UI コントローラー</summary>
+        private ValueBarWidthUIController _durabilityBarWidthUIController;
+
+        // --------------------------------------------------
+        // データ参照
+        // --------------------------------------------------
         /// <summary>プレイヤー戦車の耐久力マネージャー</summary>
         private TankDurabilityManager _playerDurabilityManager;
 
@@ -89,7 +115,6 @@ namespace UISystem.Manager
                 _playerDurabilityManager =
                     _playerTankRootManager.DurabilityManager;
 
-                // 耐久値バー横幅制御コントローラーを生成
                 _durabilityBarWidthUIController =
                     new ValueBarWidthUIController(
                         _maxDurabilityBarImage,
@@ -100,12 +125,18 @@ namespace UISystem.Manager
                     );
             }
 
-            // スロット回転 UI コントローラーを生成する
             _bulletIconSlotRotationUIController =
                 new SlotRotationUIController(
                     _bulletIconImages,
                     _bulletIconLayoutDirection,
                     _bulletIconRotationSign
+                );
+
+            _logRotationUIController =
+                new LogRotationUIController(
+                    _logTexts,
+                    _logVerticalDirection,
+                    _logInsertDirection
                 );
         }
 
@@ -120,6 +151,7 @@ namespace UISystem.Manager
             }
 
             _bulletIconSlotRotationUIController.Update(deltaTime);
+            _logRotationUIController.Update(deltaTime);
 
             // --------------------------------------------------
             // デバッグ用（いずれ削除予定）
@@ -131,6 +163,11 @@ namespace UISystem.Manager
             if (Input.GetKeyUp(KeyCode.Space))
             {
                 _bulletIconSlotRotationUIController.StopRouletteRotation();
+            }
+
+            if (Input.GetKeyUp(KeyCode.Return))
+            {
+                _logRotationUIController.AddLog();
             }
         }
 
