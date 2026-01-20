@@ -121,6 +121,9 @@ namespace UISystem.Manager
 
             _bulletIconSlotRotationUIController.Update(deltaTime);
 
+            // --------------------------------------------------
+            // デバッグ用（いずれ削除予定）
+            // --------------------------------------------------
             if (Input.GetKeyDown(KeyCode.Space))
             {
                 _bulletIconSlotRotationUIController.StartRouletteRotation();

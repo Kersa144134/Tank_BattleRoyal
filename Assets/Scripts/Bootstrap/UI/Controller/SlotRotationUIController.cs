@@ -7,6 +7,7 @@
 //            1回転処理とルーレット回転処理を提供する
 // ======================================================
 
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -74,6 +75,15 @@ namespace UISystem.Controller
         private float _maxTargetCoord;
 
         // ======================================================
+        // イベント
+        // ======================================================
+
+        /// <summary>
+        /// 目標座標 (0,0) を参照するスロットが確定した際に通知される
+        /// </summary>
+        public event Action<int> OnCenterSlotDecided;
+        
+        // ======================================================
         // コンストラクタ
         // ======================================================
 
@@ -112,23 +122,25 @@ namespace UISystem.Controller
         // --------------------------------------------------
         /// <summary>
         /// スロットを1ステップ分回転させる
-        /// ターゲット参照のみを更新し、実移動は Update で行う
         /// </summary>
         public void Rotate()
         {
             int slotCount = _slotImages.Length;
+
+            // 参照インデックスを 1 ステップ分更新
+            ShiftTargetIndexOneStep();
 
             for (int i = 0; i < slotCount; i++)
             {
                 // 対象スロットの RectTransform を取得
                 RectTransform rect = _slotImages[i].rectTransform;
 
-                // 回転方向に応じて参照インデックスを循環シフト
-                _slotTargetIndex[i] = (_slotTargetIndex[i] - 1 + slotCount) % slotCount;
-
-                // クランプ判定
+                // 開始時点の位置関係からクランプ無効判定を更新
                 EvaluateIgnoreClamp(i, rect);
             }
+
+            // 回転結果確定を通知
+            NotifyCenterSlotDecided();
         }
 
         // --------------------------------------------------
@@ -152,20 +164,35 @@ namespace UISystem.Controller
 
         /// <summary>
         /// ルーレット回転を停止する
-        /// 停止時点でランダムな参照インデックスを再構築する
+        /// 指定された要素番号が有効な場合は、その要素が中央に来るよう確定する
+        /// 無効値または指定なしの場合は 1 回転処理と同等の挙動とする
         /// </summary>
-        public void StopRouletteRotation()
+        public void StopRouletteRotation(int? centerSlotIndex = null)
         {
+            // ルーレット回転状態を解除
             _isRouletteRotating = false;
+
             int slotCount = _slotImages.Length;
 
-            // 要素0が参照するターゲットをランダムに決定
-            _slotTargetIndex[0] = Random.Range(0, slotCount);
-
-            // 残りのスロットは順番に参照インデックスを構築
-            for (int i = 1; i < slotCount; i++)
+            // 指定が有効な場合
+            if (centerSlotIndex.HasValue &&
+                centerSlotIndex.Value >= 0 &&
+                centerSlotIndex.Value < slotCount)
             {
-                _slotTargetIndex[i] = (_slotTargetIndex[i - 1] + 1) % slotCount;
+                // 要素0が参照するターゲットを指定インデックスに設定
+                _slotTargetIndex[0] = centerSlotIndex.Value;
+
+                // 残りのスロットも順番に設定
+                for (int i = 1; i < slotCount; i++)
+                {
+                    _slotTargetIndex[i] = (_slotTargetIndex[i - 1] + 1) % slotCount;
+                }
+            }
+            // 指定なし or 指定が無効な場合
+            else
+            {
+                // 参照インデックスを 1 ステップ分更新 (Rotate と同一処理)
+                ShiftTargetIndexOneStep();
             }
 
             // クランプ判定
@@ -173,6 +200,9 @@ namespace UISystem.Controller
             {
                 EvaluateIgnoreClamp(i, _slotImages[i].rectTransform);
             }
+
+            // 回転結果確定を通知
+            NotifyCenterSlotDecided();
         }
 
         // --------------------------------------------------
@@ -291,23 +321,18 @@ namespace UISystem.Controller
         }
 
         /// <summary>
-        /// RectTransform から主軸方向の現在座標を取得する
+        /// 全スロットの参照インデックスを 1 ステップ分循環シフトする
+        /// 実座標は変更せず、ターゲット参照のみを更新する
         /// </summary>
-        private float GetCurrentCoord(in RectTransform rect)
+        private void ShiftTargetIndexOneStep()
         {
-            return (_layoutDirection == LayoutDirection.Horizontal)
-                ? rect.anchoredPosition.x
-                : rect.anchoredPosition.y;
-        }
+            int slotCount = _slotImages.Length;
 
-        /// <summary>
-        /// 指定インデックスに対応するターゲット座標を取得する
-        /// </summary>
-        private float GetTargetCoord(in int slotIndex)
-        {
-            return (_layoutDirection == LayoutDirection.Horizontal)
-                ? _targetPositions[slotIndex].x
-                : _targetPositions[slotIndex].y;
+            for (int i = 0; i < slotCount; i++)
+            {
+                // 現在の参照インデックスを 1 つ前に循環シフト
+                _slotTargetIndex[i] = (_slotTargetIndex[i] - 1 + slotCount) % slotCount;
+            }
         }
 
         /// <summary>
@@ -333,6 +358,26 @@ namespace UISystem.Controller
                 // クランプ有効化
                 _isIgnoringClamp[slotIndex] = false;
             }
+        }
+
+        /// <summary>
+        /// RectTransform から主軸方向の現在座標を取得する
+        /// </summary>
+        private float GetCurrentCoord(in RectTransform rect)
+        {
+            return (_layoutDirection == LayoutDirection.Horizontal)
+                ? rect.anchoredPosition.x
+                : rect.anchoredPosition.y;
+        }
+
+        /// <summary>
+        /// 指定インデックスに対応するターゲット座標を取得する
+        /// </summary>
+        private float GetTargetCoord(in int slotIndex)
+        {
+            return (_layoutDirection == LayoutDirection.Horizontal)
+                ? _targetPositions[slotIndex].x
+                : _targetPositions[slotIndex].y;
         }
 
         /// <summary>
@@ -392,6 +437,39 @@ namespace UISystem.Controller
             }
 
             return coord;
+        }
+
+        /// <summary>
+        /// 現在の参照状態を元に中央スロット決定イベントを通知する
+        /// </summary>
+        private void NotifyCenterSlotDecided()
+        {
+            int centerIndex = GetCenterSlotIndexInternal();
+
+            if (centerIndex >= 0)
+            {
+                OnCenterSlotDecided?.Invoke(centerIndex);
+            }
+        }
+
+        /// <summary>
+        /// 目標座標 (0,0) を参照しているスロットの要素番号を取得する
+        /// </summary>
+        private int GetCenterSlotIndexInternal()
+        {
+            int slotCount = _slotTargetIndex.Length;
+
+            for (int i = 0; i < slotCount; i++)
+            {
+                float targetCoord = GetTargetCoord(_slotTargetIndex[i]);
+
+                if (Mathf.Approximately(targetCoord, 0.0f))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
         }
     }
 }
