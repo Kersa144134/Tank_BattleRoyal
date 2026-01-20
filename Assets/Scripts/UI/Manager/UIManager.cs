@@ -120,6 +120,15 @@ namespace UISystem.Manager
             }
 
             _bulletIconSlotRotationUIController.Update(deltaTime);
+
+            if (Input.GetKeyDown(KeyCode.Space))
+            {
+                _bulletIconSlotRotationUIController.StartRouletteRotation();
+            }
+            if (Input.GetKeyUp(KeyCode.Space))
+            {
+                _bulletIconSlotRotationUIController.StopRouletteRotation();
+            }
         }
 
         // ======================================================

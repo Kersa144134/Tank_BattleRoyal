@@ -70,11 +70,11 @@ namespace UISystem.Controller
         /// UI バー制御クラスを生成し初期値のみを保持する
         /// </summary>
         public ValueBarWidthUIController(
-            Image maxBar,
-            Image currentBar,
-            Image diffBar,
-            float initialMaxValue,
-            float initialCurrentValue)
+            in Image maxBar,
+            in Image currentBar,
+            in Image diffBar,
+            in float initialMaxValue,
+            in float initialCurrentValue)
         {
             // UI 参照を保持する
             _maxBar = maxBar;
@@ -94,8 +94,8 @@ namespace UISystem.Controller
         /// 値変化を通知する
         /// </summary>
         public void NotifyValueChanged(
-            float newMaxValue,
-            float newCurrentValue)
+            in float newMaxValue,
+            in float newCurrentValue)
         {
             // 最新の値を内部に保持する
             _currentMaxValue = newMaxValue;
@@ -105,7 +105,7 @@ namespace UISystem.Controller
         /// <summary>
         /// 毎フレーム呼び出して補間処理を進行させる
         /// </summary>
-        public void Update(float deltaTime)
+        public void Update(in float deltaTime)
         {
             // --------------------------------------------------
             // 最大値バー
@@ -258,11 +258,11 @@ namespace UISystem.Controller
         /// 残距離に対する追従倍率と最低速度で目標値へ近づける
         /// </summary>
         private float MoveTowardsByFollowRate(
-            float current,
-            float target,
-            float followRate,
-            float minSpeedPerSecond,
-            float deltaTime)
+            in float current,
+            in float target,
+            in float followRate,
+            in float minSpeedPerSecond,
+            in float deltaTime)
         {
             // 残り距離を算出する
             float distance =
@@ -304,8 +304,8 @@ namespace UISystem.Controller
         /// Image の横幅のみを更新する
         /// </summary>
         private void SetWidth(
-            Image image,
-            float width)
+            in Image image,
+            in float width)
         {
             // RectTransform を取得する
             RectTransform rectTransform =

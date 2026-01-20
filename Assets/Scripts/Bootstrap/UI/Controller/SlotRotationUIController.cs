@@ -4,8 +4,7 @@
 // 作成日時 : 2026-01-19
 // 更新日時 : 2026-01-19
 // 概要     : UI スロットを循環表示する汎用コントローラー
-//            起動時に ±SLOT_SPACING * 要素数 / 2 の範囲でパターンを決定
-//            回転方向に応じて最低/最大目標値への移動のみ瞬間移動
+//            1回転処理とルーレット回転処理を提供する
 // ======================================================
 
 using UnityEngine;
@@ -19,66 +18,69 @@ namespace UISystem.Controller
         // 列挙体
         // ======================================================
 
-        /// <summary>
-        /// UI スロットの配置方向
-        /// </summary>
+        /// <summary>UI スロットの配置方向を定義する</summary>
         public enum LayoutDirection
         {
             Horizontal,
             Vertical
         }
 
-        /// <summary>
-        /// スロット回転方向
-        /// </summary>
+        /// <summary>スロットが進行する回転方向を定義する</summary>
         public enum RotationSign
         {
             Positive,
             Negative
         }
 
-        // ======================================================  
-        // 定数  
-        // ======================================================  
+        // ======================================================
+        // 定数
+        // ======================================================
 
-        /// <summary>スロット間の表示間隔(px)</summary>
+        /// <summary各スロット間の表示間隔</summary>
         private const float SLOT_SPACING = 200.0f;
 
-        /// <summary>スロットの移動速度(px/s)</summary>
+        /// <summary>スロットの移動速度</summary>
         private const float MOVE_SPEED = 1000.0f;
 
         // ======================================================
         // フィールド
         // ======================================================
 
-        /// <summary>制御対象の UI スロット Image 配列</summary>
+        /// <summary>制御対象となる UI スロット Image 配列</summary>
         private readonly Image[] _slotImages;
 
         /// <summary>UI スロットの配置方向</summary>
         private readonly LayoutDirection _layoutDirection;
 
-        /// <summary>スロット回転方向</summary>
+        /// <summary>スロットの回転方向</summary>
         private readonly RotationSign _rotationSign;
 
-        /// <summary>各スロットの目標座標パターン</summary>
+        /// <summary>各スロットが目指す最終的な目標座標パターン</summary>
         private Vector2[] _targetPositions;
 
-        /// <summary>スロットごとの参照インデックス</summary>
-        private int[] _slotTargetIndex;     
+        /// <summary>各スロットが参照している目標座標のインデックス</summary>
+        private int[] _slotTargetIndex;
 
-        /// <summary>現在のターゲット番号</summary>
-        private int _currentTargetIndex;
+        /// <summary>ターゲット超過時にクランプ処理を一時的に無効化するためのフラグ</summary>
+        private bool[] _isIgnoringClamp;
 
-        /// <summary>最低目標座標</summary>
+        /// <summary>現在ルーレット回転中かどうかを示すフラグ</summary>
+        private bool _isRouletteRotating;
+
+        /// <summary>初期化時に算出される最小目標座標</summary>
         private float _minTargetCoord;
 
-        /// <summary>最大目標座標</summary>
+        /// <summary>初期化時に算出される最大目標座標</summary>
         private float _maxTargetCoord;
 
         // ======================================================
         // コンストラクタ
         // ======================================================
-        public SlotRotationUIController(Image[] slotImages, LayoutDirection layoutDirection, RotationSign rotationSign)
+
+        public SlotRotationUIController(
+            in Image[] slotImages,
+            in LayoutDirection layoutDirection,
+            in RotationSign rotationSign)
         {
             _slotImages = slotImages;
             _layoutDirection = layoutDirection;
@@ -87,16 +89,17 @@ namespace UISystem.Controller
             int slotCount = _slotImages.Length;
             _targetPositions = new Vector2[slotCount];
             _slotTargetIndex = new int[slotCount];
-            _currentTargetIndex = 0;
+            _isIgnoringClamp = new bool[slotCount];
 
-            // 初期目標座標パターン計算
+            // 初期目標座標パターンを生成
             InitializeTargetPositions();
 
-            // 初期参照インデックスを設定
+            // 各スロットの初期状態を設定
             for (int i = 0; i < slotCount; i++)
             {
                 _slotTargetIndex[i] = i;
                 _slotImages[i].rectTransform.anchoredPosition = _targetPositions[i];
+                _isIgnoringClamp[i] = false;
             }
         }
 
@@ -104,55 +107,124 @@ namespace UISystem.Controller
         // パブリックメソッド
         // ======================================================
 
+        // --------------------------------------------------
+        // 1回転
+        // --------------------------------------------------
         /// <summary>
-        /// ターゲット番号を1つ進め、線形補完／瞬間移動を適用
+        /// スロットを1ステップ分回転させる
+        /// ターゲット参照のみを更新し、実移動は Update で行う
         /// </summary>
         public void Rotate()
         {
             int slotCount = _slotImages.Length;
 
-            // 現在のターゲット番号を循環更新
-            _currentTargetIndex = (_currentTargetIndex + 1) % slotCount;
+            for (int i = 0; i < slotCount; i++)
+            {
+                // 対象スロットの RectTransform を取得
+                RectTransform rect = _slotImages[i].rectTransform;
+
+                // 回転方向に応じて参照インデックスを循環シフト
+                _slotTargetIndex[i] = (_slotTargetIndex[i] - 1 + slotCount) % slotCount;
+
+                // クランプ判定
+                EvaluateIgnoreClamp(i, rect);
+            }
+        }
+
+        // --------------------------------------------------
+        // ルーレット回転
+        // --------------------------------------------------
+        /// <summary>
+        /// ルーレット回転を開始する
+        /// クランプを行わず、無限に線形移動させる
+        /// </summary>
+        public void StartRouletteRotation()
+        {
+            // ルーレット回転状態に遷移
+            _isRouletteRotating = true;
+
+            // 全スロットのクランプを無効化
+            for (int i = 0; i < _slotImages.Length; i++)
+            {
+                _isIgnoringClamp[i] = true;
+            }
+        }
+
+        /// <summary>
+        /// ルーレット回転を停止する
+        /// 停止時点でランダムな参照インデックスを再構築する
+        /// </summary>
+        public void StopRouletteRotation()
+        {
+            _isRouletteRotating = false;
+            int slotCount = _slotImages.Length;
+
+            // 要素0が参照するターゲットをランダムに決定
+            _slotTargetIndex[0] = Random.Range(0, slotCount);
+
+            // 残りのスロットは順番に参照インデックスを構築
+            for (int i = 1; i < slotCount; i++)
+            {
+                _slotTargetIndex[i] = (_slotTargetIndex[i - 1] + 1) % slotCount;
+            }
+
+            // クランプ判定
+            for (int i = 0; i < slotCount; i++)
+            {
+                EvaluateIgnoreClamp(i, _slotImages[i].rectTransform);
+            }
+        }
+
+        // --------------------------------------------------
+        // 補間更新
+        // --------------------------------------------------
+        /// <summary>
+        /// 毎フレーム呼び出され、スロットの移動を制御する
+        /// </summary>
+        public void Update(in float deltaTime)
+        {
+            int slotCount = _slotImages.Length;
+            float delta = MOVE_SPEED * deltaTime;
 
             for (int i = 0; i < slotCount; i++)
             {
                 RectTransform rect = _slotImages[i].rectTransform;
 
-                // 参照インデックスを回転方向に応じて循環シフト
-                // スロットを表示上の順番で回転させるには参照インデックスを座標配列の逆方向に更新する必要があるため、負方向にシフトする
-                _slotTargetIndex[i] = (_slotTargetIndex[i] - 1 + slotCount) % slotCount;
-                
-                // 次の目標座標を取得
-                Vector2 nextTarget = _targetPositions[_slotTargetIndex[i]];
+                // 主軸方向の現在座標を取得
+                float current = GetCurrentCoord(rect);
 
-                // 瞬間移動判定
-                float coord = (_layoutDirection == LayoutDirection.Horizontal) ? nextTarget.x : nextTarget.y;
-                bool isInstant = (_rotationSign == RotationSign.Positive && Mathf.Approximately(coord, _minTargetCoord)) ||
-                                 (_rotationSign == RotationSign.Negative && Mathf.Approximately(coord, _maxTargetCoord));
+                float next;
 
-                if (isInstant)
+                if (_isRouletteRotating)
                 {
-                    // 瞬間移動適用
-                    rect.anchoredPosition = nextTarget;
+                    // 回転方向に応じた移動符号を決定
+                    float directionSign =
+                        (_rotationSign == RotationSign.Positive)
+                            ? 1.0f
+                            : -1.0f;
+
+                    // 移動量を加算
+                    next = current + (delta * directionSign);
+
+                    // ループ判定
+                    next = ApplyLoopCorrection(ref next, slotCount);
                 }
                 else
                 {
-                    // 線形補完用目標座標に設定（Update() で補完）
-                    _slotImages[i].rectTransform.anchoredPosition = Vector2.MoveTowards(rect.anchoredPosition, nextTarget, 0f);
+                    // 通常回転時はターゲットへ向かう補間移動を行う
+                    float target = GetTargetCoord(_slotTargetIndex[i]);
+                    next = MoveAlongAxis(current, target, i, delta, slotCount);
                 }
-            }
-        }
 
-        /// <summary>
-        /// 毎フレーム呼び出してスロットを線形補完移動
-        /// </summary>
-        public void Update(float deltaTime)
-        {
-            for (int i = 0; i < _slotImages.Length; i++)
-            {
-                RectTransform rect = _slotImages[i].rectTransform;
-                Vector2 target = _targetPositions[_slotTargetIndex[i]];
-                rect.anchoredPosition = Vector2.MoveTowards(rect.anchoredPosition, target, MOVE_SPEED * deltaTime);
+                // 計算結果を RectTransform に反映
+                if (_layoutDirection == LayoutDirection.Horizontal)
+                {
+                    rect.anchoredPosition = new Vector2(next, 0f);
+                }
+                else
+                {
+                    rect.anchoredPosition = new Vector2(0f, next);
+                }
             }
         }
 
@@ -161,25 +233,20 @@ namespace UISystem.Controller
         // ======================================================
 
         /// <summary>
-        /// 起動時に初期目標座標パターンを計算
-        /// 要素0は必ず0に配置
-        /// 配置上限を超えた場合は ±SLOT_SPACING*要素数 でループ補正
+        /// 初期目標座標パターンを生成する
+        /// 要素0は必ず座標0となる
         /// </summary>
         private void InitializeTargetPositions()
         {
             int slotCount = _slotImages.Length;
 
-            // 配列の初期化
             _targetPositions = new Vector2[slotCount];
 
-            float halfRange = SLOT_SPACING * (slotCount - 1) / 2f;
-
-            // 初期座標を計算
             for (int i = 0; i < slotCount; i++)
             {
                 float coord;
 
-                // 回転方向に応じて初期座標を決定
+                // 回転方向に応じて初期配置を決定
                 if (_rotationSign == RotationSign.Positive)
                 {
                     coord = -SLOT_SPACING * i;
@@ -189,17 +256,10 @@ namespace UISystem.Controller
                     coord = SLOT_SPACING * i;
                 }
 
-                // 配置上限を超えた場合はループ補正
-                if (coord > halfRange)
-                {
-                    coord -= SLOT_SPACING * slotCount;
-                }
-                if (coord < -halfRange)
-                {
-                    coord += SLOT_SPACING * slotCount;
-                }
+                // ループ判定
+                coord = ApplyLoopCorrection(ref coord, slotCount);
 
-                // 配置方向に応じて Vector2 に変換
+                // 配置方向に応じてスロットを配置
                 if (_layoutDirection == LayoutDirection.Horizontal)
                 {
                     _targetPositions[i] = new Vector2(coord, 0f);
@@ -210,22 +270,128 @@ namespace UISystem.Controller
                 }
             }
 
-            // 最小／最大目標座標を配列から決定
+            // 最小／最大目標座標を初期化
             _minTargetCoord = float.MaxValue;
             _maxTargetCoord = float.MinValue;
 
             for (int i = 0; i < slotCount; i++)
             {
-                float value = (_layoutDirection == LayoutDirection.Horizontal) ? _targetPositions[i].x : _targetPositions[i].y;
+                float value = GetTargetCoord(i);
+
                 if (value < _minTargetCoord)
                 {
                     _minTargetCoord = value;
                 }
+
                 if (value > _maxTargetCoord)
                 {
                     _maxTargetCoord = value;
                 }
             }
+        }
+
+        /// <summary>
+        /// RectTransform から主軸方向の現在座標を取得する
+        /// </summary>
+        private float GetCurrentCoord(in RectTransform rect)
+        {
+            return (_layoutDirection == LayoutDirection.Horizontal)
+                ? rect.anchoredPosition.x
+                : rect.anchoredPosition.y;
+        }
+
+        /// <summary>
+        /// 指定インデックスに対応するターゲット座標を取得する
+        /// </summary>
+        private float GetTargetCoord(in int slotIndex)
+        {
+            return (_layoutDirection == LayoutDirection.Horizontal)
+                ? _targetPositions[slotIndex].x
+                : _targetPositions[slotIndex].y;
+        }
+
+        /// <summary>
+        /// 回転開始時点でターゲット座標をすでに超えているかを判定し
+        /// クランプ無効フラグを設定する
+        /// </summary>
+        private void EvaluateIgnoreClamp(in int slotIndex, in RectTransform rect)
+        {
+            // 現在の主軸座標を取得
+            float currentCoord = GetCurrentCoord(rect);
+
+            // 次に向かうターゲットの主軸座標を取得
+            float targetCoord = GetTargetCoord(_slotTargetIndex[slotIndex]);
+
+            if ((_rotationSign == RotationSign.Positive && currentCoord > targetCoord) ||
+                (_rotationSign == RotationSign.Negative && currentCoord < targetCoord))
+            {
+                // クランプ無効化
+                _isIgnoringClamp[slotIndex] = true;
+            }
+            else
+            {
+                // クランプ有効化
+                _isIgnoringClamp[slotIndex] = false;
+            }
+        }
+
+        /// <summary>
+        /// 主軸方向の移動・クランプ・ループ補正をまとめて処理する
+        /// </summary>
+        private float MoveAlongAxis(
+            in float current,
+            in float target,
+            in int slotIndex,
+            in float delta,
+            in int slotCount)
+        {
+            // 回転方向に応じて次の座標を計算
+            float next = current + ((_rotationSign == RotationSign.Positive) ? delta : -delta);
+
+            // クランプが有効な場合のみターゲット超過を制限
+            if (!_isIgnoringClamp[slotIndex])
+            {
+                if ((_rotationSign == RotationSign.Positive && next > target) ||
+                    (_rotationSign == RotationSign.Negative && next < target))
+                {
+                    next = target;
+                }
+            }
+
+            // ループ補正前の値を保持
+            float beforeLoop = next;
+
+            // 表示範囲外なら反対側へループ補正
+            next = ApplyLoopCorrection(ref next, slotCount);
+
+            // ループが発生した場合はクランプ無効状態を解除
+            if (!Mathf.Approximately(beforeLoop, next))
+            {
+                _isIgnoringClamp[slotIndex] = false;
+            }
+
+            return next;
+        }
+
+        /// <summary>
+        /// 表示範囲を超えた座標を反対側へループ補正する
+        /// </summary>
+        private float ApplyLoopCorrection(ref float coord, in int slotCount)
+        {
+            // スロット全体の表示範囲の半分を算出
+            float halfRange = SLOT_SPACING * slotCount / 2f;
+
+            // 全スロット分の長さを引いて反対側へ再配置する
+            if (coord > halfRange)
+            {
+                coord -= SLOT_SPACING * slotCount;
+            }
+            if (coord < -halfRange)
+            {
+                coord += SLOT_SPACING * slotCount;
+            }
+
+            return coord;
         }
     }
 }
