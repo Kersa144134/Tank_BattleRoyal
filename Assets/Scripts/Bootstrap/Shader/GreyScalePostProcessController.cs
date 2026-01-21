@@ -1,5 +1,5 @@
 // ======================================================
-// GreyScalePostProcessParameterController.cs
+// GreyScalePostProcessController.cs
 // 作成者   : 高橋一翔
 // 作成日時 : 2026-01-21
 // 更新日時 : 2026-01-21
@@ -11,9 +11,9 @@ using System;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 
-namespace UISystem.Controller
+namespace ShaderSystem.Controller
 {
-    public sealed class GreyScalePostProcessParameterController : PostProcessControllerBase
+    public sealed class GreyScalePostProcessController : PostProcessControllerBase
     {
         // ======================================================
         // シェーダープロパティ定義
@@ -113,7 +113,7 @@ namespace UISystem.Controller
         /// <summary>
         /// グレースケールエフェクト用コントローラーを初期化する
         /// </summary>
-        public GreyScalePostProcessParameterController(
+        public GreyScalePostProcessController(
             in GreyScaleShaderProperty shaderProperty)
             : base(
                 shaderProperty.FullScreenPassFeature,

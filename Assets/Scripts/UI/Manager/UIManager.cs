@@ -10,6 +10,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using SceneSystem.Interface;
+using ShaderSystem.Controller;
 using TankSystem.Manager;
 using UISystem.Controller;
 
@@ -38,11 +39,11 @@ namespace UISystem.Manager
         [Header("画面エフェクト")]
         /// <summary>2 値化エフェクトに使用するシェーダープロパティの設定一覧</summary>
         [SerializeField]
-        private BinarizationPostProcessParameterController.BinarizationShaderProperty _binarizationShaderProperty;
+        private BinarizationPostProcessController.BinarizationShaderProperty _binarizationShaderProperty;
 
         /// <summary>グレースケール化エフェクトに使用するシェーダープロパティの設定一覧</summary>
         [SerializeField]
-        private GreyScalePostProcessParameterController.GreyScaleShaderProperty _greyScaleShaderProperty;
+        private GreyScalePostProcessController.GreyScaleShaderProperty _greyScaleShaderProperty;
 
         // --------------------------------------------------
         // プレイヤー戦車
@@ -108,10 +109,10 @@ namespace UISystem.Manager
         // UI
         // --------------------------------------------------
         /// <summary>2 値化エフェクト用のシェーダーパラメーターコントローラー</summary>
-        private BinarizationPostProcessParameterController _binarizationPostProcessParameterController;
+        private BinarizationPostProcessController _binarizationPostProcessController;
 
         /// <summary>グレースケール化エフェクト用のシェーダーパラメーターコントローラー</summary>
-        private GreyScalePostProcessParameterController _greyScalePostProcessParameterController;
+        private GreyScalePostProcessController _greyScalePostProcessController;
 
         /// <summary>ログ表示 UI コントローラー</summary>
         private LogRotationUIController _logRotationUIController;
@@ -122,6 +123,12 @@ namespace UISystem.Manager
         /// <summary>耐久値バー横幅 UI コントローラー</summary>
         private ValueBarWidthUIController _durabilityBarWidthUIController;
 
+        // --------------------------------------------------
+        // 画面演出
+        // --------------------------------------------------
+        /// <summary>画面フラッシュ演出コントローラー</summary>
+        private FlashAnimationController _flashAnimationController;
+        
         // --------------------------------------------------
         // データ参照
         // --------------------------------------------------
@@ -134,8 +141,15 @@ namespace UISystem.Manager
 
         public void OnEnter()
         {
-            _binarizationPostProcessParameterController = new BinarizationPostProcessParameterController(_binarizationShaderProperty);
-            _greyScalePostProcessParameterController = new GreyScalePostProcessParameterController(_greyScaleShaderProperty);
+            _binarizationPostProcessController = new BinarizationPostProcessController(_binarizationShaderProperty);
+
+            _greyScalePostProcessController = new GreyScalePostProcessController(_greyScaleShaderProperty);
+
+            _flashAnimationController =
+                new FlashAnimationController(
+                    _binarizationPostProcessController,
+                    _greyScalePostProcessController
+                );
 
             if (_playerTankRootManager is PlayerTankRootManager)
             {
@@ -167,17 +181,16 @@ namespace UISystem.Manager
                     _logVerticalDirection,
                     _logInsertDirection
                 );
-
-            _binarizationPostProcessParameterController.DisableFullScreenPass();
-            _greyScalePostProcessParameterController.DisableFullScreenPass();
         }
 
         public void OnLateUpdate()
         {
             float deltaTime = Time.deltaTime;
 
-            _binarizationPostProcessParameterController.Update(_binarizationShaderProperty);
-            _greyScalePostProcessParameterController.Update(_greyScaleShaderProperty);
+            _binarizationPostProcessController.Update(_binarizationShaderProperty);
+            _greyScalePostProcessController.Update(_greyScaleShaderProperty);
+
+            _flashAnimationController.Update(deltaTime);
 
             if (_playerDurabilityManager != null)
             {
@@ -190,20 +203,6 @@ namespace UISystem.Manager
             // --------------------------------------------------
             // デバッグ用（いずれ削除予定）
             // --------------------------------------------------
-            if (Input.GetKeyDown(KeyCode.Space))
-            {
-                _bulletIconSlotRotationUIController.StartRouletteRotation();
-            }
-            else if (Input.GetKeyUp(KeyCode.Space))
-            {
-                _bulletIconSlotRotationUIController.StopRouletteRotation();
-            }
-
-            if (Input.GetKeyUp(KeyCode.Return))
-            {
-                _logRotationUIController.AddLog("デバッグ");
-            }
-
             if (Input.GetKeyDown(KeyCode.Tab))
             {
                 fade.FadeIn(0.5f);
@@ -213,13 +212,9 @@ namespace UISystem.Manager
                 fade.FadeOut(0.5f);
             }
 
-            if (Input.GetKeyDown(KeyCode.Alpha1))
+            if (Input.GetKeyDown(KeyCode.Return))
             {
-                _binarizationPostProcessParameterController.ToggleFullScreenPass();
-            }
-            if (Input.GetKeyDown(KeyCode.Alpha2))
-            {
-                _greyScalePostProcessParameterController.ToggleFullScreenPass();
+                _flashAnimationController.Play();
             }
         }
 
@@ -274,7 +269,7 @@ namespace UISystem.Manager
                 displayTankId = tankId;
 
                 // ログに表示するメッセージを生成
-                logMessage = $"撃破された";
+                logMessage = "撃破された";
             }
             // 敵戦車の場合
             else

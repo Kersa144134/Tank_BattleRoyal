@@ -1,5 +1,5 @@
 // ======================================================
-// BinarizationPostProcessParameterController.cs
+// BinarizationPostProcessController.cs
 // 作成者   : 高橋一翔
 // 作成日時 : 2026-01-21
 // 更新日時 : 2026-01-21
@@ -11,9 +11,9 @@ using System;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 
-namespace UISystem.Controller
+namespace ShaderSystem.Controller
 {
-    public sealed class BinarizationPostProcessParameterController : PostProcessControllerBase
+    public sealed class BinarizationPostProcessController : PostProcessControllerBase
     {
         // ======================================================
         // シェーダープロパティ定義
@@ -109,7 +109,7 @@ namespace UISystem.Controller
         /// <summary>
         /// 2 値化エフェクト用パラメータを受け取り初期化する
         /// </summary>
-        public BinarizationPostProcessParameterController(
+        public BinarizationPostProcessController(
             in BinarizationShaderProperty shaderProperty)
             : base(
                 shaderProperty.FullScreenPassFeature,
