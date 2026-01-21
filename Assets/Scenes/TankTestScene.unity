@@ -1298,9 +1298,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _distortionCenter: {x: 0.5, y: 0.5}
   _distortionStrength: 0.1
-  _posterizationThreshold: 0.1
-  _posterizationLightColor: {r: 1, g: 1, b: 1, a: 1}
-  _posterizationDarkColor: {r: 0, g: 0, b: 0, a: 1}
+  _noiseStrength: 5000
+  _posterizationThreshold: 0.5
+  _posterizationLightColor: {r: 0, g: 0, b: 0, a: 1}
+  _posterizationDarkColor: {r: 1, g: 1, b: 1, a: 1}
   _flashAlpha: 0
 --- !u!4 &196936523
 Transform:
