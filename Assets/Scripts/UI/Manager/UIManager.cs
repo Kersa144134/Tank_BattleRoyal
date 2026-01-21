@@ -2,7 +2,7 @@
 // UIManager.cs
 // 作成者   : 高橋一翔
 // 作成日時 : 2026-01-19
-// 更新日時 : 2026-01-19
+// 更新日時 : 2026-01-21
 // 概要     : 各種UIコントローラーを生成・更新する
 // ======================================================
 
@@ -25,7 +25,7 @@ namespace UISystem.Manager
         // ======================================================
 
         // --------------------------------------------------
-        // フェード
+        // 画面フェード
         // --------------------------------------------------
         [Header("画面フェード")]
         /// <summary>画面フェード実行クラス</summary>
@@ -33,7 +33,19 @@ namespace UISystem.Manager
         private Fade fade;
 
         // --------------------------------------------------
-        // プレイヤー参照
+        // 画面エフェクト
+        // --------------------------------------------------
+        [Header("画面エフェクト")]
+        /// <summary>2 値化エフェクトに使用するシェーダープロパティの設定一覧</summary>
+        [SerializeField]
+        private BinarizationPostProcessParameterController.BinarizationShaderProperty _binarizationShaderProperty;
+
+        /// <summary>グレースケール化エフェクトに使用するシェーダープロパティの設定一覧</summary>
+        [SerializeField]
+        private GreyScalePostProcessParameterController.GreyScaleShaderProperty _greyScaleShaderProperty;
+
+        // --------------------------------------------------
+        // プレイヤー戦車
         // --------------------------------------------------
         [Header("プレイヤー戦車")]
         /// <summary>プレイヤー戦車のルートマネージャー</summary>
@@ -95,6 +107,12 @@ namespace UISystem.Manager
         // --------------------------------------------------
         // UI
         // --------------------------------------------------
+        /// <summary>2 値化エフェクト用のシェーダーパラメーターコントローラー</summary>
+        private BinarizationPostProcessParameterController _binarizationPostProcessParameterController;
+
+        /// <summary>グレースケール化エフェクト用のシェーダーパラメーターコントローラー</summary>
+        private GreyScalePostProcessParameterController _greyScalePostProcessParameterController;
+
         /// <summary>ログ表示 UI コントローラー</summary>
         private LogRotationUIController _logRotationUIController;
 
@@ -116,6 +134,9 @@ namespace UISystem.Manager
 
         public void OnEnter()
         {
+            _binarizationPostProcessParameterController = new BinarizationPostProcessParameterController(_binarizationShaderProperty);
+            _greyScalePostProcessParameterController = new GreyScalePostProcessParameterController(_greyScaleShaderProperty);
+
             if (_playerTankRootManager is PlayerTankRootManager)
             {
                 // プレイヤー戦車から耐久力マネージャーを取得
@@ -146,13 +167,18 @@ namespace UISystem.Manager
                     _logVerticalDirection,
                     _logInsertDirection
                 );
+
+            _binarizationPostProcessParameterController.DisableFullScreenPass();
+            _greyScalePostProcessParameterController.DisableFullScreenPass();
         }
 
         public void OnLateUpdate()
         {
             float deltaTime = Time.deltaTime;
-            
-            // 耐久力マネージャーが未取得の場合は処理しない
+
+            _binarizationPostProcessParameterController.Update(_binarizationShaderProperty);
+            _greyScalePostProcessParameterController.Update(_greyScaleShaderProperty);
+
             if (_playerDurabilityManager != null)
             {
                 _durabilityBarWidthUIController.Update(deltaTime);
@@ -185,6 +211,15 @@ namespace UISystem.Manager
             else if (Input.GetKeyUp(KeyCode.Tab))
             {
                 fade.FadeOut(0.5f);
+            }
+
+            if (Input.GetKeyDown(KeyCode.Alpha1))
+            {
+                _binarizationPostProcessParameterController.ToggleFullScreenPass();
+            }
+            if (Input.GetKeyDown(KeyCode.Alpha2))
+            {
+                _greyScalePostProcessParameterController.ToggleFullScreenPass();
             }
         }
 

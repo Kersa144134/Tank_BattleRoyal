@@ -19,9 +19,6 @@
             "m_Id": "20547eef232947d7818df4d52f6a62e7"
         },
         {
-            "m_Id": "e27e3e6f9b464f49a0875357fb710a94"
-        },
-        {
             "m_Id": "cbe08d90e5a349c0834affe7b9cf0a11"
         }
     ],
@@ -116,9 +113,6 @@
         },
         {
             "m_Id": "e364957092bd432c9b1a40bc6d0bf9a2"
-        },
-        {
-            "m_Id": "ae3963fad52d49aba55fc2eef884dac2"
         },
         {
             "m_Id": "690a89b80b324479ab8cb2b6fe78c186"
@@ -394,20 +388,6 @@
                     "m_Id": "c4ad1c1f275a45d88e380b93b6544f6d"
                 },
                 "m_SlotId": 1
-            }
-        },
-        {
-            "m_OutputSlot": {
-                "m_Node": {
-                    "m_Id": "ae3963fad52d49aba55fc2eef884dac2"
-                },
-                "m_SlotId": 0
-            },
-            "m_InputSlot": {
-                "m_Node": {
-                    "m_Id": "6b1ef8f2a861440488c41e09bddc1a6f"
-                },
-                "m_SlotId": 0
             }
         },
         {
@@ -1164,13 +1144,13 @@
     "m_RefNameGeneratedByDisplayName": "PosterizationDarkColor",
     "m_DefaultReferenceName": "_PosterizationDarkColor",
     "m_OverrideReferenceName": "",
-    "m_GeneratePropertyBlock": false,
+    "m_GeneratePropertyBlock": true,
     "m_UseCustomSlotLabel": false,
     "m_CustomSlotLabel": "",
     "m_DismissedVersion": 0,
     "m_Precision": 0,
     "overrideHLSLDeclaration": true,
-    "hlslDeclarationOverride": 1,
+    "hlslDeclarationOverride": 2,
     "m_Hidden": false,
     "m_Value": {
         "r": 0.0,
@@ -1374,13 +1354,13 @@
     "m_RefNameGeneratedByDisplayName": "DistortionCenter",
     "m_DefaultReferenceName": "_DistortionCenter",
     "m_OverrideReferenceName": "",
-    "m_GeneratePropertyBlock": false,
+    "m_GeneratePropertyBlock": true,
     "m_UseCustomSlotLabel": false,
     "m_CustomSlotLabel": "",
     "m_DismissedVersion": 0,
     "m_Precision": 0,
     "overrideHLSLDeclaration": true,
-    "hlslDeclarationOverride": 1,
+    "hlslDeclarationOverride": 2,
     "m_Hidden": false,
     "m_Value": {
         "x": 0.0,
@@ -1774,13 +1754,13 @@
     "m_RefNameGeneratedByDisplayName": "PosterizationLightColor",
     "m_DefaultReferenceName": "_PosterizationLightColor",
     "m_OverrideReferenceName": "",
-    "m_GeneratePropertyBlock": false,
+    "m_GeneratePropertyBlock": true,
     "m_UseCustomSlotLabel": false,
     "m_CustomSlotLabel": "",
     "m_DismissedVersion": 0,
     "m_Precision": 0,
     "overrideHLSLDeclaration": true,
-    "hlslDeclarationOverride": 1,
+    "hlslDeclarationOverride": 2,
     "m_Hidden": false,
     "m_Value": {
         "r": 1.0,
@@ -2196,13 +2176,13 @@
     "m_RefNameGeneratedByDisplayName": "DistortionStrength",
     "m_DefaultReferenceName": "_DistortionStrength",
     "m_OverrideReferenceName": "",
-    "m_GeneratePropertyBlock": false,
+    "m_GeneratePropertyBlock": true,
     "m_UseCustomSlotLabel": false,
     "m_CustomSlotLabel": "",
     "m_DismissedVersion": 0,
     "m_Precision": 0,
     "overrideHLSLDeclaration": true,
-    "hlslDeclarationOverride": 1,
+    "hlslDeclarationOverride": 2,
     "m_Hidden": false,
     "m_Value": 0.0,
     "m_FloatType": 0,
@@ -2683,42 +2663,6 @@
 
 {
     "m_SGVersion": 0,
-    "m_Type": "UnityEditor.ShaderGraph.PropertyNode",
-    "m_ObjectId": "ae3963fad52d49aba55fc2eef884dac2",
-    "m_Group": {
-        "m_Id": ""
-    },
-    "m_Name": "Property",
-    "m_DrawState": {
-        "m_Expanded": true,
-        "m_Position": {
-            "serializedVersion": "2",
-            "x": 1215.199951171875,
-            "y": 517.6000366210938,
-            "width": 132.800048828125,
-            "height": 33.5999755859375
-        }
-    },
-    "m_Slots": [
-        {
-            "m_Id": "cc707d182a7748ffb113adc98a941b37"
-        }
-    ],
-    "synonyms": [],
-    "m_Precision": 0,
-    "m_PreviewExpanded": true,
-    "m_DismissedVersion": 0,
-    "m_PreviewMode": 0,
-    "m_CustomColors": {
-        "m_SerializableColors": []
-    },
-    "m_Property": {
-        "m_Id": "e27e3e6f9b464f49a0875357fb710a94"
-    }
-}
-
-{
-    "m_SGVersion": 0,
     "m_Type": "UnityEditor.ShaderGraph.DynamicVectorMaterialSlot",
     "m_ObjectId": "af891e9c82b84c499834def052d28657",
     "m_Id": 1,
@@ -3098,9 +3042,6 @@
         },
         {
             "m_Id": "20547eef232947d7818df4d52f6a62e7"
-        },
-        {
-            "m_Id": "e27e3e6f9b464f49a0875357fb710a94"
         }
     ]
 }
@@ -3199,13 +3140,13 @@
     "m_RefNameGeneratedByDisplayName": "NoiseStrength",
     "m_DefaultReferenceName": "_NoiseStrength",
     "m_OverrideReferenceName": "",
-    "m_GeneratePropertyBlock": false,
+    "m_GeneratePropertyBlock": true,
     "m_UseCustomSlotLabel": false,
     "m_CustomSlotLabel": "",
     "m_DismissedVersion": 0,
     "m_Precision": 0,
     "overrideHLSLDeclaration": true,
-    "hlslDeclarationOverride": 1,
+    "hlslDeclarationOverride": 2,
     "m_Hidden": false,
     "m_Value": 1000.0,
     "m_FloatType": 0,
@@ -3213,21 +3154,6 @@
         "x": 0.0,
         "y": 1.0
     }
-}
-
-{
-    "m_SGVersion": 0,
-    "m_Type": "UnityEditor.ShaderGraph.Vector1MaterialSlot",
-    "m_ObjectId": "cc707d182a7748ffb113adc98a941b37",
-    "m_Id": 0,
-    "m_DisplayName": "FlashAlpha",
-    "m_SlotType": 1,
-    "m_Hidden": false,
-    "m_ShaderOutputName": "Out",
-    "m_StageCapability": 3,
-    "m_Value": 0.0,
-    "m_DefaultValue": 0.0,
-    "m_Labels": []
 }
 
 {
@@ -3242,13 +3168,13 @@
     "m_RefNameGeneratedByDisplayName": "PosterizationThreshold",
     "m_DefaultReferenceName": "_PosterizationThreshold",
     "m_OverrideReferenceName": "",
-    "m_GeneratePropertyBlock": false,
+    "m_GeneratePropertyBlock": true,
     "m_UseCustomSlotLabel": false,
     "m_CustomSlotLabel": "",
     "m_DismissedVersion": 0,
     "m_Precision": 0,
     "overrideHLSLDeclaration": true,
-    "hlslDeclarationOverride": 1,
+    "hlslDeclarationOverride": 2,
     "m_Hidden": false,
     "m_Value": 0.5,
     "m_FloatType": 0,
@@ -3444,34 +3370,6 @@
 }
 
 {
-    "m_SGVersion": 1,
-    "m_Type": "UnityEditor.ShaderGraph.Internal.Vector1ShaderProperty",
-    "m_ObjectId": "e27e3e6f9b464f49a0875357fb710a94",
-    "m_Guid": {
-        "m_GuidSerialized": "11c9c531-e858-4639-a15b-22f1aeaca41e"
-    },
-    "m_Name": "FlashAlpha",
-    "m_DefaultRefNameVersion": 1,
-    "m_RefNameGeneratedByDisplayName": "FlashAlpha",
-    "m_DefaultReferenceName": "_FlashAlpha",
-    "m_OverrideReferenceName": "",
-    "m_GeneratePropertyBlock": false,
-    "m_UseCustomSlotLabel": false,
-    "m_CustomSlotLabel": "",
-    "m_DismissedVersion": 0,
-    "m_Precision": 0,
-    "overrideHLSLDeclaration": true,
-    "hlslDeclarationOverride": 1,
-    "m_Hidden": false,
-    "m_Value": 0.0,
-    "m_FloatType": 0,
-    "m_RangeValues": {
-        "x": 0.0,
-        "y": 1.0
-    }
-}
-
-{
     "m_SGVersion": 0,
     "m_Type": "UnityEditor.ShaderGraph.SaturateNode",
     "m_ObjectId": "e364957092bd432c9b1a40bc6d0bf9a2",
@@ -3615,9 +3513,9 @@
         "m_Expanded": true,
         "m_Position": {
             "serializedVersion": "2",
-            "x": -391.20001220703127,
-            "y": 559.2000122070313,
-            "width": 208.0,
+            "x": -390.4000549316406,
+            "y": 559.2000732421875,
+            "width": 207.99996948242188,
             "height": 301.5999755859375
         }
     },
