@@ -7,7 +7,6 @@
 //            Full Screen Pass Render Feature の ON / OFF 制御を行うコントローラー
 // ======================================================
 
-using System;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 
@@ -44,45 +43,11 @@ namespace ShaderSystem.Controller
             Shader.PropertyToID("_PosterizationDarkColor");
 
         // ======================================================
-        // パブリッククラス
-        // ======================================================
-
-        /// <summary>
-        /// 使用するシェーダープロパティの設定一覧
-        /// </summary>
-        [Serializable]
-        public class BinarizationShaderProperty
-        {
-            /// <summary>制御対象となる Full Screen Pass Render Feature</summary>
-            public ScriptableRendererFeature FullScreenPassFeature;
-
-            /// <summary>Full Screen Pass で使用するマテリアル</summary>
-            public Material EffectMaterial;
-            
-            /// <summary>歪みの中心座標（UV 空間）</summary>
-            public Vector2 DistortionCenter = new Vector2(0.5f, 0.5f);
-
-            /// <summary>歪みエフェクトの強度</summary>
-            public float DistortionStrength = 0.1f;
-
-            /// <summary>ノイズエフェクトの強度</summary>
-            public float NoiseStrength = 1000.0f;
-
-            /// <summary>ポスタライズ処理のしきい値</summary>
-            public float PosterizationThreshold = 0.1f;
-
-            /// <summary>ポスタライズ明部カラー</summary>
-            [ColorUsage(false, true)]
-            public Color PosterizationLightColor = Color.white;
-
-            /// <summary>ポスタライズ暗部カラー</summary>
-            [ColorUsage(false, true)]
-            public Color PosterizationDarkColor = Color.black;
-        }
-
-        // ======================================================
         // フィールド
         // ======================================================
+
+        /// <summary>エフェクトが有効かどうか</summary>
+        private bool _isEffectEnabled = false;
 
         /// <summary>歪みの中心座標（UV 空間）</summary>
         private Vector2 _distortionCenter = new Vector2(0.5f, 0.5f);
@@ -94,7 +59,7 @@ namespace ShaderSystem.Controller
         private float _noiseStrength = 5000.0f;
 
         /// <summary>ポスタライズ処理のしきい値</summary>
-        private float _posterizationThreshold = 0.1f;
+        private float _posterizationThreshold = 0.5f;
 
         /// <summary>ポスタライズ明部に使用する HDR カラー</summary>
         private Color _posterizationLightColor = Color.white;
@@ -110,16 +75,13 @@ namespace ShaderSystem.Controller
         /// 2 値化エフェクト用パラメータを受け取り初期化する
         /// </summary>
         public BinarizationPostProcessController(
-            in BinarizationShaderProperty shaderProperty)
+            in ScriptableRendererFeature fullScreenPassFeature,
+            in Material effectMaterial)
             : base(
-                shaderProperty.FullScreenPassFeature,
-                shaderProperty.EffectMaterial)
+                fullScreenPassFeature,
+                effectMaterial)
         {
-            // 外部設定値を内部状態へ反映する
-            UpdateProperties(shaderProperty);
-
-            // 初期状態を Material に即時反映する
-            ApplyToMaterial();
+            SetFullScreenPassActive(false);
         }
 
         // ======================================================
@@ -129,9 +91,35 @@ namespace ShaderSystem.Controller
         /// <summary>
         /// Full Screen Pass Render Feature の状態を更新する
         /// </summary>
-        public void Update(in BinarizationShaderProperty shaderProperty)
+        public void Update(
+            in bool isEffectEnabled,
+            in Vector2 distortionCenter,
+            in float distortionStrength,
+            in float noiseStrength,
+            in float posterizationThreshold,
+            in Color posterizationLightColor,
+            in Color posterizationDarkColor)
         {
-            UpdateProperties(shaderProperty);
+            UpdateProperties(
+                isEffectEnabled,
+                distortionCenter,
+                distortionStrength,
+                noiseStrength,
+                posterizationThreshold,
+                posterizationLightColor,
+                posterizationDarkColor
+            );
+
+            if (_isEffectEnabled)
+            {
+                SetFullScreenPassActive(true);
+            }
+            else
+            {
+                SetFullScreenPassActive(false);
+                return;
+            }
+
             ApplyToMaterial();
         }
 
@@ -142,14 +130,22 @@ namespace ShaderSystem.Controller
         /// <summary>
         /// シェーダープロパティの設定を更新する
         /// </summary>
-        private void UpdateProperties(in BinarizationShaderProperty shaderProperty)
+        private void UpdateProperties(
+            in bool isEffectEnabled,
+            in Vector2 distortionCenter,
+            in float distortionStrength,
+            in float noiseStrength,
+            in float posterizationThreshold,
+            in Color posterizationLightColor,
+            in Color posterizationDarkColor)
         {
-            _distortionCenter = shaderProperty.DistortionCenter;
-            _distortionStrength = shaderProperty.DistortionStrength;
-            _noiseStrength = shaderProperty.NoiseStrength;
-            _posterizationThreshold = shaderProperty.PosterizationThreshold;
-            _posterizationLightColor = shaderProperty.PosterizationLightColor;
-            _posterizationDarkColor = shaderProperty.PosterizationDarkColor;
+            _isEffectEnabled = isEffectEnabled;
+            _distortionCenter = distortionCenter;
+            _distortionStrength = distortionStrength;
+            _noiseStrength = noiseStrength;
+            _posterizationThreshold = posterizationThreshold;
+            _posterizationLightColor = posterizationLightColor;
+            _posterizationDarkColor = posterizationDarkColor;
         }
 
         /// <summary>

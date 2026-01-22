@@ -6,15 +6,14 @@
 // 概要     : シーン内イベントの仲介を行う
 // ======================================================
 
+using System;
+using UnityEngine;
 using CollisionSystem.Data;
 using InputSystem.Data;
 using ItemSystem.Data;
 using SceneSystem.Data;
-using System;
 using TankSystem.Manager;
-using UnityEngine;
 using WeaponSystem.Data;
-using static UnityEngine.Rendering.VirtualTexturing.Debugging;
 
 namespace SceneSystem.Utility
 {

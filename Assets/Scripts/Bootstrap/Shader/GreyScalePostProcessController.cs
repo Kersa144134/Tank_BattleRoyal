@@ -7,7 +7,6 @@
 //            Full Screen Pass Render Feature の ON / OFF 制御を行うコントローラー
 // ======================================================
 
-using System;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 
@@ -48,63 +47,29 @@ namespace ShaderSystem.Controller
             Shader.PropertyToID("_PosterizationDarkColor");
 
         // ======================================================
-        // パブリッククラス
-        // ======================================================
-
-        /// <summary>
-        /// 使用するシェーダープロパティの設定一覧
-        /// </summary>
-        [Serializable]
-        public class GreyScaleShaderProperty
-        {
-            /// <summary>制御対象となる Full Screen Pass Render Feature</summary>
-            public ScriptableRendererFeature FullScreenPassFeature;
-
-            /// <summary>Full Screen Pass で使用するマテリアル</summary>
-            public Material EffectMaterial;
-            
-            /// <summary>グレースケールの強さ</summary>
-            public Vector3 GreyScaleStrength = new Vector3(0f, 0f, 0f);
-
-            /// <summary>歪みの中心座標（UV 空間）</summary>
-            public Vector2 DistortionCenter = new Vector2(0.5f, 0.5f);
-
-            /// <summary>歪みエフェクトの強度</summary>
-            public float DistortionStrength = 0.1f;
-
-            /// <summary>ノイズエフェクトの強度</summary>
-            public float NoiseStrength = 1000.0f;
-
-            /// <summary>ポスタライズ明部カラー</summary>
-            [ColorUsage(false, true)]
-            public Color PosterizationLightColor = Color.white;
-
-            /// <summary>ポスタライズ暗部カラー</summary>
-            [ColorUsage(false, true)]
-            public Color PosterizationDarkColor = Color.black;
-        }
-
-        // ======================================================
         // フィールド
         // ======================================================
 
+        /// <summary>エフェクトが有効かどうか</summary>
+        private bool _isEffectEnabled = false;
+
         /// <summary>グレースケールの強さ</summary>
-        private Vector3 _greyScaleStrength = new Vector3(0f, 0f, 0f);
+        private Vector3 _greyScaleStrength = new Vector3(0.25f, 0.25f, 0f);
 
         /// <summary>歪みの中心座標（UV 空間）</summary>
         private Vector2 _distortionCenter = new Vector2(0.5f, 0.5f);
 
         /// <summary>歪みエフェクトの強度</summary>
-        private float _distortionStrength = 0.1f;
+        private float _distortionStrength = 0.02f;
 
         /// <summary>ノイズエフェクトの強度</summary>
         private float _noiseStrength = 5000.0f;
 
         /// <summary>ポスタライズ明部に使用する HDR カラー</summary>
-        private Color _posterizationLightColor = Color.white;
+        private Color _posterizationLightColor = Color.black;
 
         /// <summary>ポスタライズ暗部に使用する HDR カラー</summary>
-        private Color _posterizationDarkColor = Color.black;
+        private Color _posterizationDarkColor = Color.white;
 
         // ======================================================
         // コンストラクタ
@@ -114,13 +79,13 @@ namespace ShaderSystem.Controller
         /// グレースケールエフェクト用コントローラーを初期化する
         /// </summary>
         public GreyScalePostProcessController(
-            in GreyScaleShaderProperty shaderProperty)
+            in ScriptableRendererFeature fullScreenPassFeature,
+            in Material effectMaterial)
             : base(
-                shaderProperty.FullScreenPassFeature,
-                shaderProperty.EffectMaterial)
+                fullScreenPassFeature,
+                effectMaterial)
         {
-            UpdateProperties(shaderProperty);
-            ApplyToMaterial();
+            SetFullScreenPassActive(false);
         }
 
         // ======================================================
@@ -130,9 +95,35 @@ namespace ShaderSystem.Controller
         /// <summary>
         /// Full Screen Pass Render Feature の状態を更新する
         /// </summary>
-        public void Update(in GreyScaleShaderProperty shaderProperty)
+        public void Update(
+            in bool isEffectEnabled,
+            in Vector3 greyScaleStrength,
+            in Vector2 distortionCenter,
+            in float distortionStrength,
+            in float noiseStrength,
+            in Color posterizationLightColor,
+            in Color posterizationDarkColor)
         {
-            UpdateProperties(shaderProperty);
+            UpdateProperties(
+                isEffectEnabled,
+                greyScaleStrength,
+                distortionCenter,
+                distortionStrength,
+                noiseStrength,
+                posterizationLightColor,
+                posterizationDarkColor
+            );
+
+            if (_isEffectEnabled)
+            {
+                SetFullScreenPassActive(true);
+            }
+            else
+            {
+                SetFullScreenPassActive(false);
+                return;
+            }
+
             ApplyToMaterial();
         }
 
@@ -143,14 +134,22 @@ namespace ShaderSystem.Controller
         /// <summary>
         /// シェーダープロパティの設定を更新する
         /// </summary>
-        private void UpdateProperties(in GreyScaleShaderProperty shaderProperty)
+        private void UpdateProperties(
+            in bool isEffectEnabled,
+            in Vector3 greyScaleStrength,
+            in Vector2 distortionCenter,
+            in float distortionStrength,
+            in float noiseStrength,
+            in Color posterizationLightColor,
+            in Color posterizationDarkColor)
         {
-            _greyScaleStrength = shaderProperty.GreyScaleStrength;
-            _distortionCenter = shaderProperty.DistortionCenter;
-            _distortionStrength = shaderProperty.DistortionStrength;
-            _noiseStrength = shaderProperty.NoiseStrength;
-            _posterizationLightColor = shaderProperty.PosterizationLightColor;
-            _posterizationDarkColor = shaderProperty.PosterizationDarkColor;
+            _isEffectEnabled = isEffectEnabled;
+            _greyScaleStrength = greyScaleStrength;
+            _distortionCenter = distortionCenter;
+            _distortionStrength = distortionStrength;
+            _noiseStrength = noiseStrength;
+            _posterizationLightColor = posterizationLightColor;
+            _posterizationDarkColor = posterizationDarkColor;
         }
 
         /// <summary>

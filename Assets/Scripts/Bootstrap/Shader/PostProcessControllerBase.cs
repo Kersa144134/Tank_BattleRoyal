@@ -47,47 +47,29 @@ namespace ShaderSystem.Controller
         }
 
         // ======================================================
-        // PostProcessControllerBase イベント
+        // パブリックメソッド
         // ======================================================
 
         /// <summary>
-        /// Full Screen Pass Render Feature を有効化する
+        /// Full Screen Pass Render Feature の有効状態を設定する
         /// </summary>
-        public void EnableFullScreenPass()
+        /// <param name="isEnable">有効にするかどうか</param>
+        public void SetFullScreenPassActive(bool isEnable)
         {
+            // Full Screen Pass Feature が未設定の場合は処理を行わない
             if (_fullScreenPassFeature == null)
             {
                 return;
             }
 
-            _fullScreenPassFeature.SetActive(true);
-        }
-
-        /// <summary>
-        /// Full Screen Pass Render Feature を無効化する
-        /// </summary>
-        public void DisableFullScreenPass()
-        {
-            if (_fullScreenPassFeature == null)
+            // すでに目的の状態である場合は処理を行わない
+            if (_fullScreenPassFeature.isActive == isEnable)
             {
                 return;
             }
 
-            _fullScreenPassFeature.SetActive(false);
-        }
-
-        /// <summary>
-        /// Full Screen Pass Render Feature の有効状態を反転する
-        /// </summary>
-        public void ToggleFullScreenPass()
-        {
-            if (_fullScreenPassFeature == null)
-            {
-                return;
-            }
-
-            _fullScreenPassFeature.SetActive(
-                !_fullScreenPassFeature.isActive);
+            // Full Screen Pass Feature の有効状態を切り替える
+            _fullScreenPassFeature.SetActive(isEnable);
         }
 
         // ======================================================

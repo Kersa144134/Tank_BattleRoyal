@@ -7,6 +7,7 @@
 // ======================================================
 
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 using UnityEngine.UI;
 using TMPro;
 using SceneSystem.Interface;
@@ -26,32 +27,92 @@ namespace UISystem.Manager
         // ======================================================
 
         // --------------------------------------------------
-        // 画面フェード
+        // 画面アニメーション
         // --------------------------------------------------
-        [Header("画面フェード")]
-        /// <summary>画面フェード実行クラス</summary>
+        [Header("画面アニメーション")]
+        /// <summary>画面フェードクラス</summary>
         [SerializeField]
-        private Fade fade;
+        private Fade _fade;
 
         // --------------------------------------------------
-        // 画面エフェクト
+        // 演出 <2 値化>
         // --------------------------------------------------
-        [Header("画面エフェクト")]
-        /// <summary>2 値化エフェクトに使用するシェーダープロパティの設定一覧</summary>
+        [Header("演出 <2 値化>")]
+        /// <summary>2 値化エフェクト用の制御対象となる Full Screen Pass Render Feature</summary>
         [SerializeField]
-        private BinarizationPostProcessController.BinarizationShaderProperty _binarizationShaderProperty;
+        private ScriptableRendererFeature _binarizationFullScreenPassFeature;
 
-        /// <summary>グレースケール化エフェクトに使用するシェーダープロパティの設定一覧</summary>
+        /// <summary>2 値化エフェクト用の Full Screen Pass で使用するマテリアル</summary>
         [SerializeField]
-        private GreyScalePostProcessController.GreyScaleShaderProperty _greyScaleShaderProperty;
+        private Material _binarizationEffectMaterial;
+
+        /// <summary>エフェクトが有効かどうか</summary>
+        [SerializeField]
+        private bool _isBinarizationEffectEnabled;
+
+        /// <summary>歪みの中心座標（UV 空間）</summary>
+        [SerializeField]
+        private Vector2 _binarizationDistortionCenter;
+
+        /// <summary>歪みエフェクトの強度</summary>
+        [SerializeField]
+        private float _binarizationDistortionStrength;
+
+        /// <summary>ノイズエフェクトの強度</summary>
+        [SerializeField]
+        private float _binarizationNoiseStrength;
+
+        /// <summary>ポスタライズ処理のしきい値</summary>
+        [SerializeField]
+        private float _binarizationPosterizationThreshold;
+
+        /// <summary>ポスタライズ明部カラー</summary>
+        [SerializeField, ColorUsage(false, true)]
+        private Color _binarizationPosterizationLightColor;
+
+        /// <summary>ポスタライズ暗部カラー</summary>
+        [SerializeField, ColorUsage(false, true)]
+        private Color _binarizationPosterizationDarkColor;
 
         // --------------------------------------------------
-        // プレイヤー戦車
+        // 演出 <グレースケール>
         // --------------------------------------------------
-        [Header("プレイヤー戦車")]
-        /// <summary>プレイヤー戦車のルートマネージャー</summary>
+        [Header("演出 <グレースケール>")]
+        /// <summary>グレースケール用の制御対象となる Full Screen Pass Render Feature</summary>
         [SerializeField]
-        private BaseTankRootManager _playerTankRootManager;
+        private ScriptableRendererFeature _greyScaleFullScreenPassFeature;
+
+        /// <summary>グレースケール用の Full Screen Pass で使用するマテリアル</summary>
+        [SerializeField]
+        private Material _greyScaleEffectMaterial;
+
+        /// <summary>エフェクトが有効かどうか</summary>
+        [SerializeField]
+        private bool _isGreyScaleEffectEnabled;
+
+        /// <summary>グレースケールの強さ</summary>
+        [SerializeField]
+        private Vector3 _greyScaleStrength;
+
+        /// <summary>歪みの中心座標（UV 空間）</summary>
+        [SerializeField]
+        private Vector2 _greyScaleDistortionCenter;
+
+        /// <summary>歪みエフェクトの強度</summary>
+        [SerializeField]
+        private float _greyScaleDistortionStrength;
+
+        /// <summary>ノイズエフェクトの強度</summary>
+        [SerializeField]
+        private float _greyScaleNoiseStrength;
+
+        /// <summary>ポスタライズ明部カラー</summary>
+        [SerializeField, ColorUsage(false, true)]
+        private Color _greyScalePosterizationLightColor;
+
+        /// <summary>ポスタライズ暗部カラー</summary>
+        [SerializeField, ColorUsage(false, true)]
+        private Color _greyScalePosterizationDarkColor;
 
         // --------------------------------------------------
         // 耐久値バー
@@ -101,6 +162,14 @@ namespace UISystem.Manager
         [SerializeField]
         private LogRotationUIController.InsertDirection _logInsertDirection;
 
+        // --------------------------------------------------
+        // プレイヤー戦車
+        // --------------------------------------------------
+        [Header("プレイヤー戦車")]
+        /// <summary>プレイヤー戦車のルートマネージャー</summary>
+        [SerializeField]
+        private BaseTankRootManager _playerTankRootManager;
+
         // ======================================================
         // コンポーネント参照
         // ======================================================
@@ -122,12 +191,6 @@ namespace UISystem.Manager
 
         /// <summary>耐久値バー横幅 UI コントローラー</summary>
         private ValueBarWidthUIController _durabilityBarWidthUIController;
-
-        // --------------------------------------------------
-        // 画面演出
-        // --------------------------------------------------
-        /// <summary>画面フラッシュ演出コントローラー</summary>
-        private FlashAnimationController _flashAnimationController;
         
         // --------------------------------------------------
         // データ参照
@@ -136,20 +199,36 @@ namespace UISystem.Manager
         private TankDurabilityManager _playerDurabilityManager;
 
         // ======================================================
+        // フィールド
+        // ======================================================
+
+        /// <summary>フラッシュアニメーション用アニメーター</summary>
+        private Animator _flashAnimator;
+        
+        // ======================================================
+        // 定数
+        // ======================================================
+
+        /// <summary>Flash アニメーション用のアニメーター Trigger 名</summary>
+        private const string FLASH_TRIGGER_NAME = "Flash";
+
+        // ======================================================
         // IUpdatable イベント
         // ======================================================
 
         public void OnEnter()
         {
-            _binarizationPostProcessController = new BinarizationPostProcessController(_binarizationShaderProperty);
+            _flashAnimator = GetComponent<Animator>();
 
-            _greyScalePostProcessController = new GreyScalePostProcessController(_greyScaleShaderProperty);
+            _binarizationPostProcessController =
+                new BinarizationPostProcessController(
+                    _binarizationFullScreenPassFeature,
+                    _binarizationEffectMaterial);
 
-            _flashAnimationController =
-                new FlashAnimationController(
-                    _binarizationPostProcessController,
-                    _greyScalePostProcessController
-                );
+            _greyScalePostProcessController =
+                new GreyScalePostProcessController(
+                    _greyScaleFullScreenPassFeature,
+                    _greyScaleEffectMaterial);
 
             if (_playerTankRootManager is PlayerTankRootManager)
             {
@@ -187,10 +266,25 @@ namespace UISystem.Manager
         {
             float deltaTime = Time.deltaTime;
 
-            _binarizationPostProcessController.Update(_binarizationShaderProperty);
-            _greyScalePostProcessController.Update(_greyScaleShaderProperty);
+            _binarizationPostProcessController.Update(
+                _isBinarizationEffectEnabled,
+                _binarizationDistortionCenter,
+                _binarizationDistortionStrength,
+                _binarizationNoiseStrength,
+                _binarizationPosterizationThreshold,
+                _binarizationPosterizationLightColor,
+                _binarizationPosterizationDarkColor
+            );
 
-            _flashAnimationController.Update(deltaTime);
+            _greyScalePostProcessController.Update(
+                _isGreyScaleEffectEnabled,
+                _greyScaleStrength,
+                _greyScaleDistortionCenter,
+                _greyScaleDistortionStrength,
+                _greyScaleNoiseStrength,
+                _greyScalePosterizationLightColor,
+                _greyScalePosterizationDarkColor
+            );
 
             if (_playerDurabilityManager != null)
             {
@@ -205,16 +299,16 @@ namespace UISystem.Manager
             // --------------------------------------------------
             if (Input.GetKeyDown(KeyCode.Tab))
             {
-                fade.FadeIn(0.5f);
+                _fade.FadeIn(0.5f);
             }
             else if (Input.GetKeyUp(KeyCode.Tab))
             {
-                fade.FadeOut(0.5f);
+                _fade.FadeOut(0.5f);
             }
 
             if (Input.GetKeyDown(KeyCode.Return))
             {
-                _flashAnimationController.Play();
+                _flashAnimator.SetTrigger(FLASH_TRIGGER_NAME);
             }
         }
 
