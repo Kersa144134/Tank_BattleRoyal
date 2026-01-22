@@ -106,6 +106,9 @@ namespace ItemSystem.Manager
 
         public void OnUpdate(in float playTime)
         {
+            // 初回生成
+            if (Input.GetKeyDown(KeyCode.Alpha0))_spawnController.ExecuteInitialSpawn();
+            
             // 生成制御コントローラーを更新
             _spawnController.Update();
         }
@@ -120,15 +123,18 @@ namespace ItemSystem.Manager
         }
 
         // ======================================================
-        // パブリックメソッド
+        // プライベートメソッド
         // ======================================================
 
+        // --------------------------------------------------
+        // プール操作
+        // --------------------------------------------------
         /// <summary>
         /// 未使用プールから ItemSlot をランダムに取り出す
         /// </summary>
         /// <param name="spawnPosition">生成座標</param>
         /// <returns>取得した ItemSlot</returns>
-        public ItemSlot Activate(in Vector3 spawnPosition)
+        private ItemSlot Activate(in Vector3 spawnPosition)
         {
             // 抽選により未使用キューを取得
             Queue<ItemSlot> selectedQueue = GetRandomInactiveQueue();
@@ -158,7 +164,7 @@ namespace ItemSystem.Manager
         /// ItemSlot を未使用状態としてプールへ返却する
         /// </summary>
         /// <param name="slot">返却対象の ItemSlot</param>
-        public void Deactivate(in ItemSlot slot)
+        private void Deactivate(in ItemSlot slot)
         {
             if (slot == null || slot.Transform == null)
             {
@@ -174,10 +180,6 @@ namespace ItemSystem.Manager
             // 無効化イベント通知
             OnItemDeactivated?.Invoke(slot);
         }
-
-        // ======================================================
-        // プライベートメソッド
-        // ======================================================
 
         /// <summary>
         /// プールを初期化する
@@ -223,6 +225,9 @@ namespace ItemSystem.Manager
             }
         }
 
+        // --------------------------------------------------
+        // 抽選
+        // --------------------------------------------------
         /// <summary>
         /// 未使用状態の ItemSlot キューをランダムに抽選する
         /// </summary>

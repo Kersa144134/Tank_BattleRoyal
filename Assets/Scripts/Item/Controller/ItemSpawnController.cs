@@ -30,6 +30,9 @@ namespace ItemSystem.Controller
         // 定数
         // ======================================================
 
+        /// <summary>初回生成回数</summary>
+        private const int INITIAL_SPAWN_COUNT = 10;
+        
         /// <summary>生成判定間隔（秒）</summary>
         private const float SPAWN_INTERVAL = 1.0f;
 
@@ -100,6 +103,29 @@ namespace ItemSystem.Controller
             // 生成座標確定イベントを通知
             OnSpawnPositionDetermined?.Invoke(position);
         }
+
+        /// <summary>
+        /// 初回生成処理を即時に実行する
+        /// </summary>
+        public void ExecuteInitialSpawn()
+        {
+            // 指定回数分の初回生成を実行
+            for (int i = 0; i < INITIAL_SPAWN_COUNT; i++)
+            {
+                // ランダムな生成座標を取得
+                if (!TryGetRandomSpawnPosition(out Vector3 position))
+                {
+                    continue;
+                }
+
+                // 生成座標確定イベントを通知
+                OnSpawnPositionDetermined?.Invoke(position);
+            }
+        }
+
+        // ======================================================
+        // プライベートメソッド
+        // ======================================================
 
         /// <summary>
         /// 生成タイミングに到達しているか判定する
