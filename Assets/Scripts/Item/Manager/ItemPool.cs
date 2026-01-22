@@ -124,38 +124,34 @@ namespace ItemSystem.Manager
         // ======================================================
 
         /// <summary>
-        /// 未使用プールから ItemSlot を取り出す
+        /// 未使用プールから ItemSlot をランダムに取り出す
         /// </summary>
         /// <param name="spawnPosition">生成座標</param>
         /// <returns>取得した ItemSlot</returns>
         public ItemSlot Activate(in Vector3 spawnPosition)
         {
-            // ItemData 単位でキューを走査
-            foreach (Queue<ItemSlot> queue in _inactiveItems.Values)
+            // 抽選により未使用キューを取得
+            Queue<ItemSlot> selectedQueue = GetRandomInactiveQueue();
+
+            // 抽選対象が存在しない場合は取得不可
+            if (selectedQueue == null)
             {
-                // 未使用スロットが存在しない場合はスキップ
-                if (queue.Count == 0)
-                {
-                    continue;
-                }
-
-                // 未使用キューから取得
-                ItemSlot slot = queue.Dequeue();
-
-                // イベント購読
-                slot.OnDeactivated += HandleSlotDeactivated;
-
-                // 生成位置へ移動
-                slot.Transform.position = spawnPosition;
-
-                // 有効化イベントを通知
-                OnItemActivated?.Invoke(slot);
-
-                return slot;
+                return null;
             }
 
-            // 取得可能なスロットが存在しない
-            return null;
+            // 未使用キューから ItemSlot を取得
+            ItemSlot slot = selectedQueue.Dequeue();
+
+            // イベント購読
+            slot.OnDeactivated += HandleSlotDeactivated;
+
+            // 生成位置へ移動
+            slot.Transform.position = spawnPosition;
+
+            // 有効化イベントを通知
+            OnItemActivated?.Invoke(slot);
+
+            return slot;
         }
 
         /// <summary>
@@ -183,9 +179,6 @@ namespace ItemSystem.Manager
         // プライベートメソッド
         // ======================================================
 
-        // --------------------------------------------------
-        // 初期化
-        // --------------------------------------------------
         /// <summary>
         /// プールを初期化する
         /// </summary>
@@ -228,6 +221,41 @@ namespace ItemSystem.Manager
                     queue.Enqueue(slot);
                 }
             }
+        }
+
+        /// <summary>
+        /// 未使用状態の ItemSlot キューをランダムに抽選する
+        /// </summary>
+        /// <returns>抽選された未使用キュー</returns>
+        private Queue<ItemSlot> GetRandomInactiveQueue()
+        {
+            // 抽選対象となる未使用キュー一覧
+            List<Queue<ItemSlot>> drawingQueues = new List<Queue<ItemSlot>>();
+
+            // ItemData 単位で未使用キューを走査
+            foreach (Queue<ItemSlot> queue in _inactiveItems.Values)
+            {
+                // 要素が存在しないキューは抽選対象外
+                if (queue.Count == 0)
+                {
+                    continue;
+                }
+
+                // 抽選対象として追加
+                drawingQueues.Add(queue);
+            }
+
+            // 抽選対象が存在しない場合は null を返す
+            if (drawingQueues.Count == 0)
+            {
+                return null;
+            }
+
+            // 抽選対象キューのインデックスをランダム取得
+            int randomIndex = UnityEngine.Random.Range(0, drawingQueues.Count);
+
+            // 抽選された未使用キューを返却
+            return drawingQueues[randomIndex];
         }
 
         // --------------------------------------------------
