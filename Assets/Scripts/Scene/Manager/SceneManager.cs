@@ -188,6 +188,7 @@ namespace SceneSystem.Manager
             // フェーズおよびシーン遷移条件の更新
             _phaseManager.Update(
                 unscaledDeltaTime,
+                _elapsedTime,
                 in _currentScene,
                 in _currentPhase,
                 out _targetScene,

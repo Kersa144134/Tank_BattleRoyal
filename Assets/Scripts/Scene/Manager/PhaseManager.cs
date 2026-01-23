@@ -23,11 +23,35 @@ namespace SceneSystem.Manager
         // 定数
         // ======================================================
 
-        /// <summary>Ready フェーズから Play フェーズへ遷移するまでの待機時間（秒）</summary>
+        /// <summary>
+        /// Ready フェーズから Play フェーズへ遷移するまでの待機時間（秒）
+        /// </summary>
         private const float READY_TO_PLAY_WAIT_TIME = 5.0f;
 
-        /// <summary>Finish フェーズから Result フェーズへ遷移するまでの待機時間（秒）</summary>
+        /// <summary>
+        /// Finish フェーズから Result フェーズへ遷移するまでの待機時間（秒）
+        /// </summary>
         private const float FINISH_TO_RESULT_WAIT_TIME = 5.0f;
+
+        /// <summary>
+        /// Play フェーズから Finish フェーズへ遷移するまでのゲームプレイ時間（秒）
+        /// </summary>
+        private const float PLAY_TO_FINISH_WAIT_TIME = 60.0f;
+
+        /// <summary>
+        /// 条件成立時に Title フェーズから Ready フェーズへ遷移するまでの待機時間（秒）
+        /// </summary>
+        private const float TITLE_TO_READY_WAIT_TIME = 3.0f;
+
+        /// <summary>
+        /// 条件成立時に Pause フェーズから Title フェーズへ遷移するまでの待機時間（秒）
+        /// </summary>
+        private const float PAUSE_TO_TITLE_WAIT_TIME = 3.0f;
+
+        /// <summary>
+        /// 条件成立時に Result フェーズから Title フェーズへ遷移するまでの待機時間（秒）
+        /// </summary>
+        private const float RESULT_TO_TITLE_WAIT_TIME = 3.0f;
 
         // ======================================================
         // フィールド
@@ -56,12 +80,14 @@ namespace SceneSystem.Manager
         /// フェーズおよびシーン遷移条件を毎フレーム評価する
         /// </summary>
         /// <param name="unscaledDeltaTime">timeScale の影響を受けない経過時間</param>
+        /// <param name="elapsedTime">インゲームの経過時間</param>
         /// <param name="currentScene">現在のシーン名</param>
         /// <param name="currentPhase">現在のフェーズ</param>
         /// <param name="targetScene">遷移先シーン名</param>
         /// <param name="targetPhase">遷移先フェーズ</param>
         public void Update(
             in float unscaledDeltaTime,
+            in float elapsedTime,
             in string currentScene,
             in PhaseType currentPhase,
             out string targetScene,
@@ -87,6 +113,17 @@ namespace SceneSystem.Manager
                     break;
 
                 case PhaseType.Play:
+                    if (elapsedTime > PLAY_TO_FINISH_WAIT_TIME)
+                    {
+                        // 即時遷移
+                        UpdatePhaseByElapsedTime(
+                            currentPhase,
+                            out targetPhase,
+                            0f,
+                            PhaseType.Finish
+                        );
+                    }
+
                     if (InputManager.Instance.StartButton.Down)
                     {
                         TogglePhaseChange(
