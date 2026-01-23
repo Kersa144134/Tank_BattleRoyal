@@ -48,7 +48,7 @@ namespace CameraSystem.Manager
             _followController = new CameraFollowController(cameraTransform, cameraTargets);
         }
 
-        public void OnLateUpdate()
+        public void OnLateUpdate(in float unscaledDeltaTime)
         {
             float deltaTime = Time.deltaTime;
 

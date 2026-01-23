@@ -104,9 +104,9 @@ namespace ItemSystem.Manager
             InitializePool();
         }
 
-        public void OnUpdate(in float elapsedTime)
+        public void OnUpdate(in float unscaledDeltaTime, in float elapsedTime)
         {
-            // 初回生成
+            // デバッグ用
             if (Input.GetKeyDown(KeyCode.Alpha0))_spawnController.ExecuteInitialSpawn();
             
             // 生成制御コントローラーを更新

@@ -84,7 +84,7 @@ namespace SceneSystem.Manager
             InitializeObstacles();
         }
 
-        public void OnUpdate(in float elapsedTime)
+        public void OnUpdate(in float unscaledDeltaTime, in float elapsedTime)
         {
             float deltaTime = Time.deltaTime;
             _elapsedTime = elapsedTime;
@@ -93,7 +93,7 @@ namespace SceneSystem.Manager
             _itemManager.UpdateItems(elapsedTime);
         }
 
-        public void OnLateUpdate()
+        public void OnLateUpdate(in float unscaledDeltaTime)
         {
             _itemManager.DeactivateItems();
         }

@@ -222,7 +222,7 @@ namespace TankSystem.Manager
             _durabilityManager.OnBroken += HandleBroken;
         }
 
-        public virtual void OnUpdate(in float elapsedTime)
+        public virtual void OnUpdate(in float unscaledDeltaTime, in float elapsedTime)
         {
             // 破壊済みの場合は処理なし
             if (_isBroken)
@@ -243,7 +243,6 @@ namespace TankSystem.Manager
             // タイムスケール
             // --------------------------------------------------
             float deltaTime = Time.deltaTime;
-            float unscaledDeltaTime = Time.unscaledDeltaTime;
 
             // --------------------------------------------------
             // 軸制限をリセット
@@ -305,7 +304,7 @@ namespace TankSystem.Manager
             NextRotation = calculatedRotation;
         }
 
-        public virtual void OnLateUpdate()
+        public virtual void OnLateUpdate(in float unscaledDeltaTime)
         {
             // 破壊済みの場合は処理なし
             if (_isBroken)

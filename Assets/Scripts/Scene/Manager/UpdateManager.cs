@@ -52,20 +52,22 @@ namespace SceneSystem.Manager
         /// <summary>
         /// 毎フレーム呼び出される Update 処理を実行する
         /// </summary>
+        /// <param name="unscaledDeltaTime">timeScale の影響を受けない経過時間</param>
         /// <param name="elapsedTime">インゲームの経過時間</param>
-        public void Update(in float elapsedTime)
+        public void Update(in float unscaledDeltaTime, in float elapsedTime)
         {
             // 通常 Update を実行
-            _updateController.OnUpdate(elapsedTime);
+            _updateController.OnUpdate(unscaledDeltaTime, elapsedTime);
         }
 
         /// <summary>
         /// LateUpdate タイミングで呼び出される処理を実行する
         /// </summary>
-        public void LateUpdate()
+        /// <param name="unscaledDeltaTime">timeScale の影響を受けない経過時間</param>
+        public void LateUpdate(in float unscaledDeltaTime)
         {
             // LateUpdate を実行
-            _updateController.OnLateUpdate();
+            _updateController.OnLateUpdate(unscaledDeltaTime);
         }
 
         // --------------------------------------------------

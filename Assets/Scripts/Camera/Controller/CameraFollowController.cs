@@ -107,7 +107,7 @@ namespace CameraSystem.Controller
             _cameraTransform.position = CalculateFollowPosition(deltaTime, target);
 
             // âÒì]í«è]
-            _cameraTransform.rotation = CalculateFollowRotation(target);
+            _cameraTransform.rotation = CalculateFollowRotation(deltaTime, target);
         }
 
         // ======================================================
@@ -144,7 +144,7 @@ namespace CameraSystem.Controller
         /// </summary>
         /// <param name="target">í«è]ëŒè€ÇÃ CameraTarget ÉfÅ[É^</param>
         /// <returns>ï‚ä‘çœÇ›ÇÃÉJÉÅÉâí«è]âÒì]</returns>
-        private Quaternion CalculateFollowRotation(in CameraTarget target)
+        private Quaternion CalculateFollowRotation(in float deltaTime, in CameraTarget target)
         {
             Quaternion targetRotation;
 
@@ -154,7 +154,7 @@ namespace CameraSystem.Controller
                 targetRotation = Quaternion.Slerp(
                     _cameraTransform.rotation,
                     Quaternion.Euler(target.RotationOffset),
-                    FOLLOW_SPEED * Time.deltaTime
+                    FOLLOW_SPEED * deltaTime
                 );
             }
             else
@@ -163,7 +163,7 @@ namespace CameraSystem.Controller
                 targetRotation = Quaternion.Slerp(
                     _cameraTransform.rotation,
                     target.TargetTransform.rotation * Quaternion.Euler(target.RotationOffset),
-                    FOLLOW_SPEED * Time.deltaTime
+                    FOLLOW_SPEED * deltaTime
                 );
             }
 

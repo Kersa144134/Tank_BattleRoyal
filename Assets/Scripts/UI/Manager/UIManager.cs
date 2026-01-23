@@ -262,9 +262,8 @@ namespace UISystem.Manager
                 );
         }
 
-        public void OnLateUpdate()
+        public void OnLateUpdate(in float unscaledDeltaTime)
         {
-            float unscaledDeltaTime = Time.unscaledDeltaTime;
 
             _binarizationPostProcessController.Update(
                 _isBinarizationEffectEnabled,

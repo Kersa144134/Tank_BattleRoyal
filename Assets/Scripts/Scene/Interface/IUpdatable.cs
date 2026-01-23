@@ -28,13 +28,15 @@ namespace SceneSystem.Interface
         /// <summary>
         /// 毎フレーム実行される更新処理
         /// </summary>
+        /// <param name="unscaledDeltaTime">timeScale の影響を受けない経過時間</param>
         /// <param name="elapsedTime">ゲームの経過時間</param>
-        void OnUpdate(in float elapsedTime) { }
+        void OnUpdate(in float unscaledDeltaTime, in float elapsedTime) { }
 
         /// <summary>
         /// LateUpdate 相当で毎フレーム実行される処理
         /// </summary>
-        void OnLateUpdate() { }
+        /// <param name="unscaledDeltaTime">timeScale の影響を受けない経過時間</param>
+        void OnLateUpdate(in float unscaledDeltaTime) { }
 
         /// <summary>
         /// シーン終了時に 1 度だけ呼ばれる終了処理

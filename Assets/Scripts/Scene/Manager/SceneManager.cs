@@ -63,6 +63,9 @@ namespace SceneSystem.Manager
         /// <summary>遷移先シーン名</summary>
         private string _targetScene = string.Empty;
 
+        /// <summary>シーン切り替え直後かどうかを示すフラグ</summary>
+        private bool _isSceneChanged = true;
+
         // --------------------------------------------------
         // フェーズ管理
         // --------------------------------------------------
@@ -120,9 +123,11 @@ namespace SceneSystem.Manager
             // イベント購読
             _sceneEventRouter.Subscribe();
 
-            // 初期フェーズを設定
+            // 初期値設定
             _targetPhase = PhaseType.Ready;
             ChangePhase(_targetPhase);
+            _isSceneChanged = true;
+            _elapsedTime = 0.0f;
         }
 
         private void Update()
@@ -140,33 +145,58 @@ namespace SceneSystem.Manager
                 ChangePhase(_targetPhase);
             }
 
+            // シーン切り替え直後のフレームスキップ判定
+            if (_isSceneChanged)
+            {
+                return;
+            }
+
+            float unscaledDeltaTime = Time.unscaledDeltaTime;
+
             // Play フェーズ中のみタイマーを進行
             if (_currentPhase == PhaseType.Play)
             {
                 // timeScaleに影響されない経過時間で加算
-                _elapsedTime += Time.unscaledDeltaTime;
+                _elapsedTime += unscaledDeltaTime;
             }
 
             // Update 実行
-            _updateManager.Update(_elapsedTime);
+            _updateManager.Update(unscaledDeltaTime, _elapsedTime);
         }
 
         private void LateUpdate()
         {
+            // シーン切り替え直後のフレームスキップ判定
+            if (_isSceneChanged)
+            {
+                _isSceneChanged = false;
+                return;
+            }
+
             float unscaledDeltaTime = Time.unscaledDeltaTime;
 
             // LateUpdate 実行
-            _updateManager.LateUpdate();
+            _updateManager.LateUpdate(unscaledDeltaTime);
 
             // オプションボタン押下判定
             if (InputManager.Instance.StartButton.Down)
             {
-                _phaseManager.ToggleOptionPhaseChange(ref _currentPhase);
+                _phaseManager.ToggleOptionPhaseChange(
+                    in _currentPhase,
+                    out _targetPhase
+                );
+
                 _sceneEventRouter.HandleOptionButtonPressed();
             }
 
             // フェーズおよびシーン遷移条件の更新
-            _phaseManager.Update(unscaledDeltaTime, ref _currentScene, ref _currentPhase);
+            _phaseManager.Update(
+                unscaledDeltaTime,
+                in _currentScene,
+                in _currentPhase,
+                out _targetScene,
+                out _targetPhase
+            );
         }
 
         private void OnDestroy()
@@ -192,6 +222,9 @@ namespace SceneSystem.Manager
 
             // 現在シーンを更新
             _currentScene = sceneName;
+
+            // シーン切り替え直後フラグを立てる
+            _isSceneChanged = true;
 
             // シーンロード
             UnityEngine.SceneManagement.SceneManager.LoadScene(sceneName);

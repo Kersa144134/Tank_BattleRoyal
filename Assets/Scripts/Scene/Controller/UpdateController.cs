@@ -41,29 +41,31 @@ namespace SceneSystem.Controller
         /// <summary>
         /// OnUpdate を毎フレーム実行
         /// </summary>
+        /// <param name="unscaledDeltaTime">timeScale の影響を受けない経過時間</param>
         /// <param name="elapsedTime">ゲームの経過時間</param>
-        public void OnUpdate(in float elapsedTime)
+        public void OnUpdate(in float unscaledDeltaTime, in float elapsedTime)
         {
             // 実行前にキャッシュを最新化する
             RebuildCache();
 
             for (int i = 0; i < _updateArray.Length; i++)
             {
-                _updateArray[i].OnUpdate(elapsedTime);
+                _updateArray[i].OnUpdate(unscaledDeltaTime, elapsedTime);
             }
         }
 
         /// <summary>
         /// LateUpdate 相当の処理を毎フレーム実行
         /// </summary>
-        public void OnLateUpdate()
+        /// <param name="unscaledDeltaTime">timeScale の影響を受けない経過時間</param>
+        public void OnLateUpdate(in float unscaledDeltaTime)
         {
             // 実行前にキャッシュを最新化する
             RebuildCache();
 
             for (int i = 0; i < _updateArray.Length; i++)
             {
-                _updateArray[i].OnLateUpdate();
+                _updateArray[i].OnLateUpdate(unscaledDeltaTime);
             }
         }
 
