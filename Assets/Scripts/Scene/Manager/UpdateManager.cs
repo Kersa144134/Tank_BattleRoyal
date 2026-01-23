@@ -3,18 +3,16 @@
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-17
 // 更新日時 : 2026-01-23
-// 概要     : Update を管理する
+// 概要     : Update 処理を管理する
 // ======================================================
 
-using UnityEngine;
 using SceneSystem.Controller;
 using SceneSystem.Data;
 
 namespace SceneSystem.Manager
 {
     /// <summary>
-    /// UpdateController をラップし、
-    /// Update / LateUpdate / フェーズ EnterExit の実行のみを担当する管理クラス
+    /// Update 処理の実行を担当する管理クラス
     /// </summary>
     public sealed class UpdateManager
     {

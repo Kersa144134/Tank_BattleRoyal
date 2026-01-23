@@ -10,6 +10,7 @@ using UnityEngine;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.UI;
 using TMPro;
+using SceneSystem.Data;
 using SceneSystem.Interface;
 using ShaderSystem.Controller;
 using TankSystem.Manager;
@@ -202,9 +203,12 @@ namespace UISystem.Manager
         // フィールド
         // ======================================================
 
+        /// <summary>現在インゲーム状態かどうか</summary>
+        private bool _isInGame;
+
         /// <summary>フラッシュアニメーション用アニメーター</summary>
         private Animator _flashAnimator;
-        
+
         // ======================================================
         // 定数
         // ======================================================
@@ -232,8 +236,6 @@ namespace UISystem.Manager
 
             if (_playerTankRootManager is PlayerTankRootManager)
             {
-                // プレイヤー戦車から耐久力マネージャーを取得
-                _playerDurabilityManager =
                 _playerDurabilityManager =
                     _playerTankRootManager.DurabilityManager;
 
@@ -285,6 +287,11 @@ namespace UISystem.Manager
                 _greyScalePosterizationDarkColor
             );
 
+            if (!_isInGame)
+            {
+                return;
+            }
+
             if (_playerDurabilityManager != null)
             {
                 _durabilityBarWidthUIController.Update(unscaledDeltaTime);
@@ -308,6 +315,24 @@ namespace UISystem.Manager
             if (Input.GetKeyDown(KeyCode.Return))
             {
                 _flashAnimator.SetTrigger(FLASH_TRIGGER_NAME);
+            }
+        }
+
+        public void OnPhaseEnter(in PhaseType phase)
+        {
+            // Play フェーズ開始時にインゲーム状態
+            if (phase == PhaseType.Play)
+            {
+                _isInGame = true;
+            }
+        }
+
+        public void OnPhaseExit(in PhaseType phase)
+        {
+            // Finish フェーズ終了時にインゲーム状態解除
+            if (phase == PhaseType.Finish)
+            {
+                _isInGame = false;
             }
         }
 

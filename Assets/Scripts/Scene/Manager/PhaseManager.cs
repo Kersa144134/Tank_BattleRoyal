@@ -6,8 +6,11 @@
 // 概要     : シーン及びフェーズ遷移条件を管理する
 // ======================================================
 
+using InputSystem.Manager;
 using SceneSystem.Data;
-using System.Diagnostics;
+using System;
+using UnityEngine;
+using WeaponSystem.Data;
 
 namespace SceneSystem.Manager
 {
@@ -21,7 +24,7 @@ namespace SceneSystem.Manager
         // ======================================================
 
         /// <summary>Ready フェーズから Play フェーズへ遷移するまでの待機時間（秒）</summary>
-        private const float READY_TO_PLAY_WAIT_TIME = 3.0f;
+        private const float READY_TO_PLAY_WAIT_TIME = 5.0f;
 
         /// <summary>Finish フェーズから Result フェーズへ遷移するまでの待機時間（秒）</summary>
         private const float FINISH_TO_RESULT_WAIT_TIME = 5.0f;
@@ -37,6 +40,15 @@ namespace SceneSystem.Manager
         private float _phaseElapsedTime = 0.0f;
 
         // ======================================================
+        // イベント
+        // ======================================================
+
+        /// <summary>
+        /// オプションボタン押下時に発火するイベント
+        /// </summary>
+        public event Action OnOptionButtonPressed;
+
+        // ======================================================
         // パブリックメソッド
         // ======================================================
 
@@ -44,8 +56,8 @@ namespace SceneSystem.Manager
         /// フェーズおよびシーン遷移条件を毎フレーム評価する
         /// </summary>
         /// <param name="unscaledDeltaTime">timeScale の影響を受けない経過時間</param>
-        /// <param name="currentScene">現在のシーン名（参照専用）</param>
-        /// <param name="currentPhase">現在のフェーズ（参照専用）</param>
+        /// <param name="currentScene">現在のシーン名</param>
+        /// <param name="currentPhase">現在のフェーズ</param>
         /// <param name="targetScene">遷移先シーン名</param>
         /// <param name="targetPhase">遷移先フェーズ</param>
         public void Update(
@@ -66,58 +78,49 @@ namespace SceneSystem.Manager
             switch (currentPhase)
             {
                 case PhaseType.Ready:
-                    UpdateReadyPhase(
+                    UpdatePhaseByElapsedTime(
                         currentPhase,
-                        out targetPhase
+                        out targetPhase,
+                        READY_TO_PLAY_WAIT_TIME,
+                        PhaseType.Play
                     );
                     break;
 
-                case PhaseType.Finish:
-                    UpdateFinishPhase(
-                        currentPhase,
-                        out targetPhase
-                    );
-                    break;
-
-                default:
-                    break;
-            }
-        }
-
-        /// <summary>
-        /// オプションボタン押下時のフェーズ切り替え遷移を評価する
-        /// </summary>
-        /// <param name="currentPhase">現在のフェーズ（参照専用）</param>
-        /// <param name="targetPhase">遷移先フェーズ</param>
-        public void ToggleOptionPhaseChange(
-            in PhaseType currentPhase,
-            out PhaseType targetPhase
-        )
-        {
-            // 初期状態として遷移なしを明示する
-            targetPhase = currentPhase;
-
-            switch (currentPhase)
-            {
                 case PhaseType.Play:
-                    // プレイ中は一時停止へ遷移させる
-                    targetPhase = PhaseType.Pause;
+                    if (InputManager.Instance.StartButton.Down)
+                    {
+                        TogglePhaseChange(
+                            currentPhase,
+                            out targetPhase
+                        );
+
+                        OnOptionButtonPressed?.Invoke();
+                    }
                     break;
 
                 case PhaseType.Pause:
-                    // 一時停止中はプレイへ戻す
-                    targetPhase = PhaseType.Play;
+                    if (InputManager.Instance.StartButton.Down)
+                    {
+                        TogglePhaseChange(
+                            currentPhase,
+                            out targetPhase
+                        );
+
+                        OnOptionButtonPressed?.Invoke();
+                    }
+                    break;
+
+                case PhaseType.Finish:
+                    UpdatePhaseByElapsedTime(
+                        currentPhase,
+                        out targetPhase,
+                        FINISH_TO_RESULT_WAIT_TIME,
+                        PhaseType.Result
+                    );
                     break;
 
                 default:
-                    // 対象外フェーズでは遷移を行わない
                     break;
-            }
-
-            // フェーズ遷移が確定したため経過時間を初期化する
-            if (targetPhase != currentPhase)
-            {
-                _phaseElapsedTime = 0.0f;
             }
         }
 
@@ -125,64 +128,68 @@ namespace SceneSystem.Manager
         // プライベートメソッド
         // ======================================================
 
-        // --------------------------------------------------
-        // Ready
-        // --------------------------------------------------
         /// <summary>
-        /// Ready フェーズ中の遷移条件を評価する
+        /// 指定した待機時間経過後にフェーズ遷移を行う
         /// </summary>
         /// <param name="currentPhase">現在のフェーズ</param>
         /// <param name="targetPhase">遷移先フェーズ</param>
-        private void UpdateReadyPhase(
+        /// <param name="waitTime">待機時間</param>
+        /// <param name="nextPhase">指定フェーズ</param>
+        private void UpdatePhaseByElapsedTime(
             in PhaseType currentPhase,
-            out PhaseType targetPhase
+            out PhaseType targetPhase,
+            in float waitTime,
+            in PhaseType nextPhase
         )
         {
             // 初期状態では遷移を行わない
             targetPhase = currentPhase;
 
-            // Ready フェーズの待機時間を超えているかを判定する
-            if (_phaseElapsedTime < READY_TO_PLAY_WAIT_TIME)
+            // 指定された待機時間を超えているかを判定する
+            if (_phaseElapsedTime < waitTime)
             {
                 // 待機時間未満のため遷移を行わない
                 return;
             }
 
-            // 待機時間を超えたためプレイフェーズへ遷移させる
-            targetPhase = PhaseType.Play;
+            // フェーズ遷移
+            targetPhase = nextPhase;
 
-            // フェーズ切り替えに伴い経過時間を初期化する
+            // 経過時間を初期化
             _phaseElapsedTime = 0.0f;
         }
 
-        // --------------------------------------------------
-        // Finish
-        // --------------------------------------------------
         /// <summary>
-        /// Finish フェーズ中の遷移条件を評価する
+        /// オプションボタン押下時のフェーズ切り替え遷移を評価する
         /// </summary>
         /// <param name="currentPhase">現在のフェーズ</param>
         /// <param name="targetPhase">遷移先フェーズ</param>
-        private void UpdateFinishPhase(
+        private void TogglePhaseChange(
             in PhaseType currentPhase,
             out PhaseType targetPhase
         )
         {
-            // 初期状態では遷移を行わない
             targetPhase = currentPhase;
-            
-            // Finish フェーズの待機時間を超えているかを判定する
-            if (_phaseElapsedTime < FINISH_TO_RESULT_WAIT_TIME)
+
+            switch (currentPhase)
             {
-                // 待機時間未満のため遷移を行わない
-                return;
+                case PhaseType.Play:
+                    targetPhase = PhaseType.Pause;
+                    break;
+
+                case PhaseType.Pause:
+                    targetPhase = PhaseType.Play;
+                    break;
+
+                default:
+                    break;
             }
 
-            // 待機時間を超えたため結果表示フェーズへ遷移させる
-            targetPhase = PhaseType.Result;
-
-            // フェーズ切り替えに伴い経過時間を初期化する
-            _phaseElapsedTime = 0.0f;
+            // 経過時間を初期化
+            if (targetPhase != currentPhase)
+            {
+                _phaseElapsedTime = 0.0f;
+            }
         }
     }
 }

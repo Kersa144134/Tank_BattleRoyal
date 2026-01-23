@@ -7,7 +7,6 @@
 // ======================================================
 
 using UnityEngine;
-using InputSystem.Manager;
 using SceneSystem.Controller;
 using SceneSystem.Data;
 using SceneSystem.Interface;
@@ -79,13 +78,20 @@ namespace SceneSystem.Manager
         private float _elapsedTime = 0.0f;
 
         // ======================================================
+        // 定数
+        // ======================================================
+
+        /// <summary>PhaseData を配置している Resources フォルダパス</summary>
+        private const string PHASE_DATA_RESOURCES_PATH = "Phase";
+        
+        // ======================================================
         // Unityイベント
         // ======================================================
 
         private void Awake()
         {
             // 全フェーズデータを読み込む
-            PhaseData[] phaseDataList = Resources.LoadAll<PhaseData>("Phase");
+            PhaseData[] phaseDataList = Resources.LoadAll<PhaseData>(PHASE_DATA_RESOURCES_PATH);
 
             // 各フェーズデータに対して初期化処理
             foreach (PhaseData phaseData in phaseDataList)
@@ -122,6 +128,7 @@ namespace SceneSystem.Manager
 
             // イベント購読
             _sceneEventRouter.Subscribe();
+            _phaseManager.OnOptionButtonPressed += HandleOptionButtonPressed;
 
             // 初期値設定
             _targetPhase = PhaseType.Ready;
@@ -178,17 +185,6 @@ namespace SceneSystem.Manager
             // LateUpdate 実行
             _updateManager.LateUpdate(unscaledDeltaTime);
 
-            // オプションボタン押下判定
-            if (InputManager.Instance.StartButton.Down)
-            {
-                _phaseManager.ToggleOptionPhaseChange(
-                    in _currentPhase,
-                    out _targetPhase
-                );
-
-                _sceneEventRouter.HandleOptionButtonPressed();
-            }
-
             // フェーズおよびシーン遷移条件の更新
             _phaseManager.Update(
                 unscaledDeltaTime,
@@ -203,6 +199,7 @@ namespace SceneSystem.Manager
         {
             // イベント購読解除
             _sceneEventRouter.Dispose();
+            _phaseManager.OnOptionButtonPressed -= HandleOptionButtonPressed;
         }
 
         // ======================================================
@@ -243,6 +240,14 @@ namespace SceneSystem.Manager
 
             // UpdateManager 側へ通知
             _updateManager.ChangePhase(nextPhase);
+        }
+
+        /// <summary>
+        /// フェーズ切替を行う
+        /// </summary>
+        private void HandleOptionButtonPressed()
+        {
+            _sceneEventRouter.HandleOptionButtonPressed();
         }
     }
 }

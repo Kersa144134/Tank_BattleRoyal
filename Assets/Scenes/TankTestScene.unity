@@ -604,10 +604,6 @@ MonoBehaviour:
     PositionOffset: {x: 0, y: 15, z: -15}
     RotationOffset: {x: 30, y: 0, z: 0}
     IsRotationFixed: 0
-  - TargetTransform: {fileID: 435110471}
-    PositionOffset: {x: 0, y: 50, z: 0}
-    RotationOffset: {x: 90, y: 0, z: 0}
-    IsRotationFixed: 1
 --- !u!4 &76211784
 Transform:
   m_ObjectHideFlags: 0
@@ -16341,8 +16337,8 @@ SceneRoots:
   - {fileID: 52312541}
   - {fileID: 60612202}
   - {fileID: 1832899783}
-  - {fileID: 2109405612}
   - {fileID: 1327687268}
+  - {fileID: 2109405612}
   - {fileID: 1379793714}
   - {fileID: 82897147}
   - {fileID: 1543663571}
