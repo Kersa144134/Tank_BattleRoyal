@@ -20,113 +20,105 @@ namespace SceneSystem.Manager
         // ======================================================
 
         // --------------------------------------------------
-        // シーン管理
+        // フェーズ遷移判定用
         // --------------------------------------------------
-        /// <summary>現在のシーン名</summary>
-        private string _currentScene = string.Empty;
 
-        /// <summary>遷移先シーン名</summary>
-        private string _targetScene = string.Empty;
-
-        // --------------------------------------------------
-        // フェーズ管理
-        // --------------------------------------------------
-        /// <summary>現在のフェーズ</summary>
-        private PhaseType _currentPhase = PhaseType.None;
-
-        /// <summary>遷移先フェーズ</summary>
-        private PhaseType _targetPhase = PhaseType.None;
+        /// <summary>
+        /// フェーズ経過時間計測用タイマー
+        /// フェーズが継続している時間を秒単位で保持する
+        /// </summary>
+        private float _phaseElapsedTime = 0.0f;
 
         // ======================================================
-        // プロパティ
-        // ======================================================
-
-        /// <summary>遷移先フェーズ</summary>
-        public PhaseType TargetPhase => _targetPhase;
-
-        /// <summary>遷移先シーン名</summary>
-        public string TargetScene => _targetScene;
-
-        // ======================================================
-        // 初期化
+        // パブリックメソッド
         // ======================================================
 
         /// <summary>
-        /// 初期フェーズとシーンを設定する
+        /// フェーズおよびシーン遷移条件を毎フレーム更新する
         /// </summary>
-        public void Initialize(in PhaseType startPhase, in string startScene)
+        /// <param name="unscaledDeltaTime">timeScaleに影響されない経過時間</param>
+        /// <param name="currentScene">現在のシーン名</param>
+        /// <param name="currentPhase">現在のフェーズ名</param>
+        public void Update(
+            float unscaledDeltaTime,
+            ref string currentScene,
+            ref PhaseType currentPhase
+        )
         {
-            // 現在フェーズを設定
-            _currentPhase = startPhase;
+            // timeScaleに影響されない経過時間を加算する
+            _phaseElapsedTime += unscaledDeltaTime;
 
-            // 遷移先フェーズを設定
-            _targetPhase = startPhase;
+            switch (currentPhase)
+            {
+                case PhaseType.Ready:
+                    // Ready フェーズで一定時間経過したかを判定する
+                    UpdateReadyPhase(ref currentPhase);
+                    break;
 
-            // 現在シーンを設定
-            _currentScene = startScene;
-
-            // 遷移先シーンを設定
-            _targetScene = startScene;
+                default:
+                    break;
+            }
         }
 
-        // ======================================================
-        // フェーズ遷移判定
-        // ======================================================
-
         /// <summary>
-        /// オプションボタン押下時のフェーズ切替判定
+        /// オプションボタン押下時のフェーズ切り替え処理を行うハンドラ
+        /// 現在のフェーズに応じてターゲットフェーズを切り替える
         /// </summary>
-        public void EvaluateOptionToggle()
+        public void ToggleOptionPhaseChange(
+            ref PhaseType currentPhase
+        )
         {
-            switch (_currentPhase)
+            switch (currentPhase)
             {
                 case PhaseType.Play:
-                    // Play 中なら Pause へ
-                    _targetPhase = PhaseType.Pause;
+                    // Play フェーズ中は一時停止を行うため Pause に切り替える
+                    currentPhase = PhaseType.Pause;
                     break;
 
                 case PhaseType.Pause:
-                    // Pause 中なら Play へ
-                    _targetPhase = PhaseType.Play;
+                    // Pause フェーズ中はゲーム再開を行うため Play に切り替える
+                    currentPhase = PhaseType.Play;
+                    break;
+
+                default:
+                    // 対象外フェーズでは何も行わない
                     break;
             }
-        }
 
-        /// <summary>
-        /// フェーズ変更完了通知
-        /// </summary>
-        public void NotifyPhaseChanged(in PhaseType newPhase)
-        {
-            // 現在フェーズを更新
-            _currentPhase = newPhase;
+            // フェーズが変更されたため経過時間を初期化する
+            _phaseElapsedTime = 0.0f;
         }
 
         // ======================================================
-        // シーン遷移判定
+        // プライベートメソッド
         // ======================================================
 
+        // --------------------------------------------------
+        // Ready
+        // --------------------------------------------------
         /// <summary>
-        /// シーン遷移要求を設定する
+        /// Ready フェーズ中の遷移条件を更新する
         /// </summary>
-        public void RequestSceneChange(in string nextScene)
+        /// <param name="currentPhase">
+        /// 現在のフェーズ
+        /// 遷移条件成立時に Play フェーズへ書き換える
+        /// </param>
+        private void UpdateReadyPhase(
+            ref PhaseType currentPhase
+        )
         {
-            // 無効なシーン名は無視
-            if (string.IsNullOrEmpty(nextScene))
+            // Ready フェーズの待機時間として 5 秒を超えたかを判定する
+            if (_phaseElapsedTime < 5.0f)
             {
+                // 待機時間未満のためフェーズ遷移は行わない
                 return;
             }
 
-            // 遷移先シーンを設定
-            _targetScene = nextScene;
-        }
+            // 待機時間を超えたためゲーム開始フェーズへ移行する
+            currentPhase = PhaseType.Play;
 
-        /// <summary>
-        /// シーン遷移完了通知
-        /// </summary>
-        public void NotifySceneChanged(in string sceneName)
-        {
-            // 現在シーンを更新
-            _currentScene = sceneName;
+            // フェーズが切り替わったため経過時間をリセットする
+            _phaseElapsedTime = 0.0f;
         }
     }
 }

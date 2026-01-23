@@ -2,7 +2,7 @@
 // SceneManager.cs
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-08
-// 更新日時 : 2025-12-17
+// 更新日時 : 2026-01-23
 // 概要     : シーン遷移、フェーズ管理、Update 管理を統括する
 // ======================================================
 
@@ -34,6 +34,9 @@ namespace SceneSystem.Manager
 
         /// <summary>フェーズ切替制御クラス</summary>
         private PhaseController _phaseController;
+
+        /// <summary>フェーズ遷移条件管理クラス</summary>
+        private PhaseManager _phaseManager = new PhaseManager();
 
         /// <summary>フェーズ単位の IUpdatable を保持するクラス</summary>
         private PhaseRuntimeData _phaseRuntimeData = new PhaseRuntimeData();
@@ -84,10 +87,10 @@ namespace SceneSystem.Manager
 
         private void Awake()
         {
-            // 全 PhaseData アセットを読み込む
+            // 全フェーズデータを読み込む
             PhaseData[] phaseDataList = Resources.LoadAll<PhaseData>("Phase");
 
-            // 各フェーズ定義データに対して初期化処理
+            // 各フェーズデータに対して初期化処理
             foreach (PhaseData phaseData in phaseDataList)
             {
                 IUpdatable[] phaseUpdatables =
@@ -102,28 +105,29 @@ namespace SceneSystem.Manager
                 );
             }
 
-            // Update 処理管理クラスの生成
+            // Update 処理対象管理クラスの生成
             UpdateController updateController = new UpdateController();
 
+            // フェーズ切替処理クラスの生成
             _phaseController = new PhaseController(
                 _phaseRuntimeData,
                 updateController
             );
 
+            // Update 管理クラスの生成
             _updateManager = new UpdateManager(updateController);
 
             // Bootstrapper を通じてコンポーネント初期化
             UpdatableContext context = _bootstrapper.Initialize(_components);
 
+            // シーンイベントクラスの生成
             _sceneEventRouter = new SceneEventRouter(context);
 
-            // シーンイベントの購読処理
+            // イベント購読
             _sceneEventRouter.Subscribe();
 
-            // 初期フェーズとして Play フェーズを設定する
-            _targetPhase = PhaseType.Play;
-
-            // 初期フェーズへの遷移処理を実行する
+            // 初期フェーズを設定
+            _targetPhase = PhaseType.Ready;
             ChangePhase(_targetPhase);
         }
 
@@ -144,19 +148,24 @@ namespace SceneSystem.Manager
 
             // Update 実行
             _updateManager.Update();
-
-            // オプションボタン押下判定
-            if (InputManager.Instance.StartButton.Down)
-            {
-                ToggleOptionPhaseChange();
-                _sceneEventRouter.HandleOptionButtonPressed();
-            }
         }
 
         private void LateUpdate()
         {
+            float unscaledDeltaTime = Time.unscaledDeltaTime;
+
             // LateUpdate 実行
             _updateManager.LateUpdate();
+
+            // オプションボタン押下判定
+            if (InputManager.Instance.StartButton.Down)
+            {
+                _phaseManager.ToggleOptionPhaseChange(ref _currentPhase);
+                _sceneEventRouter.HandleOptionButtonPressed();
+            }
+
+            // フェーズおよびシーン遷移条件の更新
+            _phaseManager.Update(unscaledDeltaTime, ref _currentScene, ref _currentPhase);
         }
 
         private void OnDestroy()
@@ -200,30 +209,6 @@ namespace SceneSystem.Manager
 
             // UpdateManager 側へ通知
             _updateManager.ChangePhase(nextPhase);
-        }
-
-        /// <summary>
-        /// オプションボタン押下時のフェーズ切り替え処理を行うハンドラ
-        /// 現在のフェーズに応じてターゲットフェーズを切り替える
-        /// </summary>
-        private void ToggleOptionPhaseChange()
-        {
-            switch (_currentPhase)
-            {
-                case PhaseType.Play:
-                    // Play フェーズなら Pause に切替
-                    _targetPhase = PhaseType.Pause;
-                    break;
-
-                case PhaseType.Pause:
-                    // Pause フェーズなら Play に切替
-                    _targetPhase = PhaseType.Play;
-                    break;
-
-                default:
-                    _targetPhase = PhaseType.None;
-                    break;
-            }
         }
     }
 }

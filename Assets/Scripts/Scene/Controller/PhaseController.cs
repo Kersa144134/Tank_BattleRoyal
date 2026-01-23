@@ -34,8 +34,8 @@ namespace SceneSystem.Controller
 
         public PhaseController(in PhaseRuntimeData runtimeData, in UpdateController updateController)
         {
-            _runtimeData = runtimeData ?? throw new ArgumentNullException(nameof(runtimeData));
-            _updateController = updateController ?? throw new ArgumentNullException(nameof(updateController));
+            _runtimeData = runtimeData;
+            _updateController = updateController;
         }
 
         // ======================================================

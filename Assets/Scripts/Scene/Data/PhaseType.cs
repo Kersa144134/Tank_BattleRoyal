@@ -19,11 +19,17 @@ namespace SceneSystem.Data
         /// <summary>タイトルフェーズ</summary>
         Title,
 
+        /// <summary>ゲーム開始前フェーズ</summary>
+        Ready,
+
         /// <summary>ゲーム内の通常フェーズ</summary>
         Play,
 
         /// <summary>一時停止中フェーズ</summary>
         Pause,
+
+        /// <summary>ゲーム終了後フェーズ</summary>
+        Finish,
 
         /// <summary>リザルトフェーズ</summary>
         Result,
