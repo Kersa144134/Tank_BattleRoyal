@@ -2,9 +2,11 @@
 // IUpdatable.cs
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-05
-// 更新日時 : 2025-12-08
+// 更新日時 : 2026-01-23
 // 概要     : UpdateController から呼び出される更新処理用インターフェース
 // ======================================================
+
+using SceneSystem.Data;
 
 namespace SceneSystem.Interface
 {
@@ -26,8 +28,8 @@ namespace SceneSystem.Interface
         /// <summary>
         /// 毎フレーム実行される更新処理
         /// </summary>
-        /// <param name="playTime">ゲームの経過時間</param>
-        void OnUpdate(in float playTime) { }
+        /// <param name="elapsedTime">ゲームの経過時間</param>
+        void OnUpdate(in float elapsedTime) { }
 
         /// <summary>
         /// LateUpdate 相当で毎フレーム実行される処理
@@ -42,11 +44,13 @@ namespace SceneSystem.Interface
         /// <summary>
         /// フェーズ突入時に 1 度だけ呼ばれる初期化処理
         /// </summary>
-        void OnPhaseEnter() { }
+        /// <param name="phase">遷移先のフェーズ</param>
+        void OnPhaseEnter(in PhaseType phase) { }
 
         /// <summary>
         /// フェーズ離脱時に 1 度だけ呼ばれる終了処理
         /// </summary>
-        void OnPhaseExit() { }
+        /// <param name="phase">現在のフェーズ</param>
+        void OnPhaseExit(in PhaseType phase) { }
     }
 }

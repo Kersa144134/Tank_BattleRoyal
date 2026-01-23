@@ -104,7 +104,7 @@ namespace ItemSystem.Manager
             InitializePool();
         }
 
-        public void OnUpdate(in float playTime)
+        public void OnUpdate(in float elapsedTime)
         {
             // èââÒê∂ê¨
             if (Input.GetKeyDown(KeyCode.Alpha0))_spawnController.ExecuteInitialSpawn();

@@ -41,7 +41,7 @@ namespace SceneSystem.Manager
         /// <summary>フェーズ単位の IUpdatable を保持するクラス</summary>
         private PhaseRuntimeData _phaseRuntimeData = new PhaseRuntimeData();
 
-        /// <summary>Update / LateUpdate / PhaseEnterExit を管理するクラス</summary>
+        /// <summary>Update を管理するクラス</summary>
         private UpdateManager _updateManager;
 
         /// <summary>IUpdatable の初期化と参照解決を行うクラス</summary>
@@ -72,14 +72,8 @@ namespace SceneSystem.Manager
         /// <summary>遷移先フェーズ/summary>
         private PhaseType _targetPhase = PhaseType.None;
 
-        // ======================================================
-        // プロパティ
-        // ======================================================
-
-        /// <summary>
-        /// ゲームの経過時間
-        /// </summary>
-        public float ElapsedTime => _updateManager.ElapsedTime;
+        /// <summary>ゲームの経過時間</summary>
+        private float _elapsedTime = 0.0f;
 
         // ======================================================
         // Unityイベント
@@ -146,8 +140,15 @@ namespace SceneSystem.Manager
                 ChangePhase(_targetPhase);
             }
 
+            // Play フェーズ中のみタイマーを進行
+            if (_currentPhase == PhaseType.Play)
+            {
+                // timeScaleに影響されない経過時間で加算
+                _elapsedTime += Time.unscaledDeltaTime;
+            }
+
             // Update 実行
-            _updateManager.Update();
+            _updateManager.Update(_elapsedTime);
         }
 
         private void LateUpdate()

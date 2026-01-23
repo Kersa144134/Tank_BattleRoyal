@@ -135,7 +135,7 @@ namespace InputSystem.Manager
             _stickStateManager = new StickStateManager();
         }
 
-        public void OnUpdate(in float playTime)
+        public void OnUpdate(in float elapsedTime)
         {
             // デバイス入力更新
             _deviceManager.UpdateDevices();

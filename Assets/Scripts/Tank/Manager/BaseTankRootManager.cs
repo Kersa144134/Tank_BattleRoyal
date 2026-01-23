@@ -222,7 +222,7 @@ namespace TankSystem.Manager
             _durabilityManager.OnBroken += HandleBroken;
         }
 
-        public virtual void OnUpdate(in float playTime)
+        public virtual void OnUpdate(in float elapsedTime)
         {
             // ”j‰óÏ‚İ‚Ìê‡‚Íˆ—‚È‚µ
             if (_isBroken)

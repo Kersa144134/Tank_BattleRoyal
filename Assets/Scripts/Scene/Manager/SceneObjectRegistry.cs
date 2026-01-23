@@ -56,7 +56,7 @@ namespace SceneSystem.Manager
         private Transform[] _obstacles;
 
         /// <summary>ゲームの経過時間</summary>
-        private float _playTime;
+        private float _elapsedTime;
 
         // ======================================================
         // プロパティ
@@ -84,13 +84,13 @@ namespace SceneSystem.Manager
             InitializeObstacles();
         }
 
-        public void OnUpdate(in float playTime)
+        public void OnUpdate(in float elapsedTime)
         {
             float deltaTime = Time.deltaTime;
-            _playTime = playTime;
+            _elapsedTime = elapsedTime;
 
             _bulletManager.UpdateBullets(deltaTime);
-            _itemManager.UpdateItems(playTime);
+            _itemManager.UpdateItems(elapsedTime);
         }
 
         public void OnLateUpdate()
@@ -126,7 +126,7 @@ namespace SceneSystem.Manager
         /// <param name="slot">追加するスロット</param>
         public void RegisterItem(in ItemSlot slot)
         {
-            _itemManager.RegisterItem(slot, _playTime);
+            _itemManager.RegisterItem(slot, _elapsedTime);
         }
 
         /// <summary>

@@ -6,8 +6,9 @@
 // 概要     : 指定された IUpdatable オブジェクトを保持し OnUpdate を実行するコントローラ
 // ======================================================
 
-using System.Collections.Generic;
+using SceneSystem.Data;
 using SceneSystem.Interface;
+using System.Collections.Generic;
 
 namespace SceneSystem.Controller
 {
@@ -40,15 +41,15 @@ namespace SceneSystem.Controller
         /// <summary>
         /// OnUpdate を毎フレーム実行
         /// </summary>
-        /// <param name="playTime">ゲームの経過時間</param>
-        public void OnUpdate(in float playTime)
+        /// <param name="elapsedTime">ゲームの経過時間</param>
+        public void OnUpdate(in float elapsedTime)
         {
             // 実行前にキャッシュを最新化する
             RebuildCache();
 
             for (int i = 0; i < _updateArray.Length; i++)
             {
-                _updateArray[i].OnUpdate(playTime);
+                _updateArray[i].OnUpdate(elapsedTime);
             }
         }
 
@@ -69,28 +70,30 @@ namespace SceneSystem.Controller
         /// <summary>
         /// フェーズ開始時に呼ばれる初期化処理
         /// </summary>
-        public void OnPhaseEnter()
+        /// <param name="phase">遷移先のフェーズ</param>
+        public void OnPhaseEnter(in PhaseType phase)
         {
             // 実行前にキャッシュを最新化する
             RebuildCache();
 
             for (int i = 0; i < _updateArray.Length; i++)
             {
-                _updateArray[i].OnPhaseEnter();
+                _updateArray[i].OnPhaseEnter(phase);
             }
         }
 
         /// <summary>
         /// フェーズ終了時に呼ばれる終了処理
         /// </summary>
-        public void OnPhaseExit()
+        /// <param name="phase">現在のフェーズ</param>
+        public void OnPhaseExit(in PhaseType phase)
         {
             // 実行前にキャッシュを最新化する
             RebuildCache();
 
             for (int i = 0; i < _updateArray.Length; i++)
             {
-                _updateArray[i].OnPhaseExit();
+                _updateArray[i].OnPhaseExit(phase);
             }
         }
 

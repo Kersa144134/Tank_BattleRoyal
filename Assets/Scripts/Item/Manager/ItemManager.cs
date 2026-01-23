@@ -32,7 +32,7 @@ namespace TankSystem.Manager
         // 辞書
         // ======================================================
 
-        /// <summary>アイテム生成時の PlayTime を管理する辞書</summary>
+        /// <summary>アイテム生成時のインゲーム経過時間を管理する辞書</summary>
         private readonly Dictionary<ItemSlot, float> _spawnTimes
             = new Dictionary<ItemSlot, float>();
 
@@ -76,7 +76,7 @@ namespace TankSystem.Manager
         /// <summary>
         /// 更新対象としてアイテムスロットを登録する
         /// </summary>
-        public void RegisterItem(in ItemSlot slot, in float playTime)
+        public void RegisterItem(in ItemSlot slot, in float elapsedTime)
         {
             // null ガード
             if (slot == null)
@@ -93,8 +93,8 @@ namespace TankSystem.Manager
             // 更新対象に追加
             _activeSlots.Add(slot);
 
-            // 生成時の PlayTime を記録
-            _spawnTimes.Add(slot, playTime);
+            // 生成時の elapsedTime を記録
+            _spawnTimes.Add(slot, elapsedTime);
 
             // FaceTarget を生成して管理
             _faceTargets.Add(
@@ -136,11 +136,11 @@ namespace TankSystem.Manager
         /// <summary>
         /// 全アイテムを更新する
         /// </summary>
-        /// <param name="playTime">Play フェーズ中のみ進行する経過時間</param>
-        public void UpdateItems(float playTime)
+        /// <param name="elapsedTime">インゲームの経過時間</param>
+        public void UpdateItems(float elapsedTime)
         {
             // 時間が進まないフレームは処理なし
-            if (playTime <= 0.0f)
+            if (elapsedTime <= 0.0f)
             {
                 return;
             }
@@ -158,7 +158,7 @@ namespace TankSystem.Manager
                 }
 
                 // 生成からの経過時間を算出
-                float elapsed = playTime - _spawnTimes[slot];
+                float elapsed = elapsedTime - _spawnTimes[slot];
 
                 // 生存時間超過判定
                 if (elapsed >= ITEM_LIFE_TIME)
