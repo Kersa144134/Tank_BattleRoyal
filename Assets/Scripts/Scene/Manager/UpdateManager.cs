@@ -72,7 +72,7 @@ namespace SceneSystem.Manager
             // Play フェーズ中のみタイマーを進行
             if (_currentPhase == PhaseType.Play)
             {
-                // 非スケール時間で加算
+                // timeScaleに影響されない経過時間で加算
                 _elapsedTime += Time.unscaledDeltaTime;
             }
 
@@ -107,8 +107,8 @@ namespace SceneSystem.Manager
             // フェーズを更新
             _currentPhase = nextPhase;
 
-            // Initialize フェーズ開始時にタイマーをリセット
-            if (_currentPhase == PhaseType.Initialize)
+            // タイトルフェーズ開始時にタイマーをリセット
+            if (_currentPhase == PhaseType.Title)
             {
                 _elapsedTime = 0.0f;
             }

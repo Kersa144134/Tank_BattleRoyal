@@ -34,13 +34,6 @@ namespace SceneSystem.Utility
         private bool _isSubscribed;
 
         // ======================================================
-        // イベント
-        // ======================================================
-
-        /// <summary>オプションボタン押下時に発火するイベント</summary>
-        public event Action OnOptionButtonPressed;
-
-        // ======================================================
         // コンストラクタ
         // ======================================================
 
@@ -79,7 +72,6 @@ namespace SceneSystem.Utility
             {
                 _context.PlayerTank.OnInputModeChangeButtonPressed += HandleInputModeChangeButtonPressed;
                 _context.PlayerTank.OnFireModeChangeButtonPressed += HandleFireModeChangeButtonPressed;
-                _context.PlayerTank.OnOptionButtonPressed += HandleOptionButtonPressed;
                 _context.PlayerTank.OnFireBullet += HandleFireBullet;
                 _context.PlayerTank.DurabilityManager.OnDurabilityChanged += HandleDurabilityChanged;
                 _context.PlayerTank.OnBroken += HandleBroken;
@@ -148,7 +140,6 @@ namespace SceneSystem.Utility
             {
                 _context.PlayerTank.OnInputModeChangeButtonPressed -= HandleInputModeChangeButtonPressed;
                 _context.PlayerTank.OnFireModeChangeButtonPressed -= HandleFireModeChangeButtonPressed;
-                _context.PlayerTank.OnOptionButtonPressed -= HandleOptionButtonPressed;
                 _context.PlayerTank.OnFireBullet -= HandleFireBullet;
                 _context.PlayerTank.DurabilityManager.OnDurabilityChanged -= HandleDurabilityChanged;
                 _context.PlayerTank.OnBroken -= HandleBroken;
@@ -197,12 +188,31 @@ namespace SceneSystem.Utility
             _isSubscribed = false;
         }
 
+        // --------------------------------------------------
+        // 入力
+        // --------------------------------------------------
+        /// <summary>
+        /// オプションボタン押下時の処理を行うハンドラ
+        /// SceneManager へフェーズ切り替え通知を行う
+        /// </summary>
+        public void HandleOptionButtonPressed()
+        {
+            // 現在適用中の入力マッピングインデックスを取得
+            int current = _context.InputManager.GetCurrentMappingIndex();
+
+            // 次のインデックスを算出
+            int next = (current == 0) ? 1 : 0;
+
+            // 入力マッピングを切り替え
+            _context.InputManager.SwitchInputMapping(next);
+        }
+
         // ======================================================
         // プライベートメソッド
         // ======================================================
 
         // --------------------------------------------------
-        // 入力
+        // プレイヤー戦車
         // --------------------------------------------------
         /// <summary>
         /// 入力モード切り替えボタン押下時の処理を行うハンドラ
@@ -232,25 +242,6 @@ namespace SceneSystem.Utility
         private void HandleFireModeChangeButtonPressed()
         {
             _context.UIManager.UpdateBulletIcons();
-        }
-
-        /// <summary>
-        /// オプションボタン押下時の処理を行うハンドラ
-        /// SceneManager へフェーズ切り替え通知を行う
-        /// </summary>
-        private void HandleOptionButtonPressed()
-        {
-            // 現在適用中の入力マッピングインデックスを取得
-            int current = _context.InputManager.GetCurrentMappingIndex();
-
-            // 次のインデックスを算出
-            int next = (current == 0) ? 1 : 0;
-
-            // 入力マッピングを切り替え
-            _context.InputManager.SwitchInputMapping(next);
-
-            // オプションボタン押下イベントを通知
-            OnOptionButtonPressed?.Invoke();
         }
 
         /// <summary>

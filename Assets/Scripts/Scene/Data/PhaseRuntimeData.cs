@@ -2,19 +2,18 @@
 // PhaseRuntimeData.cs
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-05
-// 更新日時 : 2025-12-08
+// 更新日時 : 2026-01-23
 // 概要     : PhaseData を実行時形式へ変換して保持するランタイムデータ
 // ======================================================
 
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 using SceneSystem.Interface;
 
 namespace SceneSystem.Data
 {
     /// <summary>
-    /// フェーズデータの実行時バージョンを管理するクラス
+    /// フェーズデータの実行タイプを管理するクラス
     /// </summary>
     public class PhaseRuntimeData
     {

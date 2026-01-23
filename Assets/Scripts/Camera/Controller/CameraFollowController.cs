@@ -87,7 +87,8 @@ namespace CameraSystem.Controller
         /// <summary>
         /// 配列のターゲットを追従
         /// </summary>
-        public void UpdateFollow()
+        /// <param name="deltaTime">経過時間</param>
+        public void UpdateFollow(in float deltaTime)
         {
             // カメラやターゲットが設定されていない場合は処理をスキップ
             if (_cameraTransform == null ||
@@ -103,7 +104,7 @@ namespace CameraSystem.Controller
             CameraTarget target = _targets[_currentTargetIndex];
 
             // 位置追従
-            _cameraTransform.position = CalculateFollowPosition(target);
+            _cameraTransform.position = CalculateFollowPosition(deltaTime, target);
 
             // 回転追従
             _cameraTransform.rotation = CalculateFollowRotation(target);
@@ -116,9 +117,10 @@ namespace CameraSystem.Controller
         /// <summary>
         /// ターゲットとオフセットに基づき、補間済みの追従位置を計算して返す
         /// </summary>
+        /// <param name="deltaTime">経過時間</param>
         /// <param name="target">追従対象の CameraTarget データ</param>
         /// <returns>補間済みのカメラ追従位置</returns>
-        private Vector3 CalculateFollowPosition(in CameraTarget target)
+        private Vector3 CalculateFollowPosition(in float deltaTime, in CameraTarget target)
         {
             Vector3 targetPos = target.TargetTransform.position;
 
@@ -134,7 +136,7 @@ namespace CameraSystem.Controller
             }
 
             // 補間してカメラ位置に適用
-            return Vector3.Lerp(_cameraTransform.position, targetPos, FOLLOW_SPEED * Time.deltaTime);
+            return Vector3.Lerp(_cameraTransform.position, targetPos, FOLLOW_SPEED * deltaTime);
         }
 
         /// <summary>

@@ -264,7 +264,7 @@ namespace UISystem.Manager
 
         public void OnLateUpdate()
         {
-            float deltaTime = Time.deltaTime;
+            float unscaledDeltaTime = Time.unscaledDeltaTime;
 
             _binarizationPostProcessController.Update(
                 _isBinarizationEffectEnabled,
@@ -288,11 +288,11 @@ namespace UISystem.Manager
 
             if (_playerDurabilityManager != null)
             {
-                _durabilityBarWidthUIController.Update(deltaTime);
+                _durabilityBarWidthUIController.Update(unscaledDeltaTime);
             }
 
-            _bulletIconSlotRotationUIController.Update(deltaTime);
-            _logRotationUIController.Update(deltaTime);
+            _bulletIconSlotRotationUIController.Update(unscaledDeltaTime);
+            _logRotationUIController.Update(unscaledDeltaTime);
 
             // --------------------------------------------------
             // デバッグ用（いずれ削除予定）

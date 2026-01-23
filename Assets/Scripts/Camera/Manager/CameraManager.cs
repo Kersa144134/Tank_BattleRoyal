@@ -50,8 +50,10 @@ namespace CameraSystem.Manager
 
         public void OnLateUpdate()
         {
+            float deltaTime = Time.deltaTime;
+
             // É^Å[ÉQÉbÉgí«è]
-            _followController.UpdateFollow();
+            _followController.UpdateFollow(deltaTime);
         }
 
         // ======================================================

@@ -154,9 +154,6 @@ namespace TankSystem.Manager
         /// <summary>攻撃モード切替ボタン押下時に発火するイベント</summary>
         public event Action OnFireModeChangeButtonPressed;
 
-        /// <summary>オプションボタン押下時に発火するイベント</summary>
-        public event Action OnOptionButtonPressed;
-
         /// <summary>弾丸が発射された際に発火するイベント</summary>
         public event Action<BaseTankRootManager, BulletType, Transform> OnFireBullet;
 
@@ -175,7 +172,6 @@ namespace TankSystem.Manager
         /// <param name="rightMobility">右キャタピラ入力から算出される前進/旋回量</param>
         /// <param name="inputModeChange">入力モード切替ボタン押下フラグ</param>
         /// <param name="fireModeChange">攻撃モード切替ボタン押下フラグ</param>
-        /// <param name="option">オプションボタン押下フラグ</param>
         /// <param name="leftFire">左攻撃ボタンの状態</param>
         /// <param name="rightFire">右攻撃ボタンの状態</param>
         protected abstract void UpdateInput(
@@ -183,7 +179,6 @@ namespace TankSystem.Manager
             out Vector2 rightMobility,
             out bool inputModeChange,
             out bool fireModeChange,
-            out bool option,
             out ButtonState leftFire,
             out ButtonState rightFire
         );
@@ -245,6 +240,12 @@ namespace TankSystem.Manager
             }
 
             // --------------------------------------------------
+            // タイムスケール
+            // --------------------------------------------------
+            float deltaTime = Time.deltaTime;
+            float unscaledDeltaTime = Time.unscaledDeltaTime;
+
+            // --------------------------------------------------
             // 軸制限をリセット
             // --------------------------------------------------
             CurrentFrameLockAxis = MovementLockAxis.None;
@@ -257,7 +258,6 @@ namespace TankSystem.Manager
                 out Vector2 rightMobility,
                 out bool inputModeChange,
                 out bool fireModeChange,
-                out bool option,
                 out ButtonState leftFire,
                 out ButtonState rightFire
             );
@@ -274,12 +274,6 @@ namespace TankSystem.Manager
                 OnFireModeChangeButtonPressed?.Invoke();
             }
 
-            // オプション入力
-            if (option)
-            {
-                OnOptionButtonPressed?.Invoke();
-            }
-
             // 入力マッピングが UI 用の場合は処理を中断
             if (InputManager.Instance.CurrentMappingIndex == 1)
             {
@@ -290,7 +284,7 @@ namespace TankSystem.Manager
             // 攻撃
             // --------------------------------------------------
             // 攻撃処理
-            _attackManager.UpdateAttack(leftFire, rightFire);
+            _attackManager.UpdateAttack(unscaledDeltaTime, leftFire, rightFire);
 
             // --------------------------------------------------
             // 機動
@@ -300,6 +294,7 @@ namespace TankSystem.Manager
             Quaternion calculatedRotation;
 
             _mobilityManager.CalculateMobility(
+                deltaTime,
                 leftMobility,
                 rightMobility,
                 out calculatedPosition,

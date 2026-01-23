@@ -2,7 +2,7 @@
 // PhaseType.cs
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-05
-// 更新日時 : 2025-12-05
+// 更新日時 : 2026-01-23
 // 概要     : ゲーム内フェーズを識別する列挙体
 // ======================================================
 
@@ -16,22 +16,16 @@ namespace SceneSystem.Data
         /// <summary>初期値用</summary>
         None,
 
-        /// <summary>ゲーム開始準備や読み込み中を示すフェーズ</summary>
-        Initialize,
+        /// <summary>タイトルフェーズ</summary>
+        Title,
 
-        /// <summary>メインメニュー</summary>
-        Menu,
-
-        /// <summary>ゲーム内の通常操作フェーズ</summary>
+        /// <summary>ゲーム内の通常フェーズ</summary>
         Play,
 
         /// <summary>一時停止中フェーズ</summary>
         Pause,
 
-        /// <summary>ステージクリア後のフェーズ</summary>
+        /// <summary>リザルトフェーズ</summary>
         Result,
-
-        /// <summary>ゲーム終了処理フェーズ</summary>
-        Finalize
     }
 }

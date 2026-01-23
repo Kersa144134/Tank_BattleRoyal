@@ -119,7 +119,6 @@ namespace SceneSystem.Manager
 
             // シーンイベントの購読処理
             _sceneEventRouter.Subscribe();
-            _sceneEventRouter.OnOptionButtonPressed += ToggleOptionPhaseChange;
 
             // 初期フェーズとして Play フェーズを設定する
             _targetPhase = PhaseType.Play;
@@ -150,6 +149,7 @@ namespace SceneSystem.Manager
             if (InputManager.Instance.StartButton.Down)
             {
                 ToggleOptionPhaseChange();
+                _sceneEventRouter.HandleOptionButtonPressed();
             }
         }
 
@@ -163,7 +163,6 @@ namespace SceneSystem.Manager
         {
             // イベント購読解除
             _sceneEventRouter.Dispose();
-            _sceneEventRouter.OnOptionButtonPressed -= ToggleOptionPhaseChange;
         }
 
         // ======================================================

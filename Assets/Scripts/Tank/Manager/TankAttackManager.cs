@@ -2,7 +2,7 @@
 // TankAttackManager.cs
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-08
-// 更新日時 : 2025-12-08
+// 更新日時 : 2026-01-23
 // 概要     : 戦車の攻撃処理を管理するクラス
 //            榴弾・徹甲弾・同時押し特殊攻撃をサポート
 // ======================================================
@@ -134,7 +134,7 @@ namespace TankSystem.Manager
             _targetTransforms = targetTransforms;
             _shieldOBBs = shieldOBBs;
         }
-        
+
         // ======================================================
         // パブリックメソッド
         // ======================================================
@@ -142,9 +142,13 @@ namespace TankSystem.Manager
         /// <summary>
         /// 毎フレーム呼び出し、攻撃入力を処理する
         /// </summary>
+        /// <param name="unscaledDeltaTime">timeScaleに影響されない経過時間</param>
         /// <param name="leftInput">榴弾ボタン入力</param>
         /// <param name="rightInput">徹甲弾ボタン入力</param>
-        public void UpdateAttack(in ButtonState leftInput, in ButtonState rightInput)
+        public void UpdateAttack(
+            in float unscaledDeltaTime,
+            in ButtonState leftInput,
+            in ButtonState rightInput)
         {
             if (leftInput == null || rightInput == null)
             {
@@ -166,7 +170,7 @@ namespace TankSystem.Manager
             // クールタイム中は何もしない
             if (_cooldownTime > 0f)
             {
-                _cooldownTime -= Time.deltaTime;
+                _cooldownTime -= unscaledDeltaTime;
                 return;
             }
 
@@ -183,11 +187,11 @@ namespace TankSystem.Manager
             // タイマーを進める
             if (_leftInputTimer >= 0f)
             {
-                _leftInputTimer += Time.deltaTime;
+                _leftInputTimer += unscaledDeltaTime;
             }
             if (_rightInputTimer >= 0f)
             {
-                _rightInputTimer += Time.deltaTime;
+                _rightInputTimer += unscaledDeltaTime;
             }
 
             // 両方押されていれば特殊攻撃判定

@@ -2,7 +2,7 @@
 // LogRotationUIController.cs
 // 作成者   : 高橋一翔
 // 作成日時 : 2026-01-20
-// 更新日時 : 2026-01-20
+// 更新日時 : 2026-01-23
 // 概要     : ログ表示をスロット方式で制御する UI コントローラー
 //            ターゲット座標に基づく線形補間移動と
 //            TextMeshPro の循環再利用を行う
@@ -158,18 +158,18 @@ namespace UISystem.Controller
                 new LogEntry
                 {
                     Rect = rect,
-                    AddedTime = Time.time
+                    AddedTime = Time.unscaledTime
                 });
         }
 
         /// <summary>
         /// 毎フレーム呼び出してログを制御する
         /// </summary>
-        public void Update(in float deltaTime)
+        public void Update(in float unscaledDeltaTime)
         {
             ProcessLogRemoval();
-            UpdateLogPositions(deltaTime);
-            UpdateExitingLogPositions(deltaTime);
+            UpdateLogPositions(unscaledDeltaTime);
+            UpdateExitingLogPositions(unscaledDeltaTime);
         }
 
         // ======================================================
@@ -181,7 +181,8 @@ namespace UISystem.Controller
         /// </summary>
         private void ProcessLogRemoval()
         {
-            float currentTime = Time.time;
+            // timeScaleに影響されない経過時間を使用する
+            float currentTime = Time.unscaledTime;
 
             while (_logQueue.Count > 0)
             {
@@ -212,9 +213,9 @@ namespace UISystem.Controller
         /// <summary>
         /// 表示中ログをターゲット座標へ補間移動させる
         /// </summary>
-        private void UpdateLogPositions(in float deltaTime)
+        private void UpdateLogPositions(in float unscaledDeltaTime)
         {
-            float moveDelta = MOVE_SPEED * deltaTime;
+            float moveDelta = MOVE_SPEED * unscaledDeltaTime;
 
             int index = 1;
 
@@ -235,9 +236,9 @@ namespace UISystem.Controller
         /// <summary>
         /// 非表示行へ移動中のログを補間更新する
         /// </summary>
-        private void UpdateExitingLogPositions(in float deltaTime)
+        private void UpdateExitingLogPositions(in float unscaledDeltaTime)
         {
-            float moveDelta = MOVE_SPEED * deltaTime;
+            float moveDelta = MOVE_SPEED * unscaledDeltaTime;
             Vector2 hiddenTarget = _targetPositions[0];
 
             for (int i = _exitingLogs.Count - 1; i >= 0; i--)

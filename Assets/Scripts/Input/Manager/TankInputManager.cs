@@ -2,7 +2,7 @@
 // TankInputManager.cs
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-08
-// 更新日時 : 2025-12-12
+// 更新日時 : 2026-01-23
 // 概要     : 戦車操作用の入力を管理するクラス
 //            基本は単一ボタンを辞書で管理し、複数ボタン対応は必要時のみ処理
 // ======================================================
@@ -49,11 +49,6 @@ namespace InputSystem.Manager
         public void UpdateInput()
         {
             int currentMapping = InputManager.Instance.CurrentMappingIndex;
-
-            // --------------------------------------------------
-            // 常時有効ボタン
-            // --------------------------------------------------
-            ButtonMap[TankInputKeys.INPUT_OPTION] = InputManager.Instance.StartButton;
 
             if (currentMapping == 0)
             {

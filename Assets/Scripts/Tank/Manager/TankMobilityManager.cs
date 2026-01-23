@@ -157,11 +157,13 @@ namespace TankSystem.Manager
         /// 前進・旋回処理を適用した場合の移動結果を計算し、
         /// 実際には Transform を変更せず、予定位置と回転を返す
         /// </summary>
+        /// <param name="deltaTime">経過時間</param>
         /// <param name="leftInput">左キャタピラ入力値（-1～1）</param>
         /// <param name="rightInput">右キャタピラ入力値（-1～1）</param>
         /// <param name="nextPosition">次フレームでの予定ワールド座標</param>
         /// <param name="nextRotation">次フレームでの予定回転</param>
         public void CalculateMobility(
+            in float deltaTime,
             in Vector2 leftInput,
             in Vector2 rightInput,
             out Vector3 nextPosition,
@@ -182,7 +184,7 @@ namespace TankSystem.Manager
             // 加減速処理
             // --------------------------------------------------
             // 前フレーム値を元に、現在の前進・旋回速度を更新する
-            ApplyAcceleration(targetForward, targetTurn);
+            ApplyAcceleration(deltaTime, targetForward, targetTurn);
 
             // --------------------------------------------------
             // 前進予定位置計算
@@ -193,11 +195,11 @@ namespace TankSystem.Manager
             // 現在の Transform 回転を基準にする
             Quaternion baseRotation = _tankTransform.rotation;
 
-            // 前進方向（ローカル forward）をワールド方向に変換する
+            // ローカル前進方向をワールド方向に変換する
             Vector3 forwardDirection = baseRotation * Vector3.forward;
 
             // 今フレームで進む予定距離を算出する
-            float forwardDistance = _currentForward * Time.deltaTime;
+            float forwardDistance = _currentForward * deltaTime;
 
             // 前進後の予定位置を計算する
             Vector3 movedPosition = basePosition + forwardDirection * forwardDistance;
@@ -206,7 +208,7 @@ namespace TankSystem.Manager
             // 旋回予定回転計算
             // --------------------------------------------------
             // 今フレームで回転する Y 軸角度を算出する
-            float turnAngle = _currentTurn * Time.deltaTime;
+            float turnAngle = _currentTurn * deltaTime;
 
             // Y 軸回転のみを表すクォータニオンを生成する
             Quaternion turnRotation = Quaternion.Euler(0f, turnAngle, 0f);
@@ -282,16 +284,15 @@ namespace TankSystem.Manager
         /// <summary>
         /// 目標移動量に向かって現在値を加減速させる（正負方向分離版）
         /// </summary>
+        /// <param name="deltaTime">経過時間</param>
         /// <param name="targetForward">前進・後退の目標移動量</param>
         /// <param name="targetTurn">旋回の目標移動量</param>
-        private void ApplyAcceleration(in float targetForward, in float targetTurn)
+        private void ApplyAcceleration(in float deltaTime, in float targetForward, in float targetTurn)
         {
-            float dt = Time.deltaTime;
-
             // --------------------------------------------------
             // 前進・後退の加減速
             // --------------------------------------------------
-            float forwardMaxDelta = _forwardAccelerationMultiplier * dt;
+            float forwardMaxDelta = _forwardAccelerationMultiplier * deltaTime;
 
             // 正方向（前進）の減速および加速
             if (targetForward >= 0f)
@@ -327,7 +328,7 @@ namespace TankSystem.Manager
             // --------------------------------------------------
             // 旋回の加減速
             // --------------------------------------------------
-            float turnMaxDelta = _turnAccelerationMultiplier * dt;
+            float turnMaxDelta = _turnAccelerationMultiplier * deltaTime;
 
             // 正方向（右旋回）の減速および加速
             if (targetTurn >= 0f)

@@ -2,7 +2,7 @@
 // TankInputKeys.cs
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-08
-// 更新日時 : 2025-12-08
+// 更新日時 : 2026-01-23
 // 概要     : ゲーム内で使用する入力キー名を一元管理する定数クラス
 // ======================================================
 
@@ -18,9 +18,6 @@ namespace InputSystem.Data
 
         /// <summary>攻撃切り替えボタンキー</summary>
         public const string FIRE_MODE_CHANGE = "FireModeChange";
-        
-        /// <summary>オプションボタンキー</summary>
-        public const string INPUT_OPTION = "Option";
 
         // 左攻撃用ボタンキー
         public const string INPUT_LEFT_FIRE = "LeftFire";

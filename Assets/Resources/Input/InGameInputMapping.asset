@@ -80,7 +80,7 @@ MonoBehaviour:
     keyCode: 0
     mouseInput: 0
   - gamepadInput: 22
-    keyCode: 0
+    keyCode: 27
     mouseInput: 0
   - gamepadInput: 23
     keyCode: 0
