@@ -16,8 +16,7 @@ namespace CollisionSystem.Service
     /// 動的オブジェクトと静的オブジェクトの
     /// OBB 衝突検知を専門に行うサービス
     /// </summary>
-    public sealed class VersusStaticCollisionService<TDynamic, TStatic>
-        : ICollisionService
+    public sealed class VersusStaticCollisionService<TDynamic, TStatic> : ICollisionService
         where TDynamic : IDynamicCollisionContext
         where TStatic : IStaticCollisionContext
     {

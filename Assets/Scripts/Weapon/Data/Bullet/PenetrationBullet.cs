@@ -58,7 +58,7 @@ namespace WeaponSystem.Data
         private const float ARMOR_MASS_DAMAGE_POWER = 1.5f;
 
         /// <summary>Šî€‚Æ‚È‚é’e‘¬Œ¸Z’l</summary>
-        private const float BASE_PENETRATION_SPEED_DECREMENT = 20f;
+        private const float BASE_PENETRATION_SPEED_DECREMENT = 15f;
 
         /// <summary>Šî€‚Æ‚È‚éáŠQ•¨ŠÑ’Ê‚Ì’e‘¬Œ¸Z’l</summary>
         private const float BASE_OBSTACLE_DECREMENT = 2f;

@@ -185,11 +185,6 @@ namespace CollisionSystem.Utility
             ObstacleCollisionContext obstacle
         )
         {
-            if (obstacle.Transform != null)
-            {
-                return;
-            }
-
             // 対象障害物が Base ならスキップ
             if (obstacle.Transform.CompareTag("Base"))
             {
