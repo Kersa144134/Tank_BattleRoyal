@@ -223,6 +223,8 @@ namespace UISystem.Manager
         public void OnEnter()
         {
             _flashAnimator = GetComponent<Animator>();
+            // タイムスケールを無視する
+            _flashAnimator.updateMode = AnimatorUpdateMode.UnscaledTime;
 
             _binarizationPostProcessController =
                 new BinarizationPostProcessController(

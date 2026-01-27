@@ -6,12 +6,12 @@
 // 概要     : シーン上の戦車・障害物・アイテムを一元管理するレジストリクラス
 // ======================================================
 
-using System;
-using System.Collections.Generic;
-using UnityEngine;
 using ItemSystem.Data;
+using SceneSystem.Data;
 using SceneSystem.Interface;
+using System;
 using TankSystem.Manager;
+using UnityEngine;
 using WeaponSystem.Data;
 using WeaponSystem.Manager;
 
@@ -73,6 +73,16 @@ namespace SceneSystem.Manager
         public Transform[] Obstacles => _obstacles;
 
         // ======================================================
+        // 定数
+        // ======================================================
+
+        /// <summary>通常時のタイムスケール</summary>
+        private const float DEFAULT_TIME_SCALE = 1.0f;
+
+        /// <summary>Finish フェーズ中のタイムスケール</summary>
+        private const float FINISH_PHASE_TIME_SCALE = 0.25f;
+
+        // ======================================================
         // IUpdatable イベント
         // ======================================================
 
@@ -96,6 +106,22 @@ namespace SceneSystem.Manager
         public void OnLateUpdate(in float unscaledDeltaTime)
         {
             _itemManager.DeactivateItems();
+        }
+
+        public void OnPhaseEnter(in PhaseType phase)
+        {
+            if (phase == PhaseType.Finish)
+            {
+                Time.timeScale = FINISH_PHASE_TIME_SCALE;
+            }
+        }
+
+        public void OnPhaseExit(in PhaseType phase)
+        {
+            if (phase == PhaseType.Finish)
+            {
+                Time.timeScale = DEFAULT_TIME_SCALE;
+            }
         }
 
         // ======================================================

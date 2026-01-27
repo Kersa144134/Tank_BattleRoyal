@@ -52,10 +52,6 @@ namespace TankSystem.Service
             out Vector3 clampedPosition
         )
         {
-            // --------------------------------------------------
-            // XZ 平面上の位置を算出
-            // --------------------------------------------------
-
             // 高さ成分を除いた平面位置を生成する
             Vector3 flatPosition = new Vector3(
                 plannedPosition.x,
@@ -63,14 +59,10 @@ namespace TankSystem.Service
                 plannedPosition.z
             );
 
-            // ステージ中心はワールド原点とする
+            // ステージ中心を設定
             Vector3 flatCenter = Vector3.zero;
 
-            // --------------------------------------------------
-            // ステージ中心からの距離を計算
-            // --------------------------------------------------
-
-            // 中心からの距離を算出する
+            // ステージ中心からの距離を算出する
             float distanceFromCenter = Vector3.Distance(
                 flatPosition,
                 flatCenter
@@ -79,11 +71,9 @@ namespace TankSystem.Service
             // --------------------------------------------------
             // 半径内判定
             // --------------------------------------------------
-
-            // ステージ半径以内であれば補正不要
+            // ステージ半径以内であれば補正なし
             if (distanceFromCenter <= _stageRadius)
             {
-                // 入力された予定位置をそのまま返す
                 clampedPosition = plannedPosition;
                 return;
             }
@@ -91,17 +81,12 @@ namespace TankSystem.Service
             // --------------------------------------------------
             // 範囲外の場合の押し戻し計算
             // --------------------------------------------------
-
             // 中心から外向きの正規化方向ベクトルを算出する
             Vector3 outwardDirection = (flatPosition - flatCenter).normalized;
 
             // 円周上の補正後平面位置を算出する
             Vector3 correctedFlatPosition =
                 flatCenter + outwardDirection * _stageRadius;
-
-            // --------------------------------------------------
-            // 高さ成分を復元
-            // --------------------------------------------------
 
             // 元の Y 座標を維持した最終位置を生成する
             clampedPosition = new Vector3(

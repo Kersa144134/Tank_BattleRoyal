@@ -6,11 +6,9 @@
 // 概要     : シーン及びフェーズ遷移条件を管理する
 // ======================================================
 
+using System;
 using InputSystem.Manager;
 using SceneSystem.Data;
-using System;
-using UnityEngine;
-using WeaponSystem.Data;
 
 namespace SceneSystem.Manager
 {

@@ -54,7 +54,6 @@ namespace SceneSystem.Manager
         /// <param name="elapsedTime">インゲームの経過時間</param>
         public void Update(in float unscaledDeltaTime, in float elapsedTime)
         {
-            // 通常 Update を実行
             _updateController.OnUpdate(unscaledDeltaTime, elapsedTime);
         }
 
@@ -64,7 +63,6 @@ namespace SceneSystem.Manager
         /// <param name="unscaledDeltaTime">timeScale の影響を受けない経過時間</param>
         public void LateUpdate(in float unscaledDeltaTime)
         {
-            // LateUpdate を実行
             _updateController.OnLateUpdate(unscaledDeltaTime);
         }
 

@@ -61,7 +61,7 @@ namespace WeaponSystem.Data
         private const float BASE_PENETRATION_SPEED_DECREMENT = 15f;
 
         /// <summary>基準となる障害物貫通時の弾速減算値</summary>
-        private const float BASE_OBSTACLE_DECREMENT = 2f;
+        private const float BASE_OBSTACLE_DECREMENT = 1.5f;
 
         /// <summary>障害物スケールに応じた減算値倍率加算値</summary>
         private const float OBSTACLE_SCALE_MULTIPLIER = 0.2f;

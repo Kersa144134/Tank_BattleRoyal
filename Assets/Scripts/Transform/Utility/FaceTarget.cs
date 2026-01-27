@@ -61,23 +61,5 @@ namespace TransformSystem.Utility
             // 自分の Y 軸を180度回転して背面を向かせる
             _sourceTransform.Rotate(0f, 180f, 0f, Space.Self);
         }
-
-        /// <summary>
-        /// ターゲット Transform を変更する
-        /// </summary>
-        /// <param name="target">新しいターゲット Transform</param>
-        public void SetTarget(Transform target)
-        {
-            _targetTransform = target;
-        }
-
-        /// <summary>
-        /// 現在のターゲット Transform を取得する
-        /// </summary>
-        /// <returns>ターゲット Transform</returns>
-        public Transform GetTargetTransform()
-        {
-            return _targetTransform;
-        }
     }
 }

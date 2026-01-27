@@ -37,7 +37,7 @@ namespace UISystem.Controller
         private const float MIN_SPEED_SLOW_PER_SECOND = 10.0f;
 
         /// <summary>高速時の最低移動速度（1秒あたり）</summary>
-        private const float MIN_SPEED_FAST_PER_SECOND = 40.0f;
+        private const float MIN_SPEED_FAST_PER_SECOND = 50.0f;
 
         // ======================================================
         // UI フィールド
