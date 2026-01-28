@@ -6,8 +6,8 @@
 // 概要     : 砲塔の回転制御を担当するクラス
 // ======================================================
 
-using TankSystem.Data;
 using UnityEngine;
+using TankSystem.Data;
 
 namespace TankSystem.Controller
 {
@@ -20,11 +20,26 @@ namespace TankSystem.Controller
         // 定数
         // ======================================================
 
-        /// <summary>砲塔回転入力に対する回転倍率</summary>
-        private const float ROTATION_INPUT_MULTIPLIER = 20.0f;
+        // --------------------------------------------------
+        // 基準値
+        // --------------------------------------------------
+        /// <summary>基準となる砲塔スケール倍率</summary>
+        private const float BASE_BARREL_TURRET_SCALE_MULTIPLIER = 0.8f;
+
+        /// <summary>基準となる砲塔スケール倍率</summary>
+        private const float BASE_BARREL_TURRET_ROTATION_MULTIPLIER = 60f;
 
         /// <summary>砲塔の最大回転許容角度（左右共通）</summary>
         private const float MAX_ROTATION_ANGLE = 60.0f;
+
+        // --------------------------------------------------
+        // パラメーター
+        // --------------------------------------------------
+        /// <summary>砲身 1 あたりの砲塔スケール倍率加算値</summary>
+        private const float BARREL_TURRET_SCALE_MULTIPLIER = 0.02f;
+
+        /// <summary>砲身 1 あたりの砲塔回転倍率加算値</summary>
+        private const float BARREL_TURRET_ROTATION_MULTIPLIER = 1.5f;
 
         // ======================================================
         // フィールド
@@ -32,6 +47,12 @@ namespace TankSystem.Controller
 
         /// <summary>回転対象となる砲塔の Transform</summary>
         private readonly Transform _turretTransform;
+
+        /// <summary>現在の砲塔スケール倍率</summary>
+        private float _turretScaleMultiplier = BASE_BARREL_TURRET_SCALE_MULTIPLIER;
+
+        /// <summary>現在の砲塔回転倍率</summary>
+        private float _turretRotationMultiplier = BASE_BARREL_TURRET_ROTATION_MULTIPLIER;
 
         /// <summary>砲塔の初期ローカル Y 回転角</summary>
         private readonly float _defaultLocalYAngle;
@@ -43,14 +64,20 @@ namespace TankSystem.Controller
         /// <summary>
         /// 砲塔回転コントローラーを生成する
         /// </summary>
+        /// <param name="tankStatus">砲塔スケール算出に使用する戦車ステータス</param>
         /// <param name="turretTransform">砲塔の Transform</param>
-        public TankTurretController(in Transform turretTransform)
+        public TankTurretController(
+            in TankStatus tankstatus,
+            in Transform turretTransform
+        )
         {
             // 砲塔 Transform を保持
             _turretTransform = turretTransform;
 
-            // 初期状態のローカル Y 回転角を保存
+            // 初期状態のローカル Y 回転角を保持
             _defaultLocalYAngle = _turretTransform.localEulerAngles.y;
+
+            UpdateTurretParameter(tankstatus);
         }
 
         // ======================================================
@@ -60,9 +87,38 @@ namespace TankSystem.Controller
         /// <summary>
         /// BarrelScale ステータスを元に砲塔スケールを再計算する
         /// </summary>
-        /// <param name="tankStatus">砲塔スケールに使用する戦車ステータス</param>
+        /// <param name="tankStatus">砲塔スケール算出に使用する戦車ステータス</param>
         public void UpdateTurretParameter(in TankStatus tankStatus)
         {
+            // 砲塔スケール倍率を算出
+            _turretScaleMultiplier =
+                BASE_BARREL_TURRET_SCALE_MULTIPLIER
+                + tankStatus.Barrel * BARREL_TURRET_SCALE_MULTIPLIER;
+
+            // 砲塔回転倍率を算出
+            _turretRotationMultiplier =
+                BASE_BARREL_TURRET_ROTATION_MULTIPLIER
+                - tankStatus.Barrel * BARREL_TURRET_ROTATION_MULTIPLIER;
+        }
+
+        /// <summary>
+        /// 砲塔 Transform にスケール倍率を適用する
+        /// </summary>
+        public void ApplyTurretScale()
+        {
+            if (_turretTransform == null)
+            {
+                return;
+            }
+
+            // 現在のローカルスケールを取得
+            Vector3 localScale = _turretTransform.localScale;
+
+            localScale.x = _turretScaleMultiplier;
+            localScale.y = _turretScaleMultiplier;
+            localScale.z = _turretScaleMultiplier;
+
+            _turretTransform.localScale = localScale;
         }
 
         /// <summary>
@@ -73,19 +129,19 @@ namespace TankSystem.Controller
         /// 回転入力値  
         /// -1 ～ 1 を想定（左回転 / 右回転）
         /// </param>
-        public void Rotate(
+        public void ApplyTurretRotate(
             in float deltaTime,
             in float rotationInput
         )
         {
-            // 入力が無い場合は処理しない
+            // 入力が無い場合は処理なし
             if (Mathf.Approximately(rotationInput, 0f))
             {
                 return;
             }
 
             // 入力値に回転倍率を適用
-            float scaledInput = rotationInput * ROTATION_INPUT_MULTIPLIER;
+            float scaledInput = rotationInput * _turretRotationMultiplier;
 
             // フレーム内の回転量を算出
             float rotationDelta = scaledInput * deltaTime;

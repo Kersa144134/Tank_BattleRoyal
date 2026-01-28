@@ -233,7 +233,7 @@ namespace WeaponSystem.Data
             BulletSpeed =
                 BASE_BULLET_SPEED_MULTIPLIER
                 * (BASE_BARREL_SCALE
-                + tankStatus.BarrelScale * BARREL_SCALE_MULTIPLIER)
+                + tankStatus.Barrel * BARREL_SCALE_MULTIPLIER)
                 / massInfluence;
         }
 

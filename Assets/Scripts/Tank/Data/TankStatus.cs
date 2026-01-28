@@ -65,7 +65,7 @@ namespace TankSystem.Data
         [Header("攻撃力関連")]
         /// <summary>砲身　砲身のスケール</summary>
         [SerializeField, Range(MIN_PARAMETER_VALUE, MAX_PARAMETER_VALUE), Tooltip("砲身　砲身のスケール")]
-        private int _barrelScale;
+        private int _barrel;
 
         /// <summary>質量　攻撃弾の質量</summary>
         [SerializeField, Range(MIN_PARAMETER_VALUE, MAX_PARAMETER_VALUE), Tooltip("質量　攻撃弾の質量")]
@@ -134,10 +134,10 @@ namespace TankSystem.Data
         // 攻撃力関連
         // --------------------------------------------------
         /// <summary>砲身　砲身のスケール</summary>
-        public int BarrelScale
+        public int Barrel
         {
-            get => _barrelScale;
-            private set => _barrelScale = Mathf.Clamp(value, MIN_PARAMETER_VALUE, MAX_PARAMETER_VALUE);
+            get => _barrel;
+            private set => _barrel = Mathf.Clamp(value, MIN_PARAMETER_VALUE, MAX_PARAMETER_VALUE);
         }
 
         /// <summary>質量　攻撃弾の質量</summary>
@@ -180,7 +180,7 @@ namespace TankSystem.Data
         public TankStatus()
         {
             _fuel = 0; _ammo = 0; _durability = 0; _armor = 0;
-            _horsePower = 0; _transmission = 0; _barrelScale = 0; _projectileMass = 0; _reloadTime = 0;
+            _horsePower = 0; _transmission = 0; _barrel = 0; _projectileMass = 0; _reloadTime = 0;
 
             // TankParam とプロパティ更新アクションを紐付け
             _paramMap = new Dictionary<TankParam, Action<int>>
@@ -191,7 +191,7 @@ namespace TankSystem.Data
                 { TankParam.Armor,          amount => Armor += amount },
                 { TankParam.HorsePower,     amount => HorsePower += amount },
                 { TankParam.Transmission,   amount => Transmission += amount },
-                { TankParam.BarrelScale,    amount => BarrelScale += amount },
+                { TankParam.BarrelScale,    amount => Barrel += amount },
                 { TankParam.ProjectileMass, amount => ProjectileMass += amount },
                 { TankParam.ReloadTime,     amount => ReloadTime += amount },
             };

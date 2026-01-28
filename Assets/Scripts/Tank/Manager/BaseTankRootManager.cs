@@ -208,7 +208,7 @@ namespace TankSystem.Manager
         public virtual void OnEnter()
         {
             _attackManager = new TankAttackManager(_tankStatus, _fieldOfViewCalculator, transform, _turret);
-            _turretController = new TankTurretController(_turret);
+            _turretController = new TankTurretController(_tankStatus, _turret);
             _boundaryService = new TankMovementBoundaryService(MOVEMENT_ALLOWED_RADIUS);
             _defenseManager = new TankDefenseManager(_tankStatus);
             _durabilityManager = new TankDurabilityManager(_tankStatus);
@@ -289,8 +289,11 @@ namespace TankSystem.Manager
             // UŒ‚ˆ—
             _attackManager.UpdateAttack(unscaledDeltaTime, leftFire, rightFire);
 
+            // –C“ƒƒXƒP[ƒ‹
+            _turretController.ApplyTurretScale();
+
             // –C“ƒ‰ñ“]
-            _turretController.Rotate(
+            _turretController.ApplyTurretRotate(
                 deltaTime,
                 turretRotation
             );
@@ -430,6 +433,7 @@ namespace TankSystem.Manager
             _defenseManager.UpdateDefenseParameter(_tankStatus);
             _durabilityManager.UpdateDurabilityParameter(_tankStatus);
             _mobilityManager.UpdateMobilityParameters(_tankStatus);
+            _turretController.UpdateTurretParameter(_tankStatus);
         }
 
         /// <summary>
