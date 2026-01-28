@@ -62,7 +62,7 @@ namespace VisionSystem.Calculator
         // ======================================================
 
         /// <summary>
-        /// 視界内にある対象物を取得（距離順を維持）
+        /// 視界内にある対象物を取得
         /// </summary>
         /// <param name="origin">視界の中心 Transform</param>
         /// <param name="targets">判定対象の Transform 配列</param>

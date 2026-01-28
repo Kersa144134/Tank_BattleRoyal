@@ -3,17 +3,14 @@
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-05
 // 更新日時 : 2025-12-13
-// 概要     : 戦車の前進・旋回処理を担当する機動力管理クラス。
-//            TrackController による前進量・旋回量を Transform に反映し、
-//            TankCollisionService により移動後の衝突判定を行う。
+// 概要     : 戦車の前進・旋回処理を担当する機動力管理クラス
 // ======================================================
 
+using UnityEngine;
 using InputSystem.Data;
 using TankSystem.Controller;
 using TankSystem.Data;
 using TankSystem.Service;
-using UnityEngine;
-using static UnityEngine.EventSystems.StandaloneInputModule;
 
 namespace TankSystem.Manager
 {

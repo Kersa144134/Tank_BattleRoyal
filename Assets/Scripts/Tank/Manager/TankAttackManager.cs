@@ -2,9 +2,8 @@
 // TankAttackManager.cs
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-08
-// 更新日時 : 2026-01-23
+// 更新日時 : 2026-01-28
 // 概要     : 戦車の攻撃処理を管理するクラス
-//            榴弾・徹甲弾・同時押し特殊攻撃をサポート
 // ======================================================
 
 using System;
@@ -12,6 +11,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using CollisionSystem.Interface;
 using InputSystem.Data;
+using TankSystem.Data;
 using VisionSystem.Calculator;
 using WeaponSystem.Data;
 
@@ -36,7 +36,6 @@ namespace TankSystem.Manager
         // --------------------------------------------------
         // 攻撃関連
         // --------------------------------------------------
-        /// <summary>入力を受けて攻撃を決定するまでの待機時間（秒）</summary>
         /// <summary>弾丸タイプの順序</summary>
         private readonly BulletType[] _bulletCycle = new BulletType[]
         {
@@ -51,6 +50,9 @@ namespace TankSystem.Manager
         /// <summary>攻撃クールタイムの残り時間（秒）</summary>
         private float _cooldownTime = 0f;
 
+        /// <summary>現在の攻撃間隔倍率</summary>
+        private float _reloadTimeMultiplier = BASE_RELOAD_TIME_MULTIPLIER;
+
         /// <summary>左攻撃ボタンが押されてからの経過時間（同時押し判定用、未押下時は -1）</summary>
         private float _leftInputTimer = -1f;
 
@@ -60,8 +62,11 @@ namespace TankSystem.Manager
         // --------------------------------------------------
         // 視界判定関連
         // --------------------------------------------------
-        /// <summary>自身の戦車の Transform</summary>
+        /// <summary>自身の戦車 Transform</summary>
         private Transform _transform;
+
+        /// <summary>自身の砲塔 Transform</summary>
+        private Transform _turretTransform;
 
         /// <summary>ターゲットの Transform 配列</summary>
         private Transform[] _targetTransforms = new Transform[0];
@@ -75,6 +80,18 @@ namespace TankSystem.Manager
         // ======================================================
         // 定数
         // ======================================================
+
+        // --------------------------------------------------
+        // 基準値
+        // --------------------------------------------------
+        /// <summary>基準となる攻撃間隔倍率</summary>
+        private const float BASE_RELOAD_TIME_MULTIPLIER = 1.0f;
+
+        // --------------------------------------------------
+        // パラメーター
+        // --------------------------------------------------
+        /// <summary>装填 1 あたりの攻撃間隔倍率減算値</summary>
+        private const float RELOAD_TIME_MULTIPLIER = 0.025f;
 
         // --------------------------------------------------
         // 攻撃関連
@@ -110,11 +127,21 @@ namespace TankSystem.Manager
         /// <summary>
         /// 視界判定コンポーネントを注入して初期化する
         /// </summary>
+        /// <param name="tankStatus">攻撃間隔算出に使用する戦車ステータス</param>
         /// <param name="fieldOfViewCalculator">視界判定のユースケースクラス</param>
-        public TankAttackManager(in FieldOfViewCalculator fieldOfViewCalculator, in Transform transform)
+        /// <param name="turretTransform">本体の Transform</param>
+        /// <param name="turretTransform">砲塔の Transform</param>
+        public TankAttackManager(
+            in TankStatus tankStatus,
+            in FieldOfViewCalculator fieldOfViewCalculator,
+            in Transform transform,
+            in Transform turretTransform)
         {
             _fieldOfViewCalculator = fieldOfViewCalculator;
             _transform = transform;
+            _turretTransform = turretTransform;
+
+            UpdateAttackParameter(tankStatus);
         }
 
         // ======================================================
@@ -140,6 +167,18 @@ namespace TankSystem.Manager
         // ======================================================
 
         /// <summary>
+        /// ReloadTime ステータスを元に攻撃間隔を再計算する
+        /// </summary>
+        /// <param name="tankStatus">攻撃間隔に使用する戦車ステータス</param>
+        public void UpdateAttackParameter(in TankStatus tankStatus)
+        {
+            // 攻撃クールタイムに使用する攻撃間隔倍率を算出
+            _reloadTimeMultiplier =
+                BASE_RELOAD_TIME_MULTIPLIER
+                - tankStatus.ReloadTime * RELOAD_TIME_MULTIPLIER;
+        }
+
+        /// <summary>
         /// 毎フレーム呼び出し、攻撃入力を処理する
         /// </summary>
         /// <param name="unscaledDeltaTime">timeScaleに影響されない経過時間</param>
@@ -157,7 +196,7 @@ namespace TankSystem.Manager
 
             // 視界内ターゲットを距離順に取得
             List<Transform> visibleTargets = _fieldOfViewCalculator.GetVisibleTargets(
-                _transform,
+                _turretTransform,
                 _targetTransforms,
                 _shieldOBBs,
                 FOV_ANGLE,
@@ -175,11 +214,21 @@ namespace TankSystem.Manager
             }
 
             // 新規入力があればタイマー開始
-            if (leftInput.Down && _leftInputTimer < 0f)
+            if (!leftInput.IsPressed)
+            {
+                _leftInputTimer = -1f;
+            }
+            if (!rightInput.IsPressed)
+            {
+                _rightInputTimer = -1f;
+            }
+
+            // 新規入力があればタイマー開始
+            if (leftInput.IsPressed && _leftInputTimer < 0f)
             {
                 _leftInputTimer = 0f;
             }
-            if (rightInput.Down && _rightInputTimer < 0f)
+            if (rightInput.IsPressed && _rightInputTimer < 0f)
             {
                 _rightInputTimer = 0f;
             }
@@ -199,9 +248,9 @@ namespace TankSystem.Manager
             {
                 if (Mathf.Abs(_leftInputTimer - _rightInputTimer) <= INPUT_DECISION_DELAY)
                 {
-                    FireSpecial();
+                    FireSpecial(closestTarget);
                     ResetInputTimers();
-                    _cooldownTime = ATTACK_COOLDOWN;
+                    _cooldownTime = ATTACK_COOLDOWN * _reloadTimeMultiplier;
                     return;
                 }
             }
@@ -210,15 +259,15 @@ namespace TankSystem.Manager
             if (_leftInputTimer >= 0f && _leftInputTimer > INPUT_DECISION_DELAY)
             {
                 FireCurrentBullet(closestTarget);
-                _leftInputTimer = -1f;
-                _cooldownTime = ATTACK_COOLDOWN;
+                ResetInputTimers();
+                _cooldownTime = ATTACK_COOLDOWN * _reloadTimeMultiplier;
             }
 
             if (_rightInputTimer >= 0f && _rightInputTimer > INPUT_DECISION_DELAY)
             {
                 FireCurrentBullet(closestTarget);
-                _rightInputTimer = -1f;
-                _cooldownTime = ATTACK_COOLDOWN;
+                ResetInputTimers();
+                _cooldownTime = ATTACK_COOLDOWN * _reloadTimeMultiplier;
             }
         }
 
@@ -252,7 +301,7 @@ namespace TankSystem.Manager
             Transform closestTarget = null;
             for (int i = 0; i < visibleTargets.Count; i++)
             {
-                if (visibleTargets[i] != _transform)
+                if (visibleTargets[i] != _transform || visibleTargets[i] != _turretTransform)
                 {
                     closestTarget = visibleTargets[i];
                     break;
@@ -312,9 +361,9 @@ namespace TankSystem.Manager
         /// <summary>
         /// 特殊攻撃を実行する
         /// </summary>
-        private void FireSpecial()
+        private void FireSpecial(Transform target = null)
         {
-            Debug.Log("Fire Special");
+            FireCurrentBullet(target);
         }
 
         /// <summary>

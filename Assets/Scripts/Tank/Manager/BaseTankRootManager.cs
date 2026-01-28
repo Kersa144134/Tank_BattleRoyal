@@ -66,6 +66,9 @@ namespace TankSystem.Manager
         /// <summary>視界判定のユースケースクラス</summary>
         private FieldOfViewCalculator _fieldOfViewCalculator = new FieldOfViewCalculator();
 
+        /// <summary>砲塔回転制御コントローラー</summary>
+        private TankTurretController _turretController;
+
         // --------------------------------------------------
         // 防御力
         // --------------------------------------------------
@@ -204,7 +207,8 @@ namespace TankSystem.Manager
 
         public virtual void OnEnter()
         {
-            _attackManager = new TankAttackManager(_fieldOfViewCalculator, transform);
+            _attackManager = new TankAttackManager(_tankStatus, _fieldOfViewCalculator, transform, _turret);
+            _turretController = new TankTurretController(_turret);
             _boundaryService = new TankMovementBoundaryService(MOVEMENT_ALLOWED_RADIUS);
             _defenseManager = new TankDefenseManager(_tankStatus);
             _durabilityManager = new TankDurabilityManager(_tankStatus);
@@ -284,6 +288,12 @@ namespace TankSystem.Manager
             // --------------------------------------------------
             // 攻撃処理
             _attackManager.UpdateAttack(unscaledDeltaTime, leftFire, rightFire);
+
+            // 砲塔回転
+            _turretController.Rotate(
+                deltaTime,
+                turretRotation
+            );
 
             // --------------------------------------------------
             // 機動
@@ -401,6 +411,28 @@ namespace TankSystem.Manager
         // ======================================================
 
         /// <summary>
+        /// 任意のパラメーターを指定量だけ増加
+        /// </summary>
+        /// <param name="param">増加させるパラメーター</param>
+        /// <param name="amount">増加量</param>
+        public void IncreaseParameter(in TankParam param, in int amount)
+        {
+            // 破壊済みの場合は処理なし
+            if (_isBroken)
+            {
+                return;
+            }
+
+            _tankStatus.IncreaseParameter(param, amount);
+
+            // パラメーター更新処理
+            _attackManager.UpdateAttackParameter(_tankStatus);
+            _defenseManager.UpdateDefenseParameter(_tankStatus);
+            _durabilityManager.UpdateDurabilityParameter(_tankStatus);
+            _mobilityManager.UpdateMobilityParameters(_tankStatus);
+        }
+
+        /// <summary>
         /// キャタピラの入力モードを切り替える
         /// </summary>
         public void ChangeInputMode()
@@ -453,27 +485,6 @@ namespace TankSystem.Manager
             }
 
             NextPosition += resolveInfo.ResolveVector;
-        }
-
-        /// <summary>
-        /// 任意のパラメーターを指定量だけ増加
-        /// </summary>
-        /// <param name="param">増加させるパラメーター</param>
-        /// <param name="amount">増加量</param>
-        public void IncreaseParameter(in TankParam param, in int amount)
-        {
-            // 破壊済みの場合は処理なし
-            if (_isBroken)
-            {
-                return;
-            }
-
-            _tankStatus.IncreaseParameter(param, amount);
-
-            // パラメーター更新処理
-            _defenseManager.UpdateDefenseParameter(_tankStatus);
-            _durabilityManager.UpdateDurabilityParameter(_tankStatus);
-            _mobilityManager.UpdateMobilityParameters(_tankStatus);
         }
 
         // ======================================================
