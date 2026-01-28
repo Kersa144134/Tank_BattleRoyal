@@ -6,6 +6,7 @@
 // 概要     : 各種UIコントローラーを生成・更新する
 // ======================================================
 
+using System;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.UI;
@@ -192,7 +193,7 @@ namespace UISystem.Manager
 
         /// <summary>耐久値バー横幅 UI コントローラー</summary>
         private ValueBarWidthUIController _durabilityBarWidthUIController;
-        
+
         // --------------------------------------------------
         // データ参照
         // --------------------------------------------------
@@ -203,18 +204,52 @@ namespace UISystem.Manager
         // フィールド
         // ======================================================
 
+        /// <summary>UI アニメーション用アニメーター</summary>
+        private Animator _uiAnimator;
+
         /// <summary>現在インゲーム状態かどうか</summary>
         private bool _isInGame;
-
-        /// <summary>フラッシュアニメーション用アニメーター</summary>
-        private Animator _flashAnimator;
 
         // ======================================================
         // 定数
         // ======================================================
 
-        /// <summary>Flash アニメーション用のアニメーター Trigger 名</summary>
-        private const string FLASH_TRIGGER_NAME = "Flash";
+        /// <summary>Finish アニメーション用のアニメーター Trigger 名</summary>
+        private const string FINISH_TRIGGER_NAME = "Finish";
+
+        /// <summary>Destroy アニメーション用のアニメーター Trigger 名</summary>
+        private const string DESTROY_TRIGGER_NAME = "Destroy";
+
+        /// <summary>Die アニメーション用のアニメーター Trigger 名</summary>
+        private const string DIE_TRIGGER_NAME = "Die";
+
+        /// <summary>フェード演出の時間</summary>
+        private const float FADE_TIME = 0.5f;
+
+        /// <summary>通常時のタイムスケール</summary>
+        private const float DEFAULT_TIME_SCALE = 1.0f;
+
+        /// <summary>撃破時のタイムスケール</summary>
+        private const float DESTROY_TIME_SCALE = 0.25f;
+
+        // ======================================================
+        // フィールド
+        // ======================================================
+
+        /// <summary>Finish フェーズアニメーション終了時</summary>
+        public event Action OnReadyPhaseAnimationFinished;
+
+        /// <summary>Ready フェーズアニメーション終了時</summary>
+        public event Action OnFinishPhaseAnimationFinished;
+
+        /// <summary>撃破アニメーション開始時</summary>
+        public event Action<float> OnFlashAnimationStarted;
+
+        /// <summary>撃破フェーズアニメーション終了時</summary>
+        public event Action<float> OnFlashAnimationFinished;
+
+        /// <summary>死亡アニメーション終了時</summary>
+        public event Action OnDieAnimationFinished;
 
         // ======================================================
         // IUpdatable イベント
@@ -222,9 +257,9 @@ namespace UISystem.Manager
 
         public void OnEnter()
         {
-            _flashAnimator = GetComponent<Animator>();
+            _uiAnimator = GetComponent<Animator>();
             // タイムスケールを無視する
-            _flashAnimator.updateMode = AnimatorUpdateMode.UnscaledTime;
+            _uiAnimator.updateMode = AnimatorUpdateMode.UnscaledTime;
 
             _binarizationPostProcessController =
                 new BinarizationPostProcessController(
@@ -301,23 +336,6 @@ namespace UISystem.Manager
 
             _bulletIconSlotRotationUIController.Update(unscaledDeltaTime);
             _logRotationUIController.Update(unscaledDeltaTime);
-
-            // --------------------------------------------------
-            // デバッグ用（いずれ削除予定）
-            // --------------------------------------------------
-            if (Input.GetKeyDown(KeyCode.Tab))
-            {
-                _fade.FadeIn(0.5f);
-            }
-            else if (Input.GetKeyUp(KeyCode.Tab))
-            {
-                _fade.FadeOut(0.5f);
-            }
-
-            if (Input.GetKeyDown(KeyCode.Return))
-            {
-                _flashAnimator.SetTrigger(FLASH_TRIGGER_NAME);
-            }
         }
 
         public void OnPhaseEnter(in PhaseType phase)
@@ -331,8 +349,8 @@ namespace UISystem.Manager
 
         public void OnPhaseExit(in PhaseType phase)
         {
-            // Finish フェーズ終了時にインゲーム状態解除
-            if (phase == PhaseType.Finish)
+            // Play フェーズ終了時にインゲーム状態解除
+            if (phase == PhaseType.Play)
             {
                 _isInGame = false;
             }
@@ -390,6 +408,8 @@ namespace UISystem.Manager
 
                 // ログに表示するメッセージを生成
                 logMessage = "撃破された";
+
+                _uiAnimator.SetTrigger(DIE_TRIGGER_NAME);
             }
             // 敵戦車の場合
             else
@@ -399,10 +419,79 @@ namespace UISystem.Manager
 
                 // ログに表示するメッセージを生成
                 logMessage = $"戦車{displayTankId} を撃破";
+
+                _uiAnimator.SetTrigger(DESTROY_TRIGGER_NAME);
             }
 
             // ログ UI に追加
             _logRotationUIController.AddLog(logMessage);
+        }
+
+        // --------------------------------------------------
+        // アニメーションイベント
+        // --------------------------------------------------
+        /// <summary>
+        /// Ready フェーズアニメーション開始時に呼ばれる処理
+        /// </summary>
+        public void ReadyPhaseAnimationStart()
+        {
+            _fade.FadeOut(FADE_TIME);
+        }
+
+        /// <summary>
+        /// Ready フェーズアニメーション終了時に呼ばれる処理
+        /// </summary>
+        public void ReadyPhaseAnimationFinish()
+        {
+            OnReadyPhaseAnimationFinished?.Invoke();
+        }
+
+        /// <summary>
+        /// Finish フェーズアニメーション開始時に呼ばれる処理
+        /// </summary>
+        public void FinishPhaseAnimationStart()
+        {
+        }
+
+        /// <summary>
+        /// Finish フェーズアニメーション終了時に呼ばれる処理
+        /// </summary>
+        public void FinishPhaseAnimationFinish()
+        {
+            _fade.FadeIn(FADE_TIME);
+            OnFinishPhaseAnimationFinished?.Invoke();
+        }
+
+        /// <summary>
+        /// フラッシュアニメーション開始時に呼ばれる処理
+        /// </summary>
+        public void FlashAnimationStart()
+        {
+            OnFlashAnimationStarted?.Invoke(DESTROY_TIME_SCALE);
+        }
+        
+        /// <summary>
+        /// フラッシュアニメーション終了時に呼ばれる処理
+        /// </summary>
+        public void FlashAnimationFinish()
+        {
+            OnFlashAnimationFinished?.Invoke(DEFAULT_TIME_SCALE);
+        }
+        
+        /// <summary>
+        /// 死亡アニメーション終了時に呼ばれる処理
+        /// </summary>
+        public void DieAnimationFinish()
+        {
+            OnDieAnimationFinished?.Invoke();
+        }
+
+        /// <summary>
+        /// フェードインアニメーション開始時に呼ばれる処理
+        /// </summary>
+        public void FadeInAnimationStart()
+        {
+            _fade.FadeOut(FADE_TIME);
         }
     }
 }

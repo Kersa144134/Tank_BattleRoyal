@@ -10307,6 +10307,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d416d1715bbc06d4789612d1211da8d4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  cutoutRange: 1
 --- !u!114 &1543663573
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10314,7 +10315,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1543663570}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 448623d86f85950479f00cc5367d0ca9, type: 3}
   m_Name: 
@@ -10324,7 +10325,6 @@ MonoBehaviour:
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   maskTexture: {fileID: 2800000, guid: a4061fb1c3da20440a56bb64de0cee97, type: 3}
-  cutoutRange: 0
 --- !u!114 &1543663574
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -28,13 +28,14 @@ public class Fade : MonoBehaviour
 {
 	IFade fade;
 
-	void Start ()
+    [SerializeField, Range(0f, 1f)]
+    private float cutoutRange;
+
+    void Start ()
 	{
 		Init ();
 		fade.Range = cutoutRange;
 	}
-
-	float cutoutRange;
 
 	void Init ()
 	{

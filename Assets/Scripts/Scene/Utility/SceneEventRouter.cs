@@ -6,13 +6,14 @@
 // 概要     : シーン内イベントの仲介を行う
 // ======================================================
 
-using System;
-using UnityEngine;
 using CollisionSystem.Data;
 using InputSystem.Data;
 using ItemSystem.Data;
 using SceneSystem.Data;
+using System;
 using TankSystem.Manager;
+using UnityEngine;
+using UnityEngine.SocialPlatforms;
 using WeaponSystem.Data;
 
 namespace SceneSystem.Utility
@@ -38,12 +39,9 @@ namespace SceneSystem.Utility
         // ======================================================
 
         /// <summary>
-        /// SceneEventRouter を生成し
-        /// 必要な TankRootManager のイベント購読を開始する
+        /// SceneEventRouter を生成する
         /// </summary>
-        /// <param name="context">
-        /// 初期化済みの UpdatableContext
-        /// </param>
+        /// <param name="context">初期化済みの Updatable コンテキスト</param>
         public SceneEventRouter(UpdatableContext context)
         {
             _context = context;
@@ -117,8 +115,20 @@ namespace SceneSystem.Utility
                 _context.CollisionManager.EventRouter.OnItemGet += HandleGetItem;
             }
 
-           // 購読完了フラグを更新
-           _isSubscribed = true;
+            // --------------------------------------------------
+            // 衝突判定
+            // --------------------------------------------------
+            if (_context.UIManager != null)
+            {
+                _context.UIManager.OnReadyPhaseAnimationFinished += HandleReadyPhaseAnimationFinish;
+                _context.UIManager.OnFinishPhaseAnimationFinished += HandleFinishPhaseAnimationFinish;
+                _context.UIManager.OnFlashAnimationStarted += HandleFlashAnimationStart;
+                _context.UIManager.OnFlashAnimationFinished += HandleFlashAnimationFinish;
+                _context.UIManager.OnDieAnimationFinished += HandleDieAnimationFinish;
+            }
+
+            // 購読完了フラグを更新
+            _isSubscribed = true;
         }
 
         /// <summary>
@@ -409,6 +419,50 @@ namespace SceneSystem.Utility
             }
 
             _context.UIManager.NotifyItemAcquired(itemSlot.ItemData.Name);
+        }
+
+        // --------------------------------------------------
+        // UI
+        // --------------------------------------------------
+        /// <summary>
+        /// Ready フェーズアニメーション終了時に呼ばれる処理
+        /// </summary>
+        private void HandleReadyPhaseAnimationFinish()
+        {
+
+        }
+
+        /// <summary>
+        /// Finish フェーズアニメーション終了時に呼ばれる処理
+        /// </summary>
+        private void HandleFinishPhaseAnimationFinish()
+        {
+
+        }
+
+        /// <summary>
+        /// フラッシュアニメーション終了時に呼ばれる処理
+        /// </summary>
+        /// <param name="timeScale">タイムスケール</param>
+        private void HandleFlashAnimationStart(float timeScale)
+        {
+            _context.SceneObjectRegistry.ChangeTimeScale(timeScale);
+        }
+
+        /// <summary>
+        /// フラッシュアニメーション終了時に呼ばれる処理
+        /// </summary>
+        /// <param name="timeScale">タイムスケール</param>
+        private void HandleFlashAnimationFinish(float timeScale)
+        {
+            _context.SceneObjectRegistry.ChangeTimeScale(timeScale);
+        }
+
+        /// <summary>
+        /// 死亡アニメーション終了時に呼ばれる処理
+        /// </summary>
+        private void HandleDieAnimationFinish()
+        {
         }
     }
 }

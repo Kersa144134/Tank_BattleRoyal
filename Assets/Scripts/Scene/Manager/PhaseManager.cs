@@ -22,16 +22,6 @@ namespace SceneSystem.Manager
         // ======================================================
 
         /// <summary>
-        /// Ready フェーズから Play フェーズへ遷移するまでの待機時間（秒）
-        /// </summary>
-        private const float READY_TO_PLAY_WAIT_TIME = 5.0f;
-
-        /// <summary>
-        /// Finish フェーズから Result フェーズへ遷移するまでの待機時間（秒）
-        /// </summary>
-        private const float FINISH_TO_RESULT_WAIT_TIME = 5.0f;
-
-        /// <summary>
         /// Play フェーズから Finish フェーズへ遷移するまでのゲームプレイ時間（秒）
         /// </summary>
         private const float PLAY_TO_FINISH_WAIT_TIME = 60.0f;
@@ -101,15 +91,6 @@ namespace SceneSystem.Manager
 
             switch (currentPhase)
             {
-                case PhaseType.Ready:
-                    UpdatePhaseByElapsedTime(
-                        currentPhase,
-                        out targetPhase,
-                        READY_TO_PLAY_WAIT_TIME,
-                        PhaseType.Play
-                    );
-                    break;
-
                 case PhaseType.Play:
                     if (elapsedTime > PLAY_TO_FINISH_WAIT_TIME)
                     {
@@ -143,15 +124,6 @@ namespace SceneSystem.Manager
 
                         OnOptionButtonPressed?.Invoke();
                     }
-                    break;
-
-                case PhaseType.Finish:
-                    UpdatePhaseByElapsedTime(
-                        currentPhase,
-                        out targetPhase,
-                        FINISH_TO_RESULT_WAIT_TIME,
-                        PhaseType.Result
-                    );
                     break;
 
                 default:

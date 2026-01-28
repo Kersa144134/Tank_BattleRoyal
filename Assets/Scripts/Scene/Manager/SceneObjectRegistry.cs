@@ -6,12 +6,12 @@
 // 概要     : シーン上の戦車・障害物・アイテムを一元管理するレジストリクラス
 // ======================================================
 
+using System;
+using UnityEngine;
 using ItemSystem.Data;
 using SceneSystem.Data;
 using SceneSystem.Interface;
-using System;
 using TankSystem.Manager;
-using UnityEngine;
 using WeaponSystem.Data;
 using WeaponSystem.Manager;
 
@@ -112,7 +112,7 @@ namespace SceneSystem.Manager
         {
             if (phase == PhaseType.Finish)
             {
-                Time.timeScale = FINISH_PHASE_TIME_SCALE;
+                ChangeTimeScale(FINISH_PHASE_TIME_SCALE);
             }
         }
 
@@ -120,7 +120,7 @@ namespace SceneSystem.Manager
         {
             if (phase == PhaseType.Finish)
             {
-                Time.timeScale = DEFAULT_TIME_SCALE;
+                ChangeTimeScale(DEFAULT_TIME_SCALE);
             }
         }
 
@@ -162,6 +162,15 @@ namespace SceneSystem.Manager
         public void UnregisterItem(in ItemSlot slot)
         {
             _itemManager.UnregisterItem(slot);
+        }
+
+        /// <summary>
+        /// シーン上のオブジェクトに影響するタイムスケールを変更する
+        /// </summary>
+        /// <param name="timeScale">変更後のタイムスケール</param>
+        public void ChangeTimeScale(in float timeScale)
+        {
+            Time.timeScale = timeScale;
         }
 
         // ======================================================

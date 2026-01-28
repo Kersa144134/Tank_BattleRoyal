@@ -6,16 +6,17 @@
 // 概要     : 戦車の各種制御を統合管理する
 // ======================================================
 
-using System;
-using UnityEngine;
 using CollisionSystem.Data;
 using CollisionSystem.Interface;
 using InputSystem.Data;
 using InputSystem.Manager;
+using SceneSystem.Data;
 using SceneSystem.Interface;
+using System;
 using TankSystem.Controller;
 using TankSystem.Data;
 using TankSystem.Service;
+using UnityEngine;
 using VisionSystem.Calculator;
 using WeaponSystem.Data;
 using WeaponSystem.Interface;
@@ -106,6 +107,9 @@ namespace TankSystem.Manager
 
         /// <summary>戦車を一意に識別する ID</summary>
         public int TankId { get; set; }
+
+        /// <summary>現在インゲーム状態かどうか</summary>
+        private bool _isInGame;
 
         /// <summary>ゲーム中に変動する戦車のパラメーター</summary>
         public TankStatus TankStatus => _tankStatus;
@@ -277,8 +281,14 @@ namespace TankSystem.Manager
                 OnFireModeChangeButtonPressed?.Invoke();
             }
 
-            // 入力マッピングが UI 用の場合は処理を中断
+            // 入力マッピングが UI 用の場合は処理なし
             if (InputManager.Instance.CurrentMappingIndex == 1)
+            {
+                return;
+            }
+
+            // インゲーム状態でなければ処理なし
+            if (!_isInGame)
             {
                 return;
             }
@@ -368,6 +378,24 @@ namespace TankSystem.Manager
             // イベント購読の解除
             _attackManager.OnFireBullet -= HandleFireBullet;
             _durabilityManager.OnBroken -= HandleBroken;
+        }
+
+        public void OnPhaseEnter(in PhaseType phase)
+        {
+            // Play フェーズ開始時にインゲーム状態
+            if (phase == PhaseType.Play)
+            {
+                _isInGame = true;
+            }
+        }
+
+        public void OnPhaseExit(in PhaseType phase)
+        {
+            // Play フェーズ終了時にインゲーム状態解除
+            if (phase == PhaseType.Play)
+            {
+                _isInGame = false;
+            }
         }
 
         // ======================================================
