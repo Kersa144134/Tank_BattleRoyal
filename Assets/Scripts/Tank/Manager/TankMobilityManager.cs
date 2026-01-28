@@ -8,10 +8,12 @@
 //            TankCollisionService により移動後の衝突判定を行う。
 // ======================================================
 
-using UnityEngine;
+using InputSystem.Data;
 using TankSystem.Controller;
 using TankSystem.Data;
 using TankSystem.Service;
+using UnityEngine;
+using static UnityEngine.EventSystems.StandaloneInputModule;
 
 namespace TankSystem.Manager
 {
@@ -158,14 +160,16 @@ namespace TankSystem.Manager
         /// 実際には Transform を変更せず、予定位置と回転を返す
         /// </summary>
         /// <param name="deltaTime">経過時間</param>
-        /// <param name="leftInput">左キャタピラ入力値（-1～1）</param>
-        /// <param name="rightInput">右キャタピラ入力値（-1～1）</param>
+        /// <param name="inputMode">キャタピラ入力モード</param>
+        /// <param name="leftStick">左スティック入力値（-1～1）</param>
+        /// <param name="rightStick">右スティック入力値（-1～1）</param>
         /// <param name="nextPosition">次フレームでの予定ワールド座標</param>
         /// <param name="nextRotation">次フレームでの予定回転</param>
         public void CalculateMobility(
             in float deltaTime,
-            in Vector2 leftInput,
-            in Vector2 rightInput,
+            in TrackInputMode inputMode,
+            in Vector2 leftStick,
+            in Vector2 rightStick,
             out Vector3 nextPosition,
             out Quaternion nextRotation
         )
@@ -174,8 +178,9 @@ namespace TankSystem.Manager
             // 目標移動量を算出
             // --------------------------------------------------
             CalculateTargetMovement(
-                leftInput,
-                rightInput,
+                inputMode,
+                leftStick,
+                rightStick,
                 out float targetForward,
                 out float targetTurn
             );
@@ -263,18 +268,26 @@ namespace TankSystem.Manager
         /// <summary>
         /// キャタピラ入力から前進・旋回の目標値を算出する
         /// </summary>
-        /// <param name="leftInput">左キャタピラ入力値</param>
-        /// <param name="rightInput">右キャタピラ入力値</param>
+        /// <param name="inputMode">キャタピラ入力モード</param>
+        /// <param name="leftInput">左スティック入力値</param>
+        /// <param name="rightInput">右スティック入力値</param>
         /// <param name="targetForward">算出された前進・後退の目標値</param>
         /// <param name="targetTurn">算出された旋回の目標値</param>
         private void CalculateTargetMovement(
-            in Vector2 leftInput,
-            in Vector2 rightInput,
+            in TrackInputMode inputMode,
+            in Vector2 leftStick,
+            in Vector2 rightStick,
             out float targetForward,
             out float targetTurn)
         {
             // キャタピラ入力を前進量・旋回量に変換
-            _trackController.UpdateTrack(leftInput, rightInput, out float forwardInput, out float turnInput);
+            _trackController.UpdateTrack(
+                inputMode,
+                leftStick,
+                rightStick,
+                out float forwardInput,
+                out float turnInput
+            );
 
             // 機動力倍率を掛けて最終的な目標値を算出
             targetForward = forwardInput * _mobilityMultiplier;

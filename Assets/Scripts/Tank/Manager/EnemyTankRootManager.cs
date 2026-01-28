@@ -9,7 +9,6 @@
 
 using UnityEngine;
 using InputSystem.Data;
-using InputSystem.Manager;
 
 namespace TankSystem.Manager
 {
@@ -23,9 +22,6 @@ namespace TankSystem.Manager
         // フィールド
         // ======================================================
 
-        /// <summary>プレイヤー入力管理クラス</summary>
-        private readonly TankInputManager _inputManager = new TankInputManager();
-
         /// <summary>無入力ボタン</summary>
         private readonly ButtonState _none = new ButtonState();
 
@@ -34,39 +30,35 @@ namespace TankSystem.Manager
         // ======================================================
 
         /// <summary>
-        /// 毎フレーム呼び出される AI 入力更新処理
-        /// BaseTankRootManager の抽象メソッドをオーバーライド
+        /// 毎フレーム呼び出される入力更新処理
         /// </summary>
-        /// <param name="leftMobility">左キャタピラ入力から算出される前進/旋回量</param>
-        /// <param name="rightMobility">右キャタピラ入力から算出される前進/旋回量</param>
+        /// <param name="leftStick">左キャタピラ入力</param>
+        /// <param name="rightStick">右キャタピラ入力</param>
+        /// <param name="turretRotation">砲塔回転入力</param>
         /// <param name="inputModeChange">入力モード切替ボタン押下フラグ</param>
         /// <param name="fireModeChange">攻撃モード切替ボタン押下フラグ</param>
         /// <param name="leftFire">左攻撃ボタンの状態</param>
         /// <param name="rightFire">右攻撃ボタンの状態</param>
         protected override void UpdateInput(
-            out Vector2 leftMobility,
-            out Vector2 rightMobility,
+            out Vector2 leftStick,
+            out Vector2 rightStick,
+            out float turretRotation,
             out bool inputModeChange,
             out bool fireModeChange,
             out ButtonState leftFire,
             out ButtonState rightFire
         )
         {
-            // 入力の更新
-            _inputManager.UpdateInput();
+            leftStick = Vector2.zero;
+            rightStick = Vector2.zero;
 
-            // --------------------------------------------------
-            // AI制御の簡易例
-            // 前進と旋回の固定値を出力
-            // --------------------------------------------------
-            leftMobility = Vector2.zero;
-            rightMobility = Vector2.zero;
+            turretRotation = 0f;
 
             inputModeChange = false;
             fireModeChange = false;
 
             leftFire = _none;
-            rightFire = _inputManager.GetButtonState(TankInputKeys.INPUT_RIGHT_FIRE);
+            rightFire = _none;
         }
     }
 }

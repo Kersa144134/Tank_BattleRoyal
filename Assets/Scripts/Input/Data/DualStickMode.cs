@@ -7,7 +7,6 @@
 // ==============================================================================
 
 using UnityEngine;
-using InputSystem.Interface;
 using TankSystem.Controller;
 
 namespace InputSystem.Data
@@ -15,13 +14,13 @@ namespace InputSystem.Data
     /// <summary>
     /// 左右キャタピラ独立操作用入力モード
     /// </summary>
-    internal sealed class DualStickMode : ITrackInputMode
+    public sealed class DualStickMode
     {
         // ======================================================
         // コンポーネント参照
         // ======================================================
 
-        /// <summary>移動量および旋回量計算を担当するコントローラ</summary>
+        /// <summary>移動量および旋回量計算を担当するコントローラー</summary>
         private readonly TankTrackController _trackController;
 
         // ======================================================
@@ -31,14 +30,14 @@ namespace InputSystem.Data
         /// <summary>
         /// デュアルスティック入力方式の計算ロジックを生成する
         /// </summary>
-        /// <param name="trackController">移動量および旋回量計算を担当するコントローラ</param>
-        internal DualStickMode(TankTrackController trackController)
+        /// <param name="trackController">移動量および旋回量計算を担当するコントローラー</param>
+        public DualStickMode(TankTrackController trackController)
         {
             _trackController = trackController;
         }
 
         // ======================================================
-        // ITrackInputMode イベント
+        // パブリックメソッド
         // ======================================================
 
         /// <summary>

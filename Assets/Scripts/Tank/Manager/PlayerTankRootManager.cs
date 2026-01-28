@@ -26,18 +26,15 @@ namespace TankSystem.Manager
         /// <summary>プレイヤー入力管理クラス</summary>
         private readonly TankInputManager _inputManager = new TankInputManager();
 
-        /// <summary>無入力ボタン</summary>
-        private readonly ButtonState _none = new ButtonState();
-
         // ======================================================
         // プロパティ
         // ======================================================
 
-        /// <summary>現在の耐久値</summary>
-        public float CurrentDurability => DurabilityManager.CurrentDurability;
+        /// <summary>プレイヤー入力管理クラス</summary>
+        public TankInputManager InputManager => _inputManager;
 
-        /// <summary>ステータスから算出される耐久の最大値</summary>
-        public float MaxDurability => DurabilityManager.MaxDurability;
+        /// <summary>キャタピラ入力モード</summary>
+        public TrackInputMode InputMode => _inputManager.InputMode;
 
         // ======================================================
         // 抽象メソッド
@@ -45,17 +42,18 @@ namespace TankSystem.Manager
 
         /// <summary>
         /// 毎フレーム呼び出される入力更新処理
-        /// BaseTankRootManager の抽象メソッドをオーバーライド
         /// </summary>
-        /// <param name="leftMobility">左キャタピラ入力から算出される前進/旋回量</param>
-        /// <param name="rightMobility">右キャタピラ入力から算出される前進/旋回量</param>
+        /// <param name="leftStick">左キャタピラ入力</param>
+        /// <param name="rightStick">右キャタピラ入力</param>
+        /// <param name="turretRotation">砲塔回転入力</param>
         /// <param name="inputModeChange">入力モード切替ボタン押下フラグ</param>
         /// <param name="fireModeChange">攻撃モード切替ボタン押下フラグ</param>
         /// <param name="leftFire">左攻撃ボタンの状態</param>
         /// <param name="rightFire">右攻撃ボタンの状態</param>
         protected override void UpdateInput(
-            out Vector2 leftMobility,
-            out Vector2 rightMobility,
+            out Vector2 leftStick,
+            out Vector2 rightStick,
+            out float turretRotation,
             out bool inputModeChange,
             out bool fireModeChange,
             out ButtonState leftFire,
@@ -66,8 +64,11 @@ namespace TankSystem.Manager
             _inputManager.UpdateInput();
 
             // 左右キャタピラ入力を取得
-            leftMobility = _inputManager.LeftStick;
-            rightMobility = _inputManager.RightStick;
+            leftStick = _inputManager.LeftStick;
+            rightStick = _inputManager.RightStick;
+
+            // 砲塔回転入力を取得
+            turretRotation = _inputManager.TurretRotation;
 
             // 入力切替ボタン押下判定
             inputModeChange = _inputManager.GetButtonState(TankInputKeys.INPUT_MODE_CHANGE).Down;
@@ -75,8 +76,7 @@ namespace TankSystem.Manager
 
             // 攻撃ボタン状態を取得
             leftFire = _inputManager.GetButtonState(TankInputKeys.INPUT_LEFT_FIRE);
-            rightFire = _none;
-            // rightFire = _inputManager.GetButtonState(TankInputKeys.INPUT_RIGHT_FIRE);
+            rightFire = _inputManager.GetButtonState(TankInputKeys.INPUT_RIGHT_FIRE);
         }
     }
 }

@@ -110,9 +110,6 @@ namespace TankSystem.Manager
         /// <summary>戦車の耐久力管理クラス</summary>
         public TankDurabilityManager DurabilityManager => _durabilityManager;
 
-        /// <summary>キャタピラ入力モード</summary>
-        public TrackInputMode InputMode => _trackController.InputMode;
-
         /// <summary>戦車の衝突設定 Box のローカル中心座標</summary>
         public Vector3 HitBoxCenter => _hitBoxCenter;
 
@@ -165,18 +162,19 @@ namespace TankSystem.Manager
         // ======================================================
 
         /// <summary>
-        /// 毎フレーム呼び出される入力更新処理を実装する抽象メソッド
-        /// プレイヤーの場合はプレイヤー入力を、敵AIの場合は自動制御入力を設定する
+        /// 毎フレーム呼び出される入力更新処理
         /// </summary>
-        /// <param name="leftMobility">左キャタピラ入力から算出される前進/旋回量</param>
-        /// <param name="rightMobility">右キャタピラ入力から算出される前進/旋回量</param>
+        /// <param name="leftStick">左スティック入力</param>
+        /// <param name="rightStick">右キスティック入力</param>
+        /// <param name="turretRotation">砲塔回転入力</param>
         /// <param name="inputModeChange">入力モード切替ボタン押下フラグ</param>
         /// <param name="fireModeChange">攻撃モード切替ボタン押下フラグ</param>
         /// <param name="leftFire">左攻撃ボタンの状態</param>
         /// <param name="rightFire">右攻撃ボタンの状態</param>
         protected abstract void UpdateInput(
-            out Vector2 leftMobility,
-            out Vector2 rightMobility,
+            out Vector2 leftStick,
+            out Vector2 rightStick,
+            out float turretRotation,
             out bool inputModeChange,
             out bool fireModeChange,
             out ButtonState leftFire,
@@ -253,8 +251,10 @@ namespace TankSystem.Manager
             // 入力
             // --------------------------------------------------
             // 各種入力状態をまとめて取得
-            UpdateInput(out Vector2 leftMobility,
-                out Vector2 rightMobility,
+            UpdateInput(
+                out Vector2 leftStick,
+                out Vector2 rightStick,
+                out float turretRotation,
                 out bool inputModeChange,
                 out bool fireModeChange,
                 out ButtonState leftFire,
@@ -292,16 +292,35 @@ namespace TankSystem.Manager
             Vector3 calculatedPosition;
             Quaternion calculatedRotation;
 
-            _mobilityManager.CalculateMobility(
-                deltaTime,
-                leftMobility,
-                rightMobility,
-                out calculatedPosition,
-                out calculatedRotation
-            );
+            if (this is PlayerTankRootManager player)
+            {
+                _mobilityManager.CalculateMobility(
+                    deltaTime,
+                    player.InputMode,
+                    leftStick,
+                    rightStick,
+                    out calculatedPosition,
+                    out calculatedRotation
+                );
 
-            NextPosition = calculatedPosition;
-            NextRotation = calculatedRotation;
+                NextPosition = calculatedPosition;
+                NextRotation = calculatedRotation;
+            }
+            // プレイヤーでない場合は入力モードをシングル固定
+            else
+            {
+                _mobilityManager.CalculateMobility(
+                    deltaTime,
+                    TrackInputMode.Single,
+                    leftStick,
+                    rightStick,
+                    out calculatedPosition,
+                    out calculatedRotation
+                );
+
+                NextPosition = calculatedPosition;
+                NextRotation = calculatedRotation;
+            }
         }
 
         public virtual void OnLateUpdate(in float unscaledDeltaTime)
@@ -386,13 +405,19 @@ namespace TankSystem.Manager
         /// </summary>
         public void ChangeInputMode()
         {
+            // プレイヤーでない場合は処理なし
+            if (this is not PlayerTankRootManager playerTankRootManager)
+            {
+                return;
+            }
+            
             // 破壊済みの場合は処理なし
             if (_isBroken)
             {
                 return;
             }
 
-            _trackController.ChangeInputMode();
+            playerTankRootManager.InputManager.ChangeInputMode();
         }
 
         /// <summary>

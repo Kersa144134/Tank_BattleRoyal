@@ -7,7 +7,6 @@
 // ==============================================================================
 
 using UnityEngine;
-using InputSystem.Interface;
 using TankSystem.Controller;
 
 namespace InputSystem.Data
@@ -15,13 +14,13 @@ namespace InputSystem.Data
     /// <summary>
     /// 左スティック単独操作用入力モード
     /// </summary>
-    internal sealed class SingleStickMode : ITrackInputMode
+    public sealed class SingleStickMode
     {
         // ======================================================
         // コンポーネント参照
         // ======================================================
 
-        /// <summary>移動量および旋回量計算を担当するコントローラ</summary>
+        /// <summary>移動量および旋回量計算を担当するコントローラー</summary>
         private readonly TankTrackController _trackController;
 
         // ======================================================
@@ -54,26 +53,24 @@ namespace InputSystem.Data
         /// <summary>
         /// シングルスティック入力方式の計算ロジックを生成する
         /// </summary>
-        /// <param name="calculator">移動量および旋回量計算を担当するコントローラ</param>
-        internal SingleStickMode(TankTrackController trackController)
+        /// <param name="calculator">移動量および旋回量計算を担当するコントローラー</param>
+        public SingleStickMode(TankTrackController trackController)
         {
             _trackController = trackController;
         }
 
         // ======================================================
-        // ITrackInputMode イベント
+        // パブリックメソッド
         // ======================================================
 
         /// <summary>
         /// 左スティック入力を移動量および旋回量に変換する
         /// </summary>
         /// <param name="leftInput">左スティックの入力値</param>
-        /// <param name="rightInput">右スティックの入力値</param>
         /// <param name="forwardAmount">算出された前進／後退量</param>
         /// <param name="turnAmount">算出された旋回量</param>
         public void Calculate(
             in Vector2 leftInput,
-            in Vector2 rightInput,
             out float forwardAmount,
             out float turnAmount
         )
@@ -113,9 +110,6 @@ namespace InputSystem.Data
         // プライベートメソッド
         // ======================================================
 
-        // --------------------------------------------------
-        // 前進／旋回判定
-        // --------------------------------------------------
         /// <summary>
         /// 前進入力が旋回入力より優勢かを判定する
         /// </summary>
@@ -131,9 +125,6 @@ namespace InputSystem.Data
             return absX - absY < IN_PLACE_TURN_DIFF_THRESHOLD;
         }
 
-        // --------------------------------------------------
-        // 旋回量算出
-        // --------------------------------------------------
         /// <summary>
         /// 前進中の旋回量を算出する
         /// </summary>
@@ -161,9 +152,6 @@ namespace InputSystem.Data
             return _trackController.CalculateTurnFromSingleAxis(x) * turnSign;
         }
 
-        // --------------------------------------------------
-        // 入力履歴更新
-        // --------------------------------------------------
         /// <summary>
         /// 前進／後退方向の入力履歴を更新する
         /// </summary>
