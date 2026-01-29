@@ -88,7 +88,7 @@ namespace TankSystem.Manager
         // エフェクト
         // --------------------------------------------------
         /// <summary>戦車のエフェクト管理クラス</summary>
-        private TankEffectController _effectController;
+        private TankEffectManager _effectManager;
 
         // --------------------------------------------------
         // サービス
@@ -227,7 +227,7 @@ namespace TankSystem.Manager
                 _boundaryService,
                 transform
             );
-            _effectController = new TankEffectController(transform);
+            _effectManager = new TankEffectManager(transform);
 
             // イベント購読
             _attackManager.OnFireBullet += HandleFireBullet;
@@ -353,7 +353,7 @@ namespace TankSystem.Manager
             // --------------------------------------------------
             // エフェクト
             // --------------------------------------------------
-            _effectController.UpdateForceField(unscaledDeltaTime);
+            _effectManager.UpdateForceField(unscaledDeltaTime);
         }
 
         public virtual void OnLateUpdate(in float unscaledDeltaTime)
@@ -438,7 +438,7 @@ namespace TankSystem.Manager
 
 
             // ダメージエフェクト再生
-            _effectController.PlayDamage();
+            _effectManager.PlayDamage();
         }
 
         /// <summary>
@@ -513,11 +513,11 @@ namespace TankSystem.Manager
             // 破壊済みの場合は強制非表示
             if (_isBroken)
             {
-                _effectController.SetForceField(false);
+                _effectManager.SetForceField(false);
             }
             else
             {
-                _effectController.SetForceField(isActive);
+                _effectManager.SetForceField(isActive);
             }
         }
 
@@ -587,7 +587,7 @@ namespace TankSystem.Manager
             ChangeTargetIcon(false);
 
             // 爆発エフェクト再生
-            _effectController.PlayExplosion();
+            _effectManager.PlayExplosion();
 
             OnBroken?.Invoke(TankId);
         }

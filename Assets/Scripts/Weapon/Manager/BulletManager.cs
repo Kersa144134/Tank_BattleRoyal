@@ -14,10 +14,6 @@ namespace WeaponSystem.Manager
     /// <summary>
     /// 弾丸の登録・更新を管理するクラス
     /// </summary>
-    /// <remarks>
-    /// MonoBehaviour を継承せず、
-    /// SceneObjectRegistry などから明示的に Update を呼び出す
-    /// </remarks>
     public class BulletManager
     {
         // ======================================================
