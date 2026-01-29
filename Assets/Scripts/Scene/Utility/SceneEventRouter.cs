@@ -274,6 +274,7 @@ namespace SceneSystem.Utility
         private void HandleBroken(int TankId)
         {
             _context.UIManager.NotifyBrokenTanks(TankId);
+            _context.CollisionManager.UnregisterTank(TankId);
         }
 
         // --------------------------------------------------

@@ -104,7 +104,10 @@ namespace TankSystem.Manager
         // フィールド
         // ======================================================
 
-        /// <summary>戦車が破壊され、機能停止状態かどうか</summary>
+        /// <summary>現在インゲーム状態かどうか</summary>
+        private bool _isInGame;
+
+        /// <summary>戦車が機能停止状態かどうか</summary>
         private bool _isBroken;
 
         // ======================================================
@@ -114,8 +117,8 @@ namespace TankSystem.Manager
         /// <summary>戦車を一意に識別する ID</summary>
         public int TankId { get; set; }
 
-        /// <summary>現在インゲーム状態かどうか</summary>
-        private bool _isInGame;
+        /// <summary>戦車が機能停止状態かどうか</summary>
+        public bool IsBroken => _isBroken;
 
         /// <summary>ゲーム中に変動する戦車のパラメーター</summary>
         public TankStatus TankStatus => _tankStatus;

@@ -204,7 +204,7 @@ namespace TankSystem.Manager
             );
 
             // 自身以外で最も近いターゲットを取得
-            Transform closestTarget = GetClosestTargetExcludingSelf(visibleTargets);
+            Transform closestTarget = GetClosestTarget(visibleTargets);
 
             // クールタイム中は何もしない
             if (_cooldownTime > 0f)
@@ -288,34 +288,56 @@ namespace TankSystem.Manager
         /// ターゲットアイコン表示を切り替える
         /// </summary>
         /// <param name="visibleTargets">視界内ターゲットのリスト（距離順）</param>
-        /// <returns>最も近いターゲット Transform。存在しなければ null</returns>
-        private Transform GetClosestTargetExcludingSelf(List<Transform> visibleTargets)
+        /// <returns>最も近いターゲット Transform</returns>
+        private Transform GetClosestTarget(List<Transform> visibleTargets)
         {
             if (visibleTargets == null || visibleTargets.Count == 0)
             {
                 UpdateCachedTarget(null);
+
                 return null;
             }
 
-            // 自身の Transform を除外して最も近いターゲットを取得
             Transform closestTarget = null;
+            BaseTankRootManager targetManager = null;
+
+            // 距離順に走査
             for (int i = 0; i < visibleTargets.Count; i++)
             {
-                if (visibleTargets[i] != _transform || visibleTargets[i] != _turretTransform)
+                Transform candidate = visibleTargets[i];
+
+                if (candidate == null)
                 {
-                    closestTarget = visibleTargets[i];
-                    break;
+                    continue;
                 }
+
+                // 自身は除外
+                if (candidate == _transform || candidate == _turretTransform)
+                {
+                    continue;
+                }
+
+                // BaseTankRootManager 取得
+                BaseTankRootManager manager = candidate.GetComponent<BaseTankRootManager>();
+
+                if (manager == null)
+                {
+                    continue;
+                }
+
+                // 破壊済みなら除外
+                if (manager.IsBroken)
+                {
+                    continue;
+                }
+
+                closestTarget = candidate;
+                targetManager = manager;
+
+                break;
             }
 
-            // ターゲットの BaseTankRootManager を取得できる場合
-            BaseTankRootManager targetManager = null;
-            if (closestTarget != null)
-            {
-                targetManager = closestTarget.GetComponent<BaseTankRootManager>();
-            }
-
-            // ターゲットを更新してアイコン表示を切り替える
+            // ターゲット状態更新
             UpdateCachedTarget(targetManager);
 
             return closestTarget;

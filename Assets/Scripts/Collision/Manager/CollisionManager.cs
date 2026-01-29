@@ -104,7 +104,15 @@ namespace TankSystem.Manager
         // 辞書
         // ======================================================
 
-        /// <summary>ItemSlot と対応する ItemCollisionContext を管理するマップ</summary>
+        /// <summary>
+        /// TankID と対応する TankCollisionContext を管理するマップ
+        /// </summary>
+        private readonly Dictionary<int, TankCollisionContext> _tankContextMap
+            = new Dictionary<int, TankCollisionContext>();
+
+        /// <summary>
+        /// ItemSlot と対応する ItemCollisionContext を管理するマップ
+        /// </summary>
         private readonly Dictionary<ItemSlot, ItemCollisionContext> _itemContextMap
             = new Dictionary<ItemSlot, ItemCollisionContext>();
 
@@ -148,9 +156,26 @@ namespace TankSystem.Manager
             _eventRouter = new CollisionEventRouter(_collisionResolverCalculator);
 
             // --------------------------------------------------
-            // 戦車・障害物 コンテキスト構築
+            // 戦車コンテキスト構築
             // --------------------------------------------------
             _tanks = _contextBuilder.BuildTankContexts();
+
+            _tankContextMap.Clear();
+
+            for (int i = 0; i < _tanks.Length; i++)
+            {
+                int tankId = _tanks[i].TankRootManager.TankId;
+
+                // 重複防止
+                if (!_tankContextMap.ContainsKey(tankId))
+                {
+                    _tankContextMap.Add(tankId, _tanks[i]);
+                }
+            }
+
+            // --------------------------------------------------
+            // 障害物コンテキスト構築
+            // --------------------------------------------------
             _obstacles = _contextBuilder.BuildObstacleContexts();
 
             // --------------------------------------------------
@@ -268,6 +293,28 @@ namespace TankSystem.Manager
         // ======================================================
         // パブリックメソッド
         // ======================================================
+
+        /// <summary>
+        /// 指定 ID の戦車を衝突判定対象から削除する
+        /// </summary>
+        /// <param name="tankId">削除対象の TankID</param>
+        public void UnregisterTank(in int tankId)
+        {
+            if (_tankContextMap.Count == 0)
+            {
+                return;
+            }
+
+            if (!_tankContextMap.ContainsKey(tankId))
+            {
+                return;
+            }
+
+            _tankContextMap.Remove(tankId);
+
+            // 配列キャッシュ更新
+            UpdateTanks();
+        }
 
         /// <summary>
         /// アイテムを衝突判定対象として追加する
@@ -423,26 +470,49 @@ namespace TankSystem.Manager
         }
 
         /// <summary>
+        /// Dictionary の値をキャッシュ配列へ反映する共通処理
+        /// </summary>
+        /// <typeparam name="TKey">Dictionary のキー型</typeparam>
+        /// <typeparam name="TValue">配列の要素型</typeparam>
+        /// <param name="map">コピー元 Dictionary</param>
+        /// <param name="cacheArray">更新対象のキャッシュ配列</param>
+        private void UpdateCacheArray<TKey, TValue>(
+            in Dictionary<TKey, TValue> map,
+            ref TValue[] cacheArray
+        )
+        {
+            // Dictionary に要素が存在しない場合空配列を代入
+            if (map.Count == 0)
+            {
+                cacheArray = Array.Empty<TValue>();
+
+                return;
+            }
+
+            // 配列が未生成または要素数が不一致の場合、必要な要素数で新規生成
+            if (cacheArray == null || cacheArray.Length != map.Count)
+            {
+                cacheArray = new TValue[map.Count];
+            }
+
+            // Value を配列へコピー
+            map.Values.CopyTo(cacheArray, 0);
+        }
+
+        /// <summary>
+        /// Tank 用キャッシュ配列を更新する
+        /// </summary>
+        private void UpdateTanks()
+        {
+            UpdateCacheArray(_tankContextMap, ref _tanks);
+        }
+
+        /// <summary>
         /// アイテム用キャッシュ配列を更新する
         /// </summary>
         private void UpdateItems()
         {
-            if (_itemContextMap.Count == 0)
-            {
-                // アイテムがない場合は空配列を割り当て
-                _items = Array.Empty<ItemCollisionContext>();
-            }
-            else
-            {
-                // 配列サイズが不足している場合は再生成
-                if (_items == null || _items.Length != _itemContextMap.Count)
-                {
-                    _items = new ItemCollisionContext[_itemContextMap.Count];
-                }
-
-                // Dictionary の値をキャッシュ配列にコピー
-                _itemContextMap.Values.CopyTo(_items, 0);
-            }
+            UpdateCacheArray(_itemContextMap, ref _items);
         }
 
         /// <summary>
@@ -450,22 +520,7 @@ namespace TankSystem.Manager
         /// </summary>
         private void UpdateBullets()
         {
-            if (_bulletContextMap.Count == 0)
-            {
-                // 弾丸がない場合は空配列を割り当て
-                _bullets = Array.Empty<BulletCollisionContext>();
-            }
-            else
-            {
-                // 配列サイズが不足している場合は再生成
-                if (_bullets == null || _bullets.Length != _bulletContextMap.Count)
-                {
-                    _bullets = new BulletCollisionContext[_bulletContextMap.Count];
-                }
-
-                // Dictionary の値をキャッシュ配列にコピー
-                _bulletContextMap.Values.CopyTo(_bullets, 0);
-            }
+            UpdateCacheArray(_bulletContextMap, ref _bullets);
         }
 
         /// <summary>
@@ -485,9 +540,7 @@ namespace TankSystem.Manager
                 return;
             }
 
-            // --------------------------------------------------
-            // 型ごとにキャストして PreUpdate にコンテキストを渡す
-            // --------------------------------------------------
+            // PreUpdate にコンテキストを渡す
             switch (service)
             {
                 case VersusStaticCollisionService<TankCollisionContext, ObstacleCollisionContext> s:

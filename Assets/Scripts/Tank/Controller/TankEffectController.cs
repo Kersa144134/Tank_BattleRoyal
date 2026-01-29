@@ -3,7 +3,7 @@
 // 作成者   : 高橋一翔
 // 作成日   : 2026-01-29
 // 更新日   : 2026-01-29
-// 概要     : 戦車の表示制御を担当するクラス
+// 概要     : 戦車の表示エフェクト制御を担当するクラス
 // ======================================================
 
 using UnityEngine;
@@ -21,6 +21,9 @@ namespace TankSystem.Controller
 
         /// <summary>制御対象となるすべての ParticleSystem</summary>
         private readonly ParticleSystem[] _particleSystems;
+
+        /// <summary>制御対象となるすべての Renderer</summary>
+        private readonly Renderer[] _renderers;
 
         // ======================================================
         // 定数
@@ -42,7 +45,7 @@ namespace TankSystem.Controller
         /// <param name="rootTransform">戦車のルート Transform</param>
         public TankEffectController(in Transform rootTransform)
         {
-            // 子オブジェクトを含むすべての ParticleSystem を取得
+            _renderers = rootTransform.GetComponentsInChildren<Renderer>(true);
             _particleSystems = rootTransform.GetComponentsInChildren<ParticleSystem>(true);
 
             if (_particleSystems == null)
@@ -50,7 +53,7 @@ namespace TankSystem.Controller
                 return;
             }
 
-            // すべての Particle を停止
+            // 起動時にパーティクルを停止する
             foreach (ParticleSystem particle in _particleSystems)
             {
                 if (particle == null)
@@ -82,12 +85,36 @@ namespace TankSystem.Controller
         /// </summary>
         public void PlayExplosion()
         {
+            SetExplosionRendererState();
+
             PlayByTag(EXPLOSION_TAG);
         }
 
         // ======================================================
         // プライベートメソッド
         // ======================================================
+
+        /// <summary>
+        /// 爆発時に爆発以外の Renderer を非表示にする
+        /// </summary>
+        private void SetExplosionRendererState()
+        {
+            if (_renderers == null)
+            {
+                return;
+            }
+
+            foreach (Renderer renderer in _renderers)
+            {
+                if (renderer == null)
+                {
+                    continue;
+                }
+
+                // Explosion タグのみ表示
+                renderer.enabled = renderer.CompareTag(EXPLOSION_TAG);
+            }
+        }
 
         /// <summary>
         /// 指定タグの ParticleSystem を再生する
@@ -106,16 +133,12 @@ namespace TankSystem.Controller
                     continue;
                 }
 
-                // 指定タグのみ対象
                 if (!particle.CompareTag(tagName))
                 {
                     continue;
                 }
 
-                // 既存パーティクルを即停止 + 削除
                 particle.Clear(true);
-
-                // 再生
                 particle.Play(true);
             }
         }
