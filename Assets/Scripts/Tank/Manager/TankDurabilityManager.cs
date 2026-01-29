@@ -86,16 +86,6 @@ namespace TankSystem.Manager
         // パブリックメソッド
         // ======================================================
 
-        public void DebugHP(in TankStatus tankStatus)
-        {
-            UpdateDurabilityParameter(tankStatus);
-        }
-
-        public void DebugDamage()
-        {
-            ApplyDamage(5f);
-        }
-
         /// <summary>
         /// Durability ステータスを元に
         /// 耐久の最大値を再計算する

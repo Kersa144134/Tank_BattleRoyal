@@ -89,6 +89,12 @@ namespace TankSystem.Manager
         private TankTrackController _trackController = new TankTrackController();
 
         // --------------------------------------------------
+        // エフェクト
+        // --------------------------------------------------
+        /// <summary>戦車のエフェクト管理クラス</summary>
+        private TankEffectController _effectController;
+
+        // --------------------------------------------------
         // サービス
         // --------------------------------------------------
         /// <summary>戦車移動範囲制限サービス</summary>
@@ -211,9 +217,9 @@ namespace TankSystem.Manager
 
         public virtual void OnEnter()
         {
+            _boundaryService = new TankMovementBoundaryService(MOVEMENT_ALLOWED_RADIUS);
             _attackManager = new TankAttackManager(_tankStatus, _fieldOfViewCalculator, transform, _turret);
             _turretController = new TankTurretController(_tankStatus, _turret);
-            _boundaryService = new TankMovementBoundaryService(MOVEMENT_ALLOWED_RADIUS);
             _defenseManager = new TankDefenseManager(_tankStatus);
             _durabilityManager = new TankDurabilityManager(_tankStatus);
             _mobilityManager = new TankMobilityManager(
@@ -222,6 +228,7 @@ namespace TankSystem.Manager
                 _boundaryService,
                 transform
             );
+            _effectController = new TankEffectController(transform);
 
             // イベント購読
             _attackManager.OnFireBullet += HandleFireBullet;
@@ -241,8 +248,7 @@ namespace TankSystem.Manager
             // --------------------------------------------------
             if (TankId == 1)
             {
-                if (Input.GetKeyDown(KeyCode.Backspace)) _durabilityManager.DebugDamage();
-                _durabilityManager.DebugHP(_tankStatus);
+                if (Input.GetKeyDown(KeyCode.Backspace)) TakeDamage(20f);
             }
 
             // --------------------------------------------------
@@ -417,8 +423,18 @@ namespace TankSystem.Manager
             // 防御力を考慮した軽減後ダメージを算出
             float reducedDamage = _defenseManager.CalculateReducedDamage(damage);
 
+            // 無効な値は処理なし
+            if (reducedDamage <= 0f)
+            {
+                return;
+            }
+
             // 耐久力管理クラスに最終ダメージを適用
             _durabilityManager.ApplyDamage(reducedDamage);
+
+
+            // ダメージエフェクト再生
+            _effectController.PlayDamage();
         }
 
         /// <summary>
@@ -568,6 +584,9 @@ namespace TankSystem.Manager
 
             // ターゲットアイコンを非表示
             ChangeTargetIcon(false);
+
+            // 爆発エフェクト再生
+            _effectController.PlayExplosion();
 
             OnBroken?.Invoke(TankId);
         }

@@ -11,6 +11,7 @@ using System;
 using UnityEngine;
 using CollisionSystem.Data;
 using TankSystem.Data;
+using WeaponSystem.Controller;
 using WeaponSystem.Interface;
 
 namespace WeaponSystem.Data
@@ -20,6 +21,13 @@ namespace WeaponSystem.Data
     /// </summary>
     public abstract class BulletBase
     {
+        // ======================================================
+        // コンポーネント参照
+        // ======================================================
+
+        /// <summary>弾丸の表示制御エフェクト</summary>
+        protected BulletEffectController _effectController;
+
         // ======================================================
         // フィールド
         // ======================================================
@@ -61,14 +69,12 @@ namespace WeaponSystem.Data
             {
                 _isEnabled = value;
 
-                // Transform がある場合は Renderer を有効/無効
-                if (Transform != null)
+                _isEnabled = value;
+
+                // 表示状態を BulletEffectController に委譲
+                if (_effectController != null)
                 {
-                    Renderer renderer = Transform.GetComponent<Renderer>();
-                    if (renderer != null)
-                    {
-                        renderer.enabled = _isEnabled;
-                    }
+                    _effectController.SetVisible(_isEnabled);
                 }
             }
         }
@@ -181,6 +187,9 @@ namespace WeaponSystem.Data
         public void Initialize(Transform transform)
         {
             Transform = transform;
+
+            // 表示制御クラスを生成
+            _effectController = new BulletEffectController(transform);
 
             // 無効化
             IsEnabled = false;
@@ -343,6 +352,9 @@ namespace WeaponSystem.Data
 
                 _damageTarget = null;
             }
+
+            // 爆発エフェクト再生
+            _effectController.PlayExplosion();
 
             // 無効化
             IsEnabled = false;

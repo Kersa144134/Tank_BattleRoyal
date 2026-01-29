@@ -1,26 +1,23 @@
 // ======================================================
-// BulletEffectController.cs
+// TankEffectController.cs
 // 作成者   : 高橋一翔
 // 作成日   : 2026-01-29
 // 更新日   : 2026-01-29
-// 概要     : 弾丸の表示制御を担当するクラス
+// 概要     : 戦車の表示制御を担当するクラス
 // ======================================================
 
 using UnityEngine;
 
-namespace WeaponSystem.Controller
+namespace TankSystem.Controller
 {
     /// <summary>
-    /// 弾丸の表示エフェクト制御クラス
+    /// 戦車の表示エフェクト制御クラス
     /// </summary>
-    public sealed class BulletEffectController
+    public sealed class TankEffectController
     {
         // ======================================================
         // フィールド
         // ======================================================
-
-        /// <summary>制御対象となるすべての Renderer</summary>
-        private readonly Renderer[] _renderers;
 
         /// <summary>制御対象となるすべての ParticleSystem</summary>
         private readonly ParticleSystem[] _particleSystems;
@@ -28,6 +25,9 @@ namespace WeaponSystem.Controller
         // ======================================================
         // 定数
         // ======================================================
+
+        /// <summary>ダメージエフェクト判定用タグ名</summary>
+        private const string DAMAGE_TAG = "Damage";
 
         /// <summary>爆発エフェクト判定用タグ名</summary>
         private const string EXPLOSION_TAG = "Explosion";
@@ -37,14 +37,11 @@ namespace WeaponSystem.Controller
         // ======================================================
 
         /// <summary>
-        /// BulletEffectController を生成する
+        /// TankEffectController を生成する
         /// </summary>
-        /// <param name="rootTransform">弾丸のルート Transform</param>
-        public BulletEffectController(in Transform rootTransform)
+        /// <param name="rootTransform">戦車のルート Transform</param>
+        public TankEffectController(in Transform rootTransform)
         {
-            // 子オブジェクトを含むすべての Renderer を取得
-            _renderers = rootTransform.GetComponentsInChildren<Renderer>(true);
-
             // 子オブジェクトを含むすべての ParticleSystem を取得
             _particleSystems = rootTransform.GetComponentsInChildren<ParticleSystem>(true);
 
@@ -53,6 +50,7 @@ namespace WeaponSystem.Controller
                 return;
             }
 
+            // すべての Particle を停止
             foreach (ParticleSystem particle in _particleSystems)
             {
                 if (particle == null)
@@ -60,7 +58,6 @@ namespace WeaponSystem.Controller
                     continue;
                 }
 
-                // 自動再生を無効化
                 particle.Stop(
                     true,
                     ParticleSystemStopBehavior.StopEmittingAndClear
@@ -73,60 +70,11 @@ namespace WeaponSystem.Controller
         // ======================================================
 
         /// <summary>
-        /// 弾丸の通常表示状態を設定する
+        /// ダメージエフェクトを再生する
         /// </summary>
-        /// <param name="isVisible">true: 表示 / false: 非表示</param>
-        public void SetVisible(in bool isVisible)
+        public void PlayDamage()
         {
-            if (_renderers != null)
-            {
-                foreach (Renderer renderer in _renderers)
-                {
-                    if (renderer == null)
-                    {
-                        continue;
-                    }
-
-                    // Explosion タグの Renderer は除外
-                    if (renderer.CompareTag(EXPLOSION_TAG))
-                    {
-                        continue;
-                    }
-
-                    renderer.enabled = isVisible;
-                }
-            }
-
-            if (_particleSystems == null)
-            {
-                return;
-            }
-
-            foreach (ParticleSystem particle in _particleSystems)
-            {
-                if (particle == null)
-                {
-                    continue;
-                }
-
-                // Explosion タグの Particle は除外
-                if (particle.CompareTag(EXPLOSION_TAG))
-                {
-                    continue;
-                }
-
-                if (isVisible)
-                {
-                    particle.Play(true);
-                }
-                else
-                {
-                    particle.Stop(
-                        true,
-                        ParticleSystemStopBehavior.StopEmittingAndClear
-                    );
-                }
-            }
+            PlayByTag(DAMAGE_TAG);
         }
 
         /// <summary>
@@ -134,6 +82,18 @@ namespace WeaponSystem.Controller
         /// </summary>
         public void PlayExplosion()
         {
+            PlayByTag(EXPLOSION_TAG);
+        }
+
+        // ======================================================
+        // プライベートメソッド
+        // ======================================================
+
+        /// <summary>
+        /// 指定タグの ParticleSystem を再生する
+        /// </summary>
+        private void PlayByTag(in string tagName)
+        {
             if (_particleSystems == null)
             {
                 return;
@@ -146,15 +106,16 @@ namespace WeaponSystem.Controller
                     continue;
                 }
 
-                // Explosion タグの ParticleSystem のみ
-                if (!particle.CompareTag(EXPLOSION_TAG))
+                // 指定タグのみ対象
+                if (!particle.CompareTag(tagName))
                 {
                     continue;
                 }
 
+                // 既存パーティクルを即停止 + 削除
                 particle.Clear(true);
 
-                // 爆発エフェクト再生
+                // 再生
                 particle.Play(true);
             }
         }
