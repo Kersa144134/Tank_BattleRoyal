@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: b31a0ec0416a427b93c12409cc3ef388
+timeCreated: 1529935533
+licenseType: Store
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 123431
+  packageName: ForceField Effects
+  packageVersion: 1.5
+  assetPath: Assets/SineVFX/ForceFieldEffects/Resources/Scripts/ControlParticlesSpawner.cs
+  uploadId: 705278

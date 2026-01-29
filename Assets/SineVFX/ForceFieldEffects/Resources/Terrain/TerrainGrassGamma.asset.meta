@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: d8d359bc988f40e3a21d349c811980b2
+timeCreated: 1531760912
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 15600000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 123431
+  packageName: ForceField Effects
+  packageVersion: 1.5
+  assetPath: Assets/SineVFX/ForceFieldEffects/Resources/Terrain/TerrainGrassGamma.asset
+  uploadId: 705278

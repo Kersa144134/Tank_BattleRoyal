@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: ef0a56cc6d2a478ea204b6ef43ef5539
+timeCreated: 1529938955
+licenseType: Store
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 123431
+  packageName: ForceField Effects
+  packageVersion: 1.5
+  assetPath: Assets/SineVFX/ForceFieldEffects/Resources/Scripts/UIControllerSine.cs
+  uploadId: 705278

@@ -43,10 +43,6 @@ namespace TankSystem.Manager
         /// <summary>戦車の衝突設定 Boxのローカルスケール</summary>
         [SerializeField] private Vector3 _hitBoxScale;
 
-        [Header("視界判定設定")]
-        /// <summary>戦車の視界判定に侵入した際に表示するターゲットアイコン</summary>
-        [SerializeField] private MeshRenderer _targetIcon;
-
         [Header("攻撃設定")]
         /// <summary>砲身の Transform</summary>
         [SerializeField] private Transform _turret;
@@ -353,6 +349,11 @@ namespace TankSystem.Manager
                 NextPosition = calculatedPosition;
                 NextRotation = calculatedRotation;
             }
+
+            // --------------------------------------------------
+            // エフェクト
+            // --------------------------------------------------
+            _effectController.UpdateForceField(unscaledDeltaTime);
         }
 
         public virtual void OnLateUpdate(in float unscaledDeltaTime)
@@ -509,17 +510,14 @@ namespace TankSystem.Manager
         /// <param name="isActive">true で表示、false で非表示</param>
         public void ChangeTargetIcon(bool isActive)
         {
-            if (_targetIcon != null)
+            // 破壊済みの場合は強制非表示
+            if (_isBroken)
             {
-                // 破壊済みの場合は強制非表示
-                if (_isBroken)
-                {
-                    _targetIcon.enabled = false;
-                }
-                else
-                {
-                    _targetIcon.enabled = isActive;
-                }
+                _effectController.SetForceField(false);
+            }
+            else
+            {
+                _effectController.SetForceField(isActive);
             }
         }
 

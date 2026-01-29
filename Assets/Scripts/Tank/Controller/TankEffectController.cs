@@ -16,6 +16,13 @@ namespace TankSystem.Controller
     public sealed class TankEffectController
     {
         // ======================================================
+        // コンポーネント参照
+        // ======================================================
+
+        /// <summary>ForceField 制御対象</summary>
+        private readonly ForceFieldController _forceFieldController;
+
+        // ======================================================
         // フィールド
         // ======================================================
 
@@ -24,6 +31,9 @@ namespace TankSystem.Controller
 
         /// <summary>制御対象となるすべての Renderer</summary>
         private readonly Renderer[] _renderers;
+
+        /// <summary>現在のターゲット ForceField 目標値</summary>
+        private float _targetForceFieldTargetValue;
 
         // ======================================================
         // 定数
@@ -35,6 +45,15 @@ namespace TankSystem.Controller
         /// <summary>爆発エフェクト判定用タグ名</summary>
         private const string EXPLOSION_TAG = "Explosion";
 
+        /// <summary>ターゲット OFF 時の値</summary>
+        private const float TARGET_OFF_VALUE = -1f;
+
+        /// <summary>ターゲット ON 時の値</summary>
+        private const float TARGET_ON_VALUE = 1f;
+
+        /// <summary>ターゲット補間速度</summary>
+        private const float TARGET_LERP_SPEED = 10f;
+
         // ======================================================
         // コンストラクタ
         // ======================================================
@@ -45,7 +64,14 @@ namespace TankSystem.Controller
         /// <param name="rootTransform">戦車のルート Transform</param>
         public TankEffectController(in Transform rootTransform)
         {
+            // ---------------------------------------------
+            // Renderer
+            // ---------------------------------------------
             _renderers = rootTransform.GetComponentsInChildren<Renderer>(true);
+
+            // ---------------------------------------------
+            // パーティクル
+            // ---------------------------------------------
             _particleSystems = rootTransform.GetComponentsInChildren<ParticleSystem>(true);
 
             if (_particleSystems == null)
@@ -66,6 +92,12 @@ namespace TankSystem.Controller
                     ParticleSystemStopBehavior.StopEmittingAndClear
                 );
             }
+
+            // ---------------------------------------------
+            // ターゲット ForceField
+            // ---------------------------------------------
+            _forceFieldController = rootTransform.GetComponentInChildren<ForceFieldController>(true);
+            _targetForceFieldTargetValue = TARGET_OFF_VALUE;
         }
 
         // ======================================================
@@ -90,6 +122,43 @@ namespace TankSystem.Controller
             PlayByTag(EXPLOSION_TAG);
         }
 
+        /// <summary>
+        /// ForceField アニメーションの目標値を設定する
+        /// </summary>
+        /// <param name="isOn">true = ON / false = OFF</param>
+        public void SetForceField(in bool isOn)
+        {
+            if (isOn)
+            {
+                _targetForceFieldTargetValue = TARGET_ON_VALUE;
+
+                return;
+            }
+
+            _targetForceFieldTargetValue = TARGET_OFF_VALUE;
+        }
+
+        /// <summary>
+        /// ForceField アニメーション更新
+        /// </summary>
+        public void UpdateForceField(in float deltaTime)
+        {
+            if (_forceFieldController == null)
+            {
+                return;
+            }
+
+            float currentValue = _forceFieldController.openCloseProgress;
+
+            float nextValue = Mathf.MoveTowards(
+                currentValue,
+                _targetForceFieldTargetValue,
+                TARGET_LERP_SPEED * deltaTime
+            );
+
+            _forceFieldController.openCloseProgress = nextValue;
+        }
+        
         // ======================================================
         // プライベートメソッド
         // ======================================================

@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: 53dc1a6623da4203b6806e032000f1a7
+timeCreated: 1529936701
+licenseType: Store
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 123431
+  packageName: ForceField Effects
+  packageVersion: 1.5
+  assetPath: Assets/SineVFX/ForceFieldEffects/Resources/Scripts/SimpleCameraRotator.cs
+  uploadId: 705278

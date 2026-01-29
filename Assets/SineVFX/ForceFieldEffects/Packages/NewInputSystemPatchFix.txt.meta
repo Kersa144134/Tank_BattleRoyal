@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 22cb891f8de2edf429888821f5ae6944
+TextScriptImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 123431
+  packageName: ForceField Effects
+  packageVersion: 1.5
+  assetPath: Assets/SineVFX/ForceFieldEffects/Packages/NewInputSystemPatchFix.txt
+  uploadId: 705278

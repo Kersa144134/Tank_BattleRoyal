@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: be930ad838b04b6883024eb37aac0a0c
+timeCreated: 1514767896
+licenseType: Store
+DefaultImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 123431
+  packageName: ForceField Effects
+  packageVersion: 1.5
+  assetPath: Assets/SineVFX/ForceFieldEffects/Resources/VFXMeshes/FFSphereUVres02.mtl
+  uploadId: 705278

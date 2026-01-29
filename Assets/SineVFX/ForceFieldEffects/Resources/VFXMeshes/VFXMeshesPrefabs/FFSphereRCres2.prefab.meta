@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: d32cb799585a0c44ab069644144723ac
+timeCreated: 1531874600
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 100100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 123431
+  packageName: ForceField Effects
+  packageVersion: 1.5
+  assetPath: Assets/SineVFX/ForceFieldEffects/Resources/VFXMeshes/VFXMeshesPrefabs/FFSphereRCres2.prefab
+  uploadId: 705278

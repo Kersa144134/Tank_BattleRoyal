@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 398b79c9fda54209994a92dc292cbec8
+timeCreated: 1514760597
+licenseType: Store
+DefaultImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 123431
+  packageName: ForceField Effects
+  packageVersion: 1.5
+  assetPath: Assets/SineVFX/ForceFieldEffects/Scenes/DemoSceneGamma.unity
+  uploadId: 705278

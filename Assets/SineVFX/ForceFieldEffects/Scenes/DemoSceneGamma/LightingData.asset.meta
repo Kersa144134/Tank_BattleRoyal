@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: ca72dc569bff8474abd8a06f9d8b4887
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 112000000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 123431
+  packageName: ForceField Effects
+  packageVersion: 1.5
+  assetPath: Assets/SineVFX/ForceFieldEffects/Scenes/DemoSceneGamma/LightingData.asset
+  uploadId: 705278

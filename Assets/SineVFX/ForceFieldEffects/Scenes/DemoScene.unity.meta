@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 0a4a087140154dcaa8ceccbce083c63c
+timeCreated: 1514760597
+licenseType: Store
+DefaultImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 123431
+  packageName: ForceField Effects
+  packageVersion: 1.5
+  assetPath: Assets/SineVFX/ForceFieldEffects/Scenes/DemoScene.unity
+  uploadId: 705278
