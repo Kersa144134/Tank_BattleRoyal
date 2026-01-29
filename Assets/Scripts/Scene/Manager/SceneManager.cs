@@ -129,6 +129,7 @@ namespace SceneSystem.Manager
             // イベント購読
             _sceneEventRouter.Subscribe();
             _phaseManager.OnOptionButtonPressed += HandleOptionButtonPressed;
+            _sceneEventRouter.OnPhaseChanged += SetTargetPhase;
 
             // 初期値設定
             _targetPhase = PhaseType.Ready;
@@ -185,15 +186,18 @@ namespace SceneSystem.Manager
             // LateUpdate 実行
             _updateManager.LateUpdate(unscaledDeltaTime);
 
-            // フェーズおよびシーン遷移条件の更新
-            _phaseManager.Update(
-                unscaledDeltaTime,
-                _elapsedTime,
-                in _currentScene,
-                in _currentPhase,
-                out _targetScene,
-                out _targetPhase
-            );
+            // フェーズ遷移判定
+            if (_currentPhase == _targetPhase)
+            {
+                _phaseManager.Update(
+                    unscaledDeltaTime,
+                    _elapsedTime,
+                    _currentScene,
+                    _currentPhase,
+                    out _targetScene,
+                    out _targetPhase
+                );
+            }
         }
 
         private void OnDestroy()
@@ -201,8 +205,22 @@ namespace SceneSystem.Manager
             // イベント購読解除
             _sceneEventRouter.Dispose();
             _phaseManager.OnOptionButtonPressed -= HandleOptionButtonPressed;
+            _sceneEventRouter.OnPhaseChanged -= SetTargetPhase;
         }
 
+        // ======================================================
+        // パブリックメソッド
+        // ======================================================
+
+        /// <summary>
+        /// 外部から遷移先フェーズを設定する
+        /// </summary>
+        public void SetTargetPhase(PhaseType nextPhase)
+        {
+            // 遷移先フェーズを更新
+            _targetPhase = nextPhase;
+        }
+        
         // ======================================================
         // プライベートメソッド
         // ======================================================

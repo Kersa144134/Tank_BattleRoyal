@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: b025161e88782ca4da7e88eee4caaa0a
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 67810
+  packageName: Ammu Pack
+  packageVersion: 1.5
+  assetPath: Assets/3D Models/Props/Ammunition/Example/Scripts/ShowRoom.cs
+  uploadId: 741172

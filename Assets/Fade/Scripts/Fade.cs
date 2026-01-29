@@ -22,7 +22,6 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 using UnityEngine;
 using System.Collections;
-using UnityEngine.Assertions;
 
 public class Fade : MonoBehaviour
 {
@@ -50,16 +49,17 @@ public class Fade : MonoBehaviour
 
 	IEnumerator FadeoutCoroutine (float time, System.Action action)
 	{
-		float endTime = Time.timeSinceLevelLoad + time * (cutoutRange);
+        float endTime = Time.unscaledTime + time * (cutoutRange);
 
-		var endFrame = new WaitForEndOfFrame ();
+        var endFrame = new WaitForEndOfFrame ();
 
-		while (Time.timeSinceLevelLoad <= endTime) {
-			cutoutRange = (endTime - Time.timeSinceLevelLoad) / time;
-			fade.Range = cutoutRange;
-			yield return endFrame;
-		}
-		cutoutRange = 0;
+        while (Time.unscaledTime <= endTime)
+        {
+            cutoutRange = (endTime - Time.unscaledTime) / time;
+            fade.Range = cutoutRange;
+            yield return endFrame;
+        }
+        cutoutRange = 0;
 		fade.Range = cutoutRange;
 
 		if (action != null) {
@@ -69,16 +69,17 @@ public class Fade : MonoBehaviour
 
 	IEnumerator FadeinCoroutine (float time, System.Action action)
 	{
-		float endTime = Time.timeSinceLevelLoad + time * (1 - cutoutRange);
-		
-		var endFrame = new WaitForEndOfFrame ();
+        float endTime = Time.unscaledTime + time * (1 - cutoutRange);
 
-		while (Time.timeSinceLevelLoad <= endTime) {
-			cutoutRange = 1 - ((endTime - Time.timeSinceLevelLoad) / time);
-			fade.Range = cutoutRange;
-			yield return endFrame;
-		}
-		cutoutRange = 1;
+        var endFrame = new WaitForEndOfFrame ();
+
+        while (Time.unscaledTime <= endTime)
+        {
+            cutoutRange = 1 - ((endTime - Time.unscaledTime) / time);
+            fade.Range = cutoutRange;
+            yield return endFrame;
+        }
+        cutoutRange = 1;
 		fade.Range = cutoutRange;
 
 		if (action != null) {

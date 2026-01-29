@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 901d8785f488a284b8f3ca9fdaec9b46
+AssemblyDefinitionImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 67810
+  packageName: Ammu Pack
+  packageVersion: 1.5
+  assetPath: Assets/3D Models/Props/Ammunition/Example/Scripts/AmmunitionShowRoom_AD.asmdef
+  uploadId: 741172

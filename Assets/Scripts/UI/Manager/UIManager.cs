@@ -214,14 +214,14 @@ namespace UISystem.Manager
         // 定数
         // ======================================================
 
-        /// <summary>Finish アニメーション用のアニメーター Trigger 名</summary>
-        private const string FINISH_TRIGGER_NAME = "Finish";
+        /// <summary>死亡アニメーション名</summary>
+        private const string DIE_STATE_NAME = "Die";
 
-        /// <summary>Destroy アニメーション用のアニメーター Trigger 名</summary>
-        private const string DESTROY_TRIGGER_NAME = "Destroy";
+        /// <summary>撃破アニメーション名</summary>
+        private const string DESTROY_STATE_NAME = "Destroy";
 
-        /// <summary>Die アニメーション用のアニメーター Trigger 名</summary>
-        private const string DIE_TRIGGER_NAME = "Die";
+        /// <summary>ゲーム終了アニメーション名</summary>
+        private const string FINISH_STATE_NAME = "Finish";
 
         /// <summary>フェード演出の時間</summary>
         private const float FADE_TIME = 0.5f;
@@ -303,7 +303,6 @@ namespace UISystem.Manager
 
         public void OnLateUpdate(in float unscaledDeltaTime)
         {
-
             _binarizationPostProcessController.Update(
                 _isBinarizationEffectEnabled,
                 _binarizationDistortionCenter,
@@ -344,6 +343,13 @@ namespace UISystem.Manager
             if (phase == PhaseType.Play)
             {
                 _isInGame = true;
+            }
+
+            // Finish フェーズ開始時に Finish アニメーション再生
+            if (phase == PhaseType.Finish)
+            {
+                // 先頭から再生
+                _uiAnimator.Play(FINISH_STATE_NAME, 0, 0f);
             }
         }
 
@@ -409,7 +415,8 @@ namespace UISystem.Manager
                 // ログに表示するメッセージを生成
                 logMessage = "撃破された";
 
-                _uiAnimator.SetTrigger(DIE_TRIGGER_NAME);
+                // 先頭から再生
+                _uiAnimator.Play(DIE_STATE_NAME, 0, 0f);
             }
             // 敵戦車の場合
             else
@@ -420,7 +427,8 @@ namespace UISystem.Manager
                 // ログに表示するメッセージを生成
                 logMessage = $"戦車{displayTankId} を撃破";
 
-                _uiAnimator.SetTrigger(DESTROY_TRIGGER_NAME);
+                // 先頭から再生
+                _uiAnimator.Play(DESTROY_STATE_NAME, 0, 0f);
             }
 
             // ログ UI に追加
@@ -491,7 +499,7 @@ namespace UISystem.Manager
         /// </summary>
         public void FadeInAnimationStart()
         {
-            _fade.FadeOut(FADE_TIME);
+            _fade.FadeIn(FADE_TIME);
         }
     }
 }

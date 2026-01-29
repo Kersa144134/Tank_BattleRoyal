@@ -13,7 +13,6 @@ using SceneSystem.Data;
 using System;
 using TankSystem.Manager;
 using UnityEngine;
-using UnityEngine.SocialPlatforms;
 using WeaponSystem.Data;
 
 namespace SceneSystem.Utility
@@ -34,6 +33,13 @@ namespace SceneSystem.Utility
         /// <summary>イベント購読が完了しているかどうかを示すフラグ</summary>
         private bool _isSubscribed;
 
+        // ======================================================
+        // イベント
+        // ======================================================
+
+        /// <summary>フェーズ変更タイミング通知</summary>
+        public event Action<PhaseType> OnPhaseChanged;
+        
         // ======================================================
         // コンストラクタ
         // ======================================================
@@ -116,7 +122,7 @@ namespace SceneSystem.Utility
             }
 
             // --------------------------------------------------
-            // 衝突判定
+            // UI
             // --------------------------------------------------
             if (_context.UIManager != null)
             {
@@ -429,7 +435,7 @@ namespace SceneSystem.Utility
         /// </summary>
         private void HandleReadyPhaseAnimationFinish()
         {
-
+            OnPhaseChanged?.Invoke(PhaseType.Play);
         }
 
         /// <summary>
@@ -437,7 +443,7 @@ namespace SceneSystem.Utility
         /// </summary>
         private void HandleFinishPhaseAnimationFinish()
         {
-
+            OnPhaseChanged?.Invoke(PhaseType.Result);
         }
 
         /// <summary>
@@ -463,6 +469,7 @@ namespace SceneSystem.Utility
         /// </summary>
         private void HandleDieAnimationFinish()
         {
+            OnPhaseChanged?.Invoke(PhaseType.Result);
         }
     }
 }
