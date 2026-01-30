@@ -60,6 +60,9 @@ namespace TankSystem.Manager
         /// <summary>戦車の攻撃管理クラス</summary>
         private TankAttackManager _attackManager;
 
+        /// <summary>視界・ターゲット管理コントローラー</summary>
+        private TankVisibilityController _visibilityController;
+
         /// <summary>視界判定のユースケースクラス</summary>
         private FieldOfViewCalculator _fieldOfViewCalculator = new FieldOfViewCalculator();
 
@@ -198,7 +201,7 @@ namespace TankSystem.Manager
         // ======================================================
 
         /// <summary>
-        /// 戦車の Transform 配列と遮蔽物の OBB 配列を AttackManager に送る
+        /// 戦車の Transform 配列と遮蔽物の OBB 配列を TankAttackManager に送る
         /// </summary>
         /// <param name="tankTransforms">戦車自身の Transform 配列</param>
         /// <param name="obstacleOBBs">遮蔽物 OBB 配列</param>
@@ -207,7 +210,7 @@ namespace TankSystem.Manager
             in IOBBData[] obstacleOBBs
         )
         {
-            _attackManager.SetContextData(tankTransforms, obstacleOBBs);
+            _visibilityController.SetContextData(tankTransforms, obstacleOBBs);
         }
         
         // ======================================================
@@ -217,7 +220,8 @@ namespace TankSystem.Manager
         public virtual void OnEnter()
         {
             _boundaryService = new TankMovementBoundaryService(MOVEMENT_ALLOWED_RADIUS);
-            _attackManager = new TankAttackManager(_tankStatus, _fieldOfViewCalculator, transform, _turret);
+            _visibilityController = new TankVisibilityController(_fieldOfViewCalculator, transform, _turret);
+            _attackManager = new TankAttackManager(_tankStatus, _visibilityController);
             _turretController = new TankTurretController(_tankStatus, _turret);
             _defenseManager = new TankDefenseManager(_tankStatus);
             _durabilityManager = new TankDurabilityManager(_tankStatus);
@@ -584,6 +588,9 @@ namespace TankSystem.Manager
 
             // ターゲットアイコンを非表示
             ChangeTargetIcon(false);
+
+            // ターゲットキャッシュ削除
+            _visibilityController.UpdateCachedTarget(null);
 
             // 爆発エフェクト再生
             _effectManager.PlayExplosion();

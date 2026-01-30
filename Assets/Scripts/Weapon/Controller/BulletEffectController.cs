@@ -146,15 +146,19 @@ namespace WeaponSystem.Controller
                     continue;
                 }
 
-                // Explosion タグの ParticleSystem のみ
+                // タグ不一致はスキップ
                 if (!particle.CompareTag(EXPLOSION_TAG))
                 {
                     continue;
                 }
 
-                particle.Clear(true);
+                // 既存パーティクルを残したまま停止
+                particle.Stop(true, ParticleSystemStopBehavior.StopEmitting);
 
-                // 爆発エフェクト再生
+                // 再生時間を0へ戻す
+                particle.Simulate(0f, true, true, true);
+
+                // 再生開始
                 particle.Play(true);
             }
         }

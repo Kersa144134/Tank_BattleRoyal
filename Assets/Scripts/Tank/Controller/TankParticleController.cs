@@ -100,12 +100,19 @@ namespace TankSystem.Controller
                     continue;
                 }
 
+                // タグ不一致はスキップ
                 if (!particle.CompareTag(tagName))
                 {
                     continue;
                 }
 
-                particle.Clear(true);
+                // 既存パーティクルを残したまま停止
+                particle.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+
+                // 再生時間を0に戻す
+                particle.Simulate(0f, true, true, true);
+
+                // 再生開始
                 particle.Play(true);
             }
         }
