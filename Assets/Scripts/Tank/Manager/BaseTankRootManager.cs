@@ -436,7 +436,6 @@ namespace TankSystem.Manager
             // 耐久力管理クラスに最終ダメージを適用
             _durabilityManager.ApplyDamage(reducedDamage);
 
-
             // ダメージエフェクト再生
             _effectManager.PlayDamage();
         }

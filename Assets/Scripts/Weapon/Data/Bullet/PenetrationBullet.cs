@@ -123,6 +123,9 @@ namespace WeaponSystem.Data
                 SetDamageTarget(collisionContext);
                 ApplyDamage();
 
+                // 爆発エフェクト再生
+                _effectController.PlayExplosion();
+
                 // 弾丸は消滅せず残す
                 return false;
             }

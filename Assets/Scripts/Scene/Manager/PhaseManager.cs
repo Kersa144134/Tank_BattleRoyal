@@ -24,7 +24,7 @@ namespace SceneSystem.Manager
         /// <summary>
         /// Play フェーズから Finish フェーズへ遷移するまでのゲームプレイ時間（秒）
         /// </summary>
-        private const float PLAY_TO_FINISH_WAIT_TIME = 60.0f;
+        private const float PLAY_TO_FINISH_WAIT_TIME = 120.0f;
 
         /// <summary>
         /// 条件成立時に Title フェーズから Ready フェーズへ遷移するまでの待機時間（秒）

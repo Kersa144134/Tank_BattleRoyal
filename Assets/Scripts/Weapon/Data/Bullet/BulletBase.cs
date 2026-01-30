@@ -374,7 +374,6 @@ namespace WeaponSystem.Data
         public virtual bool OnHit(in BaseCollisionContext collisionContext)
         {
             SetDamageTarget(collisionContext);
-            
             OnExit();
 
             return true;
