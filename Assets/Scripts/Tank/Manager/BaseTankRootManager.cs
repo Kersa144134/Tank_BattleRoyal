@@ -296,27 +296,6 @@ namespace TankSystem.Manager
                 return;
             }
 
-            // ƒCƒ“ƒQ[ƒ€ó‘Ô‚Å‚È‚¯‚ê‚Îˆ—‚È‚µ
-            if (!_isInGame)
-            {
-                return;
-            }
-            
-            // --------------------------------------------------
-            // UŒ‚
-            // --------------------------------------------------
-            // UŒ‚ˆ—
-            _attackManager.UpdateAttack(unscaledDeltaTime, leftFire, rightFire);
-
-            // –C“ƒƒXƒP[ƒ‹
-            _turretController.ApplyTurretScale();
-
-            // –C“ƒ‰ñ“]
-            _turretController.ApplyTurretRotate(
-                deltaTime,
-                turretRotation
-            );
-
             // --------------------------------------------------
             // ‹@“®
             // --------------------------------------------------
@@ -353,6 +332,29 @@ namespace TankSystem.Manager
                 NextPosition = calculatedPosition;
                 NextRotation = calculatedRotation;
             }
+
+            // --------------------------------------------------
+            // ƒCƒ“ƒQ[ƒ€ó‘Ô‚Å‚È‚¯‚ê‚ÎˆÈ‰º‚Ìˆ—‚È‚µ
+            // --------------------------------------------------
+            if (!_isInGame)
+            {
+                return;
+            }
+
+            // --------------------------------------------------
+            // UŒ‚
+            // --------------------------------------------------
+            // UŒ‚ˆ—
+            _attackManager.UpdateAttack(unscaledDeltaTime, leftFire, rightFire);
+
+            // –C“ƒƒXƒP[ƒ‹
+            _turretController.ApplyTurretScale();
+
+            // –C“ƒ‰ñ“]
+            _turretController.ApplyTurretRotate(
+                deltaTime,
+                turretRotation
+            );
 
             // --------------------------------------------------
             // ƒGƒtƒFƒNƒg

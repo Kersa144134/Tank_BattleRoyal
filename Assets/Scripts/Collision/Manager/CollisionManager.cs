@@ -63,6 +63,9 @@ namespace TankSystem.Manager
         /// <summary>戦車衝突用コンテキストを生成するビルダー</summary>
         private CollisionContextBuilder _contextBuilder;
 
+        /// <summary>CollisionContextFactory 参照</summary>
+        private CollisionContextFactory _contextFactory;
+
         // --------------------------------------------------
         // 衝突判定サービス関連
         // --------------------------------------------------
@@ -134,7 +137,7 @@ namespace TankSystem.Manager
         // ======================================================
 
         /// <summary>
-        /// シーン内オブジェクト管理用のレジストリ参照を設定する
+        /// シーン内オブジェクト管理用のレジストリー参照を設定する
         /// </summary>
         /// <param name="sceneRegistry">シーンに存在する各種オブジェクト情報を一元管理するレジストリー</param>
         public void SetSceneRegistry(SceneObjectRegistry sceneRegistry)
@@ -151,13 +154,15 @@ namespace TankSystem.Manager
             // --------------------------------------------------
             // クラス生成
             // --------------------------------------------------
-            _contextBuilder = new CollisionContextBuilder(_sceneRegistry, _obbFactory);
+            _contextFactory = new CollisionContextFactory(_obbFactory);
+            _contextBuilder = new CollisionContextBuilder(_contextFactory, _sceneRegistry);
             _collisionResolverCalculator = new CollisionResolveCalculator(_boxCollisionCalculator);
             _eventRouter = new CollisionEventRouter(_collisionResolverCalculator);
 
             // --------------------------------------------------
-            // 戦車コンテキスト構築
+            // コンテキスト構築
             // --------------------------------------------------
+            // 戦車
             _tanks = _contextBuilder.BuildTankContexts();
 
             _tankContextMap.Clear();
@@ -173,43 +178,39 @@ namespace TankSystem.Manager
                 }
             }
 
-            // --------------------------------------------------
-            // 障害物コンテキスト構築
-            // --------------------------------------------------
+            // 障害物
             _obstacles = _contextBuilder.BuildObstacleContexts();
 
             // --------------------------------------------------
             // 各衝突判定サービス生成
             // --------------------------------------------------
-            // 戦車と障害物の OBB 衝突判定サービスを生成
+            // 戦車と障害物の OBB 衝突判定
             _tankVsObstacleService =
                 new VersusStaticCollisionService<TankCollisionContext, ObstacleCollisionContext>(
                     _boxCollisionCalculator
                 );
-            // 戦車同士の OBB 衝突判定サービスを生成
+            // 戦車同士の OBB 衝突判定
             _tankVsTankService =
                 new VersusDynamicCollisionService<TankCollisionContext, TankCollisionContext>(
                     _boxCollisionCalculator
                 );
-            // 戦車とアイテムの OBB 衝突判定サービスを生成
+            // 戦車とアイテムの OBB 衝突判定
             _tankVsItemService =
                 new VersusStaticCollisionService<TankCollisionContext, ItemCollisionContext>(
                     _boxCollisionCalculator
                 );
-            // 弾丸と障害物の OBB 衝突判定サービスを生成
+            // 弾丸と障害物の OBB 衝突判定
             _bulletVsObstacleService =
                 new VersusStaticCollisionService<BulletCollisionContext, ObstacleCollisionContext>(
                     _boxCollisionCalculator
                 );
-            // 弾丸と戦車の OBB 衝突判定サービスを生成
+            // 弾丸と戦車の OBB 衝突判定
             _bulletVsTankService =
                 new VersusDynamicCollisionService<BulletCollisionContext, TankCollisionContext>(
                     _boxCollisionCalculator
                 );
 
-            // --------------------------------------------------
             // 各衝突判定サービスを登録
-            // --------------------------------------------------
             _collisionServices.Add(_tankVsObstacleService);
             _collisionServices.Add(_tankVsTankService);
             _collisionServices.Add(_tankVsItemService);
@@ -225,6 +226,7 @@ namespace TankSystem.Manager
             _bulletVsObstacleService.OnStaticHit += _eventRouter.HandleBulletHitObstacle;
             _bulletVsTankService.OnDynamicHit += _eventRouter.HandleBulletHitTank;
 
+            // コンテキストを各戦車に送る
             SendContextData();
         }
 
@@ -543,36 +545,36 @@ namespace TankSystem.Manager
             // PreUpdate にコンテキストを渡す
             switch (service)
             {
-                case VersusStaticCollisionService<TankCollisionContext, ObstacleCollisionContext> s:
-                    s.PreUpdate(
+                case VersusStaticCollisionService<TankCollisionContext, ObstacleCollisionContext> collisionService:
+                    collisionService.PreUpdate(
                         contextsA as TankCollisionContext[],
                         contextsB as ObstacleCollisionContext[]
                     );
                     break;
 
-                case VersusStaticCollisionService<TankCollisionContext, ItemCollisionContext> s:
-                    s.PreUpdate(
+                case VersusStaticCollisionService<TankCollisionContext, ItemCollisionContext> collisionService:
+                    collisionService.PreUpdate(
                         contextsA as TankCollisionContext[],
                         contextsB as ItemCollisionContext[]
                     );
                     break;
 
-                case VersusStaticCollisionService<BulletCollisionContext, ObstacleCollisionContext> s:
-                    s.PreUpdate(
+                case VersusStaticCollisionService<BulletCollisionContext, ObstacleCollisionContext> collisionService:
+                    collisionService.PreUpdate(
                         contextsA as BulletCollisionContext[],
                         contextsB as ObstacleCollisionContext[]
                     );
                     break;
 
-                case VersusDynamicCollisionService<TankCollisionContext, TankCollisionContext> s:
-                    s.PreUpdate(
+                case VersusDynamicCollisionService<TankCollisionContext, TankCollisionContext> collisionService:
+                    collisionService.PreUpdate(
                         contextsA as TankCollisionContext[],
                         contextsB as TankCollisionContext[]
                     );
                     break;
 
-                case VersusDynamicCollisionService<BulletCollisionContext, TankCollisionContext> s:
-                    s.PreUpdate(
+                case VersusDynamicCollisionService<BulletCollisionContext, TankCollisionContext> collisionService:
+                    collisionService.PreUpdate(
                         contextsA as BulletCollisionContext[],
                         contextsB as TankCollisionContext[]
                     );

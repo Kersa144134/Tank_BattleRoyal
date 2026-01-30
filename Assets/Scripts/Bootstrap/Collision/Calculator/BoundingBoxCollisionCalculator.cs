@@ -3,7 +3,7 @@
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-11
 // 更新日時 : 2025-12-13
-// 概要     : OBB 衝突計算を OBBCollisionCalculator に委譲するクラス
+// 概要     : OBB 衝突処理のユースケースクラス
 // ======================================================
 
 using UnityEngine;
@@ -14,7 +14,6 @@ namespace CollisionSystem.Calculator
 {
     /// <summary>
     /// OBB 衝突処理のユースケースクラス
-    /// 処理はすべて OBBCollisionCalculator に委譲する
     /// </summary>
     public sealed class BoundingBoxCollisionCalculator
     {
@@ -28,11 +27,14 @@ namespace CollisionSystem.Calculator
         /// <summary>OBB の射影計算を担当する数学ユーティリティ</summary>
         private readonly OBBMath _obbMath;
 
-        /// <summary>SAT による重なり判定を担当するユーティリティ</summary>
-        private readonly SATMath _satMath;
+        /// <summary>汎用的な重なり量計算を担当する数学ユーティリティ</summary>
+        private readonly OverlapMath _overlapMath;
 
-        /// <summary>MTV（侵入量）算出を担当するユーティリティ</summary>
-        private readonly MTVMath _mtvMath;
+        /// <summary>分離判定（重なり有無）を担当する数学ユーティリティ</summary>
+        private readonly SeparationMath _separationMath;
+
+        /// <summary>侵入量（押し戻し量）算出を担当する数学ユーティリティ</summary>
+        private readonly PenetrationMath _penetrationMath;
 
         // ======================================================
         // コンストラクタ
@@ -44,9 +46,10 @@ namespace CollisionSystem.Calculator
         public BoundingBoxCollisionCalculator()
         {
             _obbMath = new OBBMath();
-            _satMath = new SATMath(_obbMath);
-            _mtvMath = new MTVMath(_obbMath);
-            _obbCollisionCalculator = new OBBCollisionCalculator(_obbMath, _satMath, _mtvMath);
+            _overlapMath = new OverlapMath(_obbMath);
+            _separationMath = new SeparationMath(_overlapMath);
+            _penetrationMath = new PenetrationMath(_overlapMath);
+            _obbCollisionCalculator = new OBBCollisionCalculator(_obbMath, _separationMath, _penetrationMath);
         }
 
         // ======================================================

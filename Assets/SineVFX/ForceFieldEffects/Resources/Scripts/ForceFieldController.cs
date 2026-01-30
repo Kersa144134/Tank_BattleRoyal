@@ -1,14 +1,14 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
-public class ForceFieldController : MonoBehaviour {
+public class ForceFieldController : MonoBehaviour
+{
 
     public enum FFstate { SingleSpheres, MultipleSpheres };
     public FFstate forceFieldMode = FFstate.SingleSpheres;
 
     public int affectorCount = 20;
-    [Range (-2,2)]
+    [Range(-2, 2)]
     public float openCloseProgress = 2;
     public bool openAutoAnimation = true;
     public float openSpeed = 0.6f;
@@ -39,11 +39,11 @@ public class ForceFieldController : MonoBehaviour {
     private List<Material> rendererMaterials = new List<Material>();
     private ParticleSystem.MainModule psmain;
 
-    private float openCloseValue;
-    private float openCloseCurve;
+    private int cachedAffectorCount = -1;
+    private int cachedSphereCount = -1;
 
-    // Use this for initialization
-    void Start () {
+    void Start()
+    {
         psmain = controlParticleSystem.main;
 
         GetRenderers();
@@ -54,10 +54,9 @@ public class ForceFieldController : MonoBehaviour {
         if (procedrualGradientEnabled == true)
         {
             UpdateRampTexture();
-        }        
+        }
     }
 
-    // For Better Effects Change in DemoScene
     void OnEnable()
     {
         psmain = controlParticleSystem.main;
@@ -65,12 +64,8 @@ public class ForceFieldController : MonoBehaviour {
         GetRenderers();
         GetNumberOfSpheres();
         GetSphereArrays();
+        AllocateParticleArraysIfNeeded();
 
-        controlParticles = new ParticleSystem.Particle[affectorCount];
-        controlParticlesPositions = new Vector4[affectorCount];
-        controlParticlesSizes = new float[affectorCount];
-        psmain.maxParticles = affectorCount;
-        //controlParticleSystem.maxParticles = affectorCount;
         controlParticleSystem.GetParticles(controlParticles);
         for (int i = 0; i < affectorCount; i++)
         {
@@ -82,8 +77,8 @@ public class ForceFieldController : MonoBehaviour {
         UpdateHitWaves();
     }
 
-    // Update is called once per frame
-    void Update () {
+    void Update()
+    {
         GetNumberOfSpheres();
 
         if (numberOfSpheres != numberOfSpheresOld)
@@ -94,6 +89,7 @@ public class ForceFieldController : MonoBehaviour {
         numberOfSpheresOld = numberOfSpheres;
 
         GetSphereArrays();
+
         if (procedrualGradientEnabled == true)
         {
             if (procedrualGradientUpdate == true)
@@ -102,28 +98,39 @@ public class ForceFieldController : MonoBehaviour {
             }
         }
 
-        controlParticles = new ParticleSystem.Particle[affectorCount];
-        controlParticlesPositions = new Vector4[affectorCount];
-        controlParticlesSizes = new float[affectorCount];
-        psmain.maxParticles = affectorCount;
-        //controlParticleSystem.maxParticles = affectorCount;
+        AllocateParticleArraysIfNeeded();
+
         controlParticleSystem.GetParticles(controlParticles);
         for (int i = 0; i < affectorCount; i++)
         {
             controlParticlesPositions[i] = controlParticles[i].position;
             controlParticlesSizes[i] = controlParticles[i].GetCurrentSize(controlParticleSystem) * controlParticleSystem.transform.lossyScale.x;
         }
+
         UpdateHitWaves();
 
         if (openAutoAnimation == true)
         {
             OpenCloseProgress();
-        }        
+        }
+    }
+
+    private void AllocateParticleArraysIfNeeded()
+    {
+        if (cachedAffectorCount == affectorCount)
+            return;
+
+        cachedAffectorCount = affectorCount;
+
+        controlParticles = new ParticleSystem.Particle[affectorCount];
+        controlParticlesPositions = new Vector4[affectorCount];
+        controlParticlesSizes = new float[affectorCount];
+
+        psmain.maxParticles = affectorCount;
     }
 
     private void GetNumberOfSpheres()
     {
-        //numberOfSpheres = renderers.Length;
         if (getRenderersCustom.Length > 0)
         {
             numberOfSpheres = getRenderersCustom.Length;
@@ -136,8 +143,13 @@ public class ForceFieldController : MonoBehaviour {
 
     private void GetSphereArrays()
     {
-        spherePositions = new Vector4[numberOfSpheres];
-        sphereSizes = new float[numberOfSpheres];
+        if (cachedSphereCount != numberOfSpheres)
+        {
+            cachedSphereCount = numberOfSpheres;
+            spherePositions = new Vector4[numberOfSpheres];
+            sphereSizes = new float[numberOfSpheres];
+        }
+
         for (int i = 0; i < numberOfSpheres; i++)
         {
             spherePositions[i] = renderers[i].gameObject.transform.position;
@@ -145,31 +157,18 @@ public class ForceFieldController : MonoBehaviour {
         }
     }
 
-    // Open Animation Progress
     private void OpenCloseProgress()
     {
-        //if (openCloseValue < 1f)
-        //{
-        //    openCloseValue += Time.deltaTime * openSpeed;
-        //}
-        //else
-        //{
-        //    openCloseValue = 1f;
-        //}
-        //openCloseCurve = openCurve.Evaluate(openCloseValue);
-        //openCloseProgress = openCloseCurve;
     }
 
-    // Set Open Value from other Scripts
     public void SetOpenCloseValue(float val)
     {
         if (openAutoAnimation == true)
         {
-            openCloseValue = val;
-        }        
+            // openCloseValue = val;
+        }
     }
 
-    // Generating a texture from gradient variable
     Texture2D GenerateTextureFromGradient(Gradient grad)
     {
         float width = 256;
@@ -184,11 +183,10 @@ public class ForceFieldController : MonoBehaviour {
             }
         }
         text.wrapMode = TextureWrapMode.Clamp;
-        text.Apply();        
+        text.Apply();
         return text;
     }
 
-    // Applying material layers to objects
     public void ApplyMaterials()
     {
         for (int i = 0; i < materialLayers.Length; i++)
@@ -221,7 +219,6 @@ public class ForceFieldController : MonoBehaviour {
         }
     }
 
-    // Update procedural ramp textures and applying them to the shaders
     public void UpdateRampTexture()
     {
         rampTexture = GenerateTextureFromGradient(procedrualGradientRamp);
@@ -237,7 +234,6 @@ public class ForceFieldController : MonoBehaviour {
         }
     }
 
-    // Getting all renderers for ForceField meshes
     public void GetRenderers()
     {
         if (getRenderersCustom.Length > 0)
@@ -250,7 +246,6 @@ public class ForceFieldController : MonoBehaviour {
         }
     }
 
-    // Update Hit Waves and Control Particles
     public void UpdateHitWaves()
     {
         foreach (Renderer rend in renderers)
@@ -267,6 +262,7 @@ public class ForceFieldController : MonoBehaviour {
                         matt.SetFloat("_MaskAppearProgress", openCloseProgress);
                     }
                     break;
+
                 case FFstate.MultipleSpheres:
                     foreach (Material matt in materialLayers)
                     {
@@ -281,7 +277,7 @@ public class ForceFieldController : MonoBehaviour {
                         matt.SetFloat("_FFSphereCount", numberOfSpheres);
                     }
                     break;
-            }            
-        }        
+            }
+        }
     }
 }

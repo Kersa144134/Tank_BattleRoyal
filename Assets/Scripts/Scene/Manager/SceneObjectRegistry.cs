@@ -3,7 +3,7 @@
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-12
 // 更新日時 : 2025-12-12
-// 概要     : シーン上の戦車・障害物・アイテムを一元管理するレジストリクラス
+// 概要     : シーン上の戦車・障害物・アイテムを一元管理するレジストリークラス
 // ======================================================
 
 using System;
@@ -18,7 +18,7 @@ using WeaponSystem.Manager;
 namespace SceneSystem.Manager
 {
     /// <summary>
-    /// シーン内の当たり判定対象オブジェクトを一元管理するレジストリ
+    /// シーン内の当たり判定対象オブジェクトを一元管理するレジストリー
     /// </summary>
     public class SceneObjectRegistry : MonoBehaviour, IUpdatable
     {

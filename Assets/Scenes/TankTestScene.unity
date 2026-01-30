@@ -11283,11 +11283,11 @@ MonoBehaviour:
     _ammo: 0
     _durability: 0
     _armor: 0
-    _horsePower: 20
-    _transmission: 20
-    _barrel: 20
-    _projectileMass: 20
-    _reloadTime: 20
+    _horsePower: 0
+    _transmission: 0
+    _barrel: 0
+    _projectileMass: 0
+    _reloadTime: 0
   _hitBoxCenter: {x: 0, y: 1.4, z: 1.25}
   _hitBoxScale: {x: 3.75, y: 2.8, z: 9.25}
   _turret: {fileID: 366697374421106752}

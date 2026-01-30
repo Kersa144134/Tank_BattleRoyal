@@ -26,9 +26,6 @@ namespace CollisionSystem.Utility
         // フィールド
         // ======================================================
 
-        /// <summary>OBB ファクトリー参照</summary>
-        private readonly OBBFactory _obbFactory;
-
         /// <summary>SceneObjectRegistry 参照</summary>
         private readonly SceneObjectRegistry _sceneRegistry;
 
@@ -42,16 +39,12 @@ namespace CollisionSystem.Utility
         /// <summary>
         /// CollisionContextBuilder を生成する
         /// </summary>
-        /// <param name="sceneRegistry">シーン上のオブジェクト管理レジストリ</param>
-        /// <param name="obbFactory">OBB 生成用ファクトリー</param>
-        public CollisionContextBuilder(
-            SceneObjectRegistry sceneRegistry,
-            OBBFactory obbFactory
-        )
+        /// <param name="contextFactory">コンテキスト生成ファクトリー</param>
+        /// <param name="sceneRegistry">シーン上のオブジェクト管理レジストリー</param>
+        public CollisionContextBuilder(CollisionContextFactory contextFactory, SceneObjectRegistry sceneRegistry)
         {
+            _contextFactory = contextFactory;
             _sceneRegistry = sceneRegistry;
-            _obbFactory = obbFactory;
-            _contextFactory = new CollisionContextFactory(obbFactory);
         }
 
         // ======================================================
