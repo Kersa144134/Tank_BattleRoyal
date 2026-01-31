@@ -8,6 +8,9 @@
 // ======================================================
 
 using CollisionSystem.Data;
+using System;
+using UnityEngine;
+using WeaponSystem.Interface;
 
 namespace WeaponSystem.Data
 {
@@ -34,6 +37,13 @@ namespace WeaponSystem.Data
             get => _explosionRadius;
             set => _explosionRadius = value;
         }
+
+        // ======================================================
+        // イベント
+        // ======================================================
+
+        /// <summary>弾丸が爆発したことを通知する</summary>
+        public event Action<ExplosiveBullet, Vector3, float> OnExploded;
 
         // ======================================================
         // セッター
@@ -83,20 +93,36 @@ namespace WeaponSystem.Data
             base.OnExit();
         }
 
-        /// <summary>
-        /// 弾丸ヒット時の処理
-        /// 爆発を発生させた後、基底クラスの終了処理を行う
-        /// </summary>
-        /// <param name="collisionContext">衝突対象のコンテキスト</param>
-        public override bool OnHit(in BaseCollisionContext collisionContext)
-        {
-            // 爆発処理
-            Explode();
+        // ======================================================
+        // パブリックメソッド
+        // ======================================================
 
-            // 弾丸消滅
-            return base.OnHit(collisionContext);
+        /// <summary>
+        /// 弾丸が対象に与える爆風ダメージ処理
+        /// </summary>
+        public void ApplyExplodeDamage(in BaseCollisionContext[] collisionContexts)
+        {
+            if (collisionContexts == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < collisionContexts.Length; i++)
+            {
+                IDamageable damageable = collisionContexts[i].Transform.GetComponent<IDamageable>();
+
+                // 質量が高いほど、ダメージへの影響が段階的に大きくなるよう補正する
+                float massFactor =
+                    Mathf.Pow(Mass, MASS_DAMAGE_POWER);
+
+                // 最終ダメージ算出
+                float damage = BASE_BULLET_DAMAGE + massFactor * BASE_BULLET_DAMAGE_MULTIPLIER;
+
+                // ダメージ適用
+                damageable.TakeDamage(damage);
+            }
         }
-        
+
         // ======================================================
         // プライベートメソッド
         // ======================================================
@@ -106,7 +132,10 @@ namespace WeaponSystem.Data
         /// </summary>
         private void Explode()
         {
-            
+            // 爆発半径を質量に応じて計算
+            float explosionRadius = Mass * _explosionRadius;
+
+            OnExploded?.Invoke(this, Transform.position, explosionRadius);
         }
     }
 }

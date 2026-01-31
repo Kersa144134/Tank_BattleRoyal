@@ -82,6 +82,11 @@ namespace WeaponSystem.Manager
         /// </summary>
         public event Action<BulletBase> OnBulletDespawned;
 
+        /// <summary>
+        /// 弾丸が爆発したことを通知するイベント
+        /// </summary>
+        public event Action<ExplosiveBullet, Vector3, float> OnBulletExploded;
+
         // ======================================================
         // IUpdatable イベント
         // ======================================================
@@ -91,17 +96,16 @@ namespace WeaponSystem.Manager
             // 戦車オブジェクトごとにプール初期化を行う
             foreach (GameObject tankObj in _tankObjects)
             {
-                // 戦車ルートであることを確認（弾丸プール生成対象かの判定）
+                // 戦車ルートであるかどうかを確認
                 if (!tankObj.TryGetComponent<BaseTankRootManager>(out BaseTankRootManager _))
                 {
-                    // 戦車でないオブジェクトはスキップ
                     continue;
                 }
 
                 // 戦車専用の弾丸ルートオブジェクトを生成
                 GameObject bulletRootObject = new GameObject($"{tankObj.name}" + BULLET_ROOT_NAME);
 
-                // BulletPool 配下にまとめて配置（Hierarchy 整理用）
+                // BulletPool 配下にまとめて配置
                 bulletRootObject.transform.SetParent(transform);
 
                 // 弾丸生成時に使用する Transform を取得
@@ -133,11 +137,16 @@ namespace WeaponSystem.Manager
 
         public void OnExit()
         {
+            // イベント購読解除
             foreach (List<BulletBase> list in _activePool.Values)
             {
                 foreach (BulletBase bullet in list)
                 {
                     bullet.OnDespawnRequested -= Despawn;
+                    if (bullet is ExplosiveBullet explosive)
+                    {
+                        explosive.OnExploded -= HandleExplodedBullet;
+                    }
                 }
             }
 
@@ -146,6 +155,10 @@ namespace WeaponSystem.Manager
                 foreach (BulletBase bullet in list)
                 {
                     bullet.OnDespawnRequested -= Despawn;
+                    if (bullet is ExplosiveBullet explosive)
+                    {
+                        explosive.OnExploded -= HandleExplodedBullet;
+                    }
                 }
             }
         }
@@ -174,16 +187,13 @@ namespace WeaponSystem.Manager
             in Transform target = null)
         {
             BulletPoolEntry entry = bulletEntries.Find(e => e.Type == type);
+
             if (entry == null)
             {
-                Debug.LogError($"[BulletPool] BulletType {type} の BulletPoolEntry が未設定です。");
                 return null;
             }
-
-            // 未使用弾丸を取り出す
             if (_inactivePool[type].Count == 0)
             {
-                Debug.LogWarning($"[BulletPool] 弾丸発射中止: {type} (未使用弾丸なし)");
                 return null;
             }
 
@@ -192,7 +202,6 @@ namespace WeaponSystem.Manager
             // 未使用の弾丸が存在しなければ発射中止
             if (bullet == null)
             {
-                Debug.LogWarning($"[BulletPool] 弾丸発射中止: {type} (未使用弾丸なし)");
                 return null;
             }
 
@@ -235,13 +244,12 @@ namespace WeaponSystem.Manager
         /// <param name="bullet">非アクティブ化してプールへ戻す対象の弾丸インスタンス</param>
         public void Despawn(BulletBase bullet)
         {
-            // 弾丸のタイプを取得
             BulletType type = bullet switch
             {
                 ExplosiveBullet _ => BulletType.Explosive,
                 PenetrationBullet _ => BulletType.Penetration,
                 HomingBullet _ => BulletType.Homing,
-                _ => throw new Exception("[BulletPool] 無効な弾丸タイプです。")
+                _ => BulletType.Explosive
             };
 
             // アクティブプールから削除
@@ -282,13 +290,32 @@ namespace WeaponSystem.Manager
             // Transform を渡して初期化
             bulletBase.Initialize(bulletTransform);
 
-            // デスポーン要求イベントを購読
+            // イベント購読
             bulletBase.OnDespawnRequested += Despawn;
+            if (bulletBase is ExplosiveBullet explosive)
+            {
+                explosive.OnExploded += HandleExplodedBullet;
+            }
 
             // 未使用リストへ追加
             _inactivePool[entry.Type].Enqueue(bulletBase);
 
             return bulletBase;
+        }
+
+        /// <summary>
+        /// 弾丸爆発時の処理を行うハンドラ
+        /// </summary>
+        /// <param name="bullet">ExplosiveBullet インスタンス</param>
+        /// <param name="position">爆発の中心位置</param>
+        /// <param name="radius">爆発の半径</param>
+        private void HandleExplodedBullet(
+            ExplosiveBullet bullet,
+            Vector3 position,
+            float radius
+        )
+        {
+            OnBulletExploded?.Invoke(bullet, position, radius);
         }
     }
 }

@@ -6,13 +6,15 @@
 // 概要     : シーン内イベントの仲介を行う
 // ======================================================
 
+using System;
+using System.Collections.Generic;
+using UnityEngine;
 using CollisionSystem.Data;
 using InputSystem.Data;
 using ItemSystem.Data;
 using SceneSystem.Data;
-using System;
+using TankSystem.Data;
 using TankSystem.Manager;
-using UnityEngine;
 using WeaponSystem.Data;
 
 namespace SceneSystem.Utility
@@ -32,6 +34,11 @@ namespace SceneSystem.Utility
 
         /// <summary>イベント購読が完了しているかどうかを示すフラグ</summary>
         private bool _isSubscribed;
+
+        /// <summary>
+        /// 爆発範囲内の戦車コンテキストを一時的に格納するリスト
+        /// </summary>
+        private readonly List<TankCollisionContext> _tankOverlapResults = new List<TankCollisionContext>();
 
         // ======================================================
         // イベント
@@ -101,6 +108,7 @@ namespace SceneSystem.Utility
             {
                 _context.BulletPool.OnBulletSpawned += HandleSpawnedBullet;
                 _context.BulletPool.OnBulletDespawned += HandleDespawnedBullet;
+                _context.BulletPool.OnBulletExploded += HandleBulletExplode;
             }
 
             // --------------------------------------------------
@@ -180,6 +188,7 @@ namespace SceneSystem.Utility
             {
                 _context.BulletPool.OnBulletSpawned -= HandleSpawnedBullet;
                 _context.BulletPool.OnBulletDespawned -= HandleDespawnedBullet;
+                _context.BulletPool.OnBulletExploded -= HandleBulletExplode;
             }
 
             // --------------------------------------------------
@@ -257,59 +266,7 @@ namespace SceneSystem.Utility
         /// </summary>
         private void HandleFireModeChangeButtonPressed()
         {
-            _context.UIManager.UpdateBulletIcons();
-        }
-
-        /// <summary>
-        /// 耐久値変更時の処理を行うハンドラ
-        /// </summary>
-        private void HandleDurabilityChanged()
-        {
-            _context.UIManager.NotifyDurabilityChanged();
-        }
-
-        /// <summary>
-        /// 戦車破壊時の処理を行うハンドラ
-        /// </summary>
-        private void HandleBroken(int TankId)
-        {
-            _context.UIManager.NotifyBrokenTanks(TankId);
-            _context.CollisionManager.UnregisterTank(TankId);
-        }
-
-        // --------------------------------------------------
-        // 弾丸
-        // --------------------------------------------------
-        /// <summary>
-        /// 弾丸が生成された際に呼び出され、
-        /// SceneObjectRegistry へ登録を行う
-        /// </summary>
-        /// <param name="bullet">生成された弾丸インスタンス</param>
-        private void HandleSpawnedBullet(BulletBase bullet)
-        {
-            if (bullet == null)
-            {
-                return;
-            }
-
-            _context.SceneObjectRegistry?.RegisterBullet(bullet);
-            _context.CollisionManager?.RegisterBullet(bullet);
-        }
-
-        /// <summary>
-        /// 弾丸が破棄された際に呼び出され、
-        /// SceneObjectRegistry から登録解除を行う
-        /// </summary>
-        /// <param name="bullet">使用終了した弾丸インスタンス</param>
-        private void HandleDespawnedBullet(BulletBase bullet)
-        {
-            if (bullet == null)
-            {
-                return;
-            }
-
-            _context.SceneObjectRegistry?.UnregisterBullet(bullet);
-            _context.CollisionManager?.UnregisterBullet(bullet);
+            _context.UIManager?.UpdateBulletIcons();
         }
 
         /// <summary>
@@ -351,8 +308,10 @@ namespace SceneSystem.Utility
         }
 
         /// <summary>
+        /// 指定した弾丸が衝突した際の処理を呼び出す
         /// </summary>
-        /// <param name=""></param>
+        /// <param name="bullet">衝突判定を行った弾丸インスタンス</param>
+        /// <param name="context">衝突対象のコンテキスト情報</param>
         private void HandleHitBullet(BulletBase bullet, BaseCollisionContext context)
         {
             if (bullet == null)
@@ -361,7 +320,88 @@ namespace SceneSystem.Utility
             }
 
             // 弾丸ヒット処理
-            bullet.OnHit(context);
+            bullet?.OnHit(context);
+        }
+
+        /// <summary>
+        /// 耐久値変更時の処理を行うハンドラ
+        /// </summary>
+        private void HandleDurabilityChanged()
+        {
+            _context.UIManager?.NotifyDurabilityChanged();
+        }
+
+        /// <summary>
+        /// 戦車破壊時の処理を行うハンドラ
+        /// </summary>
+        private void HandleBroken(int TankId)
+        {
+            _context.UIManager?.NotifyBrokenTanks(TankId);
+            _context.CollisionManager?.UnregisterTank(TankId);
+        }
+
+        // --------------------------------------------------
+        // 弾丸
+        // --------------------------------------------------
+        /// <summary>
+        /// 弾丸が生成された際に呼び出され、
+        /// SceneObjectRegistry へ登録を行う
+        /// </summary>
+        /// <param name="bullet">生成された弾丸インスタンス</param>
+        private void HandleSpawnedBullet(BulletBase bullet)
+        {
+            if (bullet == null)
+            {
+                return;
+            }
+
+            _context.SceneObjectRegistry?.RegisterBullet(bullet);
+            _context.CollisionManager?.RegisterBullet(bullet);
+        }
+
+        /// <summary>
+        /// 弾丸が破棄された際に呼び出され、
+        /// SceneObjectRegistry から登録解除を行う
+        /// </summary>
+        /// <param name="bullet">使用終了した弾丸インスタンス</param>
+        private void HandleDespawnedBullet(BulletBase bullet)
+        {
+            if (bullet == null)
+            {
+                return;
+            }
+
+            _context.SceneObjectRegistry?.UnregisterBullet(bullet);
+            _context.CollisionManager?.UnregisterBullet(bullet);
+        }
+
+        /// <summary>
+        /// 弾丸が爆発した際に呼び出され、
+        /// 指定位置と半径に含まれる戦車コンテキストに対しダメージ処理を行う
+        /// </summary>
+        /// <param name="bullet">爆発した弾丸インスタンス</param>
+        /// <param name="position">爆発中心位置</param>
+        /// <param name="radius">爆発半径</param>
+        private void HandleBulletExplode(ExplosiveBullet bullet, Vector3 position, float radius)
+        {
+            if (bullet == null)
+            {
+                return;
+            }
+
+            _tankOverlapResults.Clear();
+
+            // 爆発範囲内の戦車コンテキストを取得
+            List<TankCollisionContext> overlappingTanks =
+                _context.CollisionManager?.GetOverlappingTanksCircleHorizontal(position, radius);
+
+            if (overlappingTanks != null)
+            {
+                _tankOverlapResults.AddRange(overlappingTanks);
+            }
+
+            // リストを配列に変換して渡す
+            bullet?.ApplyExplodeDamage(_tankOverlapResults.ToArray());
         }
 
         // --------------------------------------------------
@@ -414,7 +454,7 @@ namespace SceneSystem.Utility
             if (itemSlot.ItemData is ParamItemData param)
             {
                 // 戦車のパラメーターを増減させる
-                tankRootManager.IncreaseParameter(
+                tankRootManager?.IncreaseParameter(
                     param.ParamType,
                     param.Value
                 );
@@ -425,7 +465,7 @@ namespace SceneSystem.Utility
             {
             }
 
-            _context.UIManager.NotifyItemAcquired(itemSlot.ItemData.Name);
+            _context.UIManager?.NotifyItemAcquired(itemSlot.ItemData.Name);
         }
 
         // --------------------------------------------------
@@ -453,7 +493,7 @@ namespace SceneSystem.Utility
         /// <param name="timeScale">タイムスケール</param>
         private void HandleFlashAnimationStart(float timeScale)
         {
-            _context.SceneObjectRegistry.ChangeTimeScale(timeScale);
+            _context.SceneObjectRegistry?.ChangeTimeScale(timeScale);
         }
 
         /// <summary>
@@ -462,7 +502,7 @@ namespace SceneSystem.Utility
         /// <param name="timeScale">タイムスケール</param>
         private void HandleFlashAnimationFinish(float timeScale)
         {
-            _context.SceneObjectRegistry.ChangeTimeScale(timeScale);
+            _context.SceneObjectRegistry?.ChangeTimeScale(timeScale);
         }
 
         /// <summary>

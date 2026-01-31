@@ -81,7 +81,7 @@ namespace CollisionSystem.Calculator
                     continue;
                 }
 
-                // 円と OBB の重なり検出のみ実行（解決処理は一切行わない）
+                // 円と OBB の重なり検出のみ実行
                 if (IsOverlappingHorizontal(
                         circleCenter,
                         radiusSqr,
@@ -107,7 +107,7 @@ namespace CollisionSystem.Calculator
             in IOBBData obb
         )
         {
-            // OBB 軸を取得
+            // OBB のローカル軸をワールド空間で取得
             _obbMath.GetAxes(
                 obb,
                 out Vector3 rightAxis,
@@ -115,38 +115,40 @@ namespace CollisionSystem.Calculator
                 out Vector3 forwardAxis
             );
 
-            // OBB 中心
+            // OBB 中心を取得
+            // 水平判定のため、Y 座標を円中心と揃える
             Vector3 obbCenter = obb.Center;
+            obbCenter.y = circleCenter.y;
 
-            // 円 → OBB 中心差分
+            // 円中心から OBB 中心への差分ベクトル
             Vector3 delta = circleCenter - obbCenter;
 
-            // 水平成分のみ使用
+            // 念のため水平成分のみに制限
             delta.y = 0.0f;
 
-            // ローカル Right 方向距離
+            // OBB ローカル空間での距離（Right 方向）
             float localX = Vector3.Dot(delta, rightAxis);
 
-            // ローカル Forward 方向距離
+            // OBB ローカル空間での距離（Forward 方向）
             float localZ = Vector3.Dot(delta, forwardAxis);
 
-            // OBB 半サイズ
+            // OBB の半サイズ
             Vector3 half = obb.HalfSize;
 
-            // 最近点（ローカル空間）
+            // OBB 内での最近点（ローカル）
             float closestX = Mathf.Clamp(localX, -half.x, half.x);
             float closestZ = Mathf.Clamp(localZ, -half.z, half.z);
 
-            // ワールド最近点
+            // ワールド空間での最近点
             Vector3 closestPoint =
                 obbCenter +
                 rightAxis * closestX +
                 forwardAxis * closestZ;
 
-            // 円中心との差分
+            // 円中心から最近点への差分
             Vector3 diff = circleCenter - closestPoint;
 
-            // 水平成分のみ
+            // 水平成分のみで距離判定
             diff.y = 0.0f;
 
             // 距離二乗

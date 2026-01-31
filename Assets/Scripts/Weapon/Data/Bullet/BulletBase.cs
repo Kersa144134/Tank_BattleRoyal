@@ -136,10 +136,10 @@ namespace WeaponSystem.Data
         public const float BASE_BULLET_HEIGHT_INTERPOLATION_EXPONENT = 1.5f;
 
         /// <summary>基準となる弾丸のダメージ</summary>
-        private const float BASE_BULLET_DAMAGE = 10f;
+        public const float BASE_BULLET_DAMAGE = 10f;
 
         /// <summary>基準となる弾丸のダメージ倍率</summary>
-        private const float BASE_BULLET_DAMAGE_MULTIPLIER = 0.01f;
+        public const float BASE_BULLET_DAMAGE_MULTIPLIER = 0.01f;
 
         /// <summary>弾速計算時の質量影響基準値</summary>
         private const float BASE_MASS_INFLUENCE = 1.0f;
@@ -148,7 +148,7 @@ namespace WeaponSystem.Data
         private const float SPEED_DAMAGE_POWER = 1.5f;
 
         /// <summary>弾丸の質量によるダメージへの増幅係数</summary>
-        private const float MASS_DAMAGE_POWER = 1.25f;
+        public const float MASS_DAMAGE_POWER = 1.25f;
 
         // --------------------------------------------------
         // パラメーター

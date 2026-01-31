@@ -107,14 +107,15 @@ namespace CollisionSystem.Calculator
         /// <summary>
         /// 指定円と水平面上で重なっている OBB をすべて取得する
         /// </summary>
-        public List<IOBBData> GetOverlappingOBBsCircleHorizontal(
+        public IOBBData[] GetOverlappingOBBsCircleHorizontal(
             in Vector3 circleCenter,
             in float circleRadius,
             in IOBBData[] obbArray
         )
         {
             _overlapResults.Clear();
-            
+
+            // 重なっている OBB を収集
             _circleOBBCollisionCalculator.CollectOverlappingHorizontal(
                 circleCenter,
                 circleRadius,
@@ -122,7 +123,8 @@ namespace CollisionSystem.Calculator
                 ref _overlapResults
             );
 
-            return _overlapResults;
+            // 配列に変換して返却
+            return _overlapResults.ToArray();
         }
     }
 }

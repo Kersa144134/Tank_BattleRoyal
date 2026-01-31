@@ -49,7 +49,7 @@ namespace CollisionSystem.Utility
         // ======================================================
 
         /// <summary>
-        /// デフォルトコンストラクタ
+        /// コンストラクタ
         /// </summary>
         public CollisionEventRouter(in CollisionResolveCalculator collisionResolverCalculator)
         {

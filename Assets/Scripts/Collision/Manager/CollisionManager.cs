@@ -11,8 +11,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using CollisionSystem.Calculator;
 using CollisionSystem.Data;
-using CollisionSystem.Service;
 using CollisionSystem.Interface;
+using CollisionSystem.Service;
 using CollisionSystem.Utility;
 using ItemSystem.Data;
 using ObstacleSystem.Data;
@@ -103,27 +103,39 @@ namespace TankSystem.Manager
         /// <summary>弾丸コンテキストの配列</summary>
         private BulletCollisionContext[] _bullets;
 
+        /// <summary>戦車コンテキストの OBB キャッシュ配列</summary>
+        private IOBBData[] _tankOBBCache;
+
+        /// <summary>円判定で重なった戦車コンテキストキャッシュリスト</summary>
+        private readonly List<TankCollisionContext> _tankOverlapResults = new List<TankCollisionContext>(DEFAULT_OVERLAP_LIST_CAPACITY);
+
         // ======================================================
         // 辞書
         // ======================================================
 
         /// <summary>
-        /// TankID と対応する TankCollisionContext を管理するマップ
+        /// 戦車 ID と戦車コンテキストの対応を管理する辞書
         /// </summary>
         private readonly Dictionary<int, TankCollisionContext> _tankContextMap
             = new Dictionary<int, TankCollisionContext>();
 
         /// <summary>
-        /// ItemSlot と対応する ItemCollisionContext を管理するマップ
+        /// アイテムスロットとアイテムコンテキストの対応を管理する辞書
         /// </summary>
         private readonly Dictionary<ItemSlot, ItemCollisionContext> _itemContextMap
             = new Dictionary<ItemSlot, ItemCollisionContext>();
 
         /// <summary>
-        /// Bullet と対応する BulletCollisionContext を管理するマップ
+        /// 弾丸インスタンスと弾丸コンテキストの対応を管理する辞書
         /// </summary>
         private readonly Dictionary<BulletBase, BulletCollisionContext> _bulletContextMap
             = new Dictionary<BulletBase, BulletCollisionContext>();
+
+        /// <summary>
+        /// OBB インスタンスと戦車コンテキストの対応を管理する辞書
+        /// </summary>
+        private readonly Dictionary<IOBBData, TankCollisionContext> _obbToTankMap
+            = new Dictionary<IOBBData, TankCollisionContext>();
 
         // ======================================================
         // プロパティ
@@ -131,6 +143,13 @@ namespace TankSystem.Manager
 
         /// <summary>衝突イベントの発火を担当するクラス</summary>
         public CollisionEventRouter EventRouter => _eventRouter;
+
+        // ======================================================
+        // 定数
+        // ======================================================
+
+        /// <summary>円重なり判定用 OBB リストの初期容量</summary>
+        private const int DEFAULT_OVERLAP_LIST_CAPACITY = 16;
 
         // ======================================================
         // セッター
@@ -423,6 +442,40 @@ namespace TankSystem.Manager
             UpdateBullets();
         }
 
+        /// <summary>
+        /// 指定円と水平面上で重なっている戦車コンテキストを取得
+        /// </summary>
+        /// <param name="center">円の中心位置</param>
+        /// <param name="radius">円の半径</param>
+        /// <returns>重なっている戦車コンテキストのリスト</returns>
+        public List<TankCollisionContext> GetOverlappingTanksCircleHorizontal(
+            in Vector3 center,
+            in float radius
+        )
+        {
+            _tankOverlapResults.Clear();
+
+            UpdateTanks();
+            
+            // OBB 配列を渡して円と重なっている OBB を取得
+            IOBBData[] overlappingOBBs = _boxCollisionCalculator.GetOverlappingOBBsCircleHorizontal(
+                center,
+                radius,
+                _tankOBBCache
+            );
+
+            // 重なった OBB に対応する戦車コンテキストをリストに追加
+            for (int i = 0; i < overlappingOBBs.Length; i++)
+            {
+                if (_obbToTankMap.TryGetValue(overlappingOBBs[i], out TankCollisionContext tank))
+                {
+                    _tankOverlapResults.Add(tank);
+                }
+            }
+
+            return _tankOverlapResults;
+        }
+
         // ======================================================
         // プライベートメソッド
         // ======================================================
@@ -502,11 +555,44 @@ namespace TankSystem.Manager
         }
 
         /// <summary>
-        /// Tank 用キャッシュ配列を更新する
+        /// Tank 用キャッシュ配列と OBB キャッシュを更新する
         /// </summary>
         private void UpdateTanks()
         {
             UpdateCacheArray(_tankContextMap, ref _tanks);
+
+            // 辞書を再構築
+            _obbToTankMap.Clear();
+
+            // Tank が存在しない場合は OBB キャッシュも空にする
+            if (_tanks.Length == 0)
+            {
+                _tankOBBCache = null;
+
+                return;
+            }
+
+            // OBB キャッシュ配列が未生成、またはサイズ不一致の場合は再生成
+            if (_tankOBBCache == null || _tankOBBCache.Length != _tanks.Length)
+            {
+                _tankOBBCache = new IOBBData[_tanks.Length];
+            }
+
+            // 各 TankCollisionContext から OBB をキャッシュへ反映
+            for (int i = 0; i < _tanks.Length; i++)
+            {
+                TankCollisionContext tank = _tanks[i];
+
+                IOBBData obb = tank.OBB;
+
+                _tankOBBCache[i] = obb;
+
+                // 辞書に登録
+                if (obb != null)
+                {
+                    _obbToTankMap[obb] = tank;
+                }
+            }
         }
 
         /// <summary>
