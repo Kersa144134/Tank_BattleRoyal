@@ -3,7 +3,7 @@
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-13
 // 更新日時 : 2025-12-13
-// 概要     : OBB に対する純粋な幾何・数学計算のみを提供する数学ユーティリティ
+// 概要     : OBB に対する数学計算を提供するユーティリティ
 // ======================================================
 
 using UnityEngine;
@@ -12,7 +12,7 @@ using CollisionSystem.Interface;
 namespace CollisionSystem.Utility
 {
     /// <summary>
-    /// OBB に関する純数学的な計算を提供するユーティリティ
+    /// OBB に関する数学計算を提供するユーティリティ
     /// </summary>
     public sealed class OBBMath
     {

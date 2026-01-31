@@ -42,10 +42,10 @@ namespace TankSystem.Manager
         // --------------------------------------------------
         // 計算関連
         // --------------------------------------------------
-        /// <summary>OBB の衝突判定および MTV を計算するクラス</summary>
+        /// <summary>OBB の衝突判定を計算するクラス</summary>
         private readonly BoundingBoxCollisionCalculator _boxCollisionCalculator = new BoundingBoxCollisionCalculator();
 
-        /// <summary>MTV を用いた衝突解決量を計算するクラス</summary>
+        /// <summary>衝突解決量を計算するクラス</summary>
         private  CollisionResolveCalculator _collisionResolverCalculator;
 
         // --------------------------------------------------

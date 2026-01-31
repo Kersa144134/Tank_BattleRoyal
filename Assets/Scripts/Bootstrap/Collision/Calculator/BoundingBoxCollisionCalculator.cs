@@ -2,10 +2,11 @@
 // BoundingBoxCollisionCalculator.cs
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-11
-// 更新日時 : 2025-12-13
+// 更新日時 : 2026-01-31
 // 概要     : OBB 衝突処理のユースケースクラス
 // ======================================================
 
+using System.Collections.Generic;
 using UnityEngine;
 using CollisionSystem.Interface;
 using CollisionSystem.Utility;
@@ -24,6 +25,9 @@ namespace CollisionSystem.Calculator
         /// <summary>OBB 衝突計算器</summary>
         private readonly OBBCollisionCalculator _obbCollisionCalculator;
 
+        /// <summary>円 vs OBB 判定計算器</summary>
+        private readonly CircleOBBCollisionCalculator _circleOBBCollisionCalculator;
+
         /// <summary>OBB の射影計算を担当する数学ユーティリティ</summary>
         private readonly OBBMath _obbMath;
 
@@ -35,6 +39,20 @@ namespace CollisionSystem.Calculator
 
         /// <summary>侵入量（押し戻し量）算出を担当する数学ユーティリティ</summary>
         private readonly PenetrationMath _penetrationMath;
+
+        // ======================================================
+        // 定数
+        // ======================================================
+
+        /// <summary>円と OBB の重なり判定で使用する結果キャッシュリスト</summary>
+        private List<IOBBData> _overlapResults = new List<IOBBData>(DEFAULT_OVERLAP_LIST_CAPACITY);
+
+        // ======================================================
+        // 定数
+        // ======================================================
+
+        /// <summary>円重なり判定用 OBB リストの初期容量</summary>
+        private const int DEFAULT_OVERLAP_LIST_CAPACITY = 16;
 
         // ======================================================
         // コンストラクタ
@@ -50,6 +68,7 @@ namespace CollisionSystem.Calculator
             _separationMath = new SeparationMath(_overlapMath);
             _penetrationMath = new PenetrationMath(_overlapMath);
             _obbCollisionCalculator = new OBBCollisionCalculator(_obbMath, _separationMath, _penetrationMath);
+            _circleOBBCollisionCalculator = new CircleOBBCollisionCalculator(_obbMath);
         }
 
         // ======================================================
@@ -57,34 +76,53 @@ namespace CollisionSystem.Calculator
         // ======================================================
 
         /// <summary>
-        /// Y 回転のみを考慮した OBB 衝突判定
+        /// OBB 同士が水平面上で重なっているかを判定する
         /// </summary>
         public bool IsCollidingHorizontal(
             in IOBBData a,
             in IOBBData b
         )
         {
-            // OBB 衝突判定を委譲
             return _obbCollisionCalculator.IsCollidingHorizontal(a, b);
         }
 
         /// <summary>
-        /// Y 回転のみを考慮した MTV を算出する
+        /// OBB 同士が重なった場合の水平押し戻し軸と距離を算出する
         /// </summary>
-        public bool TryCalculateHorizontalMTV(
+        public bool TryGetPushOutAxisAndDistance(
             in IOBBData a,
             in IOBBData b,
             out Vector3 resolveAxis,
             out float resolveDistance
         )
         {
-            // MTV 算出処理を委譲
-            return _obbCollisionCalculator.TryCalculateHorizontalMTV(
+            return _obbCollisionCalculator.TryGetPushOutAxisAndDistance(
                 a,
                 b,
                 out resolveAxis,
                 out resolveDistance
             );
+        }
+
+        /// <summary>
+        /// 指定円と水平面上で重なっている OBB をすべて取得する
+        /// </summary>
+        public List<IOBBData> GetOverlappingOBBsCircleHorizontal(
+            in Vector3 circleCenter,
+            in float circleRadius,
+            in IOBBData[] obbArray
+        )
+        {
+            _overlapResults.Clear();
+            
+            _circleOBBCollisionCalculator.CollectOverlappingHorizontal(
+                circleCenter,
+                circleRadius,
+                obbArray,
+                ref _overlapResults
+            );
+
+            return _overlapResults;
         }
     }
 }

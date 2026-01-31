@@ -3,10 +3,9 @@
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-17
 // 更新日時 : 2025-12-17
-// 概要     : MTV を用いた衝突解決量を計算するクラス
+// 概要     : 衝突解決量を計算するクラス
 // ======================================================
 
-using System.Diagnostics;
 using UnityEngine;
 using CollisionSystem.Data;
 
@@ -22,7 +21,7 @@ namespace CollisionSystem.Calculator
         // ======================================================
 
         /// <summary>
-        /// OBB 同士の MTV 計算を行う計算器
+        /// OBB 同士の衝突計算を行う計算器
         /// </summary>
         private readonly BoundingBoxCollisionCalculator _boxCollisionCalculator;
 
@@ -53,7 +52,7 @@ namespace CollisionSystem.Calculator
         // ======================================================
 
         /// <summary>
-        /// 衝突している 2 オブジェクトに対して MTV を用いた押し戻し量を計算する
+        /// 衝突している 2 オブジェクトに対して押し戻し軸と距離を算出する
         /// </summary>
         /// <param name="contextA">押し戻し対象のオブジェクト A のコンテキスト</param>
         /// <param name="contextB">押し戻し対象のオブジェクト B のコンテキスト</param>
@@ -82,8 +81,8 @@ namespace CollisionSystem.Calculator
             MovementLockAxis lockAxisA = contextA.LockAxis;
             MovementLockAxis lockAxisB = contextB.LockAxis;
 
-            // MTV を算出
-            if (!_boxCollisionCalculator.TryCalculateHorizontalMTV(
+            // 押し戻し軸と距離を算出
+            if (!_boxCollisionCalculator.TryGetPushOutAxisAndDistance(
                 contextA.OBB,
                 contextB.OBB,
                 out Vector3 resolveAxis,

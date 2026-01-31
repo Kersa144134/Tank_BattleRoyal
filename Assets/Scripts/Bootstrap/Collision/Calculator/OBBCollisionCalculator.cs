@@ -21,7 +21,7 @@ namespace CollisionSystem.Calculator
         // コンポーネント参照
         // ======================================================
 
-        /// <summary>OBB の軸情報および射影計算を担当する幾何ユーティリティ</summary>
+        /// <summary>OBB の軸情報および射影計算を担当するユーティリティ</summary>
         private readonly OBBMath _obbMath;
 
         /// <summary>分離判定（重なり有無）を担当する数学ユーティリティ</summary>
@@ -105,9 +105,9 @@ namespace CollisionSystem.Calculator
         }
 
         /// <summary>
-        /// Y 軸回転のみを考慮し、OBB 同士の最小侵入量（解決量）を算出する
+        /// OBB 同士が重なった場合の水平押し戻し軸と距離を算出する
         /// </summary>
-        public bool TryCalculateHorizontalMTV(
+        public bool TryGetPushOutAxisAndDistance(
             in IOBBData a,
             in IOBBData b,
             out Vector3 axis,

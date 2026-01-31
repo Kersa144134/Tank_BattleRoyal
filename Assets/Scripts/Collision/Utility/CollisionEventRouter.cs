@@ -28,7 +28,7 @@ namespace CollisionSystem.Utility
         // コンポーネント参照
         // ======================================================
 
-        /// <summary>MTV を用いた衝突解決量を計算するクラス</summary>
+        /// <summary>衝突解決量を計算するクラス</summary>
         private CollisionResolveCalculator _collisionResolverCalculator;
 
         /// <summary>弾丸と対象の衝突履歴</summary>
