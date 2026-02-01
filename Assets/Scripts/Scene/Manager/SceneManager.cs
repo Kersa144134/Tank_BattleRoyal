@@ -7,6 +7,7 @@
 // ======================================================
 
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using SceneSystem.Controller;
 using SceneSystem.Data;
 using SceneSystem.Interface;
@@ -26,6 +27,10 @@ namespace SceneSystem.Manager
         [Header("IUpdatable 保持オブジェクト")]
         /// <summary>IUpdatable を保持している GameObject 群</summary>
         [SerializeField] private GameObject[] _components;
+
+        [Header("初期フェーズ")]
+        /// <summary>シーン読み込み時の初期フェーズ</summary>
+        [SerializeField] private PhaseType _startPhase;
 
         // ======================================================
         // コンポーネント参照
@@ -137,9 +142,14 @@ namespace SceneSystem.Manager
             _phaseManager.OnOptionButtonPressed += HandleOptionButtonPressed;
             _sceneEventRouter.OnPhaseChanged += SetTargetPhase;
 
-            // 初期値設定
-            _targetPhase = PhaseType.Ready;
+            // 初期シーン設定
+            Scene currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
+            _currentScene = currentScene.name;
+
+            // 初期フェーズ設定
+            _targetPhase = _startPhase;
             ChangePhase(_targetPhase);
+
             _isSceneChanged = true;
             _elapsedTime = 0.0f;
         }
@@ -268,7 +278,7 @@ namespace SceneSystem.Manager
         }
 
         /// <summary>
-        /// フェーズ切替を行う
+        /// オプションボタン押下時の処理を行うハンドラ
         /// </summary>
         private void HandleOptionButtonPressed()
         {

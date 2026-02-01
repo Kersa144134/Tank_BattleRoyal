@@ -38,9 +38,6 @@ namespace SceneSystem.Data
         /// <summary>カメラ管理</summary>
         public CollisionManager CollisionManager;
 
-        /// <summary>入力管理</summary>
-        public InputManager InputManager;
-
         /// <summary>アイテムプール</summary>
         public ItemPool ItemPool;
 

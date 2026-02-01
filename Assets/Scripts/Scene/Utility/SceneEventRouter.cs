@@ -6,15 +6,16 @@
 // 概要     : シーン内イベントの仲介を行う
 // ======================================================
 
-using System;
-using System.Collections.Generic;
-using UnityEngine;
 using CollisionSystem.Data;
 using InputSystem.Data;
+using InputSystem.Manager;
 using ItemSystem.Data;
 using SceneSystem.Data;
+using System;
+using System.Collections.Generic;
 using TankSystem.Data;
 using TankSystem.Manager;
+using UnityEngine;
 using WeaponSystem.Data;
 
 namespace SceneSystem.Utility
@@ -223,13 +224,13 @@ namespace SceneSystem.Utility
         public void HandleOptionButtonPressed()
         {
             // 現在適用中の入力マッピングインデックスを取得
-            int current = _context.InputManager.GetCurrentMappingIndex();
+            int current = InputManager.Instance.GetCurrentMappingIndex();
 
             // 次のインデックスを算出
             int next = (current == 0) ? 1 : 0;
 
             // 入力マッピングを切り替え
-            _context.InputManager.SwitchInputMapping(next);
+            InputManager.Instance.SwitchInputMapping(next);
         }
 
         // ======================================================

@@ -7,6 +7,7 @@
 // ======================================================
 
 using System;
+using System.Diagnostics;
 using InputSystem.Manager;
 using SceneSystem.Data;
 
@@ -20,6 +21,15 @@ namespace SceneSystem.Manager
         // ======================================================
         // 定数
         // ======================================================
+
+        /// <summary>タイトルシーンとして判定するシーン名</summary>
+        private const string TITLE_SCENE_NAME = "TitleScene";
+
+        /// <summary>メインシーンとして判定するシーン名</summary>
+        private const string MAIN_SCENE_NAME = "MainScene";
+
+        /// <summary>リザルトシーンとして判定するシーン名</summary>
+        private const string RESULT_SCENE_NAME = "ResultScene";
 
         /// <summary>
         /// Play フェーズから Finish フェーズへ遷移するまでのゲームプレイ時間（秒）
@@ -91,6 +101,35 @@ namespace SceneSystem.Manager
 
             switch (currentPhase)
             {
+                case PhaseType.Title:
+                    // 現在のシーン名がタイトルシーン名と一致しているかを判定する
+                    if (currentScene != TITLE_SCENE_NAME)
+                    {
+                        targetScene = TITLE_SCENE_NAME;
+                        return;
+                    }
+                    
+                    if (InputManager.Instance.ButtonA.Down)
+                    {
+                        // 待機時間経過後に遷移
+                        UpdatePhaseByElapsedTime(
+                            currentPhase,
+                            out targetPhase,
+                            TITLE_TO_READY_WAIT_TIME,
+                            PhaseType.Ready
+                        );
+                    }
+                    break;
+
+                case PhaseType.Ready:
+                    // 現在のシーン名がメインシーン名と一致しているかを判定する
+                    if (currentScene != MAIN_SCENE_NAME)
+                    {
+                        targetScene = MAIN_SCENE_NAME;
+                        return;
+                    }
+                    break;
+
                 case PhaseType.Play:
                     if (elapsedTime > PLAY_TO_FINISH_WAIT_TIME)
                     {
@@ -126,6 +165,26 @@ namespace SceneSystem.Manager
                     }
                     break;
 
+                case PhaseType.Result:
+                    // 現在のシーン名がリザルトシーン名と一致しているかを判定する
+                    if (currentScene == RESULT_SCENE_NAME)
+                    {
+                        targetScene = RESULT_SCENE_NAME;
+                        return;
+                    }
+
+                    if (InputManager.Instance.ButtonA.Down)
+                    {
+                        // 待機時間経過後に遷移
+                        UpdatePhaseByElapsedTime(
+                            currentPhase,
+                            out targetPhase,
+                            RESULT_TO_TITLE_WAIT_TIME,
+                            PhaseType.Title
+                        );
+                    }
+                    break;
+
                 default:
                     break;
             }
@@ -151,7 +210,7 @@ namespace SceneSystem.Manager
         {
             // 初期状態では遷移を行わない
             targetPhase = currentPhase;
-
+            UnityEngine.Debug.Log(_phaseElapsedTime);
             // 指定された待機時間を超えているかを判定する
             if (_phaseElapsedTime < waitTime)
             {

@@ -297,11 +297,26 @@ namespace UISystem.Manager
             _effectAnimator = GetComponent<Animator>();
 
             // タイムスケールを無視する
-            _playAnimator.updateMode = AnimatorUpdateMode.UnscaledTime;
-            _notPlayAnimator.updateMode = AnimatorUpdateMode.UnscaledTime;
-            _cameraAnimator.updateMode = AnimatorUpdateMode.UnscaledTime;
-            _volumeAnimator.updateMode = AnimatorUpdateMode.UnscaledTime;
-            _effectAnimator.updateMode = AnimatorUpdateMode.UnscaledTime;
+            if (_playAnimator != null)
+            {
+                _playAnimator.updateMode = AnimatorUpdateMode.UnscaledTime;
+            }
+            if (_notPlayAnimator != null)
+            {
+                _notPlayAnimator.updateMode = AnimatorUpdateMode.UnscaledTime;
+            }
+            if (_cameraAnimator != null)
+            {
+                _cameraAnimator.updateMode = AnimatorUpdateMode.UnscaledTime;
+            }
+            if (_volumeAnimator != null)
+            {
+                _volumeAnimator.updateMode = AnimatorUpdateMode.UnscaledTime;
+            }
+            if (_effectAnimator != null)
+            {
+                _effectAnimator.updateMode = AnimatorUpdateMode.UnscaledTime;
+            }
 
             _binarizationPostProcessController =
                 new BinarizationPostProcessController(
@@ -313,39 +328,51 @@ namespace UISystem.Manager
                     _greyScaleFullScreenPassFeature,
                     _greyScaleEffectMaterial);
 
-            if (_playerTankRootManager is PlayerTankRootManager)
+            if (_playerTankRootManager != null &&
+                _maxDurabilityBarImage != null &&
+                _currentDurabilityBarImage != null &&
+                _diffDurabilityBarImage != null)
             {
-                _playerDurabilityManager =
+                if (_playerTankRootManager is PlayerTankRootManager)
+                {
+                    _playerDurabilityManager =
                     _playerTankRootManager.DurabilityManager;
 
-                _durabilityBarWidthUIController =
-                    new ValueBarWidthUIController(
-                        _maxDurabilityBarImage,
-                        _currentDurabilityBarImage,
-                        _diffDurabilityBarImage,
-                        _playerTankRootManager.DurabilityManager.MaxDurability,
-                        _playerTankRootManager.DurabilityManager.CurrentDurability
-                    );
+                    _durabilityBarWidthUIController =
+                        new ValueBarWidthUIController(
+                            _maxDurabilityBarImage,
+                            _currentDurabilityBarImage,
+                            _diffDurabilityBarImage,
+                            _playerTankRootManager.DurabilityManager.MaxDurability,
+                            _playerTankRootManager.DurabilityManager.CurrentDurability
+                        );
+                }
             }
 
-            _bulletIconSlotRotationUIController =
+            if (_bulletIconImages != null)
+            {
+                _bulletIconSlotRotationUIController =
                 new SlotRotationUIController(
                     _bulletIconImages,
                     _bulletIconLayoutDirection,
                     _bulletIconRotationSign
                 );
+            }
 
-            _logRotationUIController =
+            if (_logTexts != null)
+            {
+                _logRotationUIController =
                 new LogRotationUIController(
                     _logTexts,
                     _logVerticalDirection,
                     _logInsertDirection
                 );
+            }
         }
 
         public void OnLateUpdate(in float unscaledDeltaTime)
         {
-            _binarizationPostProcessController.Update(
+            _binarizationPostProcessController?.Update(
                 _isBinarizationEffectEnabled,
                 _binarizationDistortionCenter,
                 _binarizationDistortionStrength,
@@ -355,7 +382,7 @@ namespace UISystem.Manager
                 _binarizationPosterizationDarkColor
             );
 
-            _greyScalePostProcessController.Update(
+            _greyScalePostProcessController?.Update(
                 _isGreyScaleEffectEnabled,
                 _greyScaleStrength,
                 _greyScaleDistortionCenter,
@@ -372,11 +399,11 @@ namespace UISystem.Manager
 
             if (_playerDurabilityManager != null)
             {
-                _durabilityBarWidthUIController.Update(unscaledDeltaTime);
+                _durabilityBarWidthUIController?.Update(unscaledDeltaTime);
             }
 
-            _bulletIconSlotRotationUIController.Update(unscaledDeltaTime);
-            _logRotationUIController.Update(unscaledDeltaTime);
+            _bulletIconSlotRotationUIController?.Update(unscaledDeltaTime);
+            _logRotationUIController?.Update(unscaledDeltaTime);
         }
 
         public void OnPhaseEnter(in PhaseType phase)
@@ -391,7 +418,7 @@ namespace UISystem.Manager
             if (phase == PhaseType.Finish)
             {
                 // 先頭から再生
-                _effectAnimator.Play(FINISH_ANIMATION_NAME, 0, 0f);
+                _effectAnimator?.Play(FINISH_ANIMATION_NAME, 0, 0f);
             }
         }
 
@@ -413,7 +440,7 @@ namespace UISystem.Manager
         /// </summary>
         public void UpdateBulletIcons()
         {
-            _bulletIconSlotRotationUIController.Rotate();
+            _bulletIconSlotRotationUIController?.Rotate();
         }
 
         /// <summary>
@@ -421,7 +448,7 @@ namespace UISystem.Manager
         /// </summary>
         public void NotifyDurabilityChanged()
         {
-            _durabilityBarWidthUIController.NotifyValueChanged(
+            _durabilityBarWidthUIController?.NotifyValueChanged(
                 _playerTankRootManager.DurabilityManager.MaxDurability,
                 _playerTankRootManager.DurabilityManager.CurrentDurability
             );
@@ -437,7 +464,7 @@ namespace UISystem.Manager
             string logMessage = $"{itemName} を獲得";
 
             // ログ表示
-            _logRotationUIController.AddLog(logMessage);
+            _logRotationUIController?.AddLog(logMessage);
         }
 
         /// <summary>
@@ -458,7 +485,7 @@ namespace UISystem.Manager
                 logMessage = "撃破された";
 
                 // 先頭から再生
-                _effectAnimator.Play(DIE_ANIMATION_NAME, 0, 0f);
+                _effectAnimator?.Play(DIE_ANIMATION_NAME, 0, 0f);
             }
             // 敵戦車の場合
             else
@@ -470,11 +497,11 @@ namespace UISystem.Manager
                 logMessage = $"戦車{displayTankId} を撃破";
 
                 // 先頭から再生
-                _effectAnimator.Play(DESTROY_ANIMATION_NAME, 0, 0f);
+                _effectAnimator?.Play(DESTROY_ANIMATION_NAME, 0, 0f);
             }
 
             // ログ UI に追加
-            _logRotationUIController.AddLog(logMessage);
+            _logRotationUIController?.AddLog(logMessage);
         }
 
         /// <summary>
@@ -482,7 +509,7 @@ namespace UISystem.Manager
         /// </summary>
         public void NotifyFireBullet()
         {
-            _cameraAnimator.Play(FIRE_ANIMATION_NAME, 0, 0f);
+            _cameraAnimator?.Play(FIRE_ANIMATION_NAME, 0, 0f);
         }
         
         // --------------------------------------------------
@@ -493,9 +520,9 @@ namespace UISystem.Manager
         /// </summary>
         public void ReadyPhaseAnimationStart()
         {
-            _notPlayAnimator.Play(READY_ANIMATION_NAME, 0, 0f);
+            _notPlayAnimator?.Play(READY_ANIMATION_NAME, 0, 0f);
 
-            _fade.FadeOut(FADE_TIME);
+            _fade?.FadeOut(FADE_TIME);
         }
 
         /// <summary>
@@ -503,7 +530,7 @@ namespace UISystem.Manager
         /// </summary>
         public void ReadyPhaseAnimationFinish()
         {
-            _playAnimator.Play(SHOW_ANIMATION_NAME, 0, 0f);
+            _playAnimator?.Play(SHOW_ANIMATION_NAME, 0, 0f);
 
             OnReadyPhaseAnimationFinished?.Invoke();
         }
@@ -513,8 +540,8 @@ namespace UISystem.Manager
         /// </summary>
         public void FinishPhaseAnimationStart()
         {
-            _playAnimator.Play(HIDE_ANIMATION_NAME, 0, 0f);
-            _notPlayAnimator.Play(FINISH_ANIMATION_NAME, 0, 0f);
+            _playAnimator?.Play(HIDE_ANIMATION_NAME, 0, 0f);
+            _notPlayAnimator?.Play(FINISH_ANIMATION_NAME, 0, 0f);
         }
 
         /// <summary>
@@ -532,8 +559,8 @@ namespace UISystem.Manager
         /// </summary>
         public void FlashAnimationStart()
         {
-            _playAnimator.Play(HIDE_ANIMATION_NAME, 0, 0f);
-            _cameraAnimator.Play(FLASH_ANIMATION_NAME, 0, 0f);
+            _playAnimator?.Play(HIDE_ANIMATION_NAME, 0, 0f);
+            _cameraAnimator?.Play(FLASH_ANIMATION_NAME, 0, 0f);
 
             OnFlashAnimationStarted?.Invoke(DESTROY_TIME_SCALE);
         }
@@ -543,7 +570,7 @@ namespace UISystem.Manager
         /// </summary>
         public void FlashAnimationFinish()
         {
-            _playAnimator.Play(SHOW_ANIMATION_NAME, 0, 0f);
+            _playAnimator?.Play(SHOW_ANIMATION_NAME, 0, 0f);
 
             OnFlashAnimationFinished?.Invoke(DEFAULT_TIME_SCALE);
         }
@@ -561,7 +588,7 @@ namespace UISystem.Manager
         /// </summary>
         public void FadeInAnimationStart()
         {
-            _fade.FadeIn(FADE_TIME);
+            _fade?.FadeIn(FADE_TIME);
         }
 
         /// <summary>
@@ -569,7 +596,7 @@ namespace UISystem.Manager
         /// </summary>
         public void VolumeFlashEffectStart()
         {
-            _volumeAnimator.Play(FLASH_ANIMATION_NAME, 0, 0f);
+            _volumeAnimator?.Play(FLASH_ANIMATION_NAME, 0, 0f);
         }
 
         /// <summary>
@@ -577,7 +604,7 @@ namespace UISystem.Manager
         /// </summary>
         public void VolumeDieEffectStart()
         {
-            _volumeAnimator.Play(DIE_ANIMATION_NAME, 0, 0f);
+            _volumeAnimator?.Play(DIE_ANIMATION_NAME, 0, 0f);
         }
     }
 }

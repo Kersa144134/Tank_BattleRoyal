@@ -19,7 +19,7 @@ namespace TankSystem.Data
         Armor,          // ‘•b
         HorsePower,     // ”n—Í
         Transmission,   // •Ï‘¬
-        BarrelScale,    // –Cg
+        Barrel,         // –Cg
         ProjectileMass, // ¿—Ê
         ReloadTime      // ‘•“U
     }

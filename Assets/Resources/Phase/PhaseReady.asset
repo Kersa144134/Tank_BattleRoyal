@@ -14,5 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _phaseType: 2
   _updatableScripts:
-  - {fileID: 11500000, guid: 6d0c2d0a83717d740bf578904191d9f9, type: 3}
   - {fileID: 11500000, guid: 19aee8684b0b7ff43b11b92b6880f93c, type: 3}

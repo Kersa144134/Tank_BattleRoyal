@@ -78,12 +78,6 @@ namespace SceneSystem.Utility
                     collisionManager.SetSceneRegistry(cacheSceneObjectRegistry);
                 }
 
-                // InputManager ‚ðŽæ“¾
-                if (updatable is InputManager inputManager)
-                {
-                    context.InputManager = inputManager;
-                }
-
                 // ItemPool ‚ðŽæ“¾
                 if (updatable is ItemPool itemPool)
                 {

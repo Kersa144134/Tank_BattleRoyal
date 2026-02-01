@@ -17,7 +17,7 @@ namespace InputSystem.Manager
     /// 入力管理クラス
     /// 物理ゲームパッドとキーボード・マウス入力を統合
     /// </summary>
-    public class InputManager : MonoBehaviour, IUpdatable
+    public class InputManager : MonoBehaviour
     {
         // ======================================================
         // シングルトンインスタンス
@@ -103,10 +103,10 @@ namespace InputSystem.Manager
         public ButtonState SelectButton => _buttonStateManager.SelectButton;
 
         // ======================================================
-        // IUpdatable イベント
+        // Unity イベント
         // ======================================================
 
-        public void OnEnter()
+        private void Awake()
         {
             // シングルトン制御
             if (Instance != null && Instance != this)
@@ -135,8 +135,13 @@ namespace InputSystem.Manager
             _stickStateManager = new StickStateManager();
         }
 
-        public void OnUpdate(in float unscaledDeltaTime, in float elapsedTime)
+        private void Update()
         {
+            if (Instance != this)
+            {
+                return;
+            }
+
             // デバイス入力更新
             _deviceManager.UpdateDevices();
 
