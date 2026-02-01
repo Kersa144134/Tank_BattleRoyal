@@ -36,6 +36,22 @@ namespace UISystem.Manager
         [SerializeField]
         private Fade _fade;
 
+        /// <summary>プレイフェーズ用アニメーター</summary>
+        [SerializeField]
+        private Animator _playAnimator;
+
+        /// <summary>非プレイフェーズ用アニメーター</summary>
+        [SerializeField]
+        private Animator _notPlayAnimator;
+
+        /// <summary>カメラ用アニメーター</summary>
+        [SerializeField]
+        private Animator _cameraAnimator;
+
+        /// <summary>ボリューム用アニメーター</summary>
+        [SerializeField]
+        private Animator _volumeAnimator;
+
         // --------------------------------------------------
         // 演出 <2 値化>
         // --------------------------------------------------
@@ -204,8 +220,8 @@ namespace UISystem.Manager
         // フィールド
         // ======================================================
 
-        /// <summary>UI アニメーション用アニメーター</summary>
-        private Animator _uiAnimator;
+        /// <summary>エフェクト用アニメーター</summary>
+        private Animator _effectAnimator;
 
         /// <summary>現在インゲーム状態かどうか</summary>
         private bool _isInGame;
@@ -214,15 +230,36 @@ namespace UISystem.Manager
         // 定数
         // ======================================================
 
+        // --------------------------------------------------
+        // アニメーション名
+        // --------------------------------------------------
+        /// <summary>開始前アニメーション名</summary>
+        private const string READY_ANIMATION_NAME = "Ready";
+
+        /// <summary>終了アニメーション名</summary>
+        private const string FINISH_ANIMATION_NAME = "Finish";
+
+        /// <summary>Show アニメーション名</summary>
+        private const string SHOW_ANIMATION_NAME = "Show";
+
+        /// <summary>Hide アニメーション名</summary>
+        private const string HIDE_ANIMATION_NAME = "Hide";
+
+        /// <summary>攻撃時アニメーション名</summary>
+        private const string FIRE_ANIMATION_NAME = "Fire";
+
+        /// <summary>エフェクト発火時アニメーション名</summary>
+        private const string FLASH_ANIMATION_NAME = "Flash";
+
         /// <summary>死亡アニメーション名</summary>
-        private const string DIE_STATE_NAME = "Die";
+        private const string DIE_ANIMATION_NAME = "Die";
 
         /// <summary>撃破アニメーション名</summary>
-        private const string DESTROY_STATE_NAME = "Destroy";
+        private const string DESTROY_ANIMATION_NAME = "Destroy";
 
-        /// <summary>ゲーム終了アニメーション名</summary>
-        private const string FINISH_STATE_NAME = "Finish";
-
+        // --------------------------------------------------
+        // パラメーター
+        // --------------------------------------------------
         /// <summary>フェード演出の時間</summary>
         private const float FADE_TIME = 0.5f;
 
@@ -257,9 +294,14 @@ namespace UISystem.Manager
 
         public void OnEnter()
         {
-            _uiAnimator = GetComponent<Animator>();
+            _effectAnimator = GetComponent<Animator>();
+
             // タイムスケールを無視する
-            _uiAnimator.updateMode = AnimatorUpdateMode.UnscaledTime;
+            _playAnimator.updateMode = AnimatorUpdateMode.UnscaledTime;
+            _notPlayAnimator.updateMode = AnimatorUpdateMode.UnscaledTime;
+            _cameraAnimator.updateMode = AnimatorUpdateMode.UnscaledTime;
+            _volumeAnimator.updateMode = AnimatorUpdateMode.UnscaledTime;
+            _effectAnimator.updateMode = AnimatorUpdateMode.UnscaledTime;
 
             _binarizationPostProcessController =
                 new BinarizationPostProcessController(
@@ -349,7 +391,7 @@ namespace UISystem.Manager
             if (phase == PhaseType.Finish)
             {
                 // 先頭から再生
-                _uiAnimator.Play(FINISH_STATE_NAME, 0, 0f);
+                _effectAnimator.Play(FINISH_ANIMATION_NAME, 0, 0f);
             }
         }
 
@@ -416,7 +458,7 @@ namespace UISystem.Manager
                 logMessage = "撃破された";
 
                 // 先頭から再生
-                _uiAnimator.Play(DIE_STATE_NAME, 0, 0f);
+                _effectAnimator.Play(DIE_ANIMATION_NAME, 0, 0f);
             }
             // 敵戦車の場合
             else
@@ -428,13 +470,21 @@ namespace UISystem.Manager
                 logMessage = $"戦車{displayTankId} を撃破";
 
                 // 先頭から再生
-                _uiAnimator.Play(DESTROY_STATE_NAME, 0, 0f);
+                _effectAnimator.Play(DESTROY_ANIMATION_NAME, 0, 0f);
             }
 
             // ログ UI に追加
             _logRotationUIController.AddLog(logMessage);
         }
 
+        /// <summary>
+        /// 攻撃時の処理を行うハンドラ
+        /// </summary>
+        public void NotifyFireBullet()
+        {
+            _cameraAnimator.Play(FIRE_ANIMATION_NAME, 0, 0f);
+        }
+        
         // --------------------------------------------------
         // アニメーションイベント
         // --------------------------------------------------
@@ -443,6 +493,8 @@ namespace UISystem.Manager
         /// </summary>
         public void ReadyPhaseAnimationStart()
         {
+            _notPlayAnimator.Play(READY_ANIMATION_NAME, 0, 0f);
+
             _fade.FadeOut(FADE_TIME);
         }
 
@@ -451,6 +503,8 @@ namespace UISystem.Manager
         /// </summary>
         public void ReadyPhaseAnimationFinish()
         {
+            _playAnimator.Play(SHOW_ANIMATION_NAME, 0, 0f);
+
             OnReadyPhaseAnimationFinished?.Invoke();
         }
 
@@ -459,6 +513,8 @@ namespace UISystem.Manager
         /// </summary>
         public void FinishPhaseAnimationStart()
         {
+            _playAnimator.Play(HIDE_ANIMATION_NAME, 0, 0f);
+            _notPlayAnimator.Play(FINISH_ANIMATION_NAME, 0, 0f);
         }
 
         /// <summary>
@@ -467,6 +523,7 @@ namespace UISystem.Manager
         public void FinishPhaseAnimationFinish()
         {
             _fade.FadeIn(FADE_TIME);
+
             OnFinishPhaseAnimationFinished?.Invoke();
         }
 
@@ -475,6 +532,9 @@ namespace UISystem.Manager
         /// </summary>
         public void FlashAnimationStart()
         {
+            _playAnimator.Play(HIDE_ANIMATION_NAME, 0, 0f);
+            _cameraAnimator.Play(FLASH_ANIMATION_NAME, 0, 0f);
+
             OnFlashAnimationStarted?.Invoke(DESTROY_TIME_SCALE);
         }
         
@@ -483,9 +543,11 @@ namespace UISystem.Manager
         /// </summary>
         public void FlashAnimationFinish()
         {
+            _playAnimator.Play(SHOW_ANIMATION_NAME, 0, 0f);
+
             OnFlashAnimationFinished?.Invoke(DEFAULT_TIME_SCALE);
         }
-        
+
         /// <summary>
         /// 死亡アニメーション終了時に呼ばれる処理
         /// </summary>
@@ -500,6 +562,22 @@ namespace UISystem.Manager
         public void FadeInAnimationStart()
         {
             _fade.FadeIn(FADE_TIME);
+        }
+
+        /// <summary>
+        /// フラッシュアニメーションのボリュームエフェクト開始時に呼ばれる処理
+        /// </summary>
+        public void VolumeFlashEffectStart()
+        {
+            _volumeAnimator.Play(FLASH_ANIMATION_NAME, 0, 0f);
+        }
+
+        /// <summary>
+        /// 死亡アニメーションのボリュームエフェクト開始時に呼ばれる処理
+        /// </summary>
+        public void VolumeDieEffectStart()
+        {
+            _volumeAnimator.Play(DIE_ANIMATION_NAME, 0, 0f);
         }
     }
 }

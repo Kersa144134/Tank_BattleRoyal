@@ -357,6 +357,7 @@ namespace SceneSystem.Utility
 
             _context.SceneObjectRegistry?.RegisterBullet(bullet);
             _context.CollisionManager?.RegisterBullet(bullet);
+            _context.UIManager?.NotifyFireBullet();
         }
 
         /// <summary>

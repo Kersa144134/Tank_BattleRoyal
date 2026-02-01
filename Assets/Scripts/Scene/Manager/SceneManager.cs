@@ -81,6 +81,9 @@ namespace SceneSystem.Manager
         // 定数
         // ======================================================
 
+        /// <summary>アプリケーション全体で固定する目標 FPS</summary>
+        private const int TARGET_FRAME_RATE = 120;
+        
         /// <summary>PhaseData を配置している Resources フォルダパス</summary>
         private const string PHASE_DATA_RESOURCES_PATH = "Phase";
         
@@ -90,6 +93,9 @@ namespace SceneSystem.Manager
 
         private void Awake()
         {
+            // アプリケーションのフレームレートを固定値に設定
+            Application.targetFrameRate = TARGET_FRAME_RATE;
+            
             // 全フェーズデータを読み込む
             PhaseData[] phaseDataList = Resources.LoadAll<PhaseData>(PHASE_DATA_RESOURCES_PATH);
 
@@ -230,7 +236,7 @@ namespace SceneSystem.Manager
         /// </summary>
         private void ChangeScene(in string sceneName)
         {
-            // 無効なシーン名は無視
+            // 無効なシーン名なら処理なし
             if (string.IsNullOrEmpty(sceneName))
             {
                 return;
