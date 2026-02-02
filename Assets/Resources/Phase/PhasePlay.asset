@@ -14,10 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _phaseType: 3
   _updatableTypeNames:
-  - SceneObjectRegistry
-  - BaseTankRootManager
-  - BulletPool
-  - ItemPool
-  - CollisionManager
-  - CameraManager
-  - BaseUIManager
+  - SceneSystem.Manager.SceneObjectRegistry
+  - TankSystem.Manager.PlayerTankRootManager
+  - TankSystem.Manager.EnemyTankRootManager
+  - WeaponSystem.Manager.BulletPool
+  - ItemSystem.Manager.ItemPool
+  - CollisionSystem.Manager.CollisionManager
+  - CameraSystem.Manager.CameraManager
+  - UISystem.Manager.MainUIManager

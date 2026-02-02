@@ -6,13 +6,13 @@
 // 概要     : シーン遷移、フェーズ管理、Update 管理を統括する
 // ======================================================
 
-using InputSystem.Manager;
+using System;
+using System.Linq;
+using UnityEngine;
 using SceneSystem.Controller;
 using SceneSystem.Data;
 using SceneSystem.Interface;
 using SceneSystem.Utility;
-using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace SceneSystem.Manager
 {
@@ -37,14 +37,14 @@ namespace SceneSystem.Manager
         // コンポーネント参照
         // ======================================================
 
-        /// <summary>フェーズ単位の IUpdatable を保持するクラス</summary>
-        private PhaseRuntimeData _phaseRuntimeData = new PhaseRuntimeData();
-
         /// <summary>フェーズ遷移条件管理クラス</summary>
         private PhaseManager _phaseManager = new PhaseManager();
 
         /// <summary>フェーズ切替制御クラス</summary>
         private PhaseController _phaseController;
+
+        /// <summary>フェーズの初期化を行うクラス</summary>
+        private PhaseInitializer _phaseInitializer = new PhaseInitializer();
 
         /// <summary>Update を管理するクラス</summary>
         private UpdateManager _updateManager;
@@ -52,8 +52,8 @@ namespace SceneSystem.Manager
         /// <summary>IUpdatable を実装しているコンポーネントを取得するクラス</summary>
         private UpdatableCollector _updatableCollector = new UpdatableCollector();
 
-        /// <summary>IUpdatable の初期化と参照解決を行うクラス</summary>
-        private UpdatableBootstrapper _bootstrapper;
+        /// <summary>IUpdatable の初期化を行うクラス</summary>
+        private UpdatableInitializer _bootstrapper;
 
         /// <summary>シーン内イベントを仲介するクラス</summary>
         private SceneEventRouter _sceneEventRouter;
@@ -95,70 +95,49 @@ namespace SceneSystem.Manager
         
         /// <summary>PhaseData を配置している Resources フォルダパス</summary>
         private const string PHASE_DATA_RESOURCES_PATH = "Phase";
-        
+
         // ======================================================
         // Unityイベント
         // ======================================================
 
         private void Awake()
         {
-            // アプリケーションのフレームレートを固定値に設定
+            // フレームレート固定
             Application.targetFrameRate = TARGET_FRAME_RATE;
 
-            // 全フェーズデータを読み込む
+            // フェーズデータ読み込み
             PhaseData[] phaseDataList = Resources.LoadAll<PhaseData>(PHASE_DATA_RESOURCES_PATH);
 
-            // ======================================================
-            // フェーズごとに Updatable を収集・登録
-            // ======================================================
-            foreach (PhaseData phaseData in phaseDataList)
-            {
-                // フェーズ向けに型名を取得
-                string[] typeNames = phaseData.GetUpdatableTypeNames();
+            // シーン上の IUpdatable 収集
+            _updatableCollector = new UpdatableCollector();
+            IUpdatable[] allUpdatables = _updatableCollector.Collect(_components);
 
-                // フェーズ名を渡して収集（ログに反映）
-                IUpdatable[] phaseUpdatables = _updatableCollector.Collect(
-                    _components,
-                    typeNames,
-                    phaseData.Phase.ToString() // ここを追加
-                );
-
-                // PhaseRuntimeData に登録
-                _phaseRuntimeData.RegisterPhase(
-                    phaseData.Phase, // これで正しい PhaseType に登録される
-                    phaseUpdatables
-                );
-            }
-
-            // Update 処理対象管理クラスの生成
             UpdateController updateController = new UpdateController();
 
-            // フェーズ切替処理クラスの生成
-            _phaseController = new PhaseController(
-                _phaseRuntimeData,
-                updateController
-            );
+            // PhaseController 初期化
+            _phaseController = new PhaseController(updateController);
 
-            // Update 管理クラスの生成
+            // UpdateManager 初期化
             _updateManager = new UpdateManager(updateController);
 
-            // Bootstrapper を通じてコンポーネント初期化
-            _bootstrapper = new UpdatableBootstrapper(_updatableCollector);
+            // フェーズごとに Updatable を登録
+            _phaseInitializer.Initialize(_phaseController, allUpdatables, phaseDataList);
+
+            // Bootstrapper を通じた参照初期化
+            _bootstrapper = new UpdatableInitializer(_updatableCollector);
             UpdatableContext context = _bootstrapper.Initialize(_components);
 
-            // シーンイベントクラスの生成
+            // シーンイベント初期化
             _sceneEventRouter = new SceneEventRouter(context);
-
-            // イベント購読
             _sceneEventRouter.Subscribe();
             _phaseManager.OnOptionButtonPressed += HandleOptionButtonPressed;
             _sceneEventRouter.OnPhaseChanged += SetTargetPhase;
 
-            // 初期設定
-            Scene currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
-            _currentScene = currentScene.name;
+            // 初期状態設定
+            _currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
             _targetScene = _currentScene;
             _targetPhase = _startPhase;
+            _currentPhase = _startPhase;
             _isSceneChanged = true;
             _elapsedTime = 0.0f;
         }

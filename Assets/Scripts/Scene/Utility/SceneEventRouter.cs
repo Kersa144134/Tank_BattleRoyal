@@ -16,7 +16,6 @@ using ItemSystem.Data;
 using SceneSystem.Data;
 using TankSystem.Data;
 using TankSystem.Manager;
-using UISystem.Manager;
 using WeaponSystem.Data;
 
 namespace SceneSystem.Utility
@@ -134,21 +133,21 @@ namespace SceneSystem.Utility
             // --------------------------------------------------
             // UI
             // --------------------------------------------------
-            if (_context.UIManager != null && _context.UIManager is TitleUIManager titleUIManager)
+            if (_context.TitleUIManager != null)
             {
-                titleUIManager.OnTitlePhaseAnimationFinished += HandleTitlePhaseAnimationFinish;
+                _context.TitleUIManager.OnTitlePhaseAnimationFinished += HandleTitlePhaseAnimationFinish;
             }
-            if (_context.UIManager != null && _context.UIManager is MainUIManager mainUIManager)
+            if (_context.MainUIManager != null)
             {
-                mainUIManager.OnReadyPhaseAnimationFinished += HandleReadyPhaseAnimationFinish;
-                mainUIManager.OnFinishPhaseAnimationFinished += HandleFinishPhaseAnimationFinish;
-                mainUIManager.OnFlashAnimationStarted += HandleFlashAnimationStart;
-                mainUIManager.OnFlashAnimationFinished += HandleFlashAnimationFinish;
-                mainUIManager.OnDieAnimationFinished += HandleDieAnimationFinish;
+                _context.MainUIManager.OnReadyPhaseAnimationFinished += HandleReadyPhaseAnimationFinish;
+                _context.MainUIManager.OnFinishPhaseAnimationFinished += HandleFinishPhaseAnimationFinish;
+                _context.MainUIManager.OnFlashAnimationStarted += HandleFlashAnimationStart;
+                _context.MainUIManager.OnFlashAnimationFinished += HandleFlashAnimationFinish;
+                _context.MainUIManager.OnDieAnimationFinished += HandleDieAnimationFinish;
             }
-            if (_context.UIManager != null && _context.UIManager is ResultUIManager resultUIManager)
+            if (_context.ResultUIManager != null)
             {
-                resultUIManager.OnResultPhaseAnimationFinished += HandleResultPhaseAnimationFinish;
+                _context.ResultUIManager.OnResultPhaseAnimationFinished += HandleResultPhaseAnimationFinish;
             }
 
             // 購読完了フラグを更新
@@ -222,21 +221,21 @@ namespace SceneSystem.Utility
             // --------------------------------------------------
             // UI
             // --------------------------------------------------
-            if (_context.UIManager != null && _context.UIManager is TitleUIManager titleUIManager)
+            if (_context.TitleUIManager != null)
             {
-                titleUIManager.OnTitlePhaseAnimationFinished -= HandleTitlePhaseAnimationFinish;
+                _context.TitleUIManager.OnTitlePhaseAnimationFinished -= HandleTitlePhaseAnimationFinish;
             }
-            if (_context.UIManager != null && _context.UIManager is MainUIManager mainUIManager)
+            if (_context.MainUIManager != null)
             {
-                mainUIManager.OnReadyPhaseAnimationFinished -= HandleReadyPhaseAnimationFinish;
-                mainUIManager.OnFinishPhaseAnimationFinished -= HandleFinishPhaseAnimationFinish;
-                mainUIManager.OnFlashAnimationStarted -= HandleFlashAnimationStart;
-                mainUIManager.OnFlashAnimationFinished -= HandleFlashAnimationFinish;
-                mainUIManager.OnDieAnimationFinished -= HandleDieAnimationFinish;
+                _context.MainUIManager.OnReadyPhaseAnimationFinished -= HandleReadyPhaseAnimationFinish;
+                _context.MainUIManager.OnFinishPhaseAnimationFinished -= HandleFinishPhaseAnimationFinish;
+                _context.MainUIManager.OnFlashAnimationStarted -= HandleFlashAnimationStart;
+                _context.MainUIManager.OnFlashAnimationFinished -= HandleFlashAnimationFinish;
+                _context.MainUIManager.OnDieAnimationFinished -= HandleDieAnimationFinish;
             }
-            if (_context.UIManager != null && _context.UIManager is ResultUIManager resultUIManager)
+            if (_context.ResultUIManager != null)
             {
-                resultUIManager.OnResultPhaseAnimationFinished -= HandleResultPhaseAnimationFinish;
+                _context.ResultUIManager.OnResultPhaseAnimationFinished -= HandleResultPhaseAnimationFinish;
             }
 
 
@@ -273,10 +272,7 @@ namespace SceneSystem.Utility
         /// <param name="limitTime">制限時間（秒）</param>
         public void UpdateLimitTimeDisplay(in float elapsedTime, in float limitTime)
         {
-            if (_context.UIManager is MainUIManager mainUIManager)
-            {
-                mainUIManager.UpdateLimitTimeDisplay(elapsedTime, limitTime);
-            }
+            _context.MainUIManager?.UpdateLimitTimeDisplay(elapsedTime, limitTime);
         }
 
         // ======================================================
@@ -313,10 +309,7 @@ namespace SceneSystem.Utility
         /// </summary>
         private void HandleFireModeChangeButtonPressed()
         {
-            if (_context.UIManager is MainUIManager mainUIManager)
-            {
-                mainUIManager.UpdateBulletIcons();
-            }
+            _context.MainUIManager?.UpdateBulletIcons();
         }
 
         /// <summary>
@@ -378,10 +371,7 @@ namespace SceneSystem.Utility
         /// </summary>
         private void HandleDurabilityChanged()
         {
-            if (_context.UIManager is MainUIManager mainUIManager)
-            {
-                mainUIManager.NotifyDurabilityChanged();
-            }
+            _context.MainUIManager?.NotifyDurabilityChanged();
         }
 
         /// <summary>
@@ -389,10 +379,7 @@ namespace SceneSystem.Utility
         /// </summary>
         private void HandleBroken(int TankId)
         {
-            if (_context.UIManager is MainUIManager mainUIManager)
-            {
-                mainUIManager.NotifyBrokenTanks(TankId);
-            }
+            _context.MainUIManager?.NotifyBrokenTanks(TankId);
             _context.CollisionManager?.UnregisterTank(TankId);
         }
 
@@ -413,10 +400,7 @@ namespace SceneSystem.Utility
 
             _context.SceneObjectRegistry?.RegisterBullet(bullet);
             _context.CollisionManager?.RegisterBullet(bullet);
-            if (_context.UIManager is MainUIManager mainUIManager)
-            {
-                mainUIManager.NotifyFireBullet();
-            }
+            _context.MainUIManager?.NotifyFireBullet();
         }
 
         /// <summary>
@@ -525,10 +509,7 @@ namespace SceneSystem.Utility
             {
             }
 
-            if (_context.UIManager is MainUIManager mainUIManager)
-            {
-                mainUIManager.NotifyItemAcquired(itemSlot.ItemData.Name);
-            }
+            _context.MainUIManager?.NotifyItemAcquired(itemSlot.ItemData.Name);
         }
 
         // --------------------------------------------------

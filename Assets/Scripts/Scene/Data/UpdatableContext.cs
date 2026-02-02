@@ -7,6 +7,7 @@
 // ======================================================
 
 using CameraSystem.Manager;
+using CollisionSystem.Manager;
 using ItemSystem.Manager;
 using SceneSystem.Interface;
 using SceneSystem.Manager;
@@ -40,8 +41,14 @@ namespace SceneSystem.Data
         /// <summary>アイテムプール</summary>
         public ItemPool ItemPool;
 
-        /// <summary>UI管理</summary>
-        public BaseUIManager UIManager;
+        /// <summary>タイトル UI 管理</summary>
+        public TitleUIManager TitleUIManager;
+
+        /// <summary>メイン UI 管理</summary>
+        public MainUIManager MainUIManager;
+
+        /// <summary>リザルト UI 管理</summary>
+        public ResultUIManager ResultUIManager;
 
         /// <summary>プレイヤー戦車</summary>
         public PlayerTankRootManager PlayerTank;

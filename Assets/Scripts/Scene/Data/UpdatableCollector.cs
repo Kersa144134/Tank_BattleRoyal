@@ -6,11 +6,11 @@
 // 概要     : 指定ルートから IUpdatable コンポーネントを取得するクラス
 // ======================================================
 
-using SceneSystem.Interface;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using SceneSystem.Interface;
 
 namespace SceneSystem.Data
 {
@@ -32,7 +32,7 @@ namespace SceneSystem.Data
         /// null または空の場合はすべての IUpdatable を取得
         /// </param>
         /// <returns>収集した IUpdatable 配列</returns>
-        public IUpdatable[] Collect(in GameObject[] roots, in string[] typeNames = null, string phaseName = "Unknown")
+        public IUpdatable[] Collect(in GameObject[] roots, in string[] typeNames = null, string phaseName = "None")
         {
             HashSet<IUpdatable> updatables = new HashSet<IUpdatable>();
 
@@ -62,7 +62,6 @@ namespace SceneSystem.Data
                 // ======================================================
                 foreach (string typeName in typeNames)
                 {
-                    // 空文字は無視
                     if (string.IsNullOrEmpty(typeName))
                     {
                         continue;
@@ -96,14 +95,6 @@ namespace SceneSystem.Data
                     }
                 }
             }
-
-            // ======================================================
-            // フェーズごとのログ表示
-            // ======================================================
-            string[] updatableTypeNames = updatables.Select(u => u.GetType().FullName).ToArray();
-            UnityEngine.Debug.Log(
-                $"[UpdatableCollector] フェーズ {phaseName} に {updatables.Count} 件の IUpdatable を収集: {string.Join(", ", updatableTypeNames)}"
-            );
 
             // HashSet から配列に変換して返却
             return updatables.ToArray();

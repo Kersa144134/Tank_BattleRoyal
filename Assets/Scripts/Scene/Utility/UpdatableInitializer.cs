@@ -1,35 +1,36 @@
 // ======================================================
-// UpdatableBootstrapper.cs
+// UpdatableInitializer.cs
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-17
-// 更新日時 : 2025-12-17
-// 概要     : IUpdatable の収集・初期化・参照キャッシュを行う
+// 更新日時 : 2026-02-02
+// 概要     : シーン上の IUpdatable を収集し、
+//            初期化済みコンテキストを生成する
 // ======================================================
 
 using System.Collections.Generic;
 using UnityEngine;
-using CameraSystem.Manager;
-using ItemSystem.Manager;
-using SceneSystem.Data;
 using SceneSystem.Interface;
-using SceneSystem.Manager;
+using CameraSystem.Manager;
+using CollisionSystem.Manager;
+using ItemSystem.Manager;
 using TankSystem.Manager;
 using UISystem.Manager;
 using WeaponSystem.Manager;
+using SceneSystem.Data;
+using SceneSystem.Manager;
 
 namespace SceneSystem.Utility
 {
     /// <summary>
-    /// シーン内に存在する IUpdatable を収集し、
-    /// 初期化および参照キャッシュを行うクラス
+    /// シーン上の IUpdatable 収集・初期化・参照キャッシュを行うクラス
     /// </summary>
-    public sealed class UpdatableBootstrapper
+    public sealed class UpdatableInitializer
     {
         // ======================================================
         // フィールド
         // ======================================================
 
-        /// <summary>IUpdatable を実装しているコンポーネントを取得するクラス</summary>
+        /// <summary>IUpdatable を収集するコレクター</summary>
         private readonly UpdatableCollector _updatableCollector;
 
         // ======================================================
@@ -37,10 +38,10 @@ namespace SceneSystem.Utility
         // ======================================================
 
         /// <summary>
-        /// UpdateManager を生成する
+        /// Bootstrapper を生成
         /// </summary>
         /// <param name="updatableCollector">IUpdatable 収集用コレクター</param>
-        public UpdatableBootstrapper(UpdatableCollector updatableCollector)
+        public UpdatableInitializer(in UpdatableCollector updatableCollector)
         {
             _updatableCollector = updatableCollector;
         }
@@ -50,27 +51,40 @@ namespace SceneSystem.Utility
         // ======================================================
 
         /// <summary>
-        /// IUpdatable を初期化し、参照コンテキストを生成する
+        /// シーン上の IUpdatable を収集・初期化し、コンテキストを生成する
         /// </summary>
-        /// <param name="components">IUpdatable を含む GameObject 配列</param>
-        /// <param name="typeNames">取得対象の型名配列（null または空で全取得）</param>
-        /// <returns>初期化済み参照をまとめたコンテキスト</returns>
-        public UpdatableContext Initialize(GameObject[] components, string[] typeNames = null)
+        /// <param name="components">収集対象の GameObject 配列</param>
+        /// <returns>初期化済み UpdatableContext</returns>
+        public UpdatableContext Initialize(in GameObject[] components)
         {
-            // IUpdatable をすべて収集（型指定があれば抽象クラスや派生クラスも取得）
-            IUpdatable[] updatables = _updatableCollector.Collect(components, typeNames);
+            // --------------------------------------------------
+            // シーン上の全 IUpdatable を収集
+            // 型指定なしで収集するのでフェーズ問わず全件取得
+            // --------------------------------------------------
+            IUpdatable[] allUpdatables = _updatableCollector.Collect(components);
 
-            // EnemyTankRootManager を一時格納するためのキャッシュ
-            List<EnemyTankRootManager> enemies = new List<EnemyTankRootManager>();
+            // --------------------------------------------------
+            // コンテキスト生成と参照キャッシュ
+            // --------------------------------------------------
+            return BuildContext(allUpdatables);
+        }
 
-            // SceneObjectRegistry を他クラスへ注入するためのキャッシュ
-            SceneObjectRegistry cacheSceneObjectRegistry = null;
+        // ======================================================
+        // プライベートメソッド
+        // ======================================================
 
-            // コンテキスト生成
+        /// <summary>
+        /// IUpdatable から UpdatableContext を生成し、参照をキャッシュする
+        /// </summary>
+        private UpdatableContext BuildContext(in IUpdatable[] allUpdatables)
+        {
             UpdatableContext context = new UpdatableContext();
+            context.Updatables = allUpdatables;
 
-            // 初期化と参照キャッシュ
-            foreach (IUpdatable updatable in updatables)
+            List<EnemyTankRootManager> enemies = new List<EnemyTankRootManager>();
+            SceneObjectRegistry cacheSceneRegistry = null;
+
+            foreach (IUpdatable updatable in allUpdatables)
             {
                 if (updatable == null)
                 {
@@ -78,10 +92,10 @@ namespace SceneSystem.Utility
                 }
 
                 // SceneObjectRegistry を取得
-                if (updatable is SceneObjectRegistry sceneObjectRegistry)
+                if (updatable is SceneObjectRegistry registry)
                 {
-                    context.SceneObjectRegistry = sceneObjectRegistry;
-                    cacheSceneObjectRegistry = sceneObjectRegistry;
+                    context.SceneObjectRegistry = registry;
+                    cacheSceneRegistry = registry;
                 }
 
                 // BulletPool を取得
@@ -96,11 +110,11 @@ namespace SceneSystem.Utility
                     context.CameraManager = cameraManager;
                 }
 
-                // CollisionManager を取得
+                // CollisionManager を取得して SceneObjectRegistry を注入
                 if (updatable is CollisionManager collisionManager)
                 {
                     context.CollisionManager = collisionManager;
-                    collisionManager.SetSceneRegistry(cacheSceneObjectRegistry);
+                    collisionManager.SetSceneRegistry(cacheSceneRegistry);
                 }
 
                 // ItemPool を取得
@@ -112,15 +126,15 @@ namespace SceneSystem.Utility
                 // UIManager を取得
                 if (updatable is TitleUIManager titleUIManager)
                 {
-                    context.UIManager = titleUIManager;
+                    context.TitleUIManager = titleUIManager;
                 }
                 if (updatable is MainUIManager mainUIManager)
                 {
-                    context.UIManager = mainUIManager;
+                    context.MainUIManager = mainUIManager;
                 }
                 if (updatable is ResultUIManager resultUIManager)
                 {
-                    context.UIManager = resultUIManager;
+                    context.ResultUIManager = resultUIManager;
                 }
 
                 // PlayerTank を取得
@@ -139,11 +153,8 @@ namespace SceneSystem.Utility
                 updatable.OnEnter();
             }
 
-            // Enemy 配列を確定
+            // EnemyTank 配列をコンテキストに設定
             context.EnemyTanks = enemies.ToArray();
-
-            // IUpdatable 配列を保持
-            context.Updatables = updatables;
 
             return context;
         }

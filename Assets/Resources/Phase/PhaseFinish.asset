@@ -14,8 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _phaseType: 5
   _updatableTypeNames:
-  - SceneObjectRegistry
-  - BaseTankRootManager
-  - CollisionManager
-  - CameraManager
-  - BaseUIManager
+  - SceneSystem.Manager.SceneObjectRegistry
+  - TankSystem.Manager.PlayerTankRootManager
+  - TankSystem.Manager.EnemyTankRootManager
+  - CollisionSystem.Manager.CollisionManager
+  - CameraSystem.Manager.CameraManager
+  - UISystem.Manager.MainUIManager

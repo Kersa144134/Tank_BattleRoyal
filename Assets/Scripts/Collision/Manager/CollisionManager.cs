@@ -19,9 +19,10 @@ using ObstacleSystem.Data;
 using SceneSystem.Interface;
 using SceneSystem.Manager;
 using TankSystem.Data;
+using TankSystem.Manager;
 using WeaponSystem.Data;
 
-namespace TankSystem.Manager
+namespace CollisionSystem.Manager
 {
     /// <summary>
     /// 戦車・障害物・アイテムの衝突判定を一元管理するマネージャー

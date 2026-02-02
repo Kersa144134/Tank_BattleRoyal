@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _phaseType: 1
   _updatableTypeNames:
-  - BaseUIManager
+  - UISystem.Manager.TitleUIManager
