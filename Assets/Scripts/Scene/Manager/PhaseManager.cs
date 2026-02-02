@@ -31,7 +31,7 @@ namespace SceneSystem.Manager
         private const string RESULT_SCENE_NAME = "ResultScene";
 
         /// <summary>Play フェーズから Finish フェーズへ遷移するまでのゲームプレイ時間（秒）</summary>
-        public const float PLAY_TO_FINISH_WAIT_TIME = 10.0f;
+        public const float PLAY_TO_FINISH_WAIT_TIME = 120.0f;
 
         // ======================================================
         // フィールド

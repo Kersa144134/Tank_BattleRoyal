@@ -17,6 +17,7 @@ using SceneSystem.Data;
 using TankSystem.Data;
 using TankSystem.Manager;
 using WeaponSystem.Data;
+using UnityEngine.SocialPlatforms;
 
 namespace SceneSystem.Utility
 {
@@ -534,8 +535,10 @@ namespace SceneSystem.Utility
         /// <summary>
         /// Finish フェーズアニメーション終了時に呼ばれる処理
         /// </summary>
-        private void HandleFinishPhaseAnimationFinish()
+        private void HandleFinishPhaseAnimationFinish(float timeScale)
         {
+            _context.SceneObjectRegistry?.ChangeTimeScale(timeScale);
+
             OnPhaseChanged?.Invoke(PhaseType.Result);
         }
 
@@ -568,8 +571,10 @@ namespace SceneSystem.Utility
         /// <summary>
         /// 死亡アニメーション終了時に呼ばれる処理
         /// </summary>
-        private void HandleDieAnimationFinish()
+        private void HandleDieAnimationFinish(float timeScale)
         {
+            _context.SceneObjectRegistry?.ChangeTimeScale(timeScale);
+
             OnPhaseChanged?.Invoke(PhaseType.Result);
         }
     }

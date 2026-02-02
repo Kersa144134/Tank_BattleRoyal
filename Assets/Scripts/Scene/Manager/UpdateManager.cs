@@ -44,9 +44,6 @@ namespace SceneSystem.Manager
         // パブリックメソッド
         // ======================================================
 
-        // --------------------------------------------------
-        // Update 管理
-        // --------------------------------------------------
         public void Update(in float unscaledDeltaTime, in float elapsedTime)
         {
             _updateController.OnUpdate(unscaledDeltaTime, elapsedTime);

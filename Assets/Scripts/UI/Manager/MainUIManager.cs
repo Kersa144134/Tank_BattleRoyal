@@ -179,7 +179,7 @@ namespace UISystem.Manager
         public event Action OnReadyPhaseAnimationFinished;
 
         /// <summary>Finish フェーズアニメーション終了時</summary>
-        public event Action OnFinishPhaseAnimationFinished;
+        public event Action<float> OnFinishPhaseAnimationFinished;
 
         /// <summary>撃破アニメーション開始時</summary>
         public event Action<float> OnFlashAnimationStarted;
@@ -188,7 +188,7 @@ namespace UISystem.Manager
         public event Action<float> OnFlashAnimationFinished;
 
         /// <summary>死亡アニメーション終了時</summary>
-        public event Action OnDieAnimationFinished;
+        public event Action<float> OnDieAnimationFinished;
 
         // ======================================================
         // IUpdatable 派生イベント
@@ -452,7 +452,7 @@ namespace UISystem.Manager
         {
             _fade.FadeIn(FADE_TIME);
 
-            OnFinishPhaseAnimationFinished?.Invoke();
+            OnFinishPhaseAnimationFinished?.Invoke(DEFAULT_TIME_SCALE);
         }
 
         /// <summary>
@@ -481,7 +481,7 @@ namespace UISystem.Manager
         /// </summary>
         public void DieAnimationFinish()
         {
-            OnDieAnimationFinished?.Invoke();
+            OnDieAnimationFinished?.Invoke(DEFAULT_TIME_SCALE);
         }
 
         /// <summary>

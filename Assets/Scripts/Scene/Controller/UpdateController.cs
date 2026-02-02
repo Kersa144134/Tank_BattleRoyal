@@ -165,8 +165,6 @@ namespace SceneSystem.Controller
             {
                 _isDirty = true;
             }
-
-            UnityEngine.Debug.Log(_updateSet.Count);
         }
 
         /// <summary>

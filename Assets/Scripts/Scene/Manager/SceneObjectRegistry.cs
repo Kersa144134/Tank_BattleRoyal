@@ -114,11 +114,7 @@ namespace SceneSystem.Manager
             {
                 ChangeTimeScale(FINISH_PHASE_TIME_SCALE);
             }
-        }
-
-        public void OnPhaseExit(in PhaseType phase)
-        {
-            if (phase == PhaseType.Finish)
+            if (phase == PhaseType.Result)
             {
                 ChangeTimeScale(DEFAULT_TIME_SCALE);
             }
