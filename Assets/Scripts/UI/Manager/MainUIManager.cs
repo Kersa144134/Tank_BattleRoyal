@@ -1,136 +1,42 @@
 // ======================================================
-// UIManager.cs
+// MainUIManager.cs
 // 作成者   : 高橋一翔
 // 作成日時 : 2026-01-19
-// 更新日時 : 2026-01-21
-// 概要     : 各種UIコントローラーを生成・更新する
+// 更新日時 : 2026-02-02
+// 概要     : メインシーンで使用される UI 演出を管理するクラス
 // ======================================================
 
 using System;
 using UnityEngine;
-using UnityEngine.Rendering.Universal;
 using UnityEngine.UI;
 using TMPro;
 using SceneSystem.Data;
 using SceneSystem.Interface;
-using ShaderSystem.Controller;
 using TankSystem.Manager;
 using UISystem.Controller;
 
 namespace UISystem.Manager
 {
     /// <summary>
-    /// UI 全体の生成および更新を管理するクラス
+    /// メインシーンにおける UI 演出およびゲーム連動 UI を管理するクラス
     /// </summary>
-    public sealed class UIManager : MonoBehaviour, IUpdatable
+    public sealed class MainUIManager : BaseUIManager, IUpdatable
     {
         // ======================================================
         // インスペクタ設定
         // ======================================================
 
+        [Header("メインシーン固有インスペクタ")]
+
         // --------------------------------------------------
         // 画面アニメーション
         // --------------------------------------------------
         [Header("画面アニメーション")]
-        /// <summary>画面フェードクラス</summary>
-        [SerializeField]
-        private Fade _fade;
-
-        /// <summary>プレイフェーズ用アニメーター</summary>
-        [SerializeField]
-        private Animator _playAnimator;
-
-        /// <summary>非プレイフェーズ用アニメーター</summary>
-        [SerializeField]
-        private Animator _notPlayAnimator;
-
-        /// <summary>カメラ用アニメーター</summary>
+        /// <summary>
+        /// カメラ用アニメーター
+        /// </summary>
         [SerializeField]
         private Animator _cameraAnimator;
-
-        /// <summary>ボリューム用アニメーター</summary>
-        [SerializeField]
-        private Animator _volumeAnimator;
-
-        // --------------------------------------------------
-        // 演出 <2 値化>
-        // --------------------------------------------------
-        [Header("演出 <2 値化>")]
-        /// <summary>2 値化エフェクト用の制御対象となる Full Screen Pass Render Feature</summary>
-        [SerializeField]
-        private ScriptableRendererFeature _binarizationFullScreenPassFeature;
-
-        /// <summary>2 値化エフェクト用の Full Screen Pass で使用するマテリアル</summary>
-        [SerializeField]
-        private Material _binarizationEffectMaterial;
-
-        /// <summary>エフェクトが有効かどうか</summary>
-        [SerializeField]
-        private bool _isBinarizationEffectEnabled;
-
-        /// <summary>歪みの中心座標（UV 空間）</summary>
-        [SerializeField]
-        private Vector2 _binarizationDistortionCenter;
-
-        /// <summary>歪みエフェクトの強度</summary>
-        [SerializeField]
-        private float _binarizationDistortionStrength;
-
-        /// <summary>ノイズエフェクトの強度</summary>
-        [SerializeField]
-        private float _binarizationNoiseStrength;
-
-        /// <summary>ポスタライズ処理のしきい値</summary>
-        [SerializeField]
-        private float _binarizationPosterizationThreshold;
-
-        /// <summary>ポスタライズ明部カラー</summary>
-        [SerializeField, ColorUsage(false, true)]
-        private Color _binarizationPosterizationLightColor;
-
-        /// <summary>ポスタライズ暗部カラー</summary>
-        [SerializeField, ColorUsage(false, true)]
-        private Color _binarizationPosterizationDarkColor;
-
-        // --------------------------------------------------
-        // 演出 <グレースケール>
-        // --------------------------------------------------
-        [Header("演出 <グレースケール>")]
-        /// <summary>グレースケール用の制御対象となる Full Screen Pass Render Feature</summary>
-        [SerializeField]
-        private ScriptableRendererFeature _greyScaleFullScreenPassFeature;
-
-        /// <summary>グレースケール用の Full Screen Pass で使用するマテリアル</summary>
-        [SerializeField]
-        private Material _greyScaleEffectMaterial;
-
-        /// <summary>エフェクトが有効かどうか</summary>
-        [SerializeField]
-        private bool _isGreyScaleEffectEnabled;
-
-        /// <summary>グレースケールの強さ</summary>
-        [SerializeField]
-        private Vector3 _greyScaleStrength;
-
-        /// <summary>歪みの中心座標（UV 空間）</summary>
-        [SerializeField]
-        private Vector2 _greyScaleDistortionCenter;
-
-        /// <summary>歪みエフェクトの強度</summary>
-        [SerializeField]
-        private float _greyScaleDistortionStrength;
-
-        /// <summary>ノイズエフェクトの強度</summary>
-        [SerializeField]
-        private float _greyScaleNoiseStrength;
-
-        /// <summary>ポスタライズ明部カラー</summary>
-        [SerializeField, ColorUsage(false, true)]
-        private Color _greyScalePosterizationLightColor;
-
-        /// <summary>ポスタライズ暗部カラー</summary>
-        [SerializeField, ColorUsage(false, true)]
-        private Color _greyScalePosterizationDarkColor;
 
         // --------------------------------------------------
         // 耐久値バー
@@ -171,7 +77,7 @@ namespace UISystem.Manager
         /// <summary>弾丸アイコン Image 配列</summary>
         [SerializeField]
         private TextMeshProUGUI[] _logTexts;
-        
+
         /// <summary>ログの縦方向表示方向</summary>
         [SerializeField]
         private LogRotationUIController.VerticalDirection _logVerticalDirection;
@@ -195,12 +101,6 @@ namespace UISystem.Manager
         // --------------------------------------------------
         // UI
         // --------------------------------------------------
-        /// <summary>2 値化エフェクト用のシェーダーパラメーターコントローラー</summary>
-        private BinarizationPostProcessController _binarizationPostProcessController;
-
-        /// <summary>グレースケール化エフェクト用のシェーダーパラメーターコントローラー</summary>
-        private GreyScalePostProcessController _greyScalePostProcessController;
-
         /// <summary>ログ表示 UI コントローラー</summary>
         private LogRotationUIController _logRotationUIController;
 
@@ -219,9 +119,6 @@ namespace UISystem.Manager
         // ======================================================
         // フィールド
         // ======================================================
-
-        /// <summary>エフェクト用アニメーター</summary>
-        private Animator _effectAnimator;
 
         /// <summary>現在インゲーム状態かどうか</summary>
         private bool _isInGame;
@@ -260,9 +157,6 @@ namespace UISystem.Manager
         // --------------------------------------------------
         // パラメーター
         // --------------------------------------------------
-        /// <summary>フェード演出の時間</summary>
-        private const float FADE_TIME = 0.5f;
-
         /// <summary>通常時のタイムスケール</summary>
         private const float DEFAULT_TIME_SCALE = 1.0f;
 
@@ -270,13 +164,13 @@ namespace UISystem.Manager
         private const float DESTROY_TIME_SCALE = 0.25f;
 
         // ======================================================
-        // フィールド
+        // イベント
         // ======================================================
 
-        /// <summary>Finish フェーズアニメーション終了時</summary>
+        /// <summary>Ready フェーズアニメーション終了時</summary>
         public event Action OnReadyPhaseAnimationFinished;
 
-        /// <summary>Ready フェーズアニメーション終了時</summary>
+        /// <summary>Finish フェーズアニメーション終了時</summary>
         public event Action OnFinishPhaseAnimationFinished;
 
         /// <summary>撃破アニメーション開始時</summary>
@@ -289,124 +183,92 @@ namespace UISystem.Manager
         public event Action OnDieAnimationFinished;
 
         // ======================================================
-        // IUpdatable イベント
+        // IUpdatable 派生イベント
         // ======================================================
 
-        public void OnEnter()
+        protected override void OnEnterInternal()
         {
-            _effectAnimator = GetComponent<Animator>();
+            base.OnEnterInternal();
 
-            // タイムスケールを無視する
-            if (_playAnimator != null)
-            {
-                _playAnimator.updateMode = AnimatorUpdateMode.UnscaledTime;
-            }
-            if (_notPlayAnimator != null)
-            {
-                _notPlayAnimator.updateMode = AnimatorUpdateMode.UnscaledTime;
-            }
+            // カメラ用 Animator をタイムスケール非依存に設定する
             if (_cameraAnimator != null)
             {
                 _cameraAnimator.updateMode = AnimatorUpdateMode.UnscaledTime;
             }
-            if (_volumeAnimator != null)
-            {
-                _volumeAnimator.updateMode = AnimatorUpdateMode.UnscaledTime;
-            }
-            if (_effectAnimator != null)
-            {
-                _effectAnimator.updateMode = AnimatorUpdateMode.UnscaledTime;
-            }
 
-            _binarizationPostProcessController =
-                new BinarizationPostProcessController(
-                    _binarizationFullScreenPassFeature,
-                    _binarizationEffectMaterial);
-
-            _greyScalePostProcessController =
-                new GreyScalePostProcessController(
-                    _greyScaleFullScreenPassFeature,
-                    _greyScaleEffectMaterial);
-
+            // プレイヤー耐久値 UI が使用可能かを確認する
             if (_playerTankRootManager != null &&
                 _maxDurabilityBarImage != null &&
                 _currentDurabilityBarImage != null &&
                 _diffDurabilityBarImage != null)
             {
-                if (_playerTankRootManager is PlayerTankRootManager)
-                {
-                    _playerDurabilityManager =
+                // プレイヤー用耐久値管理クラスを取得する
+                _playerDurabilityManager =
                     _playerTankRootManager.DurabilityManager;
 
-                    _durabilityBarWidthUIController =
-                        new ValueBarWidthUIController(
-                            _maxDurabilityBarImage,
-                            _currentDurabilityBarImage,
-                            _diffDurabilityBarImage,
-                            _playerTankRootManager.DurabilityManager.MaxDurability,
-                            _playerTankRootManager.DurabilityManager.CurrentDurability
-                        );
-                }
+                // 耐久値バー制御クラスを生成する
+                _durabilityBarWidthUIController =
+                    new ValueBarWidthUIController(
+                        _maxDurabilityBarImage,
+                        _currentDurabilityBarImage,
+                        _diffDurabilityBarImage,
+                        _playerDurabilityManager.MaxDurability,
+                        _playerDurabilityManager.CurrentDurability
+                    );
             }
 
+            // 弾丸アイコン UI が設定されているかを確認する
             if (_bulletIconImages != null)
             {
+                // 弾丸スロット回転制御クラスを生成する
                 _bulletIconSlotRotationUIController =
-                new SlotRotationUIController(
-                    _bulletIconImages,
-                    _bulletIconLayoutDirection,
-                    _bulletIconRotationSign
-                );
+                    new SlotRotationUIController(
+                        _bulletIconImages,
+                        _bulletIconLayoutDirection,
+                        _bulletIconRotationSign
+                    );
             }
 
+            // ログ UI が設定されているかを確認する
             if (_logTexts != null)
             {
+                // ログ回転制御クラスを生成する
                 _logRotationUIController =
-                new LogRotationUIController(
-                    _logTexts,
-                    _logVerticalDirection,
-                    _logInsertDirection
-                );
+                    new LogRotationUIController(
+                        _logTexts,
+                        _logVerticalDirection,
+                        _logInsertDirection
+                    );
             }
         }
 
-        public void OnLateUpdate(in float unscaledDeltaTime)
+        protected override void OnLateUpdateInternal(in float unscaledDeltaTime)
         {
-            _binarizationPostProcessController?.Update(
-                _isBinarizationEffectEnabled,
-                _binarizationDistortionCenter,
-                _binarizationDistortionStrength,
-                _binarizationNoiseStrength,
-                _binarizationPosterizationThreshold,
-                _binarizationPosterizationLightColor,
-                _binarizationPosterizationDarkColor
-            );
-
-            _greyScalePostProcessController?.Update(
-                _isGreyScaleEffectEnabled,
-                _greyScaleStrength,
-                _greyScaleDistortionCenter,
-                _greyScaleDistortionStrength,
-                _greyScaleNoiseStrength,
-                _greyScalePosterizationLightColor,
-                _greyScalePosterizationDarkColor
-            );
+            base.OnLateUpdateInternal(unscaledDeltaTime);
 
             if (!_isInGame)
             {
                 return;
             }
 
+            // プレイヤー耐久値 UI を更新する
             if (_playerDurabilityManager != null)
             {
-                _durabilityBarWidthUIController?.Update(unscaledDeltaTime);
+                _durabilityBarWidthUIController?.Update(Time.unscaledDeltaTime);
             }
 
-            _bulletIconSlotRotationUIController?.Update(unscaledDeltaTime);
-            _logRotationUIController?.Update(unscaledDeltaTime);
+            // 弾丸アイコン UI を更新する
+            _bulletIconSlotRotationUIController?.Update(Time.unscaledDeltaTime);
+
+            // ログ UI を更新する
+            _logRotationUIController?.Update(Time.unscaledDeltaTime);
         }
 
-        public void OnPhaseEnter(in PhaseType phase)
+        // ======================================================
+        // IUpdatable 派生イベント
+        // ======================================================
+
+        protected override void OnPhaseEnterInternal(in PhaseType phase)
         {
             // Play フェーズ開始時にインゲーム状態
             if (phase == PhaseType.Play)
@@ -417,12 +279,11 @@ namespace UISystem.Manager
             // Finish フェーズ開始時に Finish アニメーション再生
             if (phase == PhaseType.Finish)
             {
-                // 先頭から再生
                 _effectAnimator?.Play(FINISH_ANIMATION_NAME, 0, 0f);
             }
         }
 
-        public void OnPhaseExit(in PhaseType phase)
+        protected override void OnPhaseExitInternal(in PhaseType phase)
         {
             // Play フェーズ終了時にインゲーム状態解除
             if (phase == PhaseType.Play)

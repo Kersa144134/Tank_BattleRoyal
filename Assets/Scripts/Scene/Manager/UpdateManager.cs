@@ -6,6 +6,7 @@
 // 概要     : Update 処理を管理する
 // ======================================================
 
+using InputSystem.Manager;
 using SceneSystem.Controller;
 using SceneSystem.Data;
 
@@ -47,20 +48,11 @@ namespace SceneSystem.Manager
         // --------------------------------------------------
         // Update 管理
         // --------------------------------------------------
-        /// <summary>
-        /// 毎フレーム呼び出される Update 処理を実行する
-        /// </summary>
-        /// <param name="unscaledDeltaTime">timeScale の影響を受けない経過時間</param>
-        /// <param name="elapsedTime">インゲームの経過時間</param>
         public void Update(in float unscaledDeltaTime, in float elapsedTime)
         {
             _updateController.OnUpdate(unscaledDeltaTime, elapsedTime);
         }
 
-        /// <summary>
-        /// LateUpdate タイミングで呼び出される処理を実行する
-        /// </summary>
-        /// <param name="unscaledDeltaTime">timeScale の影響を受けない経過時間</param>
         public void LateUpdate(in float unscaledDeltaTime)
         {
             _updateController.OnLateUpdate(unscaledDeltaTime);

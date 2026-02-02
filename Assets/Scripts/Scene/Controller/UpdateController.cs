@@ -6,6 +6,7 @@
 // 概要     : 指定された IUpdatable オブジェクトを保持し OnUpdate を実行するコントローラ
 // ======================================================
 
+using InputSystem.Manager;
 using SceneSystem.Data;
 using SceneSystem.Interface;
 using System.Collections.Generic;
@@ -32,6 +33,16 @@ namespace SceneSystem.Controller
 
         /// <summary>登録内容に変更があったかどうかを示すフラグ</summary>
         private bool _isDirty = true;
+
+        // ======================================================
+        // 定数
+        // ======================================================
+
+        /// <summary>インゲーム用入力マッピングインデックス</summary>
+        private const int INPUT_MAPPING_INGAME = 0;
+
+        /// <summary>アウトゲーム用入力マッピングインデックス</summary>
+        private const int INPUT_MAPPING_OUTGAME = 1;
 
         // ======================================================
         // IUpdatable イベント
@@ -81,6 +92,41 @@ namespace SceneSystem.Controller
             for (int i = 0; i < _updateArray.Length; i++)
             {
                 _updateArray[i].OnPhaseEnter(phase);
+            }
+
+            // 入力マッピングの設定
+            switch (phase)
+            {
+                case PhaseType.Title:
+                    if (InputManager.Instance?.GetCurrentMappingIndex() == INPUT_MAPPING_INGAME)
+                    {
+                        InputManager.Instance?.SetInputMapping(INPUT_MAPPING_OUTGAME);
+                    }
+                    break;
+
+                case PhaseType.Ready:
+                    if (InputManager.Instance?.GetCurrentMappingIndex() == INPUT_MAPPING_OUTGAME)
+                    {
+                        InputManager.Instance?.SetInputMapping(INPUT_MAPPING_INGAME);
+                    }
+                    break;
+
+                case PhaseType.Play:
+                    break;
+
+                case PhaseType.Pause:
+                    break;
+
+                case PhaseType.Result:
+                    // 入力マッピングの設定
+                    if (InputManager.Instance?.GetCurrentMappingIndex() == INPUT_MAPPING_INGAME)
+                    {
+                        InputManager.Instance?.SetInputMapping(INPUT_MAPPING_OUTGAME);
+                    }
+                    break;
+
+                default:
+                    break;
             }
         }
 

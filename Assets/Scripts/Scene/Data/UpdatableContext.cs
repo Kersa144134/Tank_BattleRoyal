@@ -42,7 +42,7 @@ namespace SceneSystem.Data
         public ItemPool ItemPool;
 
         /// <summary>UIŠÇ—</summary>
-        public UIManager UIManager;
+        public BaseUIManager UIManager;
 
         /// <summary>ƒvƒŒƒCƒ„[íÔ</summary>
         public PlayerTankRootManager PlayerTank;

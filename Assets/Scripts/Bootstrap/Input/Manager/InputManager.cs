@@ -157,10 +157,10 @@ namespace InputSystem.Manager
         // ======================================================
 
         /// <summary>
-        /// 現在の入力マッピングを切り替える
+        /// 外部から入力マッピングを設定する
         /// </summary>
         /// <param name="index">マッピング配列のインデックス</param>
-        public void SwitchInputMapping(in int index)
+        public void SetInputMapping(in int index)
         {
             if (_inputMappingConfigs == null || index < 0 || index >= _inputMappingConfigs.Length)
             {

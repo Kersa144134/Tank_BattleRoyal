@@ -85,9 +85,17 @@ namespace SceneSystem.Utility
                 }
 
                 // UIManager ‚ðŽæ“¾
-                if (updatable is UIManager uiManager)
+                if (updatable is TitleUIManager titleUIManager)
                 {
-                    context.UIManager = uiManager;
+                    context.UIManager = titleUIManager;
+                }
+                if (updatable is MainUIManager mainUIManager)
+                {
+                    context.UIManager = mainUIManager;
+                }
+                if (updatable is ResultUIManager resultUIManager)
+                {
+                    context.UIManager = resultUIManager;
                 }
 
                 // PlayerTank ‚ðŽæ“¾

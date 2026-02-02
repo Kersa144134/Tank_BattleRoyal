@@ -15,6 +15,7 @@ using System;
 using System.Collections.Generic;
 using TankSystem.Data;
 using TankSystem.Manager;
+using UISystem.Manager;
 using UnityEngine;
 using WeaponSystem.Data;
 
@@ -133,13 +134,21 @@ namespace SceneSystem.Utility
             // --------------------------------------------------
             // UI
             // --------------------------------------------------
-            if (_context.UIManager != null)
+            if (_context.UIManager != null && _context.UIManager is TitleUIManager titleUIManager)
             {
-                _context.UIManager.OnReadyPhaseAnimationFinished += HandleReadyPhaseAnimationFinish;
-                _context.UIManager.OnFinishPhaseAnimationFinished += HandleFinishPhaseAnimationFinish;
-                _context.UIManager.OnFlashAnimationStarted += HandleFlashAnimationStart;
-                _context.UIManager.OnFlashAnimationFinished += HandleFlashAnimationFinish;
-                _context.UIManager.OnDieAnimationFinished += HandleDieAnimationFinish;
+                titleUIManager.OnTitlePhaseAnimationFinished += HandleTitlePhaseAnimationFinish;
+            }
+            if (_context.UIManager != null && _context.UIManager is MainUIManager mainUIManager)
+            {
+                mainUIManager.OnReadyPhaseAnimationFinished += HandleReadyPhaseAnimationFinish;
+                mainUIManager.OnFinishPhaseAnimationFinished += HandleFinishPhaseAnimationFinish;
+                mainUIManager.OnFlashAnimationStarted += HandleFlashAnimationStart;
+                mainUIManager.OnFlashAnimationFinished += HandleFlashAnimationFinish;
+                mainUIManager.OnDieAnimationFinished += HandleDieAnimationFinish;
+            }
+            if (_context.UIManager != null && _context.UIManager is ResultUIManager resultUIManager)
+            {
+                resultUIManager.OnResultPhaseAnimationFinished += HandleResultPhaseAnimationFinish;
             }
 
             // 購読完了フラグを更新
@@ -210,6 +219,27 @@ namespace SceneSystem.Utility
                 _context.CollisionManager.EventRouter.OnItemGet -= HandleGetItem;
             }
 
+            // --------------------------------------------------
+            // UI
+            // --------------------------------------------------
+            if (_context.UIManager != null && _context.UIManager is TitleUIManager titleUIManager)
+            {
+                titleUIManager.OnTitlePhaseAnimationFinished -= HandleTitlePhaseAnimationFinish;
+            }
+            if (_context.UIManager != null && _context.UIManager is MainUIManager mainUIManager)
+            {
+                mainUIManager.OnReadyPhaseAnimationFinished -= HandleReadyPhaseAnimationFinish;
+                mainUIManager.OnFinishPhaseAnimationFinished -= HandleFinishPhaseAnimationFinish;
+                mainUIManager.OnFlashAnimationStarted -= HandleFlashAnimationStart;
+                mainUIManager.OnFlashAnimationFinished -= HandleFlashAnimationFinish;
+                mainUIManager.OnDieAnimationFinished -= HandleDieAnimationFinish;
+            }
+            if (_context.UIManager != null && _context.UIManager is ResultUIManager resultUIManager)
+            {
+                resultUIManager.OnResultPhaseAnimationFinished -= HandleResultPhaseAnimationFinish;
+            }
+
+
             // 購読完了フラグを更新
             _isSubscribed = false;
         }
@@ -230,7 +260,7 @@ namespace SceneSystem.Utility
             int next = (current == 0) ? 1 : 0;
 
             // 入力マッピングを切り替え
-            InputManager.Instance.SwitchInputMapping(next);
+            InputManager.Instance.SetInputMapping(next);
         }
 
         // ======================================================
@@ -267,7 +297,10 @@ namespace SceneSystem.Utility
         /// </summary>
         private void HandleFireModeChangeButtonPressed()
         {
-            _context.UIManager?.UpdateBulletIcons();
+            if (_context.UIManager is MainUIManager mainUIManager)
+            {
+                mainUIManager.UpdateBulletIcons();
+            }
         }
 
         /// <summary>
@@ -329,7 +362,10 @@ namespace SceneSystem.Utility
         /// </summary>
         private void HandleDurabilityChanged()
         {
-            _context.UIManager?.NotifyDurabilityChanged();
+            if (_context.UIManager is MainUIManager mainUIManager)
+            {
+                mainUIManager.NotifyDurabilityChanged();
+            }
         }
 
         /// <summary>
@@ -337,7 +373,10 @@ namespace SceneSystem.Utility
         /// </summary>
         private void HandleBroken(int TankId)
         {
-            _context.UIManager?.NotifyBrokenTanks(TankId);
+            if (_context.UIManager is MainUIManager mainUIManager)
+            {
+                mainUIManager.NotifyBrokenTanks(TankId);
+            }
             _context.CollisionManager?.UnregisterTank(TankId);
         }
 
@@ -358,7 +397,10 @@ namespace SceneSystem.Utility
 
             _context.SceneObjectRegistry?.RegisterBullet(bullet);
             _context.CollisionManager?.RegisterBullet(bullet);
-            _context.UIManager?.NotifyFireBullet();
+            if (_context.UIManager is MainUIManager mainUIManager)
+            {
+                mainUIManager.NotifyFireBullet();
+            }
         }
 
         /// <summary>
@@ -467,12 +509,24 @@ namespace SceneSystem.Utility
             {
             }
 
-            _context.UIManager?.NotifyItemAcquired(itemSlot.ItemData.Name);
+            if (_context.UIManager is MainUIManager mainUIManager)
+            {
+                mainUIManager.NotifyItemAcquired(itemSlot.ItemData.Name);
+            }
         }
 
         // --------------------------------------------------
         // UI
         // --------------------------------------------------
+        /// <summary>
+        /// Title フェーズアニメーション終了時に呼ばれる処理
+        /// </summary>
+        private void HandleTitlePhaseAnimationFinish()
+        {
+            OnPhaseChanged?.Invoke(PhaseType.Ready);
+            UnityEngine.Debug.Log("PhaseChange 2");
+        }
+
         /// <summary>
         /// Ready フェーズアニメーション終了時に呼ばれる処理
         /// </summary>
@@ -487,6 +541,14 @@ namespace SceneSystem.Utility
         private void HandleFinishPhaseAnimationFinish()
         {
             OnPhaseChanged?.Invoke(PhaseType.Result);
+        }
+
+        /// <summary>
+        /// Result フェーズアニメーション終了時に呼ばれる処理
+        /// </summary>
+        private void HandleResultPhaseAnimationFinish()
+        {
+            OnPhaseChanged?.Invoke(PhaseType.Title);
         }
 
         /// <summary>

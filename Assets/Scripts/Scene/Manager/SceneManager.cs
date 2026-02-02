@@ -6,12 +6,13 @@
 // 概要     : シーン遷移、フェーズ管理、Update 管理を統括する
 // ======================================================
 
-using UnityEngine;
-using UnityEngine.SceneManagement;
+using InputSystem.Manager;
 using SceneSystem.Controller;
 using SceneSystem.Data;
 using SceneSystem.Interface;
 using SceneSystem.Utility;
+using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace SceneSystem.Manager
 {
@@ -142,14 +143,11 @@ namespace SceneSystem.Manager
             _phaseManager.OnOptionButtonPressed += HandleOptionButtonPressed;
             _sceneEventRouter.OnPhaseChanged += SetTargetPhase;
 
-            // 初期シーン設定
+            // 初期設定
             Scene currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
             _currentScene = currentScene.name;
-
-            // 初期フェーズ設定
+            _targetScene = _currentScene;
             _targetPhase = _startPhase;
-            ChangePhase(_targetPhase);
-
             _isSceneChanged = true;
             _elapsedTime = 0.0f;
         }
@@ -169,7 +167,7 @@ namespace SceneSystem.Manager
                 ChangePhase(_targetPhase);
             }
 
-            // シーン切り替え直後のフレームスキップ判定
+            // シーン切り替え直後のフレーム判定
             if (_isSceneChanged)
             {
                 return;
