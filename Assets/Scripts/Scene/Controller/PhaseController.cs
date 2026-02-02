@@ -6,11 +6,9 @@
 // 概要     : フェーズ遷移を制御し、UpdateController に更新対象を指示するコントローラ
 // ======================================================
 
-using System;
 using System.Collections.Generic;
 using SceneSystem.Data;
 using SceneSystem.Interface;
-using UnityEngine;
 
 namespace SceneSystem.Controller
 {
@@ -25,9 +23,6 @@ namespace SceneSystem.Controller
 
         /// <summary>UpdateController への参照</summary>
         private readonly UpdateController _updateController;
-
-        /// <summary>現在のフェーズ</summary>
-        private PhaseType _currentPhase = PhaseType.None;
 
         // ======================================================
         // 辞書
@@ -56,44 +51,12 @@ namespace SceneSystem.Controller
         /// <param name="updatables">フェーズに属する IUpdatable 配列</param>
         public void AssignPhaseUpdatables(in PhaseType phase, in IUpdatable[] updatables)
         {
-            // フェーズごとに内部辞書に格納
             _phaseUpdatablesMap[phase] = updatables;
 
-            // UpdateController にも現在フェーズなら登録
-            if (_currentPhase == phase)
+            // UpdateController に登録
+            foreach (IUpdatable updatable in updatables)
             {
-                foreach (IUpdatable updatable in updatables)
-                {
-                    _updateController.Add(updatable);
-                }
-            }
-        }
-
-        /// <summary>
-        /// フェーズを変更し、対応する IUpdatable を UpdateController に登録する
-        /// </summary>
-        /// <param name="nextPhase">変更先フェーズ</param>
-        public void ChangePhase(in PhaseType nextPhase)
-        {
-            // 同じフェーズなら何もしない
-            if (_currentPhase == nextPhase)
-            {
-                return;
-            }
-
-            // 現在フェーズ更新
-            _currentPhase = nextPhase;
-
-            // UpdateController をリセット
-            _updateController.Clear();
-
-            // 新フェーズの Updatable を登録
-            if (_phaseUpdatablesMap.TryGetValue(nextPhase, out IUpdatable[] phaseUpdatables))
-            {
-                foreach (IUpdatable updatable in phaseUpdatables)
-                {
-                    _updateController.Add(updatable);
-                }
+                _updateController.Add(updatable);
             }
         }
     }

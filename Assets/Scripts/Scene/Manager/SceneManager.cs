@@ -6,8 +6,6 @@
 // 概要     : シーン遷移、フェーズ管理、Update 管理を統括する
 // ======================================================
 
-using System;
-using System.Linq;
 using UnityEngine;
 using SceneSystem.Controller;
 using SceneSystem.Data;
@@ -48,6 +46,9 @@ namespace SceneSystem.Manager
 
         /// <summary>Update を管理するクラス</summary>
         private UpdateManager _updateManager;
+
+        /// <summary>Update を実行する対象を保持し、実行するクラス</summary>
+        private UpdateController _updateController = new UpdateController();
 
         /// <summary>IUpdatable を実装しているコンポーネントを取得するクラス</summary>
         private UpdatableCollector _updatableCollector = new UpdatableCollector();
@@ -105,6 +106,13 @@ namespace SceneSystem.Manager
             // フレームレート固定
             Application.targetFrameRate = TARGET_FRAME_RATE;
 
+            // 初期状態設定
+            _currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+            _targetScene = _currentScene;
+            _targetPhase = _startPhase;
+            _isSceneChanged = true;
+            _elapsedTime = 0.0f;
+
             // フェーズデータ読み込み
             PhaseData[] phaseDataList = Resources.LoadAll<PhaseData>(PHASE_DATA_RESOURCES_PATH);
 
@@ -112,13 +120,8 @@ namespace SceneSystem.Manager
             _updatableCollector = new UpdatableCollector();
             IUpdatable[] allUpdatables = _updatableCollector.Collect(_components);
 
-            UpdateController updateController = new UpdateController();
-
-            // PhaseController 初期化
-            _phaseController = new PhaseController(updateController);
-
-            // UpdateManager 初期化
-            _updateManager = new UpdateManager(updateController);
+            _phaseController = new PhaseController(_updateController);
+            _updateManager = new UpdateManager(_updateController);
 
             // フェーズごとに Updatable を登録
             _phaseInitializer.Initialize(_phaseController, allUpdatables, phaseDataList);
@@ -132,14 +135,6 @@ namespace SceneSystem.Manager
             _sceneEventRouter.Subscribe();
             _phaseManager.OnOptionButtonPressed += HandleOptionButtonPressed;
             _sceneEventRouter.OnPhaseChanged += SetTargetPhase;
-
-            // 初期状態設定
-            _currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
-            _targetScene = _currentScene;
-            _targetPhase = _startPhase;
-            _currentPhase = _startPhase;
-            _isSceneChanged = true;
-            _elapsedTime = 0.0f;
         }
 
         private void Update()
@@ -260,16 +255,27 @@ namespace SceneSystem.Manager
         /// <summary>
         /// フェーズ切替を行う
         /// </summary>
-        private void ChangePhase(in PhaseType nextPhase)
+        public void ChangePhase(in PhaseType nextPhase)
         {
-            // 現在フェーズを更新
-            _currentPhase = nextPhase;
+            if (_currentPhase == nextPhase)
+            {
+                return;
+            }
 
-            // フェーズ変更
-            _phaseController.ChangePhase(nextPhase);
+            // UpdateController をリセット
+            _updateController.Clear();
 
-            // UpdateManager 側へ通知
+            // PhaseInitializer に登録された Updatable を PhaseController に通知
+            if (_phaseInitializer.TryGetUpdatablesForPhase(nextPhase, out IUpdatable[] updatables))
+            {
+                // PhaseController に登録して UpdateController に追加
+                _phaseController.AssignPhaseUpdatables(nextPhase, updatables);
+            }
+
             _updateManager.ChangePhase(nextPhase);
+
+            // 現在フェーズ更新
+            _currentPhase = nextPhase;
         }
 
         /// <summary>

@@ -3,23 +3,36 @@
 // 作成者   : 高橋一翔
 // 作成日時 : 2026-02-02
 // 更新日時 : 2026-02-02
-// 概要     : フェーズデータと IUpdatable から
-//            フェーズごとの登録対象を抽出し PhaseController に登録する
+// 概要     : フェーズごとの IUpdatable を整理し、PhaseController への登録を補助する
 // ======================================================
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
 using SceneSystem.Controller;
 using SceneSystem.Data;
 using SceneSystem.Interface;
 
-namespace SceneSystem.Utility
+namespace SceneSystem.Manager
 {
+    /// <summary>
+    /// フェーズごとの IUpdatable を保持し、PhaseController に登録する補助クラス
+    /// </summary>
     public sealed class PhaseInitializer
     {
+        // ======================================================
+        // フィールド
+        // ======================================================
+
+        /// <summary>フェーズごとに紐づく IUpdatable 配列を保持する辞書</summary>
+        private readonly Dictionary<PhaseType, IUpdatable[]> _phaseUpdatablesMap = new Dictionary<PhaseType, IUpdatable[]>();
+
+        // ======================================================
+        // パブリックメソッド
+        // ======================================================
+
         /// <summary>
-        /// フェーズごとにシーン上の Updatable を抽出して PhaseController に登録
+        /// フェーズに紐づく Updatable を初期化・登録する
         /// </summary>
         /// <param name="phaseController">対象の PhaseController</param>
         /// <param name="allUpdatables">シーン上の IUpdatable 配列</param>
@@ -51,16 +64,23 @@ namespace SceneSystem.Utility
 
                 // フェーズに紐づくコンポーネントのみ抽出
                 IUpdatable[] phaseUpdatables = Array.FindAll(allUpdatables, u =>
-                    u != null && targetTypes.Any(tt => tt.IsAssignableFrom(u.GetType()))
+                    u != null && Array.Exists(targetTypes, tt => tt.IsAssignableFrom(u.GetType()))
                 );
 
-                // PhaseController に登録
-                phaseController.AssignPhaseUpdatables(phaseData.Phase, phaseUpdatables);
-
-                // デバッグログ
-                string[] names = phaseUpdatables.Select(u => u.GetType().FullName).ToArray();
-                Debug.Log($"[PhaseInitializer] フェーズ {phaseData.Phase} に {phaseUpdatables.Length} 件登録: {string.Join(", ", names)}");
+                // 内部辞書に登録
+                _phaseUpdatablesMap[phaseData.Phase] = phaseUpdatables;
             }
+        }
+
+        /// <summary>
+        /// 指定フェーズに紐づく Updatable を取得する
+        /// </summary>
+        /// <param name="phase">取得対象のフェーズ</param>
+        /// <param name="updatables">取得結果の配列</param>
+        /// <returns>指定フェーズが存在すれば true、存在しなければ false</returns>
+        public bool TryGetUpdatablesForPhase(in PhaseType phase, out IUpdatable[] updatables)
+        {
+            return _phaseUpdatablesMap.TryGetValue(phase, out updatables);
         }
     }
 }

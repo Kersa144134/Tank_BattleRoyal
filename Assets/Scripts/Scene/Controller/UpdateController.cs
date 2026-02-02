@@ -155,7 +155,6 @@ namespace SceneSystem.Controller
         /// <param name="updatable">登録する IUpdatable</param>
         public void Add(in IUpdatable updatable)
         {
-            // null の場合は登録しない
             if (updatable == null)
             {
                 return;
@@ -166,6 +165,8 @@ namespace SceneSystem.Controller
             {
                 _isDirty = true;
             }
+
+            UnityEngine.Debug.Log(_updateSet.Count);
         }
 
         /// <summary>
@@ -192,7 +193,7 @@ namespace SceneSystem.Controller
         /// </summary>
         private void RebuildCache()
         {
-            // 変更がない場合は再構築しない
+            // 変更がない場合は処理なし
             if (!_isDirty)
             {
                 return;
@@ -201,10 +202,9 @@ namespace SceneSystem.Controller
             // 登録数に応じた配列を新規生成する
             _updateArray = new IUpdatable[_updateSet.Count];
 
-            // 配列へのコピー用インデックス
             int index = 0;
 
-            // HashSet から配列へ要素を転写する
+            // HashSet から配列へ要素をコピーする
             foreach (IUpdatable updatable in _updateSet)
             {
                 _updateArray[index] = updatable;
