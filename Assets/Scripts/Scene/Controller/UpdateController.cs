@@ -6,10 +6,10 @@
 // 概要     : 指定された IUpdatable オブジェクトを保持し OnUpdate を実行するコントローラ
 // ======================================================
 
+using System.Collections.Generic;
 using InputSystem.Manager;
 using SceneSystem.Data;
 using SceneSystem.Interface;
-using System.Collections.Generic;
 
 namespace SceneSystem.Controller
 {

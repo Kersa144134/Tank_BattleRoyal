@@ -50,6 +50,5 @@ namespace SceneSystem.Data
 
             return types;
         }
-
     }
 }

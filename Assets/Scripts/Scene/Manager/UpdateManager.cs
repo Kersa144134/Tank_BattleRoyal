@@ -6,7 +6,6 @@
 // ŠT—v     : Update ˆ—‚ğŠÇ—‚·‚é
 // ======================================================
 
-using InputSystem.Manager;
 using SceneSystem.Controller;
 using SceneSystem.Data;
 

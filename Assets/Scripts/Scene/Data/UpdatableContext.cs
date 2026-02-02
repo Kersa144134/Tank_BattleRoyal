@@ -7,7 +7,6 @@
 // ======================================================
 
 using CameraSystem.Manager;
-using InputSystem.Manager;
 using ItemSystem.Manager;
 using SceneSystem.Interface;
 using SceneSystem.Manager;
