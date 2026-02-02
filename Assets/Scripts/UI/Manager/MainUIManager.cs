@@ -191,10 +191,7 @@ namespace UISystem.Manager
             base.OnEnterInternal();
 
             // カメラ用 Animator をタイムスケール非依存に設定する
-            if (_cameraAnimator != null)
-            {
-                _cameraAnimator.updateMode = AnimatorUpdateMode.UnscaledTime;
-            }
+            SetAnimatorUnscaledTime(_cameraAnimator);
 
             // プレイヤー耐久値 UI が使用可能かを確認する
             if (_playerTankRootManager != null &&
@@ -254,14 +251,14 @@ namespace UISystem.Manager
             // プレイヤー耐久値 UI を更新する
             if (_playerDurabilityManager != null)
             {
-                _durabilityBarWidthUIController?.Update(Time.unscaledDeltaTime);
+                _durabilityBarWidthUIController?.Update(unscaledDeltaTime);
             }
 
             // 弾丸アイコン UI を更新する
-            _bulletIconSlotRotationUIController?.Update(Time.unscaledDeltaTime);
+            _bulletIconSlotRotationUIController?.Update(unscaledDeltaTime);
 
             // ログ UI を更新する
-            _logRotationUIController?.Update(Time.unscaledDeltaTime);
+            _logRotationUIController?.Update(unscaledDeltaTime);
         }
 
         // ======================================================

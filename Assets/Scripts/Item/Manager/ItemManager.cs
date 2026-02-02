@@ -55,7 +55,7 @@ namespace TankSystem.Manager
         // ======================================================
 
         /// <summary>アイテムの生存時間（秒）</summary>
-        private const float ITEM_LIFE_TIME = 15.0f;
+        private const float ITEM_LIFE_TIME = 30.0f;
 
         // ======================================================
         // コンストラクタ

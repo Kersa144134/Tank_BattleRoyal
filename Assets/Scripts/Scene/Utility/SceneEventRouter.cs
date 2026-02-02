@@ -524,7 +524,6 @@ namespace SceneSystem.Utility
         private void HandleTitlePhaseAnimationFinish()
         {
             OnPhaseChanged?.Invoke(PhaseType.Ready);
-            UnityEngine.Debug.Log("PhaseChange 2");
         }
 
         /// <summary>

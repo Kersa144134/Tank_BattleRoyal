@@ -6,11 +6,11 @@
 // 概要     : 全シーン共通で使用される UI 演出を管理する基底クラス
 // ======================================================
 
+using UnityEngine;
+using UnityEngine.Rendering.Universal;
 using SceneSystem.Data;
 using SceneSystem.Interface;
 using ShaderSystem.Controller;
-using UnityEngine;
-using UnityEngine.Rendering.Universal;
 
 namespace UISystem.Manager
 {
@@ -76,7 +76,7 @@ namespace UISystem.Manager
         protected bool _isBinarizationEffectEnabled;
 
         /// <summary>
-        /// 歪みの中心座標（UV 空間）
+        /// 歪みの中心座標
         /// </summary>
         [SerializeField]
         protected Vector2 _binarizationDistortionCenter;
@@ -135,13 +135,13 @@ namespace UISystem.Manager
         protected bool _isGreyScaleEffectEnabled;
 
         /// <summary>
-        /// グレースケールの強度（RGB 各成分）
+        /// グレースケールの強度
         /// </summary>
         [SerializeField]
         protected Vector3 _greyScaleStrength;
 
         /// <summary>
-        /// 歪みの中心座標（UV 空間）
+        /// 歪みの中心座標
         /// </summary>
         [SerializeField]
         protected Vector2 _greyScaleDistortionCenter;
@@ -212,6 +212,16 @@ namespace UISystem.Manager
             OnLateUpdateInternal(unscaledDeltaTime);
         }
 
+        public void OnPhaseEnter(in PhaseType phase)
+        {
+            OnPhaseEnterInternal(phase);
+        }
+
+        public void OnPhaseExit(in PhaseType phase)
+        {
+            OnPhaseExitInternal(phase);
+        }
+
         // ======================================================
         // 派生クラス用フック
         // ======================================================
@@ -238,14 +248,11 @@ namespace UISystem.Manager
                     _greyScaleEffectMaterial
                 );
 
-            // プレイ用アニメーターをタイムスケール非依存に設定する
+            // 各アニメーターをタイムスケール非依存に設定する
             SetAnimatorUnscaledTime(_playAnimator);
-
-            // 非プレイ用アニメーターをタイムスケール非依存に設定する
             SetAnimatorUnscaledTime(_notPlayAnimator);
-
-            // ボリューム用アニメーターをタイムスケール非依存に設定する
             SetAnimatorUnscaledTime(_volumeAnimator);
+            SetAnimatorUnscaledTime(_effectAnimator);
         }
 
         /// <summary>
@@ -286,16 +293,16 @@ namespace UISystem.Manager
         }
 
         // ======================================================
-        // 内部処理
+        // BaseUIManager イベント
         // ======================================================
 
         /// <summary>
         /// 指定した Animator をタイムスケール非依存で更新するよう設定する
         /// </summary>
         /// <param name="animator">設定対象の Animator</param>
-        private void SetAnimatorUnscaledTime(Animator animator)
+        protected void SetAnimatorUnscaledTime(in Animator animator)
         {
-            // Animator が未設定の場合は処理を行わない
+            // Animator が未設定の場合は処理なし
             if (animator == null)
             {
                 return;

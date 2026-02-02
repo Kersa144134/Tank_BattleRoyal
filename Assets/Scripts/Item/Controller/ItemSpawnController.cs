@@ -31,7 +31,7 @@ namespace ItemSystem.Controller
         // ======================================================
 
         /// <summary>‰‰ñ¶¬‰ñ”</summary>
-        private const int INITIAL_SPAWN_COUNT = 30;
+        private const int INITIAL_SPAWN_COUNT = 40;
         
         /// <summary>¶¬”»’èŠÔŠui•bj</summary>
         private const float SPAWN_INTERVAL = 0.5f;
