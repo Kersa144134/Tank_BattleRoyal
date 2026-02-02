@@ -86,7 +86,10 @@ namespace SceneSystem.Controller
             foreach (IUpdatable updatable in updatables)
             {
                 _updateController.Add(updatable);
+                UnityEngine.Debug.Log($"[PhaseController] UpdateController Ç…í«â¡: {updatable.GetType().FullName}");
             }
+
+            UnityEngine.Debug.Log($"[PhaseController] çáåv {updatables.Count} åèÇÃ Updatable Çìoò^ÇµÇ‹ÇµÇΩ");
         }
     }
 }

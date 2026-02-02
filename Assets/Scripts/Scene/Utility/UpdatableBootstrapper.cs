@@ -6,13 +6,13 @@
 // 概要     : IUpdatable の収集・初期化・参照キャッシュを行う
 // ======================================================
 
+using System.Collections.Generic;
 using UnityEngine;
 using CameraSystem.Manager;
 using ItemSystem.Manager;
 using SceneSystem.Data;
 using SceneSystem.Interface;
 using SceneSystem.Manager;
-using System.Collections.Generic;
 using TankSystem.Manager;
 using UISystem.Manager;
 using WeaponSystem.Manager;
@@ -26,6 +26,26 @@ namespace SceneSystem.Utility
     public sealed class UpdatableBootstrapper
     {
         // ======================================================
+        // フィールド
+        // ======================================================
+
+        /// <summary>IUpdatable を実装しているコンポーネントを取得するクラス</summary>
+        private readonly UpdatableCollector _updatableCollector;
+
+        // ======================================================
+        // コンストラクタ
+        // ======================================================
+
+        /// <summary>
+        /// UpdateManager を生成する
+        /// </summary>
+        /// <param name="updatableCollector">IUpdatable 収集用コレクター</param>
+        public UpdatableBootstrapper(UpdatableCollector updatableCollector)
+        {
+            _updatableCollector = updatableCollector;
+        }
+
+        // ======================================================
         // パブリックメソッド
         // ======================================================
 
@@ -33,11 +53,12 @@ namespace SceneSystem.Utility
         /// IUpdatable を初期化し、参照コンテキストを生成する
         /// </summary>
         /// <param name="components">IUpdatable を含む GameObject 配列</param>
+        /// <param name="typeNames">取得対象の型名配列（null または空で全取得）</param>
         /// <returns>初期化済み参照をまとめたコンテキスト</returns>
-        public UpdatableContext Initialize(GameObject[] components)
+        public UpdatableContext Initialize(GameObject[] components, string[] typeNames = null)
         {
-            // シーン内の IUpdatable をすべて収集
-            IUpdatable[] updatables = UpdatableCollector.Collect(components);
+            // IUpdatable をすべて収集（型指定があれば抽象クラスや派生クラスも取得）
+            IUpdatable[] updatables = _updatableCollector.Collect(components, typeNames);
 
             // EnemyTankRootManager を一時格納するためのキャッシュ
             List<EnemyTankRootManager> enemies = new List<EnemyTankRootManager>();
@@ -51,6 +72,11 @@ namespace SceneSystem.Utility
             // 初期化と参照キャッシュ
             foreach (IUpdatable updatable in updatables)
             {
+                if (updatable == null)
+                {
+                    continue;
+                }
+
                 // SceneObjectRegistry を取得
                 if (updatable is SceneObjectRegistry sceneObjectRegistry)
                 {

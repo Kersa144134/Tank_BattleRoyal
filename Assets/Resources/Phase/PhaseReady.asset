@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: PhaseReady
   m_EditorClassIdentifier: 
   _phaseType: 2
-  _updatableScripts:
-  - {fileID: 11500000, guid: 0ec7a8dde241e94478962dd9d021c56f, type: 3}
+  _updatableTypeNames:
+  - BaseUIManager

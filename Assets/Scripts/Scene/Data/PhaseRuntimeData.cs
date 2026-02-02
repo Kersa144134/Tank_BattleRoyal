@@ -44,6 +44,15 @@ namespace SceneSystem.Data
         {
             // 配列を HashSet に変換して登録する
             _phaseUpdateMap[phase] = new HashSet<IUpdatable>(updatables);
+
+
+
+            // ---------- ログ表示 ----------
+            string types = updatables.Length > 0
+                ? string.Join(", ", Array.ConvertAll(updatables, u => u.GetType().FullName))
+                : "なし";
+
+            UnityEngine.Debug.Log($"[PhaseRuntimeData] フェーズ {phase} に {updatables.Length} 件の Updatable を登録");
         }
         
         /// <summary>現在のフェーズを外部から設定する</summary>

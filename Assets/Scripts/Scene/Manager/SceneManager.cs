@@ -37,20 +37,23 @@ namespace SceneSystem.Manager
         // コンポーネント参照
         // ======================================================
 
-        /// <summary>フェーズ切替制御クラス</summary>
-        private PhaseController _phaseController;
+        /// <summary>フェーズ単位の IUpdatable を保持するクラス</summary>
+        private PhaseRuntimeData _phaseRuntimeData = new PhaseRuntimeData();
 
         /// <summary>フェーズ遷移条件管理クラス</summary>
         private PhaseManager _phaseManager = new PhaseManager();
 
-        /// <summary>フェーズ単位の IUpdatable を保持するクラス</summary>
-        private PhaseRuntimeData _phaseRuntimeData = new PhaseRuntimeData();
+        /// <summary>フェーズ切替制御クラス</summary>
+        private PhaseController _phaseController;
 
         /// <summary>Update を管理するクラス</summary>
         private UpdateManager _updateManager;
 
+        /// <summary>IUpdatable を実装しているコンポーネントを取得するクラス</summary>
+        private UpdatableCollector _updatableCollector = new UpdatableCollector();
+
         /// <summary>IUpdatable の初期化と参照解決を行うクラス</summary>
-        private UpdatableBootstrapper _bootstrapper = new UpdatableBootstrapper();
+        private UpdatableBootstrapper _bootstrapper;
 
         /// <summary>シーン内イベントを仲介するクラス</summary>
         private SceneEventRouter _sceneEventRouter;
@@ -101,21 +104,28 @@ namespace SceneSystem.Manager
         {
             // アプリケーションのフレームレートを固定値に設定
             Application.targetFrameRate = TARGET_FRAME_RATE;
-            
+
             // 全フェーズデータを読み込む
             PhaseData[] phaseDataList = Resources.LoadAll<PhaseData>(PHASE_DATA_RESOURCES_PATH);
 
-            // 各フェーズデータに対して初期化処理
+            // ======================================================
+            // フェーズごとに Updatable を収集・登録
+            // ======================================================
             foreach (PhaseData phaseData in phaseDataList)
             {
-                IUpdatable[] phaseUpdatables =
-                    UpdatableCollector.Collect(
-                        _components,
-                        phaseData.GetUpdatableTypes()
-                    );
+                // フェーズ向けに型名を取得
+                string[] typeNames = phaseData.GetUpdatableTypeNames();
 
+                // フェーズ名を渡して収集（ログに反映）
+                IUpdatable[] phaseUpdatables = _updatableCollector.Collect(
+                    _components,
+                    typeNames,
+                    phaseData.Phase.ToString() // ここを追加
+                );
+
+                // PhaseRuntimeData に登録
                 _phaseRuntimeData.RegisterPhase(
-                    phaseData.Phase,
+                    phaseData.Phase, // これで正しい PhaseType に登録される
                     phaseUpdatables
                 );
             }
@@ -133,6 +143,7 @@ namespace SceneSystem.Manager
             _updateManager = new UpdateManager(updateController);
 
             // Bootstrapper を通じてコンポーネント初期化
+            _bootstrapper = new UpdatableBootstrapper(_updatableCollector);
             UpdatableContext context = _bootstrapper.Initialize(_components);
 
             // シーンイベントクラスの生成
