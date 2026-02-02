@@ -263,6 +263,22 @@ namespace SceneSystem.Utility
             InputManager.Instance.SetInputMapping(next);
         }
 
+        // --------------------------------------------------
+        // UI
+        // --------------------------------------------------
+        /// <summary>
+        /// 経過時間と制限時間から残り時間を計算し、UI に表示する
+        /// </summary>
+        /// <param name="elapsedTime">現在までの経過時間（秒）</param>
+        /// <param name="limitTime">制限時間（秒）</param>
+        public void UpdateLimitTimeDisplay(in float elapsedTime, in float limitTime)
+        {
+            if (_context.UIManager is MainUIManager mainUIManager)
+            {
+                mainUIManager.UpdateLimitTimeDisplay(elapsedTime, limitTime);
+            }
+        }
+
         // ======================================================
         // プライベートメソッド
         // ======================================================

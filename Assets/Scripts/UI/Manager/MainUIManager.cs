@@ -39,6 +39,14 @@ namespace UISystem.Manager
         private Animator _cameraAnimator;
 
         // --------------------------------------------------
+        // 時間表示
+        // --------------------------------------------------
+        [Header("時間表示")]
+        /// <summary>制限時間を表示するテキスト</summary>
+        [SerializeField]
+        private TextMeshProUGUI _limitTimeText;
+        
+        // --------------------------------------------------
         // 耐久値バー
         // --------------------------------------------------
         [Header("耐久値バー")]
@@ -74,7 +82,7 @@ namespace UISystem.Manager
         // ログ
         // --------------------------------------------------
         [Header("ログ")]
-        /// <summary>弾丸アイコン Image 配列</summary>
+        /// <summary>ログテキスト配列</summary>
         [SerializeField]
         private TextMeshProUGUI[] _logTexts;
 
@@ -294,6 +302,52 @@ namespace UISystem.Manager
         // ======================================================
 
         /// <summary>
+        /// 経過時間と制限時間から残り時間を計算し、UI に表示する
+        /// </summary>
+        /// <param name="elapsedTime">現在までの経過時間（秒）</param>
+        /// <param name="limitTime">制限時間（秒）</param>
+        public void UpdateLimitTimeDisplay(in float elapsedTime, in float limitTime)
+        {
+            // 制限時間表示用テキストが未設定の場合は処理なし
+            if (_limitTimeText == null)
+            {
+                return;
+            }
+
+            // 残り時間を計算する
+            float remainingTime = limitTime - elapsedTime;
+
+            // 残り時間が 0 未満にならないよう補正する
+            if (remainingTime < 0.0f)
+            {
+                remainingTime = 0.0f;
+            }
+
+            // 分を算出する
+            int minutes =
+                Mathf.FloorToInt(remainingTime / 60.0f);
+
+            // 秒を算出する
+            int seconds =
+                Mathf.FloorToInt(remainingTime % 60.0f);
+
+            // MM:SS 形式でテキストに反映する
+            _limitTimeText.text =
+                $"{minutes:00}:{seconds:00}";
+        }
+
+        /// <summary>
+        /// 耐久値変更時の処理を行う
+        /// </summary>
+        public void NotifyDurabilityChanged()
+        {
+            _durabilityBarWidthUIController?.NotifyValueChanged(
+                _playerTankRootManager.DurabilityManager.MaxDurability,
+                _playerTankRootManager.DurabilityManager.CurrentDurability
+            );
+        }
+
+        /// <summary>
         /// 弾数に応じて弾丸アイコン表示を更新する
         /// </summary>
         public void UpdateBulletIcons()
@@ -302,14 +356,11 @@ namespace UISystem.Manager
         }
 
         /// <summary>
-        /// 耐久値変更時の処理を行うハンドラ
+        /// 攻撃時の処理を行う
         /// </summary>
-        public void NotifyDurabilityChanged()
+        public void NotifyFireBullet()
         {
-            _durabilityBarWidthUIController?.NotifyValueChanged(
-                _playerTankRootManager.DurabilityManager.MaxDurability,
-                _playerTankRootManager.DurabilityManager.CurrentDurability
-            );
+            _cameraAnimator?.Play(FIRE_ANIMATION_NAME, 0, 0f);
         }
 
         /// <summary>
@@ -360,14 +411,6 @@ namespace UISystem.Manager
 
             // ログ UI に追加
             _logRotationUIController?.AddLog(logMessage);
-        }
-
-        /// <summary>
-        /// 攻撃時の処理を行うハンドラ
-        /// </summary>
-        public void NotifyFireBullet()
-        {
-            _cameraAnimator?.Play(FIRE_ANIMATION_NAME, 0, 0f);
         }
         
         // --------------------------------------------------

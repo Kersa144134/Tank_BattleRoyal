@@ -21,9 +21,6 @@ namespace SceneSystem.Manager
         // 定数
         // ======================================================
 
-        // --------------------------------------------------
-        // シーン名
-        // --------------------------------------------------
         /// <summary>タイトルシーンとして判定するシーン名</summary>
         private const string TITLE_SCENE_NAME = "TitleScene";
 
@@ -34,7 +31,7 @@ namespace SceneSystem.Manager
         private const string RESULT_SCENE_NAME = "ResultScene";
 
         /// <summary>Play フェーズから Finish フェーズへ遷移するまでのゲームプレイ時間（秒）</summary>
-        private const float PLAY_TO_FINISH_WAIT_TIME = 120.0f;
+        public const float PLAY_TO_FINISH_WAIT_TIME = 10.0f;
 
         // ======================================================
         // フィールド

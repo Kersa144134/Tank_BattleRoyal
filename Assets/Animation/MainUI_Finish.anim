@@ -66,7 +66,7 @@ AnimationClip:
     intParameter: 0
     messageOptions: 0
   - time: 4.5
-    functionName: FlashAnimationFinish
+    functionName: FinishPhaseAnimationFinish
     data: 
     objectReferenceParameter: {fileID: 0}
     floatParameter: 0
