@@ -18,8 +18,7 @@ using WeaponSystem.Manager;
 namespace SceneSystem.Data
 {
     /// <summary>
-    /// UpdatableBootstrapper により生成される
-    /// 初期化済み参照を保持するデータコンテナ
+    /// 初期化済み参照を保持するデータコンテキスト
     /// </summary>
     public sealed class UpdatableContext
     {

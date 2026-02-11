@@ -58,20 +58,19 @@ namespace CollisionSystem.Calculator
         /// <param name="contextB">押し戻し対象のオブジェクト B のコンテキスト</param>
         /// <param name="forwardSpeedA">オブジェクト A の前進速度</param>
         /// <param name="forwardSpeedB">オブジェクト B の前進速度</param>
-        /// <param name="resolveInfoA">計算結果としてのオブジェクト A の押し戻し情報</param>
-        /// <param name="resolveInfoB">計算結果としてのオブジェクト B の押し戻し情報</param>
+        /// <param name="resolveInfoA">計算結果としてのオブジェクト A の押し戻しベクトル</param>
+        /// <param name="resolveInfoB">計算結果としてのオブジェクト B の押し戻しベクトル</param>
         public void CalculateResolveInfo(
             in BaseCollisionContext contextA,
             in BaseCollisionContext contextB,
             in float forwardSpeedA,
             in float forwardSpeedB,
-            out CollisionResolveInfo resolveInfoA,
-            out CollisionResolveInfo resolveInfoB
+            out Vector3 resolveVectorA,
+            out Vector3 resolveVectorB
         )
         {
-            // 初期化
-            resolveInfoA = default;
-            resolveInfoB = default;
+            resolveVectorA = default;
+            resolveVectorB = default;
 
             // OBB 更新
             contextA.UpdateOBB();
@@ -151,8 +150,8 @@ namespace CollisionSystem.Calculator
             // --------------------------------------------------
             // CollisionResolveInfo 生成
             // --------------------------------------------------
-            resolveInfoA = new CollisionResolveInfo(finalResolveA);
-            resolveInfoB = new CollisionResolveInfo(finalResolveB);
+            resolveVectorA = finalResolveA;
+            resolveVectorB = finalResolveB;
         }
 
         // ======================================================
@@ -183,7 +182,6 @@ namespace CollisionSystem.Calculator
             out float outB
         )
         {
-            // 初期化
             outA = 0f;
             outB = 0f;
 
@@ -195,10 +193,6 @@ namespace CollisionSystem.Calculator
                     outB = -axisValue * resolveDistance;
                 }
 
-                string lockedAxesA = "";
-                if ((lockAxisA & MovementLockAxis.X) != 0) lockedAxesA += "X ";
-                if ((lockAxisA & MovementLockAxis.Z) != 0) lockedAxesA += "Z ";
-
                 return;
             }
 
@@ -206,10 +200,6 @@ namespace CollisionSystem.Calculator
             if (lockAxisB != 0)
             {
                 outA = axisValue * resolveDistance;
-
-                string lockedAxesB = "";
-                if ((lockAxisB & MovementLockAxis.X) != 0) lockedAxesB += "X ";
-                if ((lockAxisB & MovementLockAxis.Z) != 0) lockedAxesB += "Z ";
 
                 return;
             }
@@ -240,7 +230,6 @@ namespace CollisionSystem.Calculator
             out float outB
         )
         {
-            // 初期化
             outA = 0f;
             outB = 0f;
 

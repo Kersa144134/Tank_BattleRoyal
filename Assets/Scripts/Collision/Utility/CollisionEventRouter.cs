@@ -45,6 +45,13 @@ namespace CollisionSystem.Utility
         public event Action<BulletBase, BaseCollisionContext> OnBulletHit;
 
         // ======================================================
+        // 定数
+        // ======================================================
+
+        /// <summary>Base タグ</summary>
+        private const string BASE_TAG = "Base";
+        
+        // ======================================================
         // コンストラクタ
         // ======================================================
 
@@ -82,8 +89,8 @@ namespace CollisionSystem.Utility
                 obstacle,
                 context.TankRootManager.CurrentForwardSpeed,
                 0f,
-                out CollisionResolveInfo resolveInfoA,
-                out CollisionResolveInfo resolveInfoB
+                out Vector3 resolveVectorA,
+                out Vector3 resolveVectorB
             );
 
             // --------------------------------------------------
@@ -92,13 +99,13 @@ namespace CollisionSystem.Utility
             MovementLockAxis newLockAxis = MovementLockAxis.None;
 
             // X 方向に押し戻しが発生している場合
-            if (Mathf.Abs(resolveInfoA.ResolveVector.x) > 0f)
+            if (Mathf.Abs(resolveVectorA.x) > 0f)
             {
                 newLockAxis |= MovementLockAxis.X;
             }
 
             // Z 方向に押し戻しが発生している場合
-            if (Mathf.Abs(resolveInfoA.ResolveVector.z) > 0f)
+            if (Mathf.Abs(resolveVectorA.z) > 0f)
             {
                 newLockAxis |= MovementLockAxis.Z;
             }
@@ -117,7 +124,7 @@ namespace CollisionSystem.Utility
             // --------------------------------------------------
             // 押し戻し反映
             // --------------------------------------------------
-            context.TankRootManager.ApplyCollisionResolve(resolveInfoA);
+            context.TankRootManager.ApplyCollisionResolve(resolveVectorA);
 
             // OBB を押し戻し位置に更新
             context.UpdateOBB();
@@ -142,15 +149,15 @@ namespace CollisionSystem.Utility
                 contextB,
                 contextA.TankRootManager.CurrentForwardSpeed,
                 contextB.TankRootManager.CurrentForwardSpeed,
-                out CollisionResolveInfo resolveInfoA,
-                out CollisionResolveInfo resolveInfoB
+                out Vector3 resolveVectorA,
+                out Vector3 resolveVectorB
             );
 
             // --------------------------------------------------
             // 押し戻し反映
             // --------------------------------------------------
-            contextA.TankRootManager.ApplyCollisionResolve(resolveInfoA);
-            contextB.TankRootManager.ApplyCollisionResolve(resolveInfoB);
+            contextA.TankRootManager.ApplyCollisionResolve(resolveVectorA);
+            contextB.TankRootManager.ApplyCollisionResolve(resolveVectorB);
 
             // OBB 更新
             contextA.UpdateOBB();
@@ -176,7 +183,6 @@ namespace CollisionSystem.Utility
         // --------------------------------------------------
         /// <summary>
         /// 弾丸が障害物に衝突した際の処理
-        /// Base タグの障害物は無視
         /// </summary>
         /// <param name="bulletContext">弾丸コンテキスト</param>
         /// <param name="obstacle">障害物コンテキスト</param>
@@ -186,7 +192,7 @@ namespace CollisionSystem.Utility
         )
         {
             // 対象障害物が Base ならスキップ
-            if (obstacle.Transform.CompareTag("Base"))
+            if (obstacle.Transform.CompareTag(BASE_TAG))
             {
                 return;
             }

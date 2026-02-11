@@ -530,7 +530,7 @@ namespace TankSystem.Manager
         /// CollisionManager からの衝突通知を受けて、戦車のめり込みを解消する
         /// </summary>
         /// <param name="resolveInfo">呼び出し側で算出済みの押し戻し情報</param>
-        public void ApplyCollisionResolve(in CollisionResolveInfo resolveInfo)
+        public void ApplyCollisionResolve(in Vector3 resolveVector)
         {
             // 破壊済みの場合は処理なし
             if (_isBroken)
@@ -538,7 +538,7 @@ namespace TankSystem.Manager
                 return;
             }
 
-            NextPosition += resolveInfo.ResolveVector;
+            NextPosition += resolveVector;
         }
 
         // ======================================================

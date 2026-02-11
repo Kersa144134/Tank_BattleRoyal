@@ -26,10 +26,10 @@ namespace TankSystem.Controller
         // 定数
         // ======================================================
 
-        /// <summary>Damageタグ</summary>
+        /// <summary>Damage タグ</summary>
         private const string DAMAGE_TAG = "Damage";
 
-        /// <summary>Explosionタグ</summary>
+        /// <summary>Explosion タグ</summary>
         private const string EXPLOSION_TAG = "Explosion";
 
         // ======================================================

@@ -13,14 +13,23 @@ namespace TankSystem.Data
     /// </summary>
     public enum TankParam
     {
-        Fuel,           // ”R—¿
-        Ammo,           // ’e–ò
-        Durability,     // ‘Ï‹v
-        Armor,          // ‘•b
-        HorsePower,     // ”n—Í
-        Transmission,   // •Ï‘¬
-        Barrel,         // –Cg
-        ProjectileMass, // ¿—Ê
-        ReloadTime      // ‘•“U
+        // ”R—¿
+        Fuel,
+        // ’e–ò
+        Ammo,
+        // ‘Ï‹v
+        Durability,
+        // ‘•b
+        Armor,
+        // ”n—Í
+        HorsePower,
+        // •Ï‘¬
+        Transmission,
+        // –Cg
+        Barrel,
+        // ¿—Ê
+        ProjectileMass,
+        // ‘•“U
+        ReloadTime
     }
 }
