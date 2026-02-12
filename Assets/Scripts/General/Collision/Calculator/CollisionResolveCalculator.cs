@@ -3,7 +3,7 @@
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-17
 // 更新日時 : 2025-12-17
-// 概要     : 衝突解決量を計算するクラス
+// 概要     : 衝突時の位置補正量を計算するクラス
 // ======================================================
 
 using UnityEngine;
@@ -12,7 +12,7 @@ using CollisionSystem.Data;
 namespace CollisionSystem.Calculator
 {
     /// <summary>
-    /// 衝突している 2 オブジェクト間の押し戻し情報を算出するクラス
+    /// 衝突している 2 オブジェクト間の位置補正を算出するクラス
     /// </summary>
     public sealed class CollisionResolveCalculator
     {
@@ -58,9 +58,9 @@ namespace CollisionSystem.Calculator
         /// <param name="contextB">押し戻し対象のオブジェクト B のコンテキスト</param>
         /// <param name="forwardSpeedA">オブジェクト A の前進速度</param>
         /// <param name="forwardSpeedB">オブジェクト B の前進速度</param>
-        /// <param name="resolveInfoA">計算結果としてのオブジェクト A の押し戻しベクトル</param>
-        /// <param name="resolveInfoB">計算結果としてのオブジェクト B の押し戻しベクトル</param>
-        public void CalculateResolveInfo(
+        /// <param name="resolveVectorA">計算結果としてのオブジェクト A の押し戻しベクトル</param>
+        /// <param name="resolveVectorB">計算結果としてのオブジェクト B の押し戻しベクトル</param>
+        public void CalculateResolve(
             in BaseCollisionContext contextA,
             in BaseCollisionContext contextB,
             in float forwardSpeedA,

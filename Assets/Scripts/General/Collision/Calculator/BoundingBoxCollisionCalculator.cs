@@ -68,7 +68,7 @@ namespace CollisionSystem.Calculator
             _separationMath = new SeparationMath(_overlapMath);
             _penetrationMath = new PenetrationMath(_overlapMath);
             _obbCollisionCalculator = new OBBCollisionCalculator(_obbMath, _separationMath, _penetrationMath);
-            _circleOBBCollisionCalculator = new CircleOBBCollisionCalculator(_obbMath);
+            _circleOBBCollisionCalculator = new CircleOBBCollisionCalculator(_obbMath, _overlapMath);
         }
 
         // ======================================================

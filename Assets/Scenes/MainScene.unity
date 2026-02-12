@@ -2567,14 +2567,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 63d10b6377b50c643aefc81d22c73d1c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cameraTransform: {fileID: 1360044344}
-  cameraTargets:
+  _cameraTransform: {fileID: 1360044344}
+  _cameraTargets:
   - TargetTransform: {fileID: 435110471}
     PositionOffset: {x: 0, y: 5, z: -5}
     RotationOffset: {x: 15, y: 0, z: 0}
     IsRotationFixed: 0
   - TargetTransform: {fileID: 435110471}
-    PositionOffset: {x: 0, y: 15, z: -15}
+    PositionOffset: {x: 0, y: 10, z: -10}
     RotationOffset: {x: 30, y: 0, z: 0}
     IsRotationFixed: 0
 --- !u!4 &76211784

@@ -84,7 +84,7 @@ namespace CollisionSystem.Utility
             // --------------------------------------------------
             // è’ìÀâåàåvéZ
             // --------------------------------------------------
-            _collisionResolverCalculator.CalculateResolveInfo(
+            _collisionResolverCalculator.CalculateResolve(
                 context,
                 obstacle,
                 context.TankRootManager.CurrentForwardSpeed,
@@ -144,7 +144,7 @@ namespace CollisionSystem.Utility
             // --------------------------------------------------
             // è’ìÀâåàåvéZ
             // --------------------------------------------------
-            _collisionResolverCalculator.CalculateResolveInfo(
+            _collisionResolverCalculator.CalculateResolve(
                 contextA,
                 contextB,
                 contextA.TankRootManager.CurrentForwardSpeed,

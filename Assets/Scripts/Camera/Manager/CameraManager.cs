@@ -26,10 +26,10 @@ namespace CameraSystem.Manager
 
         [Header("追従設定")]
         [Tooltip("カメラTransform")]
-        [SerializeField] private Transform cameraTransform;
+        [SerializeField] private Transform _cameraTransform;
 
         [Tooltip("カメラが追従するターゲット情報配列")]
-        [SerializeField] private CameraTarget[] cameraTargets;
+        [SerializeField] private CameraTarget[] _cameraTargets;
 
         // ======================================================
         // コンポーネント参照
@@ -45,7 +45,7 @@ namespace CameraSystem.Manager
         public void OnEnter()
         {
             // CameraFollowController クラスを生成
-            _followController = new CameraFollowController(cameraTransform, cameraTargets);
+            _followController = new CameraFollowController(_cameraTransform, _cameraTargets);
         }
 
         public void OnLateUpdate(in float unscaledDeltaTime)
@@ -71,10 +71,8 @@ namespace CameraSystem.Manager
             // 現在設定されているターゲットインデックスを取得
             int currentIndex = _followController.GetCurrentTargetIndex();
 
-            // 同一ターゲットが指定された場合は解除（未選択状態へ戻す）
             if (currentIndex == targetIndex)
             {
-                _followController.SetTarget(0);
                 return;
             }
 
