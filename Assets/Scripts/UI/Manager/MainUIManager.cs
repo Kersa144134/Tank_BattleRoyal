@@ -131,6 +131,9 @@ namespace UISystem.Manager
         /// <summary>現在インゲーム状態かどうか</summary>
         private bool _isInGame;
 
+        /// <summary>直前に表示した残り秒数を保持する</summary>
+        private int _previousDisplayTotalSeconds = -1;
+
         // ======================================================
         // 定数
         // ======================================================
@@ -308,32 +311,40 @@ namespace UISystem.Manager
         /// <param name="limitTime">制限時間（秒）</param>
         public void UpdateLimitTimeDisplay(in float elapsedTime, in float limitTime)
         {
-            // 制限時間表示用テキストが未設定の場合は処理なし
             if (_limitTimeText == null)
             {
                 return;
             }
 
-            // 残り時間を計算する
+            // 残り時間を算出する
             float remainingTime = limitTime - elapsedTime;
 
-            // 残り時間が 0 未満にならないよう補正する
+            // 残り時間が負数にならないよう補正する
             if (remainingTime < 0.0f)
             {
                 remainingTime = 0.0f;
             }
 
+            // 残り時間を整数秒へ変換する（小数切り捨て）
+            int totalSeconds = Mathf.FloorToInt(remainingTime);
+
+            // 前回表示秒と同一の場合は処理なし
+            if (totalSeconds == _previousDisplayTotalSeconds)
+            {
+                return;
+            }
+
+            // 現在の表示秒をキャッシュへ保存する
+            _previousDisplayTotalSeconds = totalSeconds;
+
             // 分を算出する
-            int minutes =
-                Mathf.FloorToInt(remainingTime / 60.0f);
+            int minutes = totalSeconds / 60;
 
             // 秒を算出する
-            int seconds =
-                Mathf.FloorToInt(remainingTime % 60.0f);
+            int seconds = totalSeconds % 60;
 
-            // MM:SS 形式でテキストに反映する
-            _limitTimeText.text =
-                $"{minutes:00}:{seconds:00}";
+            // TextMeshProのSetTextを使用しフォーマット文字列で直接描画する
+            _limitTimeText.SetText("{0:00}:{1:00}", minutes, seconds);
         }
 
         /// <summary>
