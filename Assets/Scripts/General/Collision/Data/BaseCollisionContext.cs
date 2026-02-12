@@ -6,8 +6,8 @@
 // 概要     : 衝突解決計算で使用する共通コンテキスト基底クラス
 // ======================================================
 
-using CollisionSystem.Interface;
 using UnityEngine;
+using CollisionSystem.Interface;
 
 namespace CollisionSystem.Data
 {
@@ -16,7 +16,6 @@ namespace CollisionSystem.Data
     /// OBB を持つ衝突対象の最小単位を定義する
     /// </summary>
     public abstract class BaseCollisionContext
-        : IDynamicCollisionContext
     {
         // ======================================================
         // フィールド
