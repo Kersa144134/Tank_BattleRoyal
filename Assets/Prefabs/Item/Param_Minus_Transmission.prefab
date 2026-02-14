@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6453188094619372843}
   m_Layer: 0
-  m_Name: Param_Plus_Transmission
+  m_Name: Param_Minus_Transmission
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -87,7 +87,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 680235474bfc2f949b06895b4cd69742, type: 2}
+  - {fileID: 2100000, guid: 36fe3b29bb57e8144be5b121d15cbd22, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

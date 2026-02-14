@@ -14,6 +14,7 @@ using SceneSystem.Data;
 using SceneSystem.Interface;
 using TankSystem.Manager;
 using UISystem.Controller;
+using ItemSystem.Data;
 
 namespace UISystem.Manager
 {
@@ -39,9 +40,9 @@ namespace UISystem.Manager
         private Animator _cameraAnimator;
 
         // --------------------------------------------------
-        // 時間表示
+        // タイマー
         // --------------------------------------------------
-        [Header("時間表示")]
+        [Header("タイマー")]
         /// <summary>制限時間を表示するテキスト</summary>
         [SerializeField]
         private TextMeshProUGUI _limitTimeText;
@@ -166,8 +167,34 @@ namespace UISystem.Manager
         private const string DESTROY_ANIMATION_NAME = "Destroy";
 
         // --------------------------------------------------
-        // パラメーター
+        // タイマー
         // --------------------------------------------------
+        /// <summary>
+        /// 制限時間表示フォーマット
+        /// </summary>
+        private const string LIMIT_TIME_FORMAT = "{0:00}:{1:00}";
+        
+        // --------------------------------------------------
+        // ログ
+        // --------------------------------------------------
+        /// <summary>自身撃破時にログへ表示する文</summary>
+        private const string SELF_DESTROYED_TEXT = "撃破された";
+
+        /// <summary>敵撃破時にログへ表示する文のフォーマット</summary>
+        private const string ENEMY_DESTROYED_FORMAT = "戦車{0} を撃破";
+        
+        /// <summary>パラメータ上昇時にログへ追加する文/// </summary>
+        private const string INCREASE_SUFFIX = " が上昇";
+
+        /// <summary>パラメータ減少時にログへ追加する文</summary>
+        private const string DECREASE_SUFFIX = " が減少";
+
+        // --------------------------------------------------
+        // その他
+        // --------------------------------------------------
+        /// <summary>プレイヤーの戦車ID</summary>
+        private const int PLAYER_TANK_ID = 1;
+
         /// <summary>通常時のタイムスケール</summary>
         private const float DEFAULT_TIME_SCALE = 1.0f;
 
@@ -343,8 +370,8 @@ namespace UISystem.Manager
             // 秒を算出する
             int seconds = totalSeconds % 60;
 
-            // TextMeshProのSetTextを使用しフォーマット文字列で直接描画する
-            _limitTimeText.SetText("{0:00}:{1:00}", minutes, seconds);
+            // フォーマット文字列を使用して描画する
+            _limitTimeText.SetText(LIMIT_TIME_FORMAT, minutes, seconds);
         }
 
         /// <summary>
@@ -378,10 +405,21 @@ namespace UISystem.Manager
         /// アイテム獲得時のログ表示を行う
         /// </summary>
         /// <param name="itemName">獲得したアイテム名</param>
-        public void NotifyItemAcquired(in string itemName)
+        /// <param name="type">アイテム種別</param>
+        public void NotifyItemAcquired(in string itemName, in ItemType type)
         {
-            // ログに表示するメッセージを作成
-            string logMessage = $"{itemName} を獲得";
+            // アイテム種別に応じたログ文を生成
+            string logMessage = type switch
+            {
+                ItemType.ParamIncrease => string.Concat(itemName, INCREASE_SUFFIX),
+                ItemType.ParamDecrease => string.Concat(itemName, DECREASE_SUFFIX),
+                _ => null
+            };
+
+            if (string.IsNullOrEmpty(logMessage))
+            {
+                return;
+            }
 
             // ログ表示
             _logRotationUIController?.AddLog(logMessage);
@@ -396,34 +434,33 @@ namespace UISystem.Manager
             int displayTankId;
             string logMessage;
 
-            // 自身の戦車（ID = 1）の場合
-            if (tankId == 1)
+            // 自身の戦車の場合
+            if (tankId == PLAYER_TANK_ID)
             {
                 displayTankId = tankId;
 
-                // ログに表示するメッセージを生成
-                logMessage = "撃破された";
+                // ログ文言を設定
+                logMessage = SELF_DESTROYED_TEXT;
 
-                // 先頭から再生
+                // アニメーションを先頭から再生
                 _effectAnimator?.Play(DIE_ANIMATION_NAME, 0, 0f);
             }
-            // 敵戦車の場合
             else
             {
-                // 自身を除外するため -1
+                // 自身を除外するためIDを補正
                 displayTankId = tankId - 1;
 
-                // ログに表示するメッセージを生成
-                logMessage = $"戦車{displayTankId} を撃破";
+                // フォーマットを使用してログ文を生成
+                logMessage = string.Format(ENEMY_DESTROYED_FORMAT, displayTankId);
 
-                // 先頭から再生
+                // アニメーションを先頭から再生
                 _effectAnimator?.Play(DESTROY_ANIMATION_NAME, 0, 0f);
             }
 
             // ログ UI に追加
             _logRotationUIController?.AddLog(logMessage);
         }
-        
+
         // --------------------------------------------------
         // アニメーションイベント
         // --------------------------------------------------

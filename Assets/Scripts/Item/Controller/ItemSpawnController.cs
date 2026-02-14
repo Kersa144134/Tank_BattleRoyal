@@ -156,7 +156,7 @@ namespace ItemSystem.Controller
             // 初期化
             position = Vector3.zero;
 
-            // 生成ポイントが存在しない場合は失敗
+            // 生成ポイントが存在しない場合は処理なし
             if (_spawnPoints.Length == 0)
             {
                 return false;

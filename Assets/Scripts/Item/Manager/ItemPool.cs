@@ -2,7 +2,7 @@
 // ItemPool.cs
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-22
-// 更新日時 : 2026-01-07
+// 更新日時 : 2026-02-14
 // 概要     : ItemSlot を管理するプールクラス
 //            取得 / 返却をイベントで通知する
 // ======================================================
@@ -13,6 +13,7 @@ using UnityEngine;
 using ItemSystem.Controller;
 using ItemSystem.Data;
 using SceneSystem.Interface;
+using SceneSystem.Data;
 
 namespace ItemSystem.Manager
 {
@@ -54,16 +55,24 @@ namespace ItemSystem.Manager
         // コンポーネント参照
         // ======================================================
 
+        /// <summary>アイテム抽選を担当するコントローラー</summary>
+        private ItemDrawController _drawController = new ItemDrawController();
+
         /// <summary>アイテム生成を自動制御するコントローラー</summary>
         private ItemSpawnController _spawnController;
+
+        // ======================================================
+        // フィールド
+        // ======================================================
+
+        /// <summary>アイテム初期生成を実行済みかどうか</summary>
+        private bool _isInitialSpawnExecuted = false;
 
         // ======================================================
         // 辞書
         // ======================================================
 
-        /// <summary>
-        /// 未使用 ItemSlot を ItemData 単位で管理する辞書
-        /// </summary>
+        /// <summary>未使用 ItemSlot を ItemData 単位で管理する辞書</summary>
         private readonly Dictionary<ItemData, Queue<ItemSlot>> _inactiveItems
             = new Dictionary<ItemData, Queue<ItemSlot>>();
 
@@ -78,14 +87,10 @@ namespace ItemSystem.Manager
         // イベント
         // ======================================================
 
-        /// <summary>
-        /// ItemSlot が有効化（取得）された際の通知イベント
-        /// </summary>
+        /// <summary>ItemSlot が有効化された際の通知イベント</summary>
         public event Action<ItemSlot> OnItemActivated;
 
-        /// <summary>
-        /// ItemSlot が無効化（返却）された際の通知イベント
-        /// </summary>
+        /// <summary>ItemSlot が無効化された際の通知イベント</summary>
         public event Action<ItemSlot> OnItemDeactivated;
 
         // ======================================================
@@ -106,9 +111,6 @@ namespace ItemSystem.Manager
 
         public void OnUpdate(in float unscaledDeltaTime, in float elapsedTime)
         {
-            // デバッグ用
-            if (Input.GetKeyDown(KeyCode.Alpha0))_spawnController.ExecuteInitialSpawn();
-            
             // 生成制御コントローラーを更新
             _spawnController.Update();
         }
@@ -120,6 +122,24 @@ namespace ItemSystem.Manager
 
             // イベント購読解除
             _spawnController.OnSpawnPositionDetermined -= HandleSpawnPositionDetermined;
+        }
+
+        public void OnPhaseEnter(in PhaseType phase)
+        {
+            // Playフェーズの場合
+            if (phase == PhaseType.Play)
+            {
+                if (_isInitialSpawnExecuted)
+                {
+                    return;
+                }
+
+                // 初期生成を実行
+                _spawnController.ExecuteInitialSpawn();
+
+                // 実行済みフラグを立てる
+                _isInitialSpawnExecuted = true;
+            }
         }
 
         // ======================================================
@@ -136,8 +156,9 @@ namespace ItemSystem.Manager
         /// <returns>取得した ItemSlot</returns>
         private ItemSlot Activate(in Vector3 spawnPosition)
         {
-            // 抽選により未使用キューを取得
-            Queue<ItemSlot> selectedQueue = GetRandomInactiveQueue();
+            // 抽選コントローラーから未使用キューを取得
+            Queue<ItemSlot> selectedQueue
+                = _drawController.Draw(_inactiveItems);
 
             // 抽選対象が存在しない場合は取得不可
             if (selectedQueue == null)
@@ -226,44 +247,6 @@ namespace ItemSystem.Manager
         }
 
         // --------------------------------------------------
-        // 抽選
-        // --------------------------------------------------
-        /// <summary>
-        /// 未使用状態の ItemSlot キューをランダムに抽選する
-        /// </summary>
-        /// <returns>抽選された未使用キュー</returns>
-        private Queue<ItemSlot> GetRandomInactiveQueue()
-        {
-            // 抽選対象となる未使用キュー一覧
-            List<Queue<ItemSlot>> drawingQueues = new List<Queue<ItemSlot>>();
-
-            // ItemData 単位で未使用キューを走査
-            foreach (Queue<ItemSlot> queue in _inactiveItems.Values)
-            {
-                // 要素が存在しないキューは抽選対象外
-                if (queue.Count == 0)
-                {
-                    continue;
-                }
-
-                // 抽選対象として追加
-                drawingQueues.Add(queue);
-            }
-
-            // 抽選対象が存在しない場合は null を返す
-            if (drawingQueues.Count == 0)
-            {
-                return null;
-            }
-
-            // 抽選対象キューのインデックスをランダム取得
-            int randomIndex = UnityEngine.Random.Range(0, drawingQueues.Count);
-
-            // 抽選された未使用キューを返却
-            return drawingQueues[randomIndex];
-        }
-
-        // --------------------------------------------------
         // イベントハンドラ
         // --------------------------------------------------
         /// <summary>
@@ -282,7 +265,6 @@ namespace ItemSystem.Manager
         /// <param name="slot">無効化された ItemSlot</param>
         private void HandleSlotDeactivated(ItemSlot slot)
         {
-            // null ガード
             if (slot == null)
             {
                 return;

@@ -25,6 +25,10 @@ namespace TankSystem.Manager
         /// <summary>更新対象のアイテムスロット</summary>
         private readonly List<ItemSlot> _activeSlots = new List<ItemSlot>();
 
+        /// <summary>無効化対象のアイテムを一時的に保持するキュー</summary>
+        private readonly Queue<ItemSlot> _pendingDeactivateSlots
+            = new Queue<ItemSlot>();
+
         /// <summary>メインカメラ Transform</summary>
         private readonly Transform _mainCameraTransform;
 
@@ -41,16 +45,6 @@ namespace TankSystem.Manager
             = new Dictionary<ItemSlot, FaceTarget>();
 
         // ======================================================
-        // 遅延削除
-        // ======================================================
-
-        /// <summary>
-        /// 無効化対象のアイテムを一時的に保持するキュー
-        /// </summary>
-        private readonly Queue<ItemSlot> _pendingDeactivateSlots
-            = new Queue<ItemSlot>();
-
-        // ======================================================
         // 定数
         // ======================================================
 
@@ -64,7 +58,7 @@ namespace TankSystem.Manager
         /// <summary>
         /// ItemManager を生成する
         /// </summary>
-        public ItemManager(Transform mainCameraTransform)
+        public ItemManager(in Transform mainCameraTransform)
         {
             _mainCameraTransform = mainCameraTransform;
         }
@@ -78,7 +72,6 @@ namespace TankSystem.Manager
         /// </summary>
         public void RegisterItem(in ItemSlot slot, in float elapsedTime)
         {
-            // null ガード
             if (slot == null)
             {
                 return;
@@ -109,15 +102,14 @@ namespace TankSystem.Manager
         /// <summary>
         /// 更新対象からアイテムスロットを解除する
         /// </summary>
-        public void UnregisterItem(ItemSlot slot)
+        public void UnregisterItem(in ItemSlot slot)
         {
-            // null ガード
             if (slot == null)
             {
                 return;
             }
 
-            // 管理対象でなければ終了
+            // 管理対象でなければ処理なし
             if (!_activeSlots.Contains(slot))
             {
                 return;
@@ -137,7 +129,7 @@ namespace TankSystem.Manager
         /// 全アイテムを更新する
         /// </summary>
         /// <param name="elapsedTime">インゲームの経過時間</param>
-        public void UpdateItems(float elapsedTime)
+        public void UpdateItems(in float elapsedTime)
         {
             // 時間が進まないフレームは処理なし
             if (elapsedTime <= 0.0f)
@@ -163,7 +155,7 @@ namespace TankSystem.Manager
                 // 生存時間超過判定
                 if (elapsed >= ITEM_LIFE_TIME)
                 {
-                    // 遅延削除キューに積む
+                    // 遅延削除キューに追加
                     _pendingDeactivateSlots.Enqueue(slot);
                     continue;
                 }
@@ -183,7 +175,7 @@ namespace TankSystem.Manager
             {
                 ItemSlot slot = _pendingDeactivateSlots.Dequeue();
 
-                // 既に管理外なら処理しない
+                // 既に管理外なら処理なし
                 if (!_activeSlots.Contains(slot))
                 {
                     continue;
