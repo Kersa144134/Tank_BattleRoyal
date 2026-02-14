@@ -429,20 +429,15 @@ namespace ItemSystem.Controller
             string tagName =
                 basePoint.tag;
 
-            // --------------------------------------------------
-            // タグ分類
-            // --------------------------------------------------
+            // タグ判別
             switch (tagName)
             {
-                // Supply タグ
                 case SUPPLY_TAG:
                     return SpawnPointType.Supply;
 
-                // ParamBonus タグ
                 case PARAM_BONUS_TAG:
                     return SpawnPointType.ParamBobus;
 
-                // その他
                 default:
                     return SpawnPointType.None;
             }
