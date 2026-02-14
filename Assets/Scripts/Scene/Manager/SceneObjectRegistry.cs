@@ -45,6 +45,9 @@ namespace SceneSystem.Manager
         /// <summary>弾丸管理マネージャー</summary>
         private BulletManager _bulletManager = new BulletManager();
 
+        /// <summary>障害物管理マネージャー</summary>
+        private ObstacleManager _obstacleManager = new ObstacleManager();
+
         /// <summary>アイテム管理担当マネージャー</summary>
         private ItemManager _itemManager;
 
@@ -61,6 +64,9 @@ namespace SceneSystem.Manager
         // ======================================================
         // プロパティ
         // ======================================================
+
+        /// <summary>障害物管理マネージャー</summary>
+        public ObstacleManager ObstacleManager => _obstacleManager;
 
         /// <summary>
         /// プレイヤー戦車 Transform を返す
@@ -143,6 +149,15 @@ namespace SceneSystem.Manager
         }
 
         /// <summary>
+        /// 障害物を更新対象から解除する
+        /// </summary>
+        /// <param name="obstacle">解除する障害物</param>
+        public void UnregisterObstacle(in Transform obstacle)
+        {
+            _obstacleManager.UnregisterObstacle(obstacle);
+        }
+        
+        /// <summary>
         /// アイテムスロットを更新対象として登録する
         /// </summary>
         /// <param name="slot">追加するスロット</param>
@@ -168,7 +183,7 @@ namespace SceneSystem.Manager
         {
             Time.timeScale = timeScale;
         }
-
+        
         // ======================================================
         // プライベートメソッド
         // ======================================================
@@ -180,7 +195,6 @@ namespace SceneSystem.Manager
         {
             if (_tanks == null || _tanks.Length == 0)
             {
-                Debug.LogWarning("[SceneObjectRegistry] 戦車 Transform 配列が未設定です。");
                 return;
             }
 
@@ -197,7 +211,6 @@ namespace SceneSystem.Manager
                 BaseTankRootManager tankManager = tankTransform.GetComponent<BaseTankRootManager>();
                 if (tankManager == null)
                 {
-                    Debug.LogWarning($"[SceneObjectRegistry] {_tanks[i].name} に BaseTankRootManager がアタッチされていません。");
                     continue;
                 }
 
@@ -214,7 +227,6 @@ namespace SceneSystem.Manager
             if (_obstacleRoot == null)
             {
                 _obstacles = Array.Empty<Transform>();
-                Debug.LogWarning("[SceneObjectRegistry] 障害物親オブジェクトが未設定です。");
                 return;
             }
 
@@ -224,6 +236,9 @@ namespace SceneSystem.Manager
             for (int i = 0; i < count; i++)
             {
                 _obstacles[i] = _obstacleRoot.GetChild(i);
+
+                // 障害物管理クラスに登録
+                _obstacleManager.RegisterObstacle(_obstacles[i]);
             }
         }
     }

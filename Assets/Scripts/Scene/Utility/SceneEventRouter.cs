@@ -6,18 +6,20 @@
 // 概要     : シーン内イベントの仲介を行う
 // ======================================================
 
-using System;
-using System.Collections.Generic;
-using UnityEngine;
 using CollisionSystem.Data;
 using InputSystem.Data;
 using InputSystem.Manager;
 using ItemSystem.Data;
+using ObstacleSystem.Data;
 using SceneSystem.Data;
+using System;
+using System.Collections.Generic;
 using TankSystem.Data;
 using TankSystem.Manager;
+using Unity.VisualScripting;
+using UnityEngine;
 using WeaponSystem.Data;
-using UnityEngine.SocialPlatforms;
+using WeaponSystem.Interface;
 
 namespace SceneSystem.Utility
 {
@@ -38,9 +40,9 @@ namespace SceneSystem.Utility
         private bool _isSubscribed;
 
         /// <summary>
-        /// 爆発範囲内の戦車コンテキストを一時的に格納するリスト
+        /// 爆発範囲内のコンテキストを一時的に格納するリスト
         /// </summary>
-        private readonly List<TankCollisionContext> _tankOverlapResults = new List<TankCollisionContext>();
+        private readonly List<BaseCollisionContext> _overlapResults = new List<BaseCollisionContext>();
 
         // ======================================================
         // イベント
@@ -67,8 +69,7 @@ namespace SceneSystem.Utility
         // ======================================================
 
         /// <summary>
-        /// PlayerTank および EnemyTank の
-        /// 発射イベントを購読する
+        /// イベントを購読する
         /// </summary>
         public void Subscribe()
         {
@@ -76,6 +77,14 @@ namespace SceneSystem.Utility
             if (_isSubscribed)
             {
                 return;
+            }
+
+            // --------------------------------------------------
+            // オブジェクト群
+            // --------------------------------------------------
+            if (_context.SceneObjectRegistry != null)
+            {
+                _context.SceneObjectRegistry.ObstacleManager.OnObstacleBreaked += HandleDeactivatedObstacle;
             }
 
             // --------------------------------------------------
@@ -157,7 +166,6 @@ namespace SceneSystem.Utility
 
         /// <summary>
         /// 購読済みのイベントをすべて解除する
-        /// Scene 破棄時や再生成時に呼び出される想定
         /// </summary>
         public void Dispose()
         {
@@ -167,6 +175,14 @@ namespace SceneSystem.Utility
                 return;
             }
 
+            // --------------------------------------------------
+            // オブジェクト群
+            // --------------------------------------------------
+            if (_context.SceneObjectRegistry != null)
+            {
+                _context.SceneObjectRegistry.ObstacleManager.OnObstacleBreaked -= HandleDeactivatedObstacle;
+            }
+            
             // --------------------------------------------------
             // プレイヤー戦車
             // --------------------------------------------------
@@ -313,6 +329,9 @@ namespace SceneSystem.Utility
             _context.MainUIManager?.UpdateBulletIcons();
         }
 
+        // --------------------------------------------------
+        // 戦車共通
+        // --------------------------------------------------
         /// <summary>
         /// 戦車からの発射要求を受け取り、
         /// BulletPool を通じて弾丸を生成・発射する
@@ -349,22 +368,6 @@ namespace SceneSystem.Utility
                 fireDirection,
                 target
             );
-        }
-
-        /// <summary>
-        /// 指定した弾丸が衝突した際の処理を呼び出す
-        /// </summary>
-        /// <param name="bullet">衝突判定を行った弾丸インスタンス</param>
-        /// <param name="context">衝突対象のコンテキスト情報</param>
-        private void HandleHitBullet(BulletBase bullet, BaseCollisionContext context)
-        {
-            if (bullet == null)
-            {
-                return;
-            }
-
-            // 弾丸ヒット処理
-            bullet?.OnHit(context);
         }
 
         /// <summary>
@@ -421,6 +424,22 @@ namespace SceneSystem.Utility
         }
 
         /// <summary>
+        /// 指定した弾丸が衝突した際の処理を呼び出す
+        /// </summary>
+        /// <param name="bullet">衝突判定を行った弾丸インスタンス</param>
+        /// <param name="context">衝突対象のコンテキスト情報</param>
+        private void HandleHitBullet(BulletBase bullet, BaseCollisionContext context)
+        {
+            if (bullet == null)
+            {
+                return;
+            }
+
+            // 弾丸ヒット処理
+            bullet?.OnHit(context);
+        }
+
+        /// <summary>
         /// 弾丸が爆発した際に呼び出され、
         /// 指定位置と半径に含まれる戦車コンテキストに対しダメージ処理を行う
         /// </summary>
@@ -434,28 +453,46 @@ namespace SceneSystem.Utility
                 return;
             }
 
-            _tankOverlapResults.Clear();
+            _overlapResults.Clear();
 
-            // 爆発範囲内の戦車コンテキストを取得
-            List<TankCollisionContext> overlappingTanks =
-                _context.CollisionManager?.GetOverlappingTanksCircleHorizontal(position, radius);
+            // 爆発範囲内のコンテキストを取得
+            List<BaseCollisionContext> overlappingContexts =
+                _context.CollisionManager?.GetOverlappingCircleHorizontal(position, radius);
 
-            if (overlappingTanks != null)
+            if (overlappingContexts != null)
             {
-                _tankOverlapResults.AddRange(overlappingTanks);
+                _overlapResults.AddRange(overlappingContexts);
             }
 
             // リストを配列に変換して渡す
-            bullet?.ApplyExplodeDamage(_tankOverlapResults.ToArray());
+            bullet?.ApplyExplodeDamage(_overlapResults.ToArray());
         }
 
+        // --------------------------------------------------
+        // 障害物
+        // --------------------------------------------------
+        /// <summary>
+        /// 障害物を Scene 管理対象から解除する
+        /// </summary>
+        /// <param name="obstacle">解除対象の障害物</param>
+        private void HandleDeactivatedObstacle(Transform obstacle)
+        {
+            if (obstacle == null)
+            {
+                return;
+            }
+
+            _context.SceneObjectRegistry?.UnregisterObstacle(obstacle);
+            _context.CollisionManager?.UnregisterObstacle(obstacle);
+        }
+        
         // --------------------------------------------------
         // アイテム
         // --------------------------------------------------
         /// <summary>
         /// アイテムを Scene 管理対象として登録する
         /// </summary>
-        /// <param name="item">生成されたアイテムスロット</param>
+        /// <param name="item">登録対象のアイテムスロット</param>
         private void HandleActivatedItem(ItemSlot item)
         {
             if (item == null)
@@ -470,7 +507,7 @@ namespace SceneSystem.Utility
         /// <summary>
         /// アイテムを Scene 管理対象から解除する
         /// </summary>
-        /// <param name="item">使用終了または取得済みのアイテムスロット</param>
+        /// <param name="item">解除対象のアイテムスロット</param>
         private void HandleDeactivatedItem(ItemSlot item)
         {
             if (item == null)
@@ -510,7 +547,7 @@ namespace SceneSystem.Utility
             {
             }
 
-            _context.MainUIManager?.NotifyItemAcquired(itemSlot.ItemData.Name);
+            _context.MainUIManager?.NotifyItemAcquired(itemSlot.ItemData.Name, itemSlot.ItemData.Type);
         }
 
         // --------------------------------------------------

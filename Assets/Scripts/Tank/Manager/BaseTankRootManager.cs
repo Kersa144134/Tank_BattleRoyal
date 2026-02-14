@@ -247,14 +247,6 @@ namespace TankSystem.Manager
             }
 
             // --------------------------------------------------
-            // デバッグ用（いずれ削除予定）
-            // --------------------------------------------------
-            if (TankId == 1)
-            {
-                if (Input.GetKeyDown(KeyCode.Backspace)) TakeDamage(20f);
-            }
-
-            // --------------------------------------------------
             // タイムスケール
             // --------------------------------------------------
             float deltaTime = Time.deltaTime;
@@ -422,7 +414,7 @@ namespace TankSystem.Manager
         /// ダメージを受ける処理
         /// </summary>
         /// <param name="damage">受けるダメージ量</param>
-        public void TakeDamage(in float damage)
+        public void TakeDamage(in Transform target, in float damage)
         {
             // 破壊済みの場合は処理なし
             if (_isBroken)

@@ -11,6 +11,7 @@ using UnityEngine;
 using CollisionSystem.Data;
 using ObstacleSystem.Data;
 using TankSystem.Data;
+using TankSystem.Manager;
 
 namespace WeaponSystem.Data
 {
@@ -159,7 +160,10 @@ namespace WeaponSystem.Data
             float damage = BASE_ARMOR_DAMAGE + speedFactor * massFactor * BASE_ARMOR_DAMAGE_MULTIPLIER;
 
             // 装甲ダメージを適用
-            _damageTarget.TakeArmorDamage(damage);
+            if (_damageTarget is BaseTankRootManager tank)
+            {
+                tank.TakeArmorDamage(damage);
+            }
 
             _damageTarget = null;
         }

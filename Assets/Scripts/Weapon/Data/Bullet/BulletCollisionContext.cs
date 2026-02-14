@@ -85,7 +85,8 @@ namespace WeaponSystem.Data
             : base(
                 bullet.Transform,
                 obb,
-                MovementLockAxis.None
+                MovementLockAxis.None,
+                null
             )
         {
             // íeä€éQè∆Çï€éù

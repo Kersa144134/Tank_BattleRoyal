@@ -38,11 +38,11 @@ namespace CollisionSystem.Utility
         // イベント
         // ======================================================
 
-        /// <summary>戦車がアイテムを取得した際に通知されるイベント</summary>
-        public event Action<BaseTankRootManager, ItemSlot> OnItemGet;
-
         /// <summary>弾丸が衝突した際に通知されるイベント</summary>
         public event Action<BulletBase, BaseCollisionContext> OnBulletHit;
+
+        /// <summary>戦車がアイテムを取得した際に通知されるイベント</summary>
+        public event Action<BaseTankRootManager, ItemSlot> OnItemGet;
 
         // ======================================================
         // 定数

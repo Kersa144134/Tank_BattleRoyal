@@ -6,9 +6,10 @@
 // 概要     : 障害物用の静的衝突コンテキスト
 // ======================================================
 
-using UnityEngine;
 using CollisionSystem.Data;
 using CollisionSystem.Interface;
+using UnityEngine;
+using WeaponSystem.Interface;
 
 namespace ObstacleSystem.Data
 {
@@ -55,15 +56,18 @@ namespace ObstacleSystem.Data
         /// <param name="obstacleId">障害物 ID</param>
         /// <param name="transform">障害物 Transform</param>
         /// <param name="obb">衝突判定用 OBB</param>
+        /// <param name="damageable">障害物を管理するダメージ受付先</param>
         public ObstacleCollisionContext(
             in int obstacleId,
             in Transform transform,
-            in IOBBData obb
+            in IOBBData obb,
+            in IDamageable damageable
         )
             : base(
                 transform,
                 obb,
-                MovementLockAxis.All
+                MovementLockAxis.All,
+                damageable
             )
         {
             ObstacleId = obstacleId;

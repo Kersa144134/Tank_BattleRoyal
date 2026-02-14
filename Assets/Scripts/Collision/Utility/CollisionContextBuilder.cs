@@ -41,7 +41,7 @@ namespace CollisionSystem.Utility
         /// </summary>
         /// <param name="contextFactory">コンテキスト生成ファクトリー</param>
         /// <param name="sceneRegistry">シーン上のオブジェクト管理レジストリー</param>
-        public CollisionContextBuilder(CollisionContextFactory contextFactory, SceneObjectRegistry sceneRegistry)
+        public CollisionContextBuilder(in CollisionContextFactory contextFactory, in SceneObjectRegistry sceneRegistry)
         {
             _contextFactory = contextFactory;
             _sceneRegistry = sceneRegistry;

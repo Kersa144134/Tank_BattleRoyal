@@ -104,11 +104,11 @@ namespace CollisionSystem.Manager
         /// <summary>弾丸コンテキストの配列</summary>
         private BulletCollisionContext[] _bullets;
 
-        /// <summary>戦車コンテキストの OBB キャッシュ配列</summary>
-        private IOBBData[] _tankOBBCache;
+        /// <summary>円判定用統合 OBB キャッシュ配列</summary>
+        private IOBBData[] _circleQueryOBBCache;
 
-        /// <summary>円判定で重なった戦車コンテキストキャッシュリスト</summary>
-        private readonly List<TankCollisionContext> _tankOverlapResults = new List<TankCollisionContext>(DEFAULT_OVERLAP_LIST_CAPACITY);
+        /// <summary>円判定で重なったコンテキストキャッシュリスト</summary>
+        private readonly List<BaseCollisionContext> _overlapContextResults = new List<BaseCollisionContext>(DEFAULT_OVERLAP_LIST_CAPACITY);
 
         // ======================================================
         // 辞書
@@ -119,6 +119,12 @@ namespace CollisionSystem.Manager
         /// </summary>
         private readonly Dictionary<int, TankCollisionContext> _tankContextMap
             = new Dictionary<int, TankCollisionContext>();
+
+        /// <summary>
+        /// 障害物 Transform と障害物コンテキストの対応を管理する辞書
+        /// </summary>
+        private readonly Dictionary<Transform, ObstacleCollisionContext> _obstacleContextMap
+            = new Dictionary<Transform, ObstacleCollisionContext>();
 
         /// <summary>
         /// アイテムスロットとアイテムコンテキストの対応を管理する辞書
@@ -133,10 +139,10 @@ namespace CollisionSystem.Manager
             = new Dictionary<BulletBase, BulletCollisionContext>();
 
         /// <summary>
-        /// OBB インスタンスと戦車コンテキストの対応を管理する辞書
+        /// OBB と衝突コンテキストの対応を管理する共通辞書
         /// </summary>
-        private readonly Dictionary<IOBBData, TankCollisionContext> _obbToTankMap
-            = new Dictionary<IOBBData, TankCollisionContext>();
+        private readonly Dictionary<IOBBData, BaseCollisionContext> _obbToContextMap
+            = new Dictionary<IOBBData, BaseCollisionContext>();
 
         // ======================================================
         // プロパティ
@@ -150,7 +156,7 @@ namespace CollisionSystem.Manager
         // ======================================================
 
         /// <summary>円重なり判定用 OBB リストの初期容量</summary>
-        private const int DEFAULT_OVERLAP_LIST_CAPACITY = 16;
+        private const int DEFAULT_OVERLAP_LIST_CAPACITY = 32;
 
         // ======================================================
         // セッター
@@ -174,7 +180,7 @@ namespace CollisionSystem.Manager
             // --------------------------------------------------
             // クラス生成
             // --------------------------------------------------
-            _contextFactory = new CollisionContextFactory(_obbFactory);
+            _contextFactory = new CollisionContextFactory(_obbFactory, _sceneRegistry);
             _contextBuilder = new CollisionContextBuilder(_contextFactory, _sceneRegistry);
             _collisionResolverCalculator = new CollisionResolveCalculator(_boxCollisionCalculator);
             _eventRouter = new CollisionEventRouter(_collisionResolverCalculator);
@@ -200,6 +206,18 @@ namespace CollisionSystem.Manager
 
             // 障害物
             _obstacles = _contextBuilder.BuildObstacleContexts();
+
+            _obstacleContextMap.Clear();
+
+            for (int i = 0; i < _obstacles.Length; i++)
+            {
+                ObstacleCollisionContext context = _obstacles[i];
+
+                if (context != null && context.Transform != null)
+                {
+                    _obstacleContextMap[context.Transform] = context;
+                }
+            }
 
             // --------------------------------------------------
             // 各衝突判定サービス生成
@@ -322,20 +340,24 @@ namespace CollisionSystem.Manager
         /// <param name="tankId">削除対象の TankID</param>
         public void UnregisterTank(in int tankId)
         {
-            if (_tankContextMap.Count == 0)
-            {
-                return;
-            }
+            UnregisterInternal(
+                tankId,
+                _tankContextMap,
+                UpdateTanks
+            );
+        }
 
-            if (!_tankContextMap.ContainsKey(tankId))
-            {
-                return;
-            }
-
-            _tankContextMap.Remove(tankId);
-
-            // 配列キャッシュ更新
-            UpdateTanks();
+        /// <summary>
+        /// 障害物を衝突判定対象から削除する
+        /// </summary>
+        /// <param name="obstacle">削除対象となる障害物</param>
+        public void UnregisterObstacle(in Transform obstacle)
+        {
+            UnregisterInternal(
+                obstacle,
+                _obstacleContextMap,
+                UpdateObstacles
+            );
         }
 
         /// <summary>
@@ -349,20 +371,16 @@ namespace CollisionSystem.Manager
                 return;
             }
 
-            // 既に登録済みの場合は処理しない
-            if (_itemContextMap.ContainsKey(item))
-            {
-                return;
-            }
+            // コンテキスト生成
+            ItemCollisionContext context
+                = _contextBuilder.BuildItemContext(item);
 
-            // アイテム用の衝突コンテキストを生成
-            ItemCollisionContext context = _contextBuilder.BuildItemContext(item);
-
-            // 内部マップに追加
-            _itemContextMap.Add(item, context);
-
-            // キャッシュ配列を更新
-            UpdateItems();
+            RegisterInternal(
+                item,
+                context,
+                _itemContextMap,
+                UpdateItems
+            );
         }
 
         /// <summary>
@@ -371,22 +389,11 @@ namespace CollisionSystem.Manager
         /// <param name="item">削除対象となるアイテムスロット</param>
         public void UnregisterItem(in ItemSlot item)
         {
-            if (item == null)
-            {
-                return;
-            }
-
-            // 未登録の場合は処理しない
-            if (!_itemContextMap.ContainsKey(item))
-            {
-                return;
-            }
-
-            // 内部マップから削除
-            _itemContextMap.Remove(item);
-
-            // キャッシュ配列を更新
-            UpdateItems();
+            UnregisterInternal(
+                item,
+                _itemContextMap,
+                UpdateItems
+            );
         }
 
         /// <summary>
@@ -400,20 +407,16 @@ namespace CollisionSystem.Manager
                 return;
             }
 
-            // 既に登録済みの場合は処理しない
-            if (_bulletContextMap.ContainsKey(bullet))
-            {
-                return;
-            }
+            // コンテキスト生成
+            BulletCollisionContext context
+                = _contextBuilder.BuildBulletContext(bullet);
 
-            // 弾丸用衝突コンテキストを生成
-            BulletCollisionContext context = _contextBuilder.BuildBulletContext(bullet);
-
-            // 内部マップに追加
-            _bulletContextMap.Add(bullet, context);
-
-            // キャッシュ配列を更新
-            UpdateBullets();
+            RegisterInternal(
+                bullet,
+                context,
+                _bulletContextMap,
+                UpdateBullets
+            );
         }
 
         /// <summary>
@@ -427,54 +430,59 @@ namespace CollisionSystem.Manager
                 return;
             }
 
-            // 未登録の場合は処理しない
-            if (!_bulletContextMap.ContainsKey(bullet))
-            {
-                return;
-            }
-
-            // 内部マップから削除
-            _bulletContextMap.Remove(bullet);
-
             // ヒット履歴を削除
             _eventRouter.ClearHitHistory(bullet);
 
-            // キャッシュ配列を更新
-            UpdateBullets();
+            UnregisterInternal(
+                bullet,
+                _bulletContextMap,
+                UpdateBullets
+            );
         }
 
         /// <summary>
-        /// 指定円と水平面上で重なっている戦車コンテキストを取得
+        /// 指定円と水平面上で重なっているコンテキストを取得
         /// </summary>
         /// <param name="center">円の中心位置</param>
         /// <param name="radius">円の半径</param>
-        /// <returns>重なっている戦車コンテキストのリスト</returns>
-        public List<TankCollisionContext> GetOverlappingTanksCircleHorizontal(
+        /// <returns>重なっているコンテキストのリスト</returns>
+        public List<BaseCollisionContext> GetOverlappingCircleHorizontal(
             in Vector3 center,
             in float radius
         )
         {
-            _tankOverlapResults.Clear();
+            _overlapContextResults.Clear();
 
+            // 戦車キャッシュ更新
             UpdateTanks();
-            
-            // OBB 配列を渡して円と重なっている OBB を取得
-            IOBBData[] overlappingOBBs = _boxCollisionCalculator.GetOverlappingOBBsCircleHorizontal(
-                center,
-                radius,
-                _tankOBBCache
-            );
 
-            // 重なった OBB に対応する戦車コンテキストをリストに追加
+            // 障害物キャッシュ更新
+            UpdateObstacles();
+
+            // 統合OBBキャッシュ再構築
+            RebuildCircleQueryOBBCache();
+
+            // 円と重なっている OBB を取得
+            IOBBData[] overlappingOBBs =
+                _boxCollisionCalculator.GetOverlappingOBBsCircleHorizontal(
+                    center,
+                    radius,
+                    _circleQueryOBBCache
+                );
+
+            // OBB → Context 変換
             for (int i = 0; i < overlappingOBBs.Length; i++)
             {
-                if (_obbToTankMap.TryGetValue(overlappingOBBs[i], out TankCollisionContext tank))
+                if (_obbToContextMap.TryGetValue(
+                    overlappingOBBs[i],
+                    out BaseCollisionContext context
+                ))
                 {
-                    _tankOverlapResults.Add(tank);
+                    _overlapContextResults.Add(context);
                 }
             }
 
-            return _tankOverlapResults;
+            return _overlapContextResults;
         }
 
         // ======================================================
@@ -526,6 +534,73 @@ namespace CollisionSystem.Manager
         }
 
         /// <summary>
+        /// 衝突コンテキストの汎用登録処理
+        /// </summary>
+        /// <typeparam name="TKey">辞書のキー型</typeparam>
+        /// <typeparam name="TContext">衝突コンテキストの型</typeparam>
+        /// <param name="key">登録対象となるキー</param>
+        /// <param name="context">登録する衝突コンテキスト</param>
+        /// <param name="map">キーとコンテキストを管理する辞書</param>
+        /// <param name="updateCache">登録成功時に実行するキャッシュ更新処理</param>
+        private void RegisterInternal<TKey, TContext>(
+            in TKey key,
+            in TContext context,
+            in Dictionary<TKey, TContext> map,
+            in Action updateCache
+        )
+        {
+            // 既定値チェック
+            if (EqualityComparer<TKey>.Default.Equals(key, default))
+            {
+                return;
+            }
+
+            if (context == null)
+            {
+                return;
+            }
+
+            // 既に登録済みの場合は処理なし
+            if (!map.TryAdd(key, context))
+            {
+                return;
+            }
+
+            // キャッシュ更新
+            updateCache?.Invoke();
+        }
+
+        /// <summary>
+        /// 衝突コンテキストの汎用削除処理
+        /// </summary>
+        /// <typeparam name="TKey">辞書のキー型</typeparam>
+        /// <typeparam name="TContext">衝突コンテキストの型</typeparam>
+        /// <param name="key">削除対象となるキー</param>
+        /// <param name="map">キーとコンテキストを管理する辞書</param>
+        /// <param name="updateCache">削除成功時に実行するキャッシュ更新処理</param>
+        private void UnregisterInternal<TKey, TContext>(
+            in TKey key,
+            in Dictionary<TKey, TContext> map,
+            in Action updateCache
+        )
+        {
+            // 既定値チェック
+            if (EqualityComparer<TKey>.Default.Equals(key, default))
+            {
+                return;
+            }
+
+            // 存在しない場合は処理なし
+            if (!map.Remove(key))
+            {
+                return;
+            }
+
+            // キャッシュ更新
+            updateCache?.Invoke();
+        }
+
+        /// <summary>
         /// Dictionary の値をキャッシュ配列へ反映する共通処理
         /// </summary>
         /// <typeparam name="TKey">Dictionary のキー型</typeparam>
@@ -556,42 +631,47 @@ namespace CollisionSystem.Manager
         }
 
         /// <summary>
-        /// Tank 用キャッシュ配列と OBB キャッシュを更新する
+        /// Tank 用キャッシュ配列を更新する
         /// </summary>
         private void UpdateTanks()
         {
             UpdateCacheArray(_tankContextMap, ref _tanks);
 
-            // 辞書を再構築
-            _obbToTankMap.Clear();
-
-            // Tank が存在しない場合は OBB キャッシュも空にする
-            if (_tanks.Length == 0)
+            if (_tanks == null || _tanks.Length == 0)
             {
-                _tankOBBCache = null;
-
                 return;
             }
 
-            // OBB キャッシュ配列が未生成、またはサイズ不一致の場合は再生成
-            if (_tankOBBCache == null || _tankOBBCache.Length != _tanks.Length)
-            {
-                _tankOBBCache = new IOBBData[_tanks.Length];
-            }
-
-            // 各 TankCollisionContext から OBB をキャッシュへ反映
             for (int i = 0; i < _tanks.Length; i++)
             {
-                TankCollisionContext tank = _tanks[i];
+                IOBBData obb = _tanks[i].OBB;
 
-                IOBBData obb = tank.OBB;
-
-                _tankOBBCache[i] = obb;
-
-                // 辞書に登録
                 if (obb != null)
                 {
-                    _obbToTankMap[obb] = tank;
+                    _obbToContextMap[obb] = _tanks[i];
+                }
+            }
+        }
+
+        /// <summary>
+        /// 障害物用キャッシュ配列を更新する
+        /// </summary>
+        private void UpdateObstacles()
+        {
+            UpdateCacheArray(_obstacleContextMap, ref _obstacles);
+
+            if (_obstacles == null || _obstacles.Length == 0)
+            {
+                return;
+            }
+
+            for (int i = 0; i < _obstacles.Length; i++)
+            {
+                IOBBData obb = _obstacles[i].OBB;
+
+                if (obb != null)
+                {
+                    _obbToContextMap[obb] = _obstacles[i];
                 }
             }
         }
@@ -610,6 +690,50 @@ namespace CollisionSystem.Manager
         private void UpdateBullets()
         {
             UpdateCacheArray(_bulletContextMap, ref _bullets);
+        }
+
+        /// <summary>
+        /// 戦車と障害物の OBB を 1 配列へ統合する
+        /// </summary>
+        private void RebuildCircleQueryOBBCache()
+        {
+            int tankCount =
+                _tanks != null ? _tanks.Length : 0;
+            int obstacleCount =
+                _obstacles != null ? _obstacles.Length : 0;
+            int totalCount = tankCount + obstacleCount;
+
+            // 対象が存在しない場合キャッシュを無効化
+            if (totalCount == 0)
+            {
+                _circleQueryOBBCache = null;
+                return;
+            }
+
+            // 配列未生成またはサイズ不一致の場合
+            if (_circleQueryOBBCache == null ||
+                _circleQueryOBBCache.Length != totalCount)
+            {
+                // 新規配列生成
+                _circleQueryOBBCache =
+                    new IOBBData[totalCount];
+            }
+
+            int index = 0;
+
+            // 戦車OBBを統合配列へコピー
+            for (int i = 0; i < tankCount; i++)
+            {
+                _circleQueryOBBCache[index++] =
+                    _tanks[i].OBB;
+            }
+
+            // 障害物OBBを統合配列へコピー
+            for (int i = 0; i < obstacleCount; i++)
+            {
+                _circleQueryOBBCache[index++] =
+                    _obstacles[i].OBB;
+            }
         }
 
         /// <summary>

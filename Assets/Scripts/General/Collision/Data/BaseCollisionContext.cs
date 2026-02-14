@@ -6,8 +6,9 @@
 // 概要     : 衝突解決計算で使用する共通コンテキスト基底クラス
 // ======================================================
 
-using UnityEngine;
 using CollisionSystem.Interface;
+using UnityEngine;
+using WeaponSystem.Interface;
 
 namespace CollisionSystem.Data
 {
@@ -44,15 +45,19 @@ namespace CollisionSystem.Data
             get;
             protected set;
         }
+        
+        /// <summary>ダメージを受け取れる対象</summary>
+        public IDamageable Damageable
+        {
+            get;
+            protected set;
+        }
 
-        /// <summary>
-        /// このフレーム中に衝突解決が一度でも行われたか
-        /// 外部からは読み取り専用
-        /// </summary>
+        /// <summary>このフレーム中に衝突解決が行われたか</summary>
         public bool IsResolvedThisFrame
         {
             get;
-            private set;
+            protected set;
         }
 
         // ======================================================
@@ -85,15 +90,18 @@ namespace CollisionSystem.Data
         /// <param name="transform">衝突対象の Transform</param>
         /// <param name="obb">衝突判定用 OBB</param>
         /// <param name="lockAxis">初期移動ロック軸</param>
+        /// <param name="damageable">ダメージ対象</param>
         protected BaseCollisionContext(
             Transform transform,
             IOBBData obb,
-            MovementLockAxis lockAxis
+            MovementLockAxis lockAxis,
+            IDamageable damageable
         )
         {
             Transform = transform;
             OBB = obb;
             LockAxis = lockAxis;
+            Damageable = damageable;
         }
 
         // ======================================================

@@ -50,6 +50,9 @@ namespace WeaponSystem.Data
         /// <summary>ダメージ対象</summary>
         protected IDamageable _damageTarget;
 
+        /// <summary>ダメージ対象 Transform</summary>
+        protected Transform _damageTargetTransform;
+
         // ======================================================
         // プロパティ
         // ======================================================
@@ -401,7 +404,7 @@ namespace WeaponSystem.Data
             float damage = BASE_BULLET_DAMAGE + speedFactor * massFactor * BASE_BULLET_DAMAGE_MULTIPLIER;
 
             // ダメージ適用
-            _damageTarget.TakeDamage(damage);
+            _damageTarget.TakeDamage(_damageTargetTransform, damage);
         }
 
         // ======================================================
@@ -433,11 +436,8 @@ namespace WeaponSystem.Data
                 return;
             }
 
-            // Transform から IDamageable を取得
-            IDamageable damageable = collisionContext.Transform.GetComponent<IDamageable>();
-
-            // 取得できた場合のみターゲットに設定
-            _damageTarget = damageable;
+            _damageTarget = collisionContext.Damageable;
+            _damageTargetTransform = collisionContext.Transform;
         }
     }
 }

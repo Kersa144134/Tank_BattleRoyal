@@ -7,12 +7,13 @@
 //            戦車、障害物、アイテムの静的・動的 OBB に対応
 // ======================================================
 
-using UnityEngine;
 using CollisionSystem.Interface;
 using ItemSystem.Data;
 using ObstacleSystem.Data;
+using SceneSystem.Manager;
 using TankSystem.Data;
 using TankSystem.Manager;
+using UnityEngine;
 using WeaponSystem.Data;
 
 namespace CollisionSystem.Utility
@@ -24,11 +25,14 @@ namespace CollisionSystem.Utility
     public sealed class CollisionContextFactory
     {
         // ======================================================
-        // フィールド
+        // コンポーネント参照
         // ======================================================
 
         /// <summary>OBB を生成するためのファクトリー</summary>
         private readonly OBBFactory _obbFactory;
+
+        /// <summary>SceneObjectRegistry 参照</summary>
+        private readonly SceneObjectRegistry _sceneRegistry;
 
         // ======================================================
         // コンストラクタ
@@ -38,9 +42,11 @@ namespace CollisionSystem.Utility
         /// CollisionContextFactory を生成する
         /// </summary>
         /// <param name="obbFactory">OBB 生成用ファクトリー</param>
-        public CollisionContextFactory(in OBBFactory obbFactory)
+        /// <param name="sceneRegistry">シーン上のオブジェクト管理レジストリー</param>
+        public CollisionContextFactory(in OBBFactory obbFactory, in SceneObjectRegistry sceneRegistry)
         {
             _obbFactory = obbFactory;
+            _sceneRegistry = sceneRegistry;
         }
 
         // ======================================================
@@ -58,7 +64,11 @@ namespace CollisionSystem.Utility
             IOBBData obb = _obbFactory.CreateDynamicOBB(tankRootManager.HitBoxCenter, tankRootManager.HitBoxScale);
 
             // TankCollisionContext を構築して返却
-            return new TankCollisionContext(tankRootManager.TankId, obb, tankRootManager);
+            return new TankCollisionContext(
+                tankRootManager.TankId,
+                obb,
+                tankRootManager
+            );
         }
 
         /// <summary>
@@ -87,7 +97,7 @@ namespace CollisionSystem.Utility
             in Transform obstacleTransform
         )
         {
-            // 静的 OBB を生成
+            // 静的 OBB を生成する
             IOBBData obb = _obbFactory.CreateStaticOBB(
                 obstacleTransform.position,
                 obstacleTransform.rotation,
@@ -95,8 +105,13 @@ namespace CollisionSystem.Utility
                 obstacleTransform.lossyScale
             );
 
-            // ObstacleCollisionContext を構築して返却
-            return new ObstacleCollisionContext(obstacleId, obstacleTransform, obb);
+            // ObstacleCollisionContext を構築して返却する
+            return new ObstacleCollisionContext(
+                obstacleId,
+                obstacleTransform,
+                obb,
+                _sceneRegistry.ObstacleManager
+            );
         }
 
         /// <summary>

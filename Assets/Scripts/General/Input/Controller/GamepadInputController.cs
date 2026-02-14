@@ -14,7 +14,7 @@ using InputSystem.Data;
 namespace InputSystem.Controller
 {
     /// <summary>
-    /// ゲームパッド入力を取得するクラス（MonoBehaviour 非継承）
+    /// ゲームパッド入力を取得するクラス
     /// デッドゾーン処理を行った入力値を保持する
     /// </summary>
     public class GamepadInputController : IGamepadInputSource
@@ -96,11 +96,9 @@ namespace InputSystem.Controller
             // 現在接続されているゲームパッドを取得
             Gamepad pad = Gamepad.current;
 
-            // ゲームパッド未接続なら処理中断
+            // ゲームパッド未接続なら処理なし
             if (pad == null)
             {
-                // デバッグ用にエラーログを出力
-                Debug.LogError("[InputManager] ゲームパッドが接続されていません。処理を中断します。");
                 return;
             }
 

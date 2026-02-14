@@ -7,9 +7,11 @@
 //            衝突または一定時間経過で爆発する
 // ======================================================
 
-using CollisionSystem.Data;
 using System;
 using UnityEngine;
+using CollisionSystem.Data;
+using ObstacleSystem.Data;
+using TankSystem.Data;
 using WeaponSystem.Interface;
 
 namespace WeaponSystem.Data
@@ -109,7 +111,9 @@ namespace WeaponSystem.Data
 
             for (int i = 0; i < collisionContexts.Length; i++)
             {
-                IDamageable damageable = collisionContexts[i].Transform.GetComponent<IDamageable>();
+                IDamageable damageable = collisionContexts[i].Damageable;
+                Transform damageableTransform = collisionContexts[i].Transform;
+                Debug.Log(collisionContexts[i]);
 
                 // 質量が高いほど、ダメージへの影響が段階的に大きくなるよう補正する
                 float massFactor =
@@ -119,7 +123,7 @@ namespace WeaponSystem.Data
                 float damage = BASE_BULLET_DAMAGE + massFactor * BASE_BULLET_DAMAGE_MULTIPLIER;
 
                 // ダメージ適用
-                damageable.TakeDamage(damage);
+                damageable.TakeDamage(damageableTransform, damage);
             }
         }
 

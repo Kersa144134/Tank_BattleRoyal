@@ -9,6 +9,7 @@ TagManager:
   - Explosion
   - Damage
   - Smoke
+  - Breakable
   layers:
   - Default
   - TransparentFX

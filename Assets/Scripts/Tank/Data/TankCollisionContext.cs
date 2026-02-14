@@ -68,7 +68,8 @@ namespace TankSystem.Data
             : base(
                 tankRootManager.transform,
                 obb,
-                tankRootManager.CurrentFrameLockAxis
+                tankRootManager.CurrentFrameLockAxis,
+                tankRootManager
             )
         {
             TankId = tankId;

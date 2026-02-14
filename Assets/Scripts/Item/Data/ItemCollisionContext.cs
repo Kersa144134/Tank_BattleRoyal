@@ -67,7 +67,8 @@ namespace ItemSystem.Data
             : base(
                 item.Transform,
                 obb,
-                MovementLockAxis.All
+                MovementLockAxis.All,
+                null
             )
         {
             // ƒAƒCƒeƒ€î•ñ‚ğ•Û
