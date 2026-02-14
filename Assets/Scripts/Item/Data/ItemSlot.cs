@@ -2,8 +2,8 @@
 // ItemSlot.cs
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-11
-// 更新日時 : 2026-01-07
-// 概要     : ItemData と Transform を保持するデータスロット
+// 更新日時 : 2026-01-14
+// 概要     : ItemData / Transform / 生成グリッドキーを保持するデータスロット
 // ======================================================
 
 using System;
@@ -17,6 +17,42 @@ namespace ItemSystem.Data
     public sealed class ItemSlot
     {
         // ======================================================
+        // 構造体
+        // ======================================================
+
+        /// <summary>
+        /// 生成グリッドを一意に識別するキー構造体
+        /// SpawnPointIndex とローカルオフセットで構成される
+        /// </summary>
+        public readonly struct SpawnGridKey
+        {
+            /// <summary>基準となる SpawnPoint のインデックス</summary>
+            public readonly int SpawnPointIndex;
+
+            /// <summary>X方向のローカルオフセット</summary>
+            public readonly int OffsetX;
+
+            /// <summary>Z方向のローカルオフセット</summary>
+            public readonly int OffsetZ;
+
+            /// <summary>
+            /// グリッドキーを初期化するコンストラクタ
+            /// </summary>
+            /// <param name="spawnPointIndex">SpawnPoint インデックス</param>
+            /// <param name="offsetX">X方向オフセット</param>
+            /// <param name="offsetZ">Z方向オフセット</param>
+            public SpawnGridKey(
+                int spawnPointIndex,
+                int offsetX,
+                int offsetZ)
+            {
+                SpawnPointIndex = spawnPointIndex;
+                OffsetX = offsetX;
+                OffsetZ = offsetZ;
+            }
+        }
+
+        // ======================================================
         // フィールド
         // ======================================================
 
@@ -26,17 +62,17 @@ namespace ItemSystem.Data
         /// <summary>アイテム表示用 Transform</summary>
         private readonly Transform _transform;
 
-        /// <summary>アイテムの詳細データを保持する ItemData</summary>
+        /// <summary>アイテムの詳細データ</summary>
         private readonly ItemData _itemData;
 
         /// <summary>表示制御用 Renderer</summary>
         private readonly Renderer _renderer;
 
-        /// <summary>生成時刻</summary>
-        private float _spawnTime;
-
-        /// <summary>生存時間（秒）</summary>
-        private float _lifeTime;
+        /// <summary>
+        /// 現在占有している生成グリッドキー
+        /// Release 時に逆算を行わないために保持する
+        /// </summary>
+        private SpawnGridKey _spawnGridKey;
 
         // ======================================================
         // プロパティ
@@ -51,11 +87,8 @@ namespace ItemSystem.Data
         /// <summary>有効状態</summary>
         public bool IsEnabled => _isEnabled;
 
-        /// <summary>生成時刻</summary>
-        public float SpawnTime => _spawnTime;
-
-        /// <summary>生存時間</summary>
-        public float LifeTime => _lifeTime;
+        /// <summary>現在保持している生成グリッドキー</summary>
+        public SpawnGridKey GridKey => _spawnGridKey;
 
         // ======================================================
         // イベント
@@ -65,7 +98,7 @@ namespace ItemSystem.Data
         /// 無効化要求イベント
         /// </summary>
         public event Action<ItemSlot> OnDeactivated;
-        
+
         // ======================================================
         // コンストラクタ
         // ======================================================
@@ -75,7 +108,9 @@ namespace ItemSystem.Data
         /// </summary>
         /// <param name="transform">表示用 Transform</param>
         /// <param name="itemData">ItemData</param>
-        public ItemSlot(in Transform transform, in ItemData itemData)
+        public ItemSlot(
+            in Transform transform,
+            in ItemData itemData)
         {
             // Transform を保持
             _transform = transform;
@@ -86,18 +121,17 @@ namespace ItemSystem.Data
             // 初期状態は無効
             _isEnabled = false;
 
-            // 初期時刻をリセット
-            _spawnTime = 0.0f;
-
-            // 生存時間を初期化
-            _lifeTime = 0.0f;
+            // グリッドキーを初期化
+            _spawnGridKey = default;
 
             // Transform が存在する場合のみ Renderer を取得
             if (_transform != null)
             {
-                _renderer = _transform.GetComponentInChildren<Renderer>(true);
+                // 子階層含め Renderer を取得
+                _renderer =
+                    _transform.GetComponentInChildren<Renderer>(true);
 
-                // 初期状態では非表示
+                // Renderer が存在する場合のみ非表示に設定
                 if (_renderer != null)
                 {
                     _renderer.enabled = false;
@@ -110,28 +144,30 @@ namespace ItemSystem.Data
         // ======================================================
 
         /// <summary>
-        /// 指定位置・寿命で有効化する
+        /// 生成グリッドキーを設定する
         /// </summary>
-        public void Activate(in float lifeTime)
+        /// <param name="spawnGridKey">割り当てられたキー</param>
+        public void SetSpawnGridKey(
+            in SpawnGridKey spawnGridKey)
         {
-            // Transform 未設定は無効
+            _spawnGridKey = spawnGridKey;
+        }
+
+        /// <summary>
+        /// アイテムを有効化する
+        /// </summary>
+        public void Activate()
+        {
             if (_transform == null)
             {
                 return;
             }
 
-            // 生成時刻を記録
-            _spawnTime = Time.time;
-
-            // 生存時間を設定（マイナス防止）
-            _lifeTime = Mathf.Max(0.0f, lifeTime);
-
-            // 有効化
             SetEnabled(true);
         }
 
         /// <summary>
-        /// 無効化する
+        /// アイテムを無効化する
         /// </summary>
         public void Deactivate()
         {
@@ -140,8 +176,7 @@ namespace ItemSystem.Data
             {
                 return;
             }
-            
-            // 表示・状態を無効化
+
             SetEnabled(false);
 
             // 無効化通知を発行
@@ -155,9 +190,11 @@ namespace ItemSystem.Data
         /// <summary>
         /// 有効状態を Renderer に反映する
         /// </summary>
-        private void SetEnabled(in bool isEnabled)
+        /// <param name="isEnabled">設定する状態</param>
+        private void SetEnabled(
+            in bool isEnabled)
         {
-            // 状態変化がない場合は処理なし
+            // 状態変化がない場合は処理しない
             if (_isEnabled == isEnabled)
             {
                 return;
@@ -166,7 +203,7 @@ namespace ItemSystem.Data
             // 内部状態を更新
             _isEnabled = isEnabled;
 
-            // Renderer が存在しない場合は処理なし
+            // Renderer が存在しない場合は処理しない
             if (_renderer == null)
             {
                 return;

@@ -150,15 +150,19 @@ namespace ItemSystem.Manager
         // プール操作
         // --------------------------------------------------
         /// <summary>
-        /// 未使用プールから ItemSlot をランダムに取り出す
+        /// 未使用プールから ItemSlot をランダムに取り出し、
+        /// 指定グリッドキーと座標で有効化する
         /// </summary>
         /// <param name="spawnPosition">生成座標</param>
+        /// <param name="spawnGridKey">割り当てられたグリッドキー</param>
         /// <returns>取得した ItemSlot</returns>
-        private ItemSlot Activate(in Vector3 spawnPosition)
+        private ItemSlot Activate(
+            in Vector3 spawnPosition,
+            in ItemSlot.SpawnGridKey spawnGridKey)
         {
             // 抽選コントローラーから未使用キューを取得
-            Queue<ItemSlot> selectedQueue
-                = _drawController.Draw(_inactiveItems);
+            Queue<ItemSlot> selectedQueue =
+                _drawController.Draw(_inactiveItems);
 
             // 抽選対象が存在しない場合は取得不可
             if (selectedQueue == null)
@@ -167,13 +171,18 @@ namespace ItemSystem.Manager
             }
 
             // 未使用キューから ItemSlot を取得
-            ItemSlot slot = selectedQueue.Dequeue();
+            ItemSlot slot =
+                selectedQueue.Dequeue();
 
             // イベント購読
             slot.OnDeactivated += HandleSlotDeactivated;
 
             // 生成位置へ移動
-            slot.Transform.position = spawnPosition;
+            slot.Transform.position =
+                spawnPosition;
+
+            // グリッドキーを設定
+            slot.SetSpawnGridKey(spawnGridKey);
 
             // 有効化イベントを通知
             OnItemActivated?.Invoke(slot);
@@ -197,6 +206,9 @@ namespace ItemSystem.Manager
 
             // プールへ返却
             _inactiveItems[slot.ItemData].Enqueue(slot);
+
+            // 生成座標を解放
+            _spawnController.ReleaseSpawnPosition(slot.GridKey);
 
             // 無効化イベント通知
             OnItemDeactivated?.Invoke(slot);
@@ -253,10 +265,13 @@ namespace ItemSystem.Manager
         /// 生成座標確定時の処理
         /// </summary>
         /// <param name="spawnPosition">生成座標</param>
-        private void HandleSpawnPositionDetermined(Vector3 spawnPosition)
+        /// <param name="spawnGridKey">対応グリッドキー</param>
+        private void HandleSpawnPositionDetermined(
+            Vector3 spawnPosition,
+            ItemSlot.SpawnGridKey spawnGridKey)
         {
             // 未使用スロットを取得
-            ItemSlot slot = Activate(spawnPosition);
+            Activate(spawnPosition, spawnGridKey);
         }
 
         /// <summary>

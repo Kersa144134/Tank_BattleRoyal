@@ -96,7 +96,7 @@ namespace TankSystem.Manager
             );
 
             // スロットを有効化
-            slot.Activate(ITEM_LIFE_TIME);
+            slot.Activate();
         }
 
         /// <summary>

@@ -2,12 +2,14 @@
 // ItemSpawnController.cs
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-22
-// 更新日時 : 2026-01-07
+// 更新日時 : 2026-02-14
 // 概要     : アイテム生成位置を管理するコントローラー
 // ======================================================
 
 using System;
+using System.Collections.Generic;
 using UnityEngine;
+using ItemSystem.Data;
 
 namespace ItemSystem.Controller
 {
@@ -23,6 +25,9 @@ namespace ItemSystem.Controller
         /// <summary>生成ポイント Transform 配列</summary>
         private readonly Transform[] _spawnPoints;
 
+        /// <summary>利用可能グリッドキープール</summary>
+        private readonly List<ItemSlot.SpawnGridKey> _availableSpawnGridKeys;
+
         /// <summary>前回生成判定時刻</summary>
         private float _lastSpawnTime;
 
@@ -32,7 +37,7 @@ namespace ItemSystem.Controller
 
         /// <summary>初回生成回数</summary>
         private const int INITIAL_SPAWN_COUNT = 40;
-        
+
         /// <summary>生成判定間隔（秒）</summary>
         private const float SPAWN_INTERVAL = 0.5f;
 
@@ -44,7 +49,7 @@ namespace ItemSystem.Controller
 
         /// <summary>生成座標オフセット段数</summary>
         private const int SPAWN_OFFSET_LEVEL_COUNT = 2;
-        
+
         // ======================================================
         // イベント
         // ======================================================
@@ -52,30 +57,70 @@ namespace ItemSystem.Controller
         /// <summary>
         /// 生成可能になった際に呼び出されるイベント
         /// </summary>
-        public event Action<Vector3> OnSpawnPositionDetermined;
+        public event Action<Vector3, ItemSlot.SpawnGridKey> OnSpawnPositionDetermined;
 
         // ======================================================
         // コンストラクタ
         // ======================================================
 
         /// <summary>
-        /// 生成ポイントを登録する
+        /// 生成ポイントを登録し、グリッドプールを初期化する
         /// </summary>
         /// <param name="spawnPointsRoot">生成ポイントの親 Transform</param>
         public ItemSpawnController(in Transform spawnPointsRoot)
         {
+            // null の場合は空配列を設定
             if (spawnPointsRoot == null)
             {
                 _spawnPoints = Array.Empty<Transform>();
+
+                _availableSpawnGridKeys =
+                    new List<ItemSlot.SpawnGridKey>(0);
+
                 return;
             }
 
-            int childCount = spawnPointsRoot.childCount;
-            _spawnPoints = new Transform[childCount];
+            int childCount =
+                spawnPointsRoot.childCount;
+            _spawnPoints =
+                new Transform[childCount];
 
+            // 子Transformを格納
             for (int i = 0; i < childCount; i++)
             {
-                _spawnPoints[i] = spawnPointsRoot.GetChild(i);
+                _spawnPoints[i] =
+                    spawnPointsRoot.GetChild(i);
+            }
+
+            // --------------------------------------------------
+            // 最大グリッド数を算出
+            // --------------------------------------------------
+            int gridPerSpawnPoint =
+                (SPAWN_OFFSET_LEVEL_COUNT * 2 + 1) *
+                (SPAWN_OFFSET_LEVEL_COUNT * 2 + 1);
+
+            int totalGridCount =
+                childCount * gridPerSpawnPoint;
+
+            // 容量を事前確保
+            _availableSpawnGridKeys =
+                new List<ItemSlot.SpawnGridKey>(totalGridCount);
+
+            // --------------------------------------------------
+            // グリッドキープール生成
+            // --------------------------------------------------
+            for (int sp = 0; sp < childCount; sp++)
+            {
+                for (int x = -SPAWN_OFFSET_LEVEL_COUNT; x <= SPAWN_OFFSET_LEVEL_COUNT; x++)
+                {
+                    for (int z = -SPAWN_OFFSET_LEVEL_COUNT; z <= SPAWN_OFFSET_LEVEL_COUNT; z++)
+                    {
+                        ItemSlot.SpawnGridKey key =
+                            new ItemSlot.SpawnGridKey(sp, x, z);
+
+                        _availableSpawnGridKeys.Add(key);
+                    }
+                }
             }
         }
 
@@ -94,14 +139,16 @@ namespace ItemSystem.Controller
                 return;
             }
 
-            // 生成座標を取得
-            if (!TryGetRandomSpawnPosition(out Vector3 position))
+            // プール方式で生成座標を取得
+            if (!TryGetRandomSpawnPosition(
+                out Vector3 position,
+                out ItemSlot.SpawnGridKey key))
             {
                 return;
             }
 
             // 生成座標確定イベントを通知
-            OnSpawnPositionDetermined?.Invoke(position);
+            OnSpawnPositionDetermined?.Invoke(position, key);
         }
 
         /// <summary>
@@ -109,18 +156,27 @@ namespace ItemSystem.Controller
         /// </summary>
         public void ExecuteInitialSpawn()
         {
-            // 指定回数分の初回生成を実行
             for (int i = 0; i < INITIAL_SPAWN_COUNT; i++)
             {
-                // ランダムな生成座標を取得
-                if (!TryGetRandomSpawnPosition(out Vector3 position))
+                if (!TryGetRandomSpawnPosition(
+                    out Vector3 position,
+                    out ItemSlot.SpawnGridKey key))
                 {
                     continue;
                 }
 
-                // 生成座標確定イベントを通知
-                OnSpawnPositionDetermined?.Invoke(position);
+                OnSpawnPositionDetermined?.Invoke(position, key);
             }
+        }
+
+        /// <summary>
+        /// グリッドキーを解放しプールへ戻す
+        /// </summary>
+        /// <param name="spawnKey">解放対象キー</param>
+        public void ReleaseSpawnPosition(
+            in ItemSlot.SpawnGridKey spawnKey)
+        {
+            _availableSpawnGridKeys.Add(spawnKey);
         }
 
         // ======================================================
@@ -128,72 +184,91 @@ namespace ItemSystem.Controller
         // ======================================================
 
         /// <summary>
-        /// 生成タイミングに到達しているか判定する
+        /// 生成タイミング判定
         /// </summary>
         /// <returns>生成可能なら true</returns>
         private bool CanSpawn()
         {
-            float currentTime = Time.time;
+            float currentTime =
+                Time.time;
 
-            // 生成間隔未満なら不可
             if (currentTime - _lastSpawnTime < SPAWN_INTERVAL)
             {
                 return false;
             }
 
-            // 判定通過時に時刻更新
-            _lastSpawnTime = currentTime;
+            _lastSpawnTime =
+                currentTime;
+
             return true;
         }
 
         /// <summary>
-        /// ランダムな生成座標を取得する
+        /// プール方式でランダム生成座標を取得する
         /// </summary>
-        /// <param name="position">取得した生成座標</param>
+        /// <param name="position">生成座標</param>
+        /// <param name="spawnKey">対応キー</param>
         /// <returns>取得成功なら true</returns>
-        private bool TryGetRandomSpawnPosition(out Vector3 position)
+        private bool TryGetRandomSpawnPosition(
+            out Vector3 position,
+            out ItemSlot.SpawnGridKey spawnKey)
         {
-            // 初期化
-            position = Vector3.zero;
+            position =
+                Vector3.zero;
 
-            // 生成ポイントが存在しない場合は処理なし
-            if (_spawnPoints.Length == 0)
+            spawnKey =
+                default;
+
+            // 利用可能なグリッドキーが存在しない場合は処理なし
+            if (_availableSpawnGridKeys.Count == 0)
             {
                 return false;
             }
 
-            // 基準となる生成ポイントをランダムに選択
-            Transform basePoint = _spawnPoints[UnityEngine.Random.Range(0, _spawnPoints.Length)];
+            // --------------------------------------------------
+            // グリッドキー取得
+            // --------------------------------------------------
+            // 利用可能キーの中からランダム取得
+            int randomIndex =
+                UnityEngine.Random.Range(
+                    0,
+                    _availableSpawnGridKeys.Count
+                );
+            spawnKey =
+                _availableSpawnGridKeys[randomIndex];
 
-            // Transform が無効なら処理なし
-            if (basePoint == null)
-            {
-                return false;
-            }
+            // --------------------------------------------------
+            // スワップ削除
+            // --------------------------------------------------
+            // 末尾インデックスを算出
+            int lastIndex =
+                _availableSpawnGridKeys.Count - 1;
 
-            // ----------------------------------------------
-            // オフセット段数を抽選
-            // ----------------------------------------------
-            int offsetIndexX =
-                UnityEngine.Random.Range(-SPAWN_OFFSET_LEVEL_COUNT, SPAWN_OFFSET_LEVEL_COUNT + 1);
+            // ランダムインデックス要素に末尾インデックス要素を上書き
+            _availableSpawnGridKeys[randomIndex] =
+                _availableSpawnGridKeys[lastIndex];
 
-            int offsetIndexZ =
-                UnityEngine.Random.Range(-SPAWN_OFFSET_LEVEL_COUNT, SPAWN_OFFSET_LEVEL_COUNT + 1);
+            // 末尾インデックス要素を削除し、シフト処理を抑制
+            _availableSpawnGridKeys.RemoveAt(lastIndex);
 
-            // ----------------------------------------------
-            // 刻み幅を掛けて実際のオフセット値を算出
-            // ----------------------------------------------
-            int offsetX = offsetIndexX * SPAWN_OFFSET_STEP;
-            int offsetZ = offsetIndexZ * SPAWN_OFFSET_STEP;
+            // --------------------------------------------------
+            // 生成座標算出
+            // --------------------------------------------------
+            // 基準となる SpawnPoint を取得
+            Transform basePoint =
+                _spawnPoints[spawnKey.SpawnPointIndex];
 
-            // 基準座標を取得
-            Vector3 basePos = basePoint.position;
+            // 基準ワールド座標を取得
+            Vector3 basePos =
+                basePoint.position;
 
-            // 生成座標を構築
+            // オフセット値を加算して最終生成座標を算出
             position = new Vector3(
-                basePos.x + offsetX,
+                basePos.x +
+                spawnKey.OffsetX * SPAWN_OFFSET_STEP,
                 SPAWN_HEIGHT,
-                basePos.z + offsetZ
+                basePos.z +
+                spawnKey.OffsetZ * SPAWN_OFFSET_STEP
             );
 
             return true;

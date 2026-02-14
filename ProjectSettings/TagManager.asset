@@ -10,6 +10,7 @@ TagManager:
   - Damage
   - Smoke
   - Breakable
+  - Supply
   layers:
   - Default
   - TransparentFX

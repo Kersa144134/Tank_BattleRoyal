@@ -116,7 +116,7 @@ Material:
     - _CubemapReflectionEnabled: 0
     - _DepthFadeDistance: 2
     - _DepthFadeExp: 4
-    - _FinalPower: 6.84
+    - _FinalPower: 2
     - _FinalPowerAdjust: 0
     - _FinalPowerSubtract: -1
     - _Float0: 0.5
@@ -141,7 +141,7 @@ Material:
     - _MaskAppearNoiseTriplanar: 0
     - _MaskAppearNoiseTriplanarTiling: 0.1
     - _MaskAppearPower: 0.5
-    - _MaskAppearProgress: -0.5837939
+    - _MaskAppearProgress: 2
     - _MaskAppearRemapLocalY: 0.5
     - _MaskAppearSubtract: 0.25
     - _MaskAppearUseWorldPosition: 0
@@ -155,13 +155,13 @@ Material:
     - _Noise02ScrollSpeed: 0.1
     - _Noise02Tiling: 0.35
     - _NoiseDistortionEnabled: 1
-    - _NoiseDistortionPower: 0.25
+    - _NoiseDistortionPower: 0.433
     - _NoiseDistortionTiling: 0.1
     - _NoiseMaskAdd: 1
     - _NoiseMaskPower: 3.79
     - _NoisePower: 1
     - _NormalVertexOffset: 0
-    - _OpacityPower: 4
+    - _OpacityPower: 0.5
     - _OpacityPowerAdd: 0
     - _ProcedrualGradientEnabled: 0
     - _QueueControl: 0

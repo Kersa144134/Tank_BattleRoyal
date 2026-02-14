@@ -38,7 +38,7 @@ namespace ItemSystem.Manager
             // 抽選対象となるキューの総数
             int availableQueueCount = 0;
 
-            // 1回目の走査：要素を持つキュー数を数える
+            // 要素を持つキュー数を数える
             foreach (Queue<ItemSlot> queue in inactiveItems.Values)
             {
                 if (queue.Count == 0)
@@ -63,7 +63,7 @@ namespace ItemSystem.Manager
             // 現在の有効キュー走査インデックス
             int currentIndex = 0;
 
-            // 2回目の走査：対象インデックスに一致するキューを取得
+            // 対象インデックスに一致するキューを取得
             foreach (Queue<ItemSlot> queue in inactiveItems.Values)
             {
                 if (queue.Count == 0)
