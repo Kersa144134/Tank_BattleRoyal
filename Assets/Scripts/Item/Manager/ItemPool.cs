@@ -12,8 +12,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using ItemSystem.Controller;
 using ItemSystem.Data;
-using SceneSystem.Interface;
 using SceneSystem.Data;
+using SceneSystem.Interface;
 
 namespace ItemSystem.Manager
 {
@@ -155,14 +155,16 @@ namespace ItemSystem.Manager
         /// </summary>
         /// <param name="spawnPosition">生成座標</param>
         /// <param name="spawnGridKey">割り当てられたグリッドキー</param>
+        /// <param name="spawnPointType">SpawnPoint の種別</param>
         /// <returns>取得した ItemSlot</returns>
         private ItemSlot Activate(
             in Vector3 spawnPosition,
-            in ItemSlot.SpawnGridKey spawnGridKey)
+            in ItemSlot.SpawnGridKey spawnGridKey,
+            in ItemSpawnController.SpawnPointType spawnPointType)
         {
             // 抽選コントローラーから未使用キューを取得
             Queue<ItemSlot> selectedQueue =
-                _drawController.Draw(_inactiveItems);
+                _drawController.Draw(_inactiveItems, spawnPointType);
 
             // 抽選対象が存在しない場合は取得不可
             if (selectedQueue == null)
@@ -219,14 +221,15 @@ namespace ItemSystem.Manager
         /// </summary>
         private void InitializePool()
         {
-            // 管理辞書を初期化
             _inactiveItems.Clear();
 
             // アイテム定義を走査
             foreach (ItemEntry entry in _itemEntries)
             {
                 // 不正定義は除外
-                if (entry.ItemData == null || entry.ItemModel == null)
+                if (entry.ItemData == null ||
+                    entry.ItemModel == null ||
+                    entry.ItemData.name != entry.ItemModel.name)
                 {
                     continue;
                 }
@@ -266,12 +269,13 @@ namespace ItemSystem.Manager
         /// </summary>
         /// <param name="spawnPosition">生成座標</param>
         /// <param name="spawnGridKey">対応グリッドキー</param>
+        /// <param name="spawnPointType">SpawnPoint の種別</param>
         private void HandleSpawnPositionDetermined(
             Vector3 spawnPosition,
-            ItemSlot.SpawnGridKey spawnGridKey)
+            ItemSlot.SpawnGridKey spawnGridKey,
+            ItemSpawnController.SpawnPointType spawnPointType)
         {
-            // 未使用スロットを取得
-            Activate(spawnPosition, spawnGridKey);
+            Activate(spawnPosition, spawnGridKey, spawnPointType);
         }
 
         /// <summary>
@@ -285,7 +289,6 @@ namespace ItemSystem.Manager
                 return;
             }
 
-            // Pool 側の返却処理を実行
             Deactivate(slot);
         }
     }

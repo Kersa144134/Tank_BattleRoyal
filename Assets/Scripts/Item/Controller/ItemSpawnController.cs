@@ -19,6 +19,20 @@ namespace ItemSystem.Controller
     public sealed class ItemSpawnController
     {
         // ======================================================
+        // 列挙体
+        // ======================================================
+
+        /// <summary>
+        /// SpawnPoint の種別を表す列挙型
+        /// </summary>
+        public enum SpawnPointType
+        {
+            None,
+            Supply,
+            ParamBobus
+        }
+        
+        // ======================================================
         // フィールド
         // ======================================================
 
@@ -50,14 +64,20 @@ namespace ItemSystem.Controller
         /// <summary>生成座標オフセット段数</summary>
         private const int SPAWN_OFFSET_LEVEL_COUNT = 2;
 
+        /// <summary>Supply 判定用タグ名</summary>
+        private const string SUPPLY_TAG = "Supply";
+
+        /// <summary>ParamBonus 判定用タグ名</summary>
+        private const string PARAM_BONUS_TAG = "ParamBonus";
+
         // ======================================================
         // イベント
         // ======================================================
 
-        /// <summary>
-        /// 生成可能になった際に呼び出されるイベント
+        //// <summary>
+        /// 生成座標決定通知イベント
         /// </summary>
-        public event Action<Vector3, ItemSlot.SpawnGridKey> OnSpawnPositionDetermined;
+        public event Action<Vector3, ItemSlot. SpawnGridKey, SpawnPointType> OnSpawnPositionDetermined;
 
         // ======================================================
         // コンストラクタ
@@ -142,13 +162,14 @@ namespace ItemSystem.Controller
             // プール方式で生成座標を取得
             if (!TryGetRandomSpawnPosition(
                 out Vector3 position,
-                out ItemSlot.SpawnGridKey key))
+                out ItemSlot.SpawnGridKey key,
+                out SpawnPointType spawnPointType))
             {
                 return;
             }
 
             // 生成座標確定イベントを通知
-            OnSpawnPositionDetermined?.Invoke(position, key);
+            OnSpawnPositionDetermined?.Invoke(position, key, spawnPointType);
         }
 
         /// <summary>
@@ -160,12 +181,13 @@ namespace ItemSystem.Controller
             {
                 if (!TryGetRandomSpawnPosition(
                     out Vector3 position,
-                    out ItemSlot.SpawnGridKey key))
+                    out ItemSlot.SpawnGridKey key,
+                    out SpawnPointType spawnPointType))
                 {
                     continue;
                 }
 
-                OnSpawnPositionDetermined?.Invoke(position, key);
+                OnSpawnPositionDetermined?.Invoke(position, key, spawnPointType);
             }
         }
 
@@ -192,11 +214,13 @@ namespace ItemSystem.Controller
             float currentTime =
                 Time.time;
 
+            // 経過時間がインターバル未満なら処理なし
             if (currentTime - _lastSpawnTime < SPAWN_INTERVAL)
             {
                 return false;
             }
 
+            // 最終生成時刻を更新
             _lastSpawnTime =
                 currentTime;
 
@@ -206,18 +230,22 @@ namespace ItemSystem.Controller
         /// <summary>
         /// プール方式でランダム生成座標を取得する
         /// </summary>
-        /// <param name="position">生成座標</param>
-        /// <param name="spawnKey">対応キー</param>
+        /// <param name="position">生成座標（ワールド座標）</param>
+        /// <param name="spawnKey">対応する生成グリッドキー</param>
+        /// <param name="spawnPointType">SpawnPoint の種別</param>
         /// <returns>取得成功なら true</returns>
         private bool TryGetRandomSpawnPosition(
             out Vector3 position,
-            out ItemSlot.SpawnGridKey spawnKey)
+            out ItemSlot.SpawnGridKey spawnKey,
+            out SpawnPointType spawnPointType)
         {
             position =
                 Vector3.zero;
 
             spawnKey =
                 default;
+
+            spawnPointType = SpawnPointType.None;
 
             // 利用可能なグリッドキーが存在しない場合は処理なし
             if (_availableSpawnGridKeys.Count == 0)
@@ -270,6 +298,18 @@ namespace ItemSystem.Controller
                 basePos.z +
                 spawnKey.OffsetZ * SPAWN_OFFSET_STEP
             );
+
+            // SpawnPoint のタグ判定
+            if (basePoint.CompareTag(SUPPLY_TAG))
+            {
+                spawnPointType =
+                    SpawnPointType.Supply;
+            }
+            else if (basePoint.CompareTag(PARAM_BONUS_TAG))
+            {
+                spawnPointType =
+                    SpawnPointType.ParamBobus;
+            }
 
             return true;
         }

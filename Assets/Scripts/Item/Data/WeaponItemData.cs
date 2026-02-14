@@ -18,7 +18,7 @@ namespace ItemSystem.Data
     public class WeaponItemData : ItemData
     {
         // ======================================================
-        // フィールド
+        // プロパティ
         // ======================================================
 
         /// <summary>武装種別</summary>
@@ -31,7 +31,7 @@ namespace ItemSystem.Data
         public float ReloadTime;
 
         // ======================================================
-        // Unityイベント
+        // Unity イベント
         // ======================================================
 
         /// <summary>

@@ -127,7 +127,7 @@ namespace ItemSystem.Data
             // Transform が存在する場合のみ Renderer を取得
             if (_transform != null)
             {
-                // 子階層含め Renderer を取得
+                // 子オブジェクト含めて Renderer を取得
                 _renderer =
                     _transform.GetComponentInChildren<Renderer>(true);
 
@@ -142,16 +142,6 @@ namespace ItemSystem.Data
         // ======================================================
         // パブリックメソッド
         // ======================================================
-
-        /// <summary>
-        /// 生成グリッドキーを設定する
-        /// </summary>
-        /// <param name="spawnGridKey">割り当てられたキー</param>
-        public void SetSpawnGridKey(
-            in SpawnGridKey spawnGridKey)
-        {
-            _spawnGridKey = spawnGridKey;
-        }
 
         /// <summary>
         /// アイテムを有効化する
@@ -183,6 +173,16 @@ namespace ItemSystem.Data
             OnDeactivated?.Invoke(this);
         }
 
+        /// <summary>
+        /// 生成グリッドキーを設定する
+        /// </summary>
+        /// <param name="spawnGridKey">割り当てられたキー</param>
+        public void SetSpawnGridKey(
+            in SpawnGridKey spawnGridKey)
+        {
+            _spawnGridKey = spawnGridKey;
+        }
+
         // ======================================================
         // プライベートメソッド
         // ======================================================
@@ -194,7 +194,7 @@ namespace ItemSystem.Data
         private void SetEnabled(
             in bool isEnabled)
         {
-            // 状態変化がない場合は処理しない
+            // 状態変化がない場合は処理なし
             if (_isEnabled == isEnabled)
             {
                 return;
@@ -203,7 +203,7 @@ namespace ItemSystem.Data
             // 内部状態を更新
             _isEnabled = isEnabled;
 
-            // Renderer が存在しない場合は処理しない
+            // Renderer が存在しない場合は処理なし
             if (_renderer == null)
             {
                 return;

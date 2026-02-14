@@ -11,6 +11,7 @@ TagManager:
   - Smoke
   - Breakable
   - Supply
+  - ParamBonus
   layers:
   - Default
   - TransparentFX

@@ -2,7 +2,7 @@
 // ItemData.cs
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-11
-// 更新日時 : 2025-12-21
+// 更新日時 : 2026-02-15
 // 概要     : アイテムデータ基底クラス
 // ======================================================
 
@@ -31,6 +31,21 @@ namespace ItemSystem.Data
     public abstract class ItemData : ScriptableObject
     {
         // ======================================================
+        // 定数
+        // ======================================================
+
+        /// <summary>
+        /// 最小重み値
+        /// 0未満を防止するための下限値
+        /// </summary>
+        private const float MIN_WEIGHT = 0.0f;
+
+        /// <summary>
+        /// デフォルト重み値
+        /// </summary>
+        private const float DEFAULT_WEIGHT = 1.0f;
+
+        // ======================================================
         // フィールド
         // ======================================================
 
@@ -39,6 +54,13 @@ namespace ItemSystem.Data
 
         /// <summary>アイテム種別</summary>
         [SerializeField] protected ItemType itemType;
+
+        /// <summary>
+        /// 抽選重み
+        /// 大きいほど抽選されやすくなる
+        /// </summary>
+        [SerializeField, Min(MIN_WEIGHT)]
+        protected float spawnWeight = DEFAULT_WEIGHT;
 
         // ======================================================
         // プロパティ
@@ -51,11 +73,10 @@ namespace ItemSystem.Data
         {
             get
             {
-                // アイテム名を返す
                 return itemName;
             }
         }
-        
+
         /// <summary>
         /// アイテム種別
         /// </summary>
@@ -63,8 +84,25 @@ namespace ItemSystem.Data
         {
             get
             {
-                // アイテムの種別を返す
                 return itemType;
+            }
+        }
+
+        /// <summary>
+        /// 抽選重み
+        /// 0未満にならないよう補正して返す
+        /// </summary>
+        public float SpawnWeight
+        {
+            get
+            {
+                // 0未満防止
+                if (spawnWeight < MIN_WEIGHT)
+                {
+                    return MIN_WEIGHT;
+                }
+
+                return spawnWeight;
             }
         }
     }

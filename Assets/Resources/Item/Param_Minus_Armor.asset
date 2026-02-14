@@ -14,5 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   itemName: "\u88C5\u7532"
   itemType: 1
+  spawnWeight: 0.2
   ParamType: 3
   Value: -1

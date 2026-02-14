@@ -182,9 +182,9 @@ namespace UISystem.Manager
 
         /// <summary>敵撃破時にログへ表示する文のフォーマット</summary>
         private const string ENEMY_DESTROYED_FORMAT = "戦車{0} を撃破";
-        
-        /// <summary>パラメータ上昇時にログへ追加する文/// </summary>
-        private const string INCREASE_SUFFIX = " が上昇";
+
+        /// <summary>パラメータ増加時にログへ追加する文/// </summary>
+        private const string INCREASE_SUFFIX = " が増加";
 
         /// <summary>パラメータ減少時にログへ追加する文</summary>
         private const string DECREASE_SUFFIX = " が減少";
