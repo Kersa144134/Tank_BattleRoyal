@@ -393,6 +393,9 @@ namespace SceneSystem.Utility
                 fireDirection,
                 target
             );
+
+            tank.EnergyManager.ConsumeFuel();
+            tank.EnergyManager.ConsumeAmmo();
         }
 
         /// <summary>

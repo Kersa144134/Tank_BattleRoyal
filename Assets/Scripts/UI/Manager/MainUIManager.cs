@@ -199,7 +199,15 @@ namespace UISystem.Manager
         /// 制限時間表示フォーマット
         /// </summary>
         private const string LIMIT_TIME_FORMAT = "{0:00}:{1:00}";
-        
+
+        // --------------------------------------------------
+        // 弾薬
+        // --------------------------------------------------
+        /// <summary>
+        /// 弾薬表示フォーマット
+        /// </summary>
+        private const string AMMO_FORMAT = "{0} / {1}";
+
         // --------------------------------------------------
         // ログ
         // --------------------------------------------------
@@ -300,6 +308,9 @@ namespace UISystem.Manager
                         _playerEnergyManager.MaxFuel,
                         _playerEnergyManager.CurrentFuel
                     );
+
+                // 初期弾薬値を表示
+                NotifyAmmoChanged();
             }
 
             // 弾丸アイコン UI が設定されているかを確認する
@@ -424,7 +435,7 @@ namespace UISystem.Manager
             // 秒を算出する
             int seconds = totalSeconds % 60;
 
-            // フォーマット文字列を使用して描画する
+            // フォーマットを使用して UI に反映
             _limitTimeText.SetText(LIMIT_TIME_FORMAT, minutes, seconds);
         }
 
@@ -465,10 +476,20 @@ namespace UISystem.Manager
         /// </summary>
         public void NotifyAmmoChanged()
         {
+            // EnergyManager が未設定の場合は処理しない
             if (_playerEnergyManager == null)
             {
                 return;
             }
+
+            // 現在の弾薬数を取得
+            int currentAmmo = _playerEnergyManager.CurrentAmmo;
+
+            // 最大弾薬数を取得
+            int maxAmmo = _playerEnergyManager.MaxAmmo;
+
+            // フォーマットを使用して UI に反映
+            _ammoText.SetText(AMMO_FORMAT, currentAmmo, maxAmmo);
         }
 
         /// <summary>

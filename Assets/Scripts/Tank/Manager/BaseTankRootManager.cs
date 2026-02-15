@@ -6,18 +6,17 @@
 // 概要     : 戦車の各種制御を統合管理する
 // ======================================================
 
+using System;
+using UnityEngine;
 using CollisionSystem.Data;
 using CollisionSystem.Interface;
 using InputSystem.Data;
 using InputSystem.Manager;
 using SceneSystem.Data;
 using SceneSystem.Interface;
-using ShaderSystem.Controller;
-using System;
 using TankSystem.Controller;
 using TankSystem.Data;
 using TankSystem.Service;
-using UnityEngine;
 using VisionSystem.Calculator;
 using WeaponSystem.Data;
 using WeaponSystem.Interface;
@@ -126,9 +125,6 @@ namespace TankSystem.Manager
         /// <summary>戦車を一意に識別する ID</summary>
         public int TankId { get; set; }
 
-        /// <summary>戦車が機能停止状態かどうか</summary>
-        public bool IsBroken => _isBroken;
-
         /// <summary>ゲーム中に変動する戦車のパラメーター</summary>
         public TankStatus TankStatus => _tankStatus;
 
@@ -171,6 +167,9 @@ namespace TankSystem.Manager
 
         /// <summary>戦車の移動許容距離半径</summary>
         private const float MOVEMENT_ALLOWED_RADIUS = 315f;
+
+        /// <summary>移動速度 1 あたりの燃料消費倍率</summary>
+        private const float FUEL_CONSUMPTION_PER_SPEED = 0.001f;
 
         // ======================================================
         // イベント
@@ -341,8 +340,11 @@ namespace TankSystem.Manager
             // --------------------------------------------------
             // 攻撃
             // --------------------------------------------------
-            // 攻撃処理
-            _attackManager.UpdateAttack(unscaledDeltaTime, leftFire, rightFire, Tanks);
+            // 弾薬が 0 以上
+            if (_energyManager.CurrentAmmo > 0)
+            {
+                _attackManager.UpdateAttack(unscaledDeltaTime, leftFire, rightFire, Tanks);
+            }
 
             // 砲塔スケール
             _turretController.ApplyTurretScale();
@@ -379,11 +381,17 @@ namespace TankSystem.Manager
             // --------------------------------------------------
             // 機動
             // --------------------------------------------------
-            // 計算済みの移動・回転結果を Transform に適用する
-            _mobilityManager.ApplyMobility(
-                NextPosition,
-                NextRotation
-            );
+            // 燃料が 0 以上
+            if (_energyManager.CurrentFuel > 0)
+            {
+                // 計算済みの移動・回転結果を Transform に適用する
+                _mobilityManager.ApplyMobility(
+                    NextPosition,
+                    NextRotation
+                );
+
+                _energyManager.ConsumeFuel(CurrentForwardSpeed * FUEL_CONSUMPTION_PER_SPEED);
+            }
         }
 
         public virtual void OnExit()
@@ -521,9 +529,12 @@ namespace TankSystem.Manager
             _mobilityManager.UpdateMobilityParameters(_tankStatus);
             _turretController.UpdateTurretParameter(_tankStatus);
 
-            if (param == TankParam.Fuel || param == TankParam.Ammo)
+            if (param == TankParam.Fuel && amount > 0)
             {
                 _energyManager.RefillFuel();
+            }
+            if (param == TankParam.Ammo && amount > 0)
+            {
                 _energyManager.RefillAmmo();
             }
         }

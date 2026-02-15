@@ -3085,12 +3085,12 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 1
   m_Children:
+  - {fileID: 450494674}
+  - {fileID: 1561146901}
+  - {fileID: 300561463}
   - {fileID: 1942058913}
   - {fileID: 1034439861}
-  - {fileID: 300561463}
-  - {fileID: 1561146901}
   - {fileID: 1456622470}
-  - {fileID: 450494674}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -9432,7 +9432,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 320, y: -685}
-  m_SizeDelta: {x: 300, y: 150}
+  m_SizeDelta: {x: 250, y: 150}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &300561464
 MonoBehaviour:
@@ -9481,8 +9481,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 100
-  m_fontSizeBase: 100
+  m_fontSize: 75
+  m_fontSizeBase: 75
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -65489,7 +65489,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1942058913}
   m_Layer: 5
-  m_Name: HP
+  m_Name: Durability
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

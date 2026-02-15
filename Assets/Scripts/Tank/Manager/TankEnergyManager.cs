@@ -51,6 +51,9 @@ namespace TankSystem.Manager
         /// <summary>現在の弾薬量</summary>
         public int CurrentAmmo => _currentAmmo;
 
+        /// <summary>弾薬の最大値</summary>
+        public int MaxAmmo => _maxAmmo;
+
         // ======================================================
         // 定数
         // ======================================================
@@ -67,6 +70,11 @@ namespace TankSystem.Manager
         /// Ammo ステータスが 0 のときの弾薬最大値の基準値
         /// </summary>
         private const int BASE_AMMO_MAX_VALUE = 10;
+
+        /// <summary>
+        /// 攻撃 1 回あたりの燃料消費倍率
+        /// </summary>
+        private const float FUEL_CONSUMPTION_PER_ATTACK = 5.0f;
 
         // --------------------------------------------------
         // パラメーター
@@ -127,43 +135,13 @@ namespace TankSystem.Manager
             // 最大値を計算
             _maxFuel = BASE_FUEL_MAX_VALUE + tankStatus.Fuel * FUEL_MAX_MULTIPLIER;
             _maxAmmo = BASE_AMMO_MAX_VALUE + tankStatus.Ammo * AMMO_MAX_MULTIPLIER;
-
-            // 燃料が増えた場合は現在値を補正
-            float fuelIncrease = _maxFuel - previousMaxFuel;
-            if (fuelIncrease > 0f)
-            {
-                _currentFuel += fuelIncrease;
-
-                // 上限補正
-                if (_currentFuel > _maxFuel)
-                {
-                    _currentFuel = _maxFuel;
-                }
-
-                OnFuelChanged?.Invoke();
-            }
-
-            // 弾薬が増えた場合は現在値を補正
-            int ammoIncrease = _maxAmmo - previousMaxAmmo;
-            if (ammoIncrease > 0)
-            {
-                _currentAmmo += ammoIncrease;
-
-                // 上限補正
-                if (_currentAmmo > _maxAmmo)
-                {
-                    _currentAmmo = _maxAmmo;
-                }
-                
-                OnAmmoChanged?.Invoke();
-            }
         }
 
         /// <summary>
         /// 燃料を消費
         /// </summary>
         /// <param name="amount">消費量</param>
-        public void ConsumeFuel(in float amount = FUEL_MAX_MULTIPLIER)
+        public void ConsumeFuel(in float amount = FUEL_CONSUMPTION_PER_ATTACK)
         {
             if (amount <= 0f || _isFuelEmpty)
             {
