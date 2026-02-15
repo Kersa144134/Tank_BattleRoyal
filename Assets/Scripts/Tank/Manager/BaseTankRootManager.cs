@@ -134,11 +134,8 @@ namespace TankSystem.Manager
         /// <summary>戦車のエネルギー管理クラス</summary>
         public TankEnergyManager EnergyManager => _energyManager;
 
-        /// <summary>戦車の衝突設定 Box のローカル中心座標</summary>
-        public Vector3 HitBoxCenter => _hitBoxCenter;
-
-        /// <summary>戦車の衝突設定 Boxのローカルスケール</summary>
-        public Vector3 HitBoxScale => _hitBoxScale;
+        /// <summary>戦車 Transform 配列</summary>
+        public Transform[] Tanks { get; set; }
 
         /// <summary>自身の Transform</summary>
         public Transform Transform => transform;
@@ -146,8 +143,11 @@ namespace TankSystem.Manager
         /// <summary>弾丸発射ローカル位置</summary>
         public Transform FirePoint => _firePoint;
 
-        /// <summary>現在の前進移動速度</summary>
-        public float CurrentForwardSpeed => _mobilityManager.CurrentForwardSpeed;
+        /// <summary>戦車の衝突設定 Box のローカル中心座標</summary>
+        public Vector3 HitBoxCenter => _hitBoxCenter;
+
+        /// <summary>戦車の衝突設定 Boxのローカルスケール</summary>
+        public Vector3 HitBoxScale => _hitBoxScale;
 
         /// <summary>移動予定ワールド座標</summary>
         public Vector3 NextPosition { get; set; }
@@ -158,8 +158,8 @@ namespace TankSystem.Manager
         /// <summary>今フレーム中に移動を制限すべき軸</summary>
         public MovementLockAxis CurrentFrameLockAxis { get; set; } = MovementLockAxis.None;
 
-        /// <summary>戦車 Transform</summary>
-        public Transform[] Tanks { get; set; }
+        /// <summary>現在の前進移動速度</summary>
+        public float CurrentForwardSpeed => _mobilityManager.CurrentForwardSpeed;
 
         // ======================================================
         // 定数
@@ -631,7 +631,6 @@ namespace TankSystem.Manager
                 return;
             }
 
-            // 機能停止フラグを立てる
             _isBroken = true;
 
             // 移動予定を現在位置に固定

@@ -245,7 +245,6 @@ namespace SceneSystem.Manager
             // 現在シーンを更新
             _currentScene = sceneName;
 
-            // シーン切り替え直後フラグを立てる
             _isSceneChanged = true;
 
             // シーンロード

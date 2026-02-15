@@ -150,7 +150,6 @@ namespace ItemSystem.Manager
                 // 初期生成を実行
                 _spawnController.ExecuteInitialSpawn();
 
-                // 実行済みフラグを立てる
                 _isInitialSpawnExecuted = true;
             }
         }

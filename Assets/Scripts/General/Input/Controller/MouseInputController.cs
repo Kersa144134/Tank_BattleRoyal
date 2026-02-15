@@ -7,7 +7,6 @@
 //            マウス入力を取得するコントローラクラス
 // ======================================================
 
-using System.Linq;
 using UnityEngine;
 using InputSystem.Data;
 
@@ -76,8 +75,6 @@ namespace InputSystem.Controller
         public bool GetButton(in GamepadInputType inputType)
         {
             InputMapping map = default;
-
-            // 見つかったかどうかのフラグ
             bool found = false;
 
             // ループで対応するマッピングを検索

@@ -256,7 +256,6 @@ namespace SceneSystem.Utility
                 _context.ResultUIManager.OnResultPhaseAnimationFinished -= HandleResultPhaseAnimationFinish;
             }
 
-
             // 購読完了フラグを更新
             _isSubscribed = false;
         }
