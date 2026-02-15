@@ -166,6 +166,7 @@ namespace TankSystem.Data
         // ======================================================
         // 辞書
         // ======================================================
+
         /// <summary>TankParam 列挙型の値をキーに、対応する TankStatus のプロパティ更新アクションを格納する辞書</summary>
         private readonly Dictionary<TankParam, Action<int>> _paramMap;
 
@@ -178,10 +179,17 @@ namespace TankSystem.Data
         /// </summary>
         public TankStatus()
         {
-            _fuel = 0; _ammo = 0; _durability = 0; _armor = 0;
-            _horsePower = 0; _transmission = 0; _barrel = 0; _projectileMass = 0; _reloadTime = 0;
+            _fuel = 0;
+            _ammo = 0;
+            _durability = 0;
+            _armor = 0;
+            _horsePower = 0;
+            _transmission = 0;
+            _barrel = 0;
+            _projectileMass = 0;
+            _reloadTime = 0;
 
-            // TankParam とプロパティ更新アクションを紐付け
+            // TankParam とパラメーター更新を紐付ける
             _paramMap = new Dictionary<TankParam, Action<int>>
             {
                 { TankParam.Fuel,           amount => Fuel += amount },

@@ -93,6 +93,8 @@ namespace SceneSystem.Utility
                 _context.PlayerTank.OnFireModeChangeButtonPressed += HandleFireModeChangeButtonPressed;
                 _context.PlayerTank.OnFireBullet += HandleFireBullet;
                 _context.PlayerTank.DurabilityManager.OnDurabilityChanged += HandleDurabilityChanged;
+                _context.PlayerTank.EnergyManager.OnFuelChanged += HandleFuelChanged;
+                _context.PlayerTank.EnergyManager.OnAmmoChanged += HandleAmmoChanged;
                 _context.PlayerTank.OnBroken += HandleBroken;
             }
 
@@ -189,6 +191,8 @@ namespace SceneSystem.Utility
                 _context.PlayerTank.OnFireModeChangeButtonPressed -= HandleFireModeChangeButtonPressed;
                 _context.PlayerTank.OnFireBullet -= HandleFireBullet;
                 _context.PlayerTank.DurabilityManager.OnDurabilityChanged -= HandleDurabilityChanged;
+                _context.PlayerTank.EnergyManager.OnFuelChanged -= HandleFuelChanged;
+                _context.PlayerTank.EnergyManager.OnAmmoChanged -= HandleAmmoChanged;
                 _context.PlayerTank.OnBroken -= HandleBroken;
             }
 
@@ -326,6 +330,30 @@ namespace SceneSystem.Utility
             _context.MainUIManager?.UpdateBulletIcons();
         }
 
+        /// <summary>
+        /// 耐久値変更時の処理を行うハンドラ
+        /// </summary>
+        private void HandleDurabilityChanged()
+        {
+            _context.MainUIManager?.NotifyDurabilityChanged();
+        }
+
+        /// <summary>
+        /// 燃料値変更時の処理を行うハンドラ
+        /// </summary>
+        private void HandleFuelChanged()
+        {
+            _context.MainUIManager?.NotifyFuelChanged();
+        }
+
+        /// <summary>
+        /// 弾薬値変更時の処理を行うハンドラ
+        /// </summary>
+        private void HandleAmmoChanged()
+        {
+            _context.MainUIManager?.NotifyAmmoChanged();
+        }
+
         // --------------------------------------------------
         // 戦車共通
         // --------------------------------------------------
@@ -365,14 +393,6 @@ namespace SceneSystem.Utility
                 fireDirection,
                 target
             );
-        }
-
-        /// <summary>
-        /// 耐久値変更時の処理を行うハンドラ
-        /// </summary>
-        private void HandleDurabilityChanged()
-        {
-            _context.MainUIManager?.NotifyDurabilityChanged();
         }
 
         /// <summary>

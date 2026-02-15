@@ -83,6 +83,12 @@ namespace TankSystem.Manager
         private TankTrackController _trackController = new TankTrackController();
 
         // --------------------------------------------------
+        // エネルギー
+        // --------------------------------------------------
+        /// <summary>戦車のエネルギー管理クラス</summary>
+        protected TankEnergyManager _energyManager;
+
+        // --------------------------------------------------
         // 視界
         // --------------------------------------------------
         /// <summary>視界・ターゲット管理コントローラー</summary>
@@ -128,6 +134,9 @@ namespace TankSystem.Manager
 
         /// <summary>戦車の耐久力管理クラス</summary>
         public TankDurabilityManager DurabilityManager => _durabilityManager;
+
+        /// <summary>戦車のエネルギー管理クラス</summary>
+        public TankEnergyManager EnergyManager => _energyManager;
 
         /// <summary>戦車の衝突設定 Box のローカル中心座標</summary>
         public Vector3 HitBoxCenter => _hitBoxCenter;
@@ -421,6 +430,8 @@ namespace TankSystem.Manager
                 transform
             );
 
+            _energyManager = new TankEnergyManager(_tankStatus);
+
             _effectManager = new TankEffectManager(transform);
 
             // イベント購読
@@ -504,10 +515,17 @@ namespace TankSystem.Manager
 
             // パラメーター更新処理
             _attackManager.UpdateAttackParameter(_tankStatus);
+            _energyManager.UpdateEnergyParameter(_tankStatus);
             _defenseManager.UpdateDefenseParameter(_tankStatus);
             _durabilityManager.UpdateDurabilityParameter(_tankStatus);
             _mobilityManager.UpdateMobilityParameters(_tankStatus);
             _turretController.UpdateTurretParameter(_tankStatus);
+
+            if (param == TankParam.Fuel || param == TankParam.Ammo)
+            {
+                _energyManager.RefillFuel();
+                _energyManager.RefillAmmo();
+            }
         }
 
         /// <summary>

@@ -47,7 +47,23 @@ namespace UISystem.Manager
         /// <summary>制限時間を表示するテキスト</summary>
         [SerializeField]
         private TextMeshProUGUI _limitTimeText;
-        
+
+        // --------------------------------------------------
+        // 弾丸アイコン
+        // --------------------------------------------------
+        [Header("弾丸アイコン")]
+        /// <summary>弾丸アイコン Image 配列</summary>
+        [SerializeField]
+        private Image[] _bulletIconImages;
+
+        /// <summary>弾丸アイコンの配置方向</summary>
+        [SerializeField]
+        private SlotRotationUIController.LayoutDirection _bulletIconLayoutDirection;
+
+        /// <summary>弾丸アイコンの回転方向の符号</summary>
+        [SerializeField]
+        private SlotRotationUIController.RotationSign _bulletIconRotationSign;
+
         // --------------------------------------------------
         // 耐久値バー
         // --------------------------------------------------
@@ -65,20 +81,28 @@ namespace UISystem.Manager
         private Image _diffDurabilityBarImage;
 
         // --------------------------------------------------
-        // 弾丸アイコン
+        // 燃料値バー
         // --------------------------------------------------
-        [Header("弾丸アイコン")]
-        /// <summary>弾丸アイコン Image 配列</summary>
+        [Header("燃料値バー")]
+        /// <summary>最大燃料値を表すバー Image</summary>
         [SerializeField]
-        private Image[] _bulletIconImages;
+        private Image _maxFuelBarImage;
 
-        /// <summary>弾丸アイコンの配置方向</summary>
+        /// <summary>現在燃料値を表すバー Image</summary>
         [SerializeField]
-        private SlotRotationUIController.LayoutDirection _bulletIconLayoutDirection;
+        private Image _currentFuelBarImage;
 
-        /// <summary>弾丸アイコンの回転方向の符号</summary>
+        /// <summary>差分燃料値を表すバー Image</summary>
         [SerializeField]
-        private SlotRotationUIController.RotationSign _bulletIconRotationSign;
+        private Image _diffFuelBarImage;
+
+        // --------------------------------------------------
+        // 弾薬値
+        // --------------------------------------------------
+        [Header("弾薬値")]
+        /// <summary>弾薬値を表示するテキスト</summary>
+        [SerializeField]
+        private TextMeshProUGUI _ammoText;
 
         // --------------------------------------------------
         // ログ
@@ -115,11 +139,17 @@ namespace UISystem.Manager
         /// <summary>耐久値バー横幅 UI コントローラー</summary>
         private ValueBarWidthUIController _durabilityBarWidthUIController;
 
+        /// <summary>燃料値値バー横幅 UI コントローラー</summary>
+        private ValueBarWidthUIController _fuelBarWidthUIController;
+
         // --------------------------------------------------
         // データ参照
         // --------------------------------------------------
-        /// <summary>プレイヤー戦車の耐久力マネージャー</summary>
+        /// <summary>プレイヤー戦車の耐久力管理マネージャー</summary>
         private TankDurabilityManager _playerDurabilityManager;
+
+        /// <summary>プレイヤー戦車のエネルギー管理マネージャー</summary>
+        private TankEnergyManager _playerEnergyManager;
 
         // ======================================================
         // フィールド
@@ -243,14 +273,13 @@ namespace UISystem.Manager
             BaseTankRootManager playerTankRootManager = _sceneRegistry.Tanks[0].GetComponent<BaseTankRootManager>();
 
             // プレイヤー耐久値 UI が使用可能かを確認する
-            if (playerTankRootManager != null &&
-                _maxDurabilityBarImage != null &&
-                _currentDurabilityBarImage != null &&
-                _diffDurabilityBarImage != null)
+            if (playerTankRootManager != null)
             {
-                // プレイヤー用耐久値管理クラスを取得する
+                // プレイヤーパラメーター管理クラスを取得する
                 _playerDurabilityManager =
                     playerTankRootManager.DurabilityManager;
+                _playerEnergyManager =
+                    playerTankRootManager.EnergyManager;
 
                 // 耐久値バー制御クラスを生成する
                 _durabilityBarWidthUIController =
@@ -260,6 +289,16 @@ namespace UISystem.Manager
                         _diffDurabilityBarImage,
                         _playerDurabilityManager.MaxDurability,
                         _playerDurabilityManager.CurrentDurability
+                    );
+
+                // 燃料値バー制御クラスを生成する
+                _fuelBarWidthUIController =
+                    new ValueBarWidthUIController(
+                        _maxFuelBarImage,
+                        _currentFuelBarImage,
+                        _diffFuelBarImage,
+                        _playerEnergyManager.MaxFuel,
+                        _playerEnergyManager.CurrentFuel
                     );
             }
 
@@ -301,6 +340,10 @@ namespace UISystem.Manager
             if (_playerDurabilityManager != null)
             {
                 _durabilityBarWidthUIController?.Update(unscaledDeltaTime);
+            }
+            if (_playerEnergyManager != null)
+            {
+                _fuelBarWidthUIController?.Update(unscaledDeltaTime);
             }
 
             // 弾丸アイコン UI を更新する
@@ -399,6 +442,33 @@ namespace UISystem.Manager
                 _playerDurabilityManager.MaxDurability,
                 _playerDurabilityManager.CurrentDurability
             );
+        }
+
+        /// <summary>
+        /// 燃料値変更時の処理を行う
+        /// </summary>
+        public void NotifyFuelChanged()
+        {
+            if (_playerEnergyManager == null)
+            {
+                return;
+            }
+
+            _fuelBarWidthUIController?.NotifyValueChanged(
+                _playerEnergyManager.MaxFuel,
+                _playerEnergyManager.CurrentFuel
+            );
+        }
+
+        /// <summary>
+        /// 弾薬値変更時の処理を行う
+        /// </summary>
+        public void NotifyAmmoChanged()
+        {
+            if (_playerEnergyManager == null)
+            {
+                return;
+            }
         }
 
         /// <summary>
