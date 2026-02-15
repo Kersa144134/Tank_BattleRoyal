@@ -73796,11 +73796,11 @@ PrefabInstance:
       objectReference: {fileID: 330585545}
     - target: {fileID: 4859157878037131412, guid: 37c493efc5fbb8f468366628fc97a032, type: 3}
       propertyPath: cutoutRange
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5118595161639167389, guid: 37c493efc5fbb8f468366628fc97a032, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5726372060417178785, guid: 37c493efc5fbb8f468366628fc97a032, type: 3}
       propertyPath: m_Pivot.x
