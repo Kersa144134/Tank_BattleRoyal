@@ -30,8 +30,9 @@ namespace ItemSystem.Controller
         public enum SpawnPointType
         {
             None,
+            ParamBobus,
             Supply,
-            ParamBobus
+            Armory
         }
 
         // ======================================================
@@ -66,11 +67,14 @@ namespace ItemSystem.Controller
         /// <summary>生成時のY座標固定値</summary>
         private const float SPAWN_HEIGHT = 1.5f;
 
+        /// <summary>ParamBonus 判定用タグ名</summary>
+        private const string PARAM_BONUS_TAG = "ParamBonus";
+
         /// <summary>Supply 判定用タグ名</summary>
         private const string SUPPLY_TAG = "Supply";
 
-        /// <summary>ParamBonus 判定用タグ名</summary>
-        private const string PARAM_BONUS_TAG = "ParamBonus";
+        /// <summary>Armory 判定用タグ名</summary>
+        private const string ARMORY_TAG = "Armory";
 
         // ======================================================
         // イベント
@@ -432,11 +436,14 @@ namespace ItemSystem.Controller
             // タグ判別
             switch (tagName)
             {
+                case PARAM_BONUS_TAG:
+                    return SpawnPointType.ParamBobus;
+
                 case SUPPLY_TAG:
                     return SpawnPointType.Supply;
 
-                case PARAM_BONUS_TAG:
-                    return SpawnPointType.ParamBobus;
+                case ARMORY_TAG:
+                    return SpawnPointType.Armory;
 
                 default:
                     return SpawnPointType.None;

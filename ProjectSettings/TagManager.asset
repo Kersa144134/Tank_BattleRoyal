@@ -12,6 +12,7 @@ TagManager:
   - Breakable
   - Supply
   - ParamBonus
+  - Armory
   layers:
   - Default
   - TransparentFX

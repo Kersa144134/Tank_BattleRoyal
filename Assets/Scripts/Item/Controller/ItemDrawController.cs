@@ -139,10 +139,28 @@ namespace ItemSystem.Manager
             }
 
             // --------------------------------------------------
+            // ParamBobus 専用スポーン
+            // --------------------------------------------------
+            if (spawnPointType == ItemSpawnController.SpawnPointType.ParamBobus)
+            {
+                // パラメーター増加アイテム のみ対象
+                if (itemData.Type == ItemType.ParamIncrease)
+                {
+                    return true;
+                }
+            }
+
+            // --------------------------------------------------
             // Supply 専用スポーン
             // --------------------------------------------------
             if (spawnPointType == ItemSpawnController.SpawnPointType.Supply)
             {
+                // パラメーター増加アイテム のみ対象
+                if (itemData.Type != ItemType.ParamIncrease)
+                {
+                    return false;
+                }
+
                 ParamItemData paramItemData =
                     itemData as ParamItemData;
 
@@ -151,7 +169,7 @@ namespace ItemSystem.Manager
                     return false;
                 }
 
-                // Fuel または Ammo のみ対象
+                // Fuel または Ammo を対象
                 if (paramItemData.ParamType == TankParam.Fuel ||
                     paramItemData.ParamType == TankParam.Ammo)
                 {
@@ -160,17 +178,28 @@ namespace ItemSystem.Manager
             }
 
             // --------------------------------------------------
-            // ParamBobus 専用スポーン
+            // Armory 専用スポーン
             // --------------------------------------------------
-            if (spawnPointType == ItemSpawnController.SpawnPointType.ParamBobus)
+            if (spawnPointType == ItemSpawnController.SpawnPointType.Armory)
             {
-                if (itemData == null)
+                // パラメーター増加アイテム のみ対象
+                if (itemData.Type != ItemType.ParamIncrease)
                 {
                     return false;
                 }
 
-                // パラメーター増加アイテム のみ対象
-                if (itemData.Type == ItemType.ParamIncrease)
+                ParamItemData paramItemData =
+                    itemData as ParamItemData;
+
+                if (paramItemData == null)
+                {
+                    return false;
+                }
+
+                // Barrel, ProjectileMass, ReloadTime を対象
+                if (paramItemData.ParamType == TankParam.Barrel ||
+                    paramItemData.ParamType == TankParam.ProjectileMass ||
+                    paramItemData.ParamType == TankParam.ReloadTime)
                 {
                     return true;
                 }

@@ -6,10 +6,12 @@
 // 概要     : カメラ制御の統括クラス
 // ======================================================
 
+using System.Collections.Generic;
 using UnityEngine;
 using CameraSystem.Controller;
 using SceneSystem.Interface;
 using SceneSystem.Manager;
+using TankSystem.Manager;
 
 namespace CameraSystem.Manager
 {
@@ -37,6 +39,27 @@ namespace CameraSystem.Manager
         private CameraFollowController _followController;
 
         // ======================================================
+        // フィールド
+        // ======================================================
+
+        /// <summary>プレイヤー追従前のモードをキャッシュ</summary>
+        private int _cachedPlayerTargetModeIndex = 0;
+
+        // ======================================================
+        // 辞書
+        // ======================================================
+
+        /// <summary>戦車 ID に応じた Transform 辞書</summary>
+        private Dictionary<int, Transform> _tankTransformMap = new Dictionary<int, Transform>();
+
+        // ======================================================
+        // 定数
+        // ======================================================
+
+        /// <summary>プレイヤー以外のターゲット追従時に設定するインデックス</summary>
+        private const int NON_PLAYER_TARGET_MODE_INDEX = 2;
+
+        // ======================================================
         // セッター
         // ======================================================
 
@@ -47,6 +70,25 @@ namespace CameraSystem.Manager
         public void SetSceneRegistry(SceneObjectRegistry sceneRegistry)
         {
             _sceneRegistry = sceneRegistry;
+
+            _tankTransformMap.Clear();
+
+            foreach (Transform tank in _sceneRegistry.Tanks)
+            {
+                if (!tank.TryGetComponent<BaseTankRootManager>(out BaseTankRootManager rootManager))
+                {
+                    continue;
+                }
+
+                // 戦車IDを取得
+                int tankId = rootManager.TankId;
+
+                // 辞書に登録
+                if (!_tankTransformMap.ContainsKey(tankId))
+                {
+                    _tankTransformMap.Add(tankId, tank);
+                }
+            }
         }
 
         // ======================================================
@@ -76,7 +118,7 @@ namespace CameraSystem.Manager
         /// <param name="targetModeIndex">
         /// 設定する追従モードのインデックス
         /// </param>
-        public void SetTargetByIndex(in int targetModeIndex)
+        public void SetTargetMode(in int targetModeIndex)
         {
             int currentIndex = _followController.GetCurrentTargetModeIndex();
 
@@ -90,14 +132,32 @@ namespace CameraSystem.Manager
 
         /// <summary>
         /// 追従対象の Transform を変更
-        /// null の場合はプレイヤー Transform を設定する
+        /// tankId が未入力または無効な場合はプレイヤー Transform を設定
+        /// プレイヤー以外の場合は TargetMode を 2 に変更し、プレイヤー復帰時に元のモードに戻す
         /// </summary>
-        /// <param name="newTargetTransform">ターゲット Transform</param>
-        public void SetTargetTransform(in Transform target = null)
+        /// <param name="tankId">追従したい戦車 ID（未指定なら 0）</param>
+        public void SetTargetTransform(in int tankId = 0)
         {
-            // null の場合はプレイヤー Transform を対象とする
-            Transform targetTransform = target ?? _sceneRegistry.Tanks[0];
+            Transform targetTransform;
 
+            // 無効な ID の場合
+            if (!_tankTransformMap.TryGetValue(tankId, out targetTransform) || targetTransform == null)
+            {
+                targetTransform = _sceneRegistry.Tanks[0];
+
+                // キャッシュしたモードに戻す
+                _followController.SetTargetMode(_cachedPlayerTargetModeIndex);
+            }
+            else
+            {
+                // 追従モードインデックスをキャッシュ
+                _cachedPlayerTargetModeIndex = _followController.GetCurrentTargetModeIndex();
+
+                // 非プレイヤーモードに切り替え
+                _followController.SetTargetMode(NON_PLAYER_TARGET_MODE_INDEX);
+            }
+
+            // 追従コントローラーに Transform を設定
             _followController.SetTargetTransform(targetTransform);
         }
     }

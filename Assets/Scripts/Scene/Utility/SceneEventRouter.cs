@@ -6,20 +6,17 @@
 // 概要     : シーン内イベントの仲介を行う
 // ======================================================
 
+using System;
+using System.Collections.Generic;
+using UnityEngine;
 using CollisionSystem.Data;
 using InputSystem.Data;
 using InputSystem.Manager;
 using ItemSystem.Data;
-using ObstacleSystem.Data;
 using SceneSystem.Data;
-using System;
-using System.Collections.Generic;
-using TankSystem.Data;
+using ScoreSystem.Manager;
 using TankSystem.Manager;
-using Unity.VisualScripting;
-using UnityEngine;
 using WeaponSystem.Data;
-using WeaponSystem.Interface;
 
 namespace SceneSystem.Utility
 {
@@ -318,7 +315,7 @@ namespace SceneSystem.Utility
                 : 0;
 
             // カメラの追従ターゲットを切り替え
-            _context.CameraManager?.SetTargetByIndex(cameraTargetIndex);
+            _context.CameraManager?.SetTargetMode(cameraTargetIndex);
         }
 
         /// <summary>
@@ -385,7 +382,13 @@ namespace SceneSystem.Utility
         {
             _context.MainUIManager?.NotifyBrokenTanks(TankId);
             _context.CollisionManager?.UnregisterTank(TankId);
-            _context.CameraManager?.SetTargetTransform();
+            _context.CameraManager?.SetTargetTransform(TankId);
+
+            // プレイヤー戦車 ID の場合は処理なし
+            if (TankId != 1)
+            {
+                ScoreManager.Instance.AddCumulativeScore();
+            }
         }
 
         // --------------------------------------------------
@@ -551,6 +554,8 @@ namespace SceneSystem.Utility
             if (tankRootManager is PlayerTankRootManager)
             {
                 _context.MainUIManager?.NotifyItemAcquired(itemSlot.ItemData.Name, itemSlot.ItemData.Type);
+
+                ScoreManager.Instance.AddFixedScore();
             }
         }
 
@@ -592,13 +597,12 @@ namespace SceneSystem.Utility
         }
 
         /// <summary>
-        /// フラッシュアニメーション終了時に呼ばれる処理
+        /// フラッシュアニメーション開始時に呼ばれる処理
         /// </summary>
         /// <param name="timeScale">タイムスケール</param>
         private void HandleFlashAnimationStart(float timeScale)
         {
             _context.SceneObjectRegistry?.ChangeTimeScale(timeScale);
-            _context.CameraManager?.SetTargetTransform();
         }
 
         /// <summary>
@@ -608,6 +612,7 @@ namespace SceneSystem.Utility
         private void HandleFlashAnimationFinish(float timeScale)
         {
             _context.SceneObjectRegistry?.ChangeTimeScale(timeScale);
+            _context.CameraManager?.SetTargetTransform();
         }
 
         /// <summary>

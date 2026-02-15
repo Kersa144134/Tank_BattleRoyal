@@ -41,7 +41,7 @@ namespace TankSystem.Manager
         private const string BREAKABLE_TAG = "Breakable";
 
         /// <summary>障害物の耐久最大値</summary>
-        private const float OBSTACLE_DURABILITY = 10f;
+        private const float OBSTACLE_DURABILITY = 20f;
 
         // ======================================================
         // イベント
