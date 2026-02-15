@@ -6,13 +6,11 @@
 // 概要     : 戦車の攻撃処理を管理するクラス
 // ======================================================
 
-using CollisionSystem.Interface;
-using InputSystem.Data;
 using System;
+using UnityEngine;
+using InputSystem.Data;
 using TankSystem.Controller;
 using TankSystem.Data;
-using UnityEngine;
-using VisionSystem.Calculator;
 using WeaponSystem.Data;
 
 namespace TankSystem.Manager
@@ -84,6 +82,15 @@ namespace TankSystem.Manager
         /// <summary>攻撃クールタイム（秒）</summary>
         private const float ATTACK_COOLDOWN = 1.0f;
 
+        // --------------------------------------------------
+        // 視界関連
+        // --------------------------------------------------
+        /// <summary>視界判定に使用する視野角（度）</summary>
+        private const float FOV_ANGLE = 30f;
+        
+        /// <summary>視界判定に使用する最大索敵距離</summary>
+        private const float VIEW_DISTANCE = 100f;
+
         // ======================================================
         // イベント
         // ======================================================
@@ -121,9 +128,7 @@ namespace TankSystem.Manager
         public void UpdateAttackParameter(in TankStatus tankStatus)
         {
             // ReloadTime に応じて攻撃間隔を短縮
-            _reloadTimeMultiplier =
-                BASE_RELOAD_TIME_MULTIPLIER
-                - tankStatus.ReloadTime * RELOAD_TIME_MULTIPLIER;
+            _reloadTimeMultiplier = BASE_RELOAD_TIME_MULTIPLIER - tankStatus.ReloadTime * RELOAD_TIME_MULTIPLIER;
         }
 
         /// <summary>
@@ -132,7 +137,8 @@ namespace TankSystem.Manager
         public void UpdateAttack(
             in float unscaledDeltaTime,
             in ButtonState leftInput,
-            in ButtonState rightInput)
+            in ButtonState rightInput,
+            in Transform[] tanks)
         {
             // 入力無効防止
             if (leftInput == null || rightInput == null)
@@ -141,7 +147,12 @@ namespace TankSystem.Manager
             }
 
             // ターゲット取得 
-            Transform target = _visibilityController.GetClosestTarget();
+            Transform target = _visibilityController.GetClosestTarget(
+                true,
+                FOV_ANGLE,
+                VIEW_DISTANCE,
+                tanks
+            );
 
             // クールタイム中
             if (_cooldownTime > 0f)

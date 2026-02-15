@@ -4,19 +4,17 @@
 // 作成日時 : 2025-12-04
 // 更新日時 : 2025-12-05
 // 概要     : カメラ制御の統括クラス
-//            追従対象の配列を管理し、追従クラスに渡す
-//            入力で追従ターゲットを切り替え可能
 // ======================================================
 
 using UnityEngine;
 using CameraSystem.Controller;
-using InputSystem.Manager;
 using SceneSystem.Interface;
+using SceneSystem.Manager;
 
 namespace CameraSystem.Manager
 {
     /// <summary>
-    /// 複数ターゲットを管理し、CameraFollow に渡す役割を持つ
+    /// カメラ制御の統括クラス
     /// </summary>
     public class CameraManager : MonoBehaviour, IUpdatable
     {
@@ -25,18 +23,31 @@ namespace CameraSystem.Manager
         // ======================================================
 
         [Header("追従設定")]
-        [Tooltip("カメラTransform")]
-        [SerializeField] private Transform _cameraTransform;
-
-        [Tooltip("カメラが追従するターゲット情報配列")]
+        /// <summary>カメラが追従するターゲット情報配列</summary>
         [SerializeField] private CameraTarget[] _cameraTargets;
 
         // ======================================================
         // コンポーネント参照
         // ======================================================
 
+        /// <summary>シーン上オブジェクトの Transform を一元管理するレジストリー</summary>
+        private SceneObjectRegistry _sceneRegistry;
+
         /// <summary>カメラ追従ロジック</summary>
         private CameraFollowController _followController;
+
+        // ======================================================
+        // セッター
+        // ======================================================
+
+        /// <summary>
+        /// シーン内オブジェクト管理用のレジストリー参照を設定する
+        /// </summary>
+        /// <param name="sceneRegistry">シーンに存在する各種オブジェクト情報を一元管理するレジストリー</param>
+        public void SetSceneRegistry(SceneObjectRegistry sceneRegistry)
+        {
+            _sceneRegistry = sceneRegistry;
+        }
 
         // ======================================================
         // IUpdatable イベント
@@ -44,8 +55,7 @@ namespace CameraSystem.Manager
 
         public void OnEnter()
         {
-            // CameraFollowController クラスを生成
-            _followController = new CameraFollowController(_cameraTransform, _cameraTargets);
+            _followController = new CameraFollowController(_sceneRegistry.Camera, _cameraTargets, _sceneRegistry.Tanks[0]);
         }
 
         public void OnLateUpdate(in float unscaledDeltaTime)
@@ -61,23 +71,34 @@ namespace CameraSystem.Manager
         // ======================================================
 
         /// <summary>
-        /// 指定されたインデックスのターゲットへ切り替える
+        /// 指定されたインデックスの追従モードへ切り替える
         /// </summary>
-        /// <param name="targetIndex">
-        /// 設定するターゲットのインデックス
+        /// <param name="targetModeIndex">
+        /// 設定する追従モードのインデックス
         /// </param>
-        public void SetTargetByIndex(int targetIndex)
+        public void SetTargetByIndex(in int targetModeIndex)
         {
-            // 現在設定されているターゲットインデックスを取得
-            int currentIndex = _followController.GetCurrentTargetIndex();
+            int currentIndex = _followController.GetCurrentTargetModeIndex();
 
-            if (currentIndex == targetIndex)
+            if (currentIndex == targetModeIndex)
             {
                 return;
             }
 
-            // 指定されたインデックスのターゲットを設定
-            _followController.SetTarget(targetIndex);
+            _followController.SetTargetMode(targetModeIndex);
+        }
+
+        /// <summary>
+        /// 追従対象の Transform を変更
+        /// null の場合はプレイヤー Transform を設定する
+        /// </summary>
+        /// <param name="newTargetTransform">ターゲット Transform</param>
+        public void SetTargetTransform(in Transform target = null)
+        {
+            // null の場合はプレイヤー Transform を対象とする
+            Transform targetTransform = target ?? _sceneRegistry.Tanks[0];
+
+            _followController.SetTargetTransform(targetTransform);
         }
     }
 }

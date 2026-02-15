@@ -54,7 +54,7 @@ namespace SceneSystem.Manager
         private UpdatableCollector _updatableCollector = new UpdatableCollector();
 
         /// <summary>IUpdatable の初期化を行うクラス</summary>
-        private UpdatableInitializer _bootstrapper;
+        private UpdatableInitializer _initializer;
 
         /// <summary>シーン内イベントを仲介するクラス</summary>
         private SceneEventRouter _sceneEventRouter;
@@ -126,9 +126,9 @@ namespace SceneSystem.Manager
             // フェーズごとに Updatable を登録
             _phaseInitializer.Initialize(_phaseController, allUpdatables, phaseDataList);
 
-            // Bootstrapper を通じた参照初期化
-            _bootstrapper = new UpdatableInitializer(_updatableCollector);
-            UpdatableContext context = _bootstrapper.Initialize(_components);
+            // Initializer を通じた参照初期化
+            _initializer = new UpdatableInitializer(_updatableCollector);
+            UpdatableContext context = _initializer.Initialize(_components);
 
             // シーンイベント初期化
             _sceneEventRouter = new SceneEventRouter(context);

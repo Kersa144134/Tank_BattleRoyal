@@ -3,7 +3,7 @@
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-04
 // 更新日時 : 2025-12-04
-// 概要     : カメラ追従対象データ（Transform + 位置/角度オフセット）
+// 概要     : カメラ追従対象データ
 // ======================================================
 
 using UnityEngine;
@@ -17,9 +17,6 @@ namespace CameraSystem.Controller
     [System.Serializable]
     public class CameraTarget
     {
-        /// <summary>追従対象 Transform</summary>
-        public Transform TargetTransform;
-
         /// <summary>カメラとターゲット間の位置オフセット</summary>
         public Vector3 PositionOffset = new Vector3(0f, 5f, -10f);
 

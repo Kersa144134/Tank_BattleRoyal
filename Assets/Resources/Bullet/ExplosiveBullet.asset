@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8a9773886067ee44f83d6b42c006dd09, type: 3}
-  m_Name: HomingBulletData
+  m_Name: ExplosiveBullet
   m_EditorClassIdentifier: 
-  BulletType: 2
-  BulletSpeed: 1.5
-  Mass: 0.5
-  ExplosiveRadius: 0
+  BulletType: 0
+  BulletSpeed: 1
+  Mass: 1
+  ExplosiveRadius: 5
   PenetrationSpeed: 0
-  RotateSpeed: 45
+  RotateSpeed: 0

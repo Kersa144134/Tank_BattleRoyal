@@ -7,8 +7,8 @@
 //            BaseTankRootManager を継承し、入力処理をAI制御に差し替える
 // ======================================================
 
-using UnityEngine;
 using InputSystem.Data;
+using UnityEngine;
 
 namespace TankSystem.Manager
 {
@@ -19,11 +19,47 @@ namespace TankSystem.Manager
     public sealed class EnemyTankRootManager : BaseTankRootManager
     {
         // ======================================================
+        // コンポーネント参照
+        // ======================================================
+
+        /// <summary>戦車 AI 制御クラス</summary>
+        private TankAIManager _tankAIManager;
+
+        // ======================================================
         // フィールド
         // ======================================================
 
         /// <summary>無入力ボタン</summary>
         private readonly ButtonState _none = new ButtonState();
+
+        /// <summary>ターゲットを発見しているかどうか</summary>
+        private bool _hasTarget;
+
+        // ======================================================
+        // IUpdatable 派生イベント
+        // ======================================================
+
+        protected override void OnEnterInternal()
+        {
+            base.OnEnterInternal();
+
+            if (_visibilityController != null)
+            {
+                _tankAIManager = new TankAIManager(_visibilityController);
+
+                _visibilityController.OnTargetAcquired += HandleAttackInput;
+            }
+        }
+
+        protected override void OnExitInternal()
+        {
+            base.OnExitInternal();
+
+            if (_visibilityController != null)
+            {
+                _visibilityController.OnTargetAcquired -= HandleAttackInput;
+            }
+        }
 
         // ======================================================
         // 抽象メソッド
@@ -49,7 +85,8 @@ namespace TankSystem.Manager
             out ButtonState rightFire
         )
         {
-            leftStick = Vector2.zero;
+            // AI による移動入力計算を委譲
+            _tankAIManager.GetMovementInputTowardsTarget(transform, out leftStick);
             rightStick = Vector2.zero;
 
             turretRotation = 0f;
@@ -59,6 +96,42 @@ namespace TankSystem.Manager
 
             leftFire = _none;
             rightFire = _none;
+            rightFire.Update(_hasTarget);
+        }
+
+        /// <summary>
+        /// ターゲット Transform 配列を送る
+        /// </summary>
+        /// <param name="tankTransforms">戦車 Transform 配列</param>
+        /// <param name="itemTransforms">アイテム Transform 配列</param>
+        public override void SetTargetData(
+            in Transform[] tankTransforms,
+            in Transform[] itemTransforms
+        )
+        {
+            Tanks = tankTransforms;
+
+            _tankAIManager.SetTargetData(tankTransforms, itemTransforms);
+        }
+
+        // ======================================================
+        // プライベートメソッド
+        // ======================================================
+
+        /// <summary>
+        /// ターゲット取得イベント受け取り
+        /// </summary>
+        /// <param name="target">ターゲット</param>
+        private void HandleAttackInput(BaseTankRootManager target)
+        {
+            if (target is PlayerTankRootManager)
+            {
+                _hasTarget = true;
+            }
+            else
+            {
+                _hasTarget = false;
+            }
         }
     }
 }

@@ -20,14 +20,17 @@ namespace CameraSystem.Controller
         // フィールド
         // ======================================================
 
-        /// <summary>追従対象配列（CameraTarget）</summary>
-        private CameraTarget[] _targets;
-
         /// <summary>カメラ Transform</summary>
-        private Transform _cameraTransform;
+        private readonly Transform _cameraTransform;
 
-        /// <summary>現在追従中のターゲットインデックス</summary>
-        private int _currentTargetIndex = 0;
+        /// <summary>追従対象配列</summary>
+        private readonly CameraTarget[] _targets;
+
+        /// <summary>ターゲット Transform</summary>
+        private Transform _targetTransform;
+
+        /// <summary>現在の追従モードインデックス</summary>
+        private int _currentTargetModeIndex = 0;
 
         // ======================================================
         // 定数
@@ -45,10 +48,15 @@ namespace CameraSystem.Controller
         /// </summary>
         /// <param name="cameraTransform">カメラ Transform</param>
         /// <param name="targetArray">追従対象の CameraTarget 配列</param>
-        public CameraFollowController(in Transform cameraTransform, in CameraTarget[] targetArray)
+        /// <param name="targetTransform">ターゲット Transform</param>
+        public CameraFollowController(
+            in Transform cameraTransform,
+            in CameraTarget[] targetArray,
+            in Transform targetTransform)
         {
             _cameraTransform = cameraTransform;
             _targets = targetArray;
+            _targetTransform = targetTransform;
         }
 
         // ======================================================
@@ -56,13 +64,31 @@ namespace CameraSystem.Controller
         // ======================================================
 
         /// <summary>
-        /// 現在追従中のターゲットを指定インデックスに変更
+        /// 追従モードを指定インデックスに変更
         /// </summary>
         /// <param name="index">配列インデックス</param>
-        public void SetTarget(in int index)
+        public void SetTargetMode(in int index)
         {
-            if (_targets == null || index < 0 || index >= _targets.Length) return;
-            _currentTargetIndex = index;
+            if (_targets == null || index < 0 || _targets.Length <= index)
+            {
+                return;
+            }
+
+            _currentTargetModeIndex = index;
+        }
+
+        /// <summary>
+        /// 追従対象の Transform を変更
+        /// </summary>
+        /// <param name="targetTransform">新しいターゲット Transform</param>
+        public void SetTargetTransform(in Transform targetTransform)
+        {
+            if (targetTransform == null)
+            {
+                return;
+            }
+
+            _targetTransform = targetTransform;
         }
 
         // ======================================================
@@ -70,14 +96,12 @@ namespace CameraSystem.Controller
         // ======================================================
 
         /// <summary>
-        /// 現在追従中のターゲットインデックスを取得
+        /// 現在の追従モードインデックスを取得
         /// </summary>
-        /// <returns>有効なターゲットインデックス、無効な場合は -1</returns>
-        public int GetCurrentTargetIndex()
+        /// <returns>有効な追従モードインデックス</returns>
+        public int GetCurrentTargetModeIndex()
         {
-            if (_targets == null || _targets.Length == 0) return -1;
-            if (_targets[_currentTargetIndex] == null || _targets[_currentTargetIndex].TargetTransform == null) return -1;
-            return _currentTargetIndex;
+            return _currentTargetModeIndex;
         }
 
         // ======================================================
@@ -94,14 +118,14 @@ namespace CameraSystem.Controller
             if (_cameraTransform == null ||
                 _targets == null ||
                 _targets.Length == 0 ||
-                _targets[_currentTargetIndex] == null ||
-                _targets[_currentTargetIndex].TargetTransform == null
+                _targets[_currentTargetModeIndex] == null ||
+                _targetTransform == null
             )
             {
                 return;
             }
 
-            CameraTarget target = _targets[_currentTargetIndex];
+            CameraTarget target = _targets[_currentTargetModeIndex];
 
             // 位置追従
             _cameraTransform.position = CalculateFollowPosition(deltaTime, target);
@@ -122,7 +146,7 @@ namespace CameraSystem.Controller
         /// <returns>補間済みのカメラ追従位置</returns>
         private Vector3 CalculateFollowPosition(in float deltaTime, in CameraTarget target)
         {
-            Vector3 targetPos = target.TargetTransform.position;
+            Vector3 targetPos = _targetTransform.position;
 
             if (target.IsRotationFixed)
             {
@@ -132,7 +156,7 @@ namespace CameraSystem.Controller
             else
             {
                 // ターゲット回転に応じたローカルオフセットをワールド座標に変換して加算
-                targetPos += target.TargetTransform.TransformVector(target.PositionOffset);
+                targetPos += _targetTransform.TransformVector(target.PositionOffset);
             }
 
             // 補間してカメラ位置に適用
@@ -162,7 +186,7 @@ namespace CameraSystem.Controller
                 // ターゲット回転にオフセットを加え、前回の回転から補間
                 targetRotation = Quaternion.Slerp(
                     _cameraTransform.rotation,
-                    target.TargetTransform.rotation * Quaternion.Euler(target.RotationOffset),
+                    _targetTransform.rotation * Quaternion.Euler(target.RotationOffset),
                     FOLLOW_SPEED * deltaTime
                 );
             }

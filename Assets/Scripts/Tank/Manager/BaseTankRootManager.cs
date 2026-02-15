@@ -6,17 +6,18 @@
 // 概要     : 戦車の各種制御を統合管理する
 // ======================================================
 
-using System;
-using UnityEngine;
 using CollisionSystem.Data;
 using CollisionSystem.Interface;
 using InputSystem.Data;
 using InputSystem.Manager;
 using SceneSystem.Data;
 using SceneSystem.Interface;
+using ShaderSystem.Controller;
+using System;
 using TankSystem.Controller;
 using TankSystem.Data;
 using TankSystem.Service;
+using UnityEngine;
 using VisionSystem.Calculator;
 using WeaponSystem.Data;
 using WeaponSystem.Interface;
@@ -60,12 +61,6 @@ namespace TankSystem.Manager
         /// <summary>戦車の攻撃管理クラス</summary>
         private TankAttackManager _attackManager;
 
-        /// <summary>視界・ターゲット管理コントローラー</summary>
-        private TankVisibilityController _visibilityController;
-
-        /// <summary>視界判定のユースケースクラス</summary>
-        private FieldOfViewCalculator _fieldOfViewCalculator = new FieldOfViewCalculator();
-
         /// <summary>砲塔回転制御コントローラー</summary>
         private TankTurretController _turretController;
 
@@ -86,6 +81,15 @@ namespace TankSystem.Manager
 
         /// <summary>左右キャタピラ入力から前進量・旋回量を算出するコントローラー</summary>
         private TankTrackController _trackController = new TankTrackController();
+
+        // --------------------------------------------------
+        // 視界
+        // --------------------------------------------------
+        /// <summary>視界・ターゲット管理コントローラー</summary>
+        protected TankVisibilityController _visibilityController;
+
+        /// <summary>視界判定のユースケースクラス</summary>
+        private FieldOfViewCalculator _fieldOfViewCalculator = new FieldOfViewCalculator();
 
         // --------------------------------------------------
         // エフェクト
@@ -149,6 +153,9 @@ namespace TankSystem.Manager
         /// <summary>今フレーム中に移動を制限すべき軸</summary>
         public MovementLockAxis CurrentFrameLockAxis { get; set; } = MovementLockAxis.None;
 
+        /// <summary>戦車 Transform</summary>
+        public Transform[] Tanks { get; set; }
+
         // ======================================================
         // 定数
         // ======================================================
@@ -196,46 +203,35 @@ namespace TankSystem.Manager
             out ButtonState rightFire
         );
 
+        /// <summary>
+        /// ターゲット Transform 配列を送る
+        /// </summary>
+        /// <param name="obstacleOBBs">遮蔽物 OBB 配列</param>
+        public abstract void SetTargetData(
+            in Transform[] tankTransforms,
+            in Transform[] itemTransforms
+        );
+
         // ======================================================
         // セッター
         // ======================================================
 
         /// <summary>
-        /// 戦車の Transform 配列と遮蔽物の OBB 配列を TankAttackManager に送る
+        /// 遮蔽物の OBB 配列を送る
         /// </summary>
-        /// <param name="tankTransforms">戦車自身の Transform 配列</param>
         /// <param name="obstacleOBBs">遮蔽物 OBB 配列</param>
-        public void SetContextData(
-            in Transform[] tankTransforms,
-            in IOBBData[] obstacleOBBs
-        )
+        public void SetObstacleData(in IOBBData[] obstacleOBBs)
         {
-            _visibilityController.SetContextData(tankTransforms, obstacleOBBs);
+            _visibilityController.SetObstacleData(obstacleOBBs);
         }
-        
+
         // ======================================================
         // IUpdatable イベント
         // ======================================================
 
-        public virtual void OnEnter()
+        public void OnEnter()
         {
-            _boundaryService = new TankMovementBoundaryService(MOVEMENT_ALLOWED_RADIUS);
-            _visibilityController = new TankVisibilityController(_fieldOfViewCalculator, transform, _turret);
-            _attackManager = new TankAttackManager(_tankStatus, _visibilityController);
-            _turretController = new TankTurretController(_tankStatus, _turret);
-            _defenseManager = new TankDefenseManager(_tankStatus);
-            _durabilityManager = new TankDurabilityManager(_tankStatus);
-            _mobilityManager = new TankMobilityManager(
-                _tankStatus,
-                _trackController,
-                _boundaryService,
-                transform
-            );
-            _effectManager = new TankEffectManager(transform);
-
-            // イベント購読
-            _attackManager.OnFireBullet += HandleFireBullet;
-            _durabilityManager.OnBroken += HandleBroken;
+            OnEnterInternal();
         }
 
         public virtual void OnUpdate(in float unscaledDeltaTime, in float elapsedTime)
@@ -337,7 +333,7 @@ namespace TankSystem.Manager
             // 攻撃
             // --------------------------------------------------
             // 攻撃処理
-            _attackManager.UpdateAttack(unscaledDeltaTime, leftFire, rightFire);
+            _attackManager.UpdateAttack(unscaledDeltaTime, leftFire, rightFire, Tanks);
 
             // 砲塔スケール
             _turretController.ApplyTurretScale();
@@ -370,7 +366,7 @@ namespace TankSystem.Manager
             {
                 return;
             }
-            
+
             // --------------------------------------------------
             // 機動
             // --------------------------------------------------
@@ -383,9 +379,7 @@ namespace TankSystem.Manager
 
         public virtual void OnExit()
         {
-            // イベント購読の解除
-            _attackManager.OnFireBullet -= HandleFireBullet;
-            _durabilityManager.OnBroken -= HandleBroken;
+            OnEnterInternal();
         }
 
         public void OnPhaseEnter(in PhaseType phase)
@@ -404,6 +398,41 @@ namespace TankSystem.Manager
             {
                 _isInGame = false;
             }
+        }
+
+        // ======================================================
+        // IUpdatable 派生イベント
+        // ======================================================
+
+        protected virtual void OnEnterInternal()
+        {
+            _visibilityController = new TankVisibilityController(_fieldOfViewCalculator, transform, _turret);
+            _attackManager = new TankAttackManager(_tankStatus, _visibilityController);
+            _turretController = new TankTurretController(_tankStatus, _turret);
+
+            _defenseManager = new TankDefenseManager(_tankStatus);
+            _durabilityManager = new TankDurabilityManager(_tankStatus);
+
+            _boundaryService = new TankMovementBoundaryService(MOVEMENT_ALLOWED_RADIUS);
+            _mobilityManager = new TankMobilityManager(
+                _tankStatus,
+                _trackController,
+                _boundaryService,
+                transform
+            );
+
+            _effectManager = new TankEffectManager(transform);
+
+            // イベント購読
+            _attackManager.OnFireBullet += HandleFireBullet;
+            _durabilityManager.OnBroken += HandleBroken;
+        }
+
+        protected virtual void OnExitInternal()
+        {
+            // イベント購読の解除
+            _attackManager.OnFireBullet -= HandleFireBullet;
+            _durabilityManager.OnBroken -= HandleBroken;
         }
 
         // ======================================================

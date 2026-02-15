@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8a9773886067ee44f83d6b42c006dd09, type: 3}
-  m_Name: PenetrationBulletData
+  m_Name: PenetrationBullet
   m_EditorClassIdentifier: 
   BulletType: 1
   BulletSpeed: 0.75

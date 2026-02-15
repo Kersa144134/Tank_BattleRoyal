@@ -385,6 +385,7 @@ namespace SceneSystem.Utility
         {
             _context.MainUIManager?.NotifyBrokenTanks(TankId);
             _context.CollisionManager?.UnregisterTank(TankId);
+            _context.CameraManager?.SetTargetTransform();
         }
 
         // --------------------------------------------------
@@ -594,6 +595,7 @@ namespace SceneSystem.Utility
         private void HandleFlashAnimationStart(float timeScale)
         {
             _context.SceneObjectRegistry?.ChangeTimeScale(timeScale);
+            _context.CameraManager?.SetTargetTransform();
         }
 
         /// <summary>

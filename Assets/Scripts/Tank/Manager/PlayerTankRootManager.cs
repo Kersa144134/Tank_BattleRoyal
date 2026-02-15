@@ -78,5 +78,18 @@ namespace TankSystem.Manager
             leftFire = _inputManager.GetButtonState(TankInputKeys.INPUT_LEFT_FIRE);
             rightFire = _inputManager.GetButtonState(TankInputKeys.INPUT_RIGHT_FIRE);
         }
+
+        /// <summary>
+        /// ターゲット Transform 配列を送る
+        /// </summary>
+        /// <param name="tankTransforms">戦車 Transform 配列</param>
+        /// <param name="itemTransforms">アイテム Transform 配列</param>
+        public override void SetTargetData(
+            in Transform[] tankTransforms,
+            in Transform[] itemTransforms
+        )
+        {
+            Tanks = tankTransforms;
+        }
     }
 }

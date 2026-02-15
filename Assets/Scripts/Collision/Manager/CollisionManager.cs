@@ -104,6 +104,15 @@ namespace CollisionSystem.Manager
         /// <summary>弾丸コンテキストの配列</summary>
         private BulletCollisionContext[] _bullets;
 
+        /// <summary>戦車 Transform キャッシュ配列</summary>
+        private Transform[] _tankTransformsCache;
+
+        /// <summary>アイテム Transform  キャッシュ配列</summary>
+        private Transform[] _itemTransformsCache;
+
+        /// <summary>障害物 OBB キャッシュ配列</summary>
+        private IOBBData[] _obstacleOBBsCache;
+
         /// <summary>円判定用統合 OBB キャッシュ配列</summary>
         private IOBBData[] _circleQueryOBBCache;
 
@@ -139,10 +148,16 @@ namespace CollisionSystem.Manager
             = new Dictionary<BulletBase, BulletCollisionContext>();
 
         /// <summary>
-        /// OBB と衝突コンテキストの対応を管理する共通辞書
+        /// OBB と戦車コンテキストの対応を管理する辞書
         /// </summary>
-        private readonly Dictionary<IOBBData, BaseCollisionContext> _obbToContextMap
-            = new Dictionary<IOBBData, BaseCollisionContext>();
+        private readonly Dictionary<IOBBData, TankCollisionContext> _obbToTankMap
+            = new Dictionary<IOBBData, TankCollisionContext>();
+
+        /// <summary>
+        /// OBB と障害物コンテキストの対応を管理する辞書
+        /// </summary>
+        private readonly Dictionary<IOBBData, ObstacleCollisionContext> _obbToObstacleMap
+            = new Dictionary<IOBBData, ObstacleCollisionContext>();
 
         // ======================================================
         // プロパティ
@@ -283,7 +298,7 @@ namespace CollisionSystem.Manager
             // --------------------------------------------------
             ExecuteCollisionService(_tankVsObstacleService, _tanks, _obstacles);
 
-            // 障害物由来の LockAxis を確定
+            // 障害物による LockAxis を確定
             for (int i = 0; i < _tanks.Length; i++)
             {
                 _tanks[i].FinalizeLockAxis();
@@ -305,6 +320,12 @@ namespace CollisionSystem.Manager
 
             // 再び戦車衝突チェック
             ExecuteCollisionService(_tankVsTankService, _tanks, _tanks);
+
+            // --------------------------------------------------
+            // キャッシュ更新
+            // --------------------------------------------------
+            UpdateTanks();
+            UpdateObstacles();
 
             // --------------------------------------------------
             // アイテム
@@ -345,6 +366,8 @@ namespace CollisionSystem.Manager
                 _tankContextMap,
                 UpdateTanks
             );
+
+            SendContextData();
         }
 
         /// <summary>
@@ -358,6 +381,8 @@ namespace CollisionSystem.Manager
                 _obstacleContextMap,
                 UpdateObstacles
             );
+
+            SendContextData();
         }
 
         /// <summary>
@@ -381,6 +406,8 @@ namespace CollisionSystem.Manager
                 _itemContextMap,
                 UpdateItems
             );
+
+            SendContextData();
         }
 
         /// <summary>
@@ -394,6 +421,8 @@ namespace CollisionSystem.Manager
                 _itemContextMap,
                 UpdateItems
             );
+
+            SendContextData();
         }
 
         /// <summary>
@@ -470,15 +499,22 @@ namespace CollisionSystem.Manager
                     _circleQueryOBBCache
                 );
 
-            // OBB → Context 変換
+            // OBB → Context 変換（戦車と障害物の両方を参照）
             for (int i = 0; i < overlappingOBBs.Length; i++)
             {
-                if (_obbToContextMap.TryGetValue(
-                    overlappingOBBs[i],
-                    out BaseCollisionContext context
-                ))
+                IOBBData obb = overlappingOBBs[i];
+
+                // 戦車マップ優先
+                if (_obbToTankMap.TryGetValue(obb, out TankCollisionContext tankContext))
                 {
-                    _overlapContextResults.Add(context);
+                    _overlapContextResults.Add(tankContext);
+                    continue;
+                }
+
+                // 戦車が無ければ障害物マップ
+                if (_obbToObstacleMap.TryGetValue(obb, out ObstacleCollisionContext obstacleContext))
+                {
+                    _overlapContextResults.Add(obstacleContext);
                 }
             }
 
@@ -490,46 +526,57 @@ namespace CollisionSystem.Manager
         // ======================================================
 
         /// <summary>
-        /// 戦車の Transform 配列と障害物の OBB 配列を
+        /// 戦車とアイテムの Transform 配列と障害物の OBB 配列を
         /// 各戦車マネージャーにセットする
         /// </summary>
         private void SendContextData()
         {
-            if (_tanks == null || _obstacles == null)
+            if (_tanks == null || _obstacles == null || _items == null)
             {
                 return;
             }
 
-            // 戦車ごとに Transform と OBB 配列をセット
-            Transform[] tankTransforms = new Transform[_tanks.Length];
-            IOBBData[] tankOBBs = new IOBBData[_tanks.Length];
+            // 戦車 Transform 配列
+            if (_tankTransformsCache == null || _tankTransformsCache.Length != _tanks.Length)
+            {
+                _tankTransformsCache = new Transform[_tanks.Length];
+            }
 
             for (int i = 0; i < _tanks.Length; i++)
             {
-                TankCollisionContext tank = _tanks[i];
-                tankTransforms[i] = tank.TankRootManager.Transform;
+                _tankTransformsCache[i] = _tanks[i].TankRootManager.Transform;
             }
 
-            // 障害物 Transform と OBB 配列をキャッシュ
-            Transform[] obstacleTransforms = new Transform[_obstacles.Length];
-            IOBBData[] obstacleOBBs = new IOBBData[_obstacles.Length];
+            // アイテム Transform 配列
+            if (_itemTransformsCache == null || _itemTransformsCache.Length != _items.Length)
+            {
+                _itemTransformsCache = new Transform[_items.Length];
+            }
+
+            for (int i = 0; i < _items.Length; i++)
+            {
+                _itemTransformsCache[i] = _items[i].Transform;
+            }
+
+            // 障害物 OBB 配列
+            if (_obstacleOBBsCache == null || _obstacleOBBsCache.Length != _obstacles.Length)
+            {
+                _obstacleOBBsCache = new IOBBData[_obstacles.Length];
+            }
+
             for (int i = 0; i < _obstacles.Length; i++)
             {
-                ObstacleCollisionContext obstacle = _obstacles[i];
-                obstacleOBBs[i] = obstacle.OBB;
+                _obstacleOBBsCache[i] = _obstacles[i].OBB;
             }
 
-            // 各戦車マネージャーにセット
+            // 各戦車へセット
             for (int i = 0; i < _tanks.Length; i++)
             {
                 BaseTankRootManager tankManager = _tanks[i].TankRootManager;
-                if (tankManager != null)
-                {
-                    tankManager.SetContextData(
-                        tankTransforms,
-                        obstacleOBBs
-                    );
-                }
+                if (tankManager == null) continue;
+
+                tankManager.SetTargetData(_tankTransformsCache, _itemTransformsCache);
+                tankManager.SetObstacleData(_obstacleOBBsCache);
             }
         }
 
@@ -648,7 +695,7 @@ namespace CollisionSystem.Manager
 
                 if (obb != null)
                 {
-                    _obbToContextMap[obb] = _tanks[i];
+                    _obbToTankMap[obb] = _tanks[i];
                 }
             }
         }
@@ -671,7 +718,7 @@ namespace CollisionSystem.Manager
 
                 if (obb != null)
                 {
-                    _obbToContextMap[obb] = _obstacles[i];
+                    _obbToObstacleMap[obb] = _obstacles[i];
                 }
             }
         }

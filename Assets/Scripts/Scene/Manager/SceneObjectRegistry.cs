@@ -27,8 +27,8 @@ namespace SceneSystem.Manager
         // ======================================================
 
         [Header("メインカメラ")]
-        /// <summary>メインカメラ</summary>
-        [SerializeField] private Transform _mainCamera;
+        /// <summary>カメラ Transform</summary>
+        [SerializeField] private Transform _camera;
 
         [Header("戦車")]
         /// <summary>戦車の Transform 配列</summary>
@@ -37,6 +37,11 @@ namespace SceneSystem.Manager
         [Header("障害物")]
         /// <summary>障害物の親 Transform</summary>
         [SerializeField] private Transform _obstacleRoot;
+
+        [Header("アイテム")]
+        /// <summary>生成ポイントの親 Transform</summary>
+        [SerializeField]
+        private Transform _spawnPointsRoot;
 
         // ======================================================
         // コンポーネント参照
@@ -68,15 +73,17 @@ namespace SceneSystem.Manager
         /// <summary>障害物管理マネージャー</summary>
         public ObstacleManager ObstacleManager => _obstacleManager;
 
-        /// <summary>
-        /// プレイヤー戦車 Transform を返す
-        /// </summary>
+        /// <summary>カメラ Transform</summary>
+        public Transform Camera => _camera;
+        
+        /// <summary>プレイヤー戦車 Transform</summary>
         public Transform[] Tanks => _tanks;
 
-        /// <summary>
-        /// 障害物 Transform 配列を返す
-        /// </summary>
+        /// <summary>障害物 Transform 配列</summary>
         public Transform[] Obstacles => _obstacles;
+
+        /// <summary>生成ポイントの親 Transform</summary>
+        public Transform SpawnPointsRoot => _spawnPointsRoot;
 
         // ======================================================
         // 定数
@@ -94,7 +101,7 @@ namespace SceneSystem.Manager
 
         public void OnEnter()
         {
-            _itemManager = new ItemManager(_mainCamera);
+            _itemManager = new ItemManager(_camera);
 
             InitializeTanks();
             InitializeObstacles();

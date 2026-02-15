@@ -113,7 +113,6 @@ namespace WeaponSystem.Data
             {
                 IDamageable damageable = collisionContexts[i].Damageable;
                 Transform damageableTransform = collisionContexts[i].Transform;
-                Debug.Log(collisionContexts[i]);
 
                 // 質量が高いほど、ダメージへの影響が段階的に大きくなるよう補正する
                 float massFactor =

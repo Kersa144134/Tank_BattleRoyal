@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using SceneSystem.Interface;
+using SceneSystem.Manager;
 using TankSystem.Data;
 using TankSystem.Manager;
 using WeaponSystem.Data;
@@ -27,10 +28,6 @@ namespace WeaponSystem.Manager
         // ======================================================
         // インスペクタ設定
         // ======================================================
-
-        [Header("戦車オブジェクト")]
-        /// <summary>プレイヤー戦車や敵戦車の GameObject 配列</summary>
-        [SerializeField] private GameObject[] _tankObjects;
 
         /// <summary>弾丸プール設定を表すエントリークラス</summary>
         [Serializable] public class BulletPoolEntry
@@ -52,14 +49,23 @@ namespace WeaponSystem.Manager
         [SerializeField] private List<BulletPoolEntry> bulletEntries = new List<BulletPoolEntry>();
 
         // ======================================================
+        // コンポーネント参照
+        // ======================================================
+
+        /// <summary>シーン上オブジェクトの Transform を一元管理するレジストリー</summary>
+        private SceneObjectRegistry _sceneRegistry;
+
+        // ======================================================
         // 辞書
         // ======================================================
 
-        /// <summary>使用中の弾丸を種類ごとに保持</summary>
-        private readonly Dictionary<BulletType, List<BulletBase>> _activePool = new Dictionary<BulletType, List<BulletBase>>();
+        /// <summary>戦車IDごとの使用中タイプ別弾丸リスト</summary>
+        private readonly Dictionary<int, Dictionary<BulletType, List<BulletBase>>> _activePools
+            = new Dictionary<int, Dictionary<BulletType, List<BulletBase>>>();
 
-        /// <summary>未使用の弾丸を種類ごとに保持</summary>
-        private readonly Dictionary<BulletType, Queue<BulletBase>> _inactivePool = new Dictionary<BulletType, Queue<BulletBase>>();
+        /// <summary>戦車IDごとの未使用タイプ別弾丸キュー</summary>
+        private readonly Dictionary<int, Dictionary<BulletType, Queue<BulletBase>>> _inactivePools
+            = new Dictionary<int, Dictionary<BulletType, Queue<BulletBase>>>();
 
         // ======================================================
         // 定数
@@ -88,48 +94,53 @@ namespace WeaponSystem.Manager
         public event Action<ExplosiveBullet, Vector3, float> OnBulletExploded;
 
         // ======================================================
+        // セッター
+        // ======================================================
+
+        /// <summary>
+        /// シーン内オブジェクト管理用のレジストリー参照を設定する
+        /// </summary>
+        /// <param name="sceneRegistry">シーンに存在する各種オブジェクト情報を一元管理するレジストリー</param>
+        public void SetSceneRegistry(SceneObjectRegistry sceneRegistry)
+        {
+            _sceneRegistry = sceneRegistry;
+        }
+
+        // ======================================================
         // IUpdatable イベント
         // ======================================================
 
         public void OnEnter()
         {
-            // 戦車オブジェクトごとにプール初期化を行う
-            foreach (GameObject tankObj in _tankObjects)
+            foreach (Transform tank in _sceneRegistry.Tanks)
             {
-                // 戦車ルートであるかどうかを確認
-                if (!tankObj.TryGetComponent<BaseTankRootManager>(out BaseTankRootManager _))
+                if (!tank.TryGetComponent<BaseTankRootManager>(out BaseTankRootManager tankRoot))
                 {
                     continue;
                 }
 
+                int tankId = tankRoot.TankId;
+
                 // 戦車専用の弾丸ルートオブジェクトを生成
-                GameObject bulletRootObject = new GameObject($"{tankObj.name}" + BULLET_ROOT_NAME);
-
-                // BulletPool 配下にまとめて配置
+                GameObject bulletRootObject = new GameObject($"{tank.name}" + BULLET_ROOT_NAME);
                 bulletRootObject.transform.SetParent(transform);
-
-                // 弾丸生成時に使用する Transform を取得
                 Transform bulletRootTransform = bulletRootObject.transform;
 
-                // 弾丸タイプごとにプールを初期化
+                // 戦車ごとのプール辞書を初期化
+                if (!_inactivePools.ContainsKey(tankId))
+                {
+                    _inactivePools[tankId] = new Dictionary<BulletType, Queue<BulletBase>>();
+                    _activePools[tankId] = new Dictionary<BulletType, List<BulletBase>>();
+                }
+
                 foreach (BulletPoolEntry entry in bulletEntries)
                 {
-                    // 未使用プールが未生成の場合は作成
-                    if (!_inactivePool.ContainsKey(entry.Type))
-                    {
-                        _inactivePool[entry.Type] = new Queue<BulletBase>();
-                    }
+                    _inactivePools[tankId][entry.Type] = new Queue<BulletBase>();
+                    _activePools[tankId][entry.Type] = new List<BulletBase>();
 
-                    // 使用中プールが未生成の場合は作成
-                    if (!_activePool.ContainsKey(entry.Type))
-                    {
-                        _activePool[entry.Type] = new List<BulletBase>();
-                    }
-
-                    // 初期生成数ぶんだけ弾丸を生成し、戦車専用ルート配下に配置
                     for (int i = 0; i < entry.InitialCount; i++)
                     {
-                        CreateNewBullet(entry, bulletRootTransform);
+                        CreateNewBullet(tankId, entry, bulletRootTransform);
                     }
                 }
             }
@@ -137,30 +148,49 @@ namespace WeaponSystem.Manager
 
         public void OnExit()
         {
-            // イベント購読解除
-            foreach (List<BulletBase> list in _activePool.Values)
+            // 戦車IDごとの使用プールを走査してイベント解除
+            foreach (KeyValuePair<int, Dictionary<BulletType, List<BulletBase>>> tankActivePair in _activePools)
             {
-                foreach (BulletBase bullet in list)
+                int tankId = tankActivePair.Key;
+                Dictionary<BulletType, List<BulletBase>> typeDict = tankActivePair.Value;
+
+                foreach (List<BulletBase> bulletList in typeDict.Values)
                 {
-                    bullet.OnDespawnRequested -= Despawn;
-                    if (bullet is ExplosiveBullet explosive)
+                    foreach (BulletBase bullet in bulletList)
                     {
-                        explosive.OnExploded -= HandleExplodedBullet;
+                        bullet.OnDespawnRequested -= Despawn;
+
+                        if (bullet is ExplosiveBullet explosive)
+                        {
+                            explosive.OnExploded -= HandleExplodedBullet;
+                        }
                     }
                 }
             }
 
-            foreach (Queue<BulletBase> list in _inactivePool.Values)
+            // 戦車IDごとの未使用プールを走査してイベント解除
+            foreach (KeyValuePair<int, Dictionary<BulletType, Queue<BulletBase>>> tankInactivePair in _inactivePools)
             {
-                foreach (BulletBase bullet in list)
+                int tankId = tankInactivePair.Key;
+                Dictionary<BulletType, Queue<BulletBase>> typeDict = tankInactivePair.Value;
+
+                foreach (Queue<BulletBase> bulletQueue in typeDict.Values)
                 {
-                    bullet.OnDespawnRequested -= Despawn;
-                    if (bullet is ExplosiveBullet explosive)
+                    foreach (BulletBase bullet in bulletQueue)
                     {
-                        explosive.OnExploded -= HandleExplodedBullet;
+                        bullet.OnDespawnRequested -= Despawn;
+
+                        if (bullet is ExplosiveBullet explosive)
+                        {
+                            explosive.OnExploded -= HandleExplodedBullet;
+                        }
                     }
                 }
             }
+
+            // 戦車IDごとの辞書をクリア
+            _activePools.Clear();
+            _inactivePools.Clear();
         }
 
         // ======================================================
@@ -187,17 +217,18 @@ namespace WeaponSystem.Manager
             in Transform target = null)
         {
             BulletPoolEntry entry = bulletEntries.Find(e => e.Type == type);
+            if (entry == null) return null;
 
-            if (entry == null)
+            // tankId に応じた未使用プールを取得
+            if (!_inactivePools.TryGetValue(tankId, out Dictionary<BulletType, Queue<BulletBase>> tankPool) ||
+                !tankPool.TryGetValue(type, out Queue<BulletBase> targetPool) ||
+                targetPool.Count == 0)
             {
                 return null;
             }
-            if (_inactivePool[type].Count == 0)
-            {
-                return null;
-            }
 
-            BulletBase bullet = _inactivePool[type].Dequeue();
+            // 弾丸取得
+            BulletBase bullet = targetPool.Dequeue();
 
             // 未使用の弾丸が存在しなければ発射中止
             if (bullet == null)
@@ -226,11 +257,11 @@ namespace WeaponSystem.Manager
             bullet.ApplyTankStatus(tankStatus);
 
             // 発射
-            bullet.OnEnter(tankId, position, direction);
+            bullet.OnEnter(position, direction);
 
             // プール管理
-            _inactivePool[type].Enqueue(bullet);
-            _activePool[type].Add(bullet);
+            _activePools[tankId][type].Add(bullet);
+            _inactivePools[tankId][type].Enqueue(bullet);
 
             // 弾丸生成イベントを通知する
             OnBulletSpawned?.Invoke(bullet);
@@ -252,14 +283,18 @@ namespace WeaponSystem.Manager
                 _ => BulletType.Explosive
             };
 
+            int tankId = bullet.BulletId;
+
             // アクティブプールから削除
-            if (_activePool.TryGetValue(type, out List<BulletBase> activeList))
+            if (_activePools.TryGetValue(tankId, out Dictionary<BulletType, List<BulletBase>> activeDict) &&
+                activeDict.TryGetValue(type, out List<BulletBase> activeList))
             {
                 activeList.Remove(bullet);
             }
 
             // 非アクティブプールへ戻す
-            if (_inactivePool.TryGetValue(type, out Queue<BulletBase> inactiveQueue))
+            if (_inactivePools.TryGetValue(tankId, out Dictionary<BulletType, Queue<BulletBase>> inactiveDict) &&
+                inactiveDict.TryGetValue(type, out Queue<BulletBase> inactiveQueue))
             {
                 inactiveQueue.Enqueue(bullet);
             }
@@ -279,28 +314,28 @@ namespace WeaponSystem.Manager
         /// <param name="entry">生成対象となる弾丸のプール定義情報</param>
         /// <param name="parent">生成される弾丸オブジェクトの親となる Transform</param>
         /// <returns>プール登録が完了した弾丸インスタンス</returns>
-        private BulletBase CreateNewBullet(in BulletPoolEntry entry, in Transform parent)
+        private BulletBase CreateNewBullet(in int tankId, in BulletPoolEntry entry, in Transform parent)
         {
             // 親を戦車ルートに指定
             Transform bulletTransform = Instantiate(entry.Prefab, parent);
 
             // ScriptableObject からロジックインスタンスを生成
-            BulletBase bulletBase = entry.Data.CreateInstance();
+            BulletBase bullet = entry.Data.CreateInstance();
 
             // Transform を渡して初期化
-            bulletBase.Initialize(bulletTransform);
+            bullet.Initialize(tankId, bulletTransform);
 
             // イベント購読
-            bulletBase.OnDespawnRequested += Despawn;
-            if (bulletBase is ExplosiveBullet explosive)
+            bullet.OnDespawnRequested += Despawn;
+            if (bullet is ExplosiveBullet explosive)
             {
                 explosive.OnExploded += HandleExplodedBullet;
             }
 
             // 未使用リストへ追加
-            _inactivePool[entry.Type].Enqueue(bulletBase);
+            _inactivePools[bullet.BulletId][entry.Type].Enqueue(bullet);
 
-            return bulletBase;
+            return bullet;
         }
 
         /// <summary>

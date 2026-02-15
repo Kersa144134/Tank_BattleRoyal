@@ -41,6 +41,7 @@ namespace VisionSystem.Calculator
         // ’è”
         // ======================================================
 
+        /// <summary>‹ŠE”»’è‚Åˆµ‚¤ƒ^[ƒQƒbƒg‚ÌÅ‘å”</summary>
         private const int MAX_TARGETS = 128;
 
         // ======================================================
@@ -111,9 +112,7 @@ namespace VisionSystem.Calculator
 
                 if (!blocked)
                 {
-                    // --------------------------------------------------
                     // “ñ•ª’Tõ‚Å‹——£‡‚Ì‘}“üˆÊ’u‚ğŒˆ’è
-                    // --------------------------------------------------
                     int insertIndex = BinarySearchInsertIndex(origin.position, target);
                     _visibleTargetsBuffer.Insert(insertIndex, target);
                 }

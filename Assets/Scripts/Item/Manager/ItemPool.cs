@@ -14,6 +14,7 @@ using ItemSystem.Controller;
 using ItemSystem.Data;
 using SceneSystem.Data;
 using SceneSystem.Interface;
+using SceneSystem.Manager;
 
 namespace ItemSystem.Manager
 {
@@ -47,13 +48,12 @@ namespace ItemSystem.Manager
         [SerializeField]
         private ItemEntry[] _itemEntries;
 
-        /// <summary>生成ポイントの親 Transform</summary>
-        [SerializeField]
-        private Transform _spawnPointsRoot;
-
         // ======================================================
         // コンポーネント参照
         // ======================================================
+
+        /// <summary>シーン上オブジェクトの Transform を一元管理するレジストリー</summary>
+        private SceneObjectRegistry _sceneRegistry;
 
         /// <summary>アイテム抽選を担当するコントローラー</summary>
         private ItemDrawController _drawController = new ItemDrawController();
@@ -94,13 +94,26 @@ namespace ItemSystem.Manager
         public event Action<ItemSlot> OnItemDeactivated;
 
         // ======================================================
+        // セッター
+        // ======================================================
+
+        /// <summary>
+        /// シーン内オブジェクト管理用のレジストリー参照を設定する
+        /// </summary>
+        /// <param name="sceneRegistry">シーンに存在する各種オブジェクト情報を一元管理するレジストリー</param>
+        public void SetSceneRegistry(SceneObjectRegistry sceneRegistry)
+        {
+            _sceneRegistry = sceneRegistry;
+        }
+
+        // ======================================================
         // IUpdatable イベント
         // ======================================================
 
         public void OnEnter()
         {
             // 生成制御コントローラーを生成
-            _spawnController = new ItemSpawnController(_spawnPointsRoot);
+            _spawnController = new ItemSpawnController(_sceneRegistry.SpawnPointsRoot);
 
             // イベント購読
             _spawnController.OnSpawnPositionDetermined += HandleSpawnPositionDetermined;

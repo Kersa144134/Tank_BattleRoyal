@@ -57,15 +57,10 @@ namespace SceneSystem.Utility
         /// <returns>初期化済み UpdatableContext</returns>
         public UpdatableContext Initialize(in GameObject[] components)
         {
-            // --------------------------------------------------
             // シーン上の全 IUpdatable を収集
-            // 型指定なしで収集するのでフェーズ問わず全件取得
-            // --------------------------------------------------
             IUpdatable[] allUpdatables = _updatableCollector.Collect(components);
 
-            // --------------------------------------------------
             // コンテキスト生成と参照キャッシュ
-            // --------------------------------------------------
             return BuildContext(allUpdatables);
         }
 
@@ -102,12 +97,14 @@ namespace SceneSystem.Utility
                 if (updatable is BulletPool bulletPool)
                 {
                     context.BulletPool = bulletPool;
+                    bulletPool.SetSceneRegistry(cacheSceneRegistry);
                 }
 
                 // CameraManager を取得
                 if (updatable is CameraManager cameraManager)
                 {
                     context.CameraManager = cameraManager;
+                    cameraManager.SetSceneRegistry(cacheSceneRegistry);
                 }
 
                 // CollisionManager を取得して SceneObjectRegistry を注入
@@ -121,6 +118,7 @@ namespace SceneSystem.Utility
                 if (updatable is ItemPool itemPool)
                 {
                     context.ItemPool = itemPool;
+                    itemPool.SetSceneRegistry(cacheSceneRegistry);
                 }
 
                 // UIManager を取得
@@ -131,6 +129,7 @@ namespace SceneSystem.Utility
                 if (updatable is MainUIManager mainUIManager)
                 {
                     context.MainUIManager = mainUIManager;
+                    mainUIManager.SetSceneRegistry(cacheSceneRegistry);
                 }
                 if (updatable is ResultUIManager resultUIManager)
                 {

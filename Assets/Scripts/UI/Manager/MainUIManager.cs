@@ -10,11 +10,12 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using ItemSystem.Data;
 using SceneSystem.Data;
 using SceneSystem.Interface;
+using SceneSystem.Manager;
 using TankSystem.Manager;
 using UISystem.Controller;
-using ItemSystem.Data;
 
 namespace UISystem.Manager
 {
@@ -95,17 +96,12 @@ namespace UISystem.Manager
         [SerializeField]
         private LogRotationUIController.InsertDirection _logInsertDirection;
 
-        // --------------------------------------------------
-        // プレイヤー戦車
-        // --------------------------------------------------
-        [Header("プレイヤー戦車")]
-        /// <summary>プレイヤー戦車のルートマネージャー</summary>
-        [SerializeField]
-        private BaseTankRootManager _playerTankRootManager;
-
         // ======================================================
         // コンポーネント参照
         // ======================================================
+
+        /// <summary>シーン上オブジェクトの Transform を一元管理するレジストリー</summary>
+        private SceneObjectRegistry _sceneRegistry;
 
         // --------------------------------------------------
         // UI
@@ -221,6 +217,19 @@ namespace UISystem.Manager
         public event Action<float> OnDieAnimationFinished;
 
         // ======================================================
+        // セッター
+        // ======================================================
+
+        /// <summary>
+        /// シーン内オブジェクト管理用のレジストリー参照を設定する
+        /// </summary>
+        /// <param name="sceneRegistry">シーンに存在する各種オブジェクト情報を一元管理するレジストリー</param>
+        public void SetSceneRegistry(SceneObjectRegistry sceneRegistry)
+        {
+            _sceneRegistry = sceneRegistry;
+        }
+
+        // ======================================================
         // IUpdatable 派生イベント
         // ======================================================
 
@@ -231,15 +240,17 @@ namespace UISystem.Manager
             // カメラ用 Animator をタイムスケール非依存に設定する
             SetAnimatorUnscaledTime(_cameraAnimator);
 
+            BaseTankRootManager playerTankRootManager = _sceneRegistry.Tanks[0].GetComponent<BaseTankRootManager>();
+
             // プレイヤー耐久値 UI が使用可能かを確認する
-            if (_playerTankRootManager != null &&
+            if (playerTankRootManager != null &&
                 _maxDurabilityBarImage != null &&
                 _currentDurabilityBarImage != null &&
                 _diffDurabilityBarImage != null)
             {
                 // プレイヤー用耐久値管理クラスを取得する
                 _playerDurabilityManager =
-                    _playerTankRootManager.DurabilityManager;
+                    playerTankRootManager.DurabilityManager;
 
                 // 耐久値バー制御クラスを生成する
                 _durabilityBarWidthUIController =
@@ -379,9 +390,14 @@ namespace UISystem.Manager
         /// </summary>
         public void NotifyDurabilityChanged()
         {
+            if (_playerDurabilityManager == null)
+            {
+                return;
+            }
+
             _durabilityBarWidthUIController?.NotifyValueChanged(
-                _playerTankRootManager.DurabilityManager.MaxDurability,
-                _playerTankRootManager.DurabilityManager.CurrentDurability
+                _playerDurabilityManager.MaxDurability,
+                _playerDurabilityManager.CurrentDurability
             );
         }
 

@@ -223,12 +223,9 @@ namespace UISystem.Manager
         }
 
         // ======================================================
-        // 派生クラス用フック
+        // IUpdatable 派生イベント
         // ======================================================
 
-        /// <summary>
-        /// UI 共通の初期化処理を行う
-        /// </summary>
         protected virtual void OnEnterInternal()
         {
             // エフェクト用 Animator を取得する
@@ -255,9 +252,6 @@ namespace UISystem.Manager
             SetAnimatorUnscaledTime(_effectAnimator);
         }
 
-        /// <summary>
-        /// UI 共通の更新処理を行う
-        /// </summary>
         protected virtual void OnLateUpdateInternal(in float unscaledDeltaTime)
         {
             // 2 値化エフェクトの有効／無効および各種パラメーターを反映する
@@ -283,14 +277,9 @@ namespace UISystem.Manager
             );
         }
 
-        protected virtual void OnPhaseEnterInternal(in PhaseType phase)
-        {
-        }
+        protected virtual void OnPhaseEnterInternal(in PhaseType phase) { }
 
-        protected virtual void OnPhaseExitInternal(in PhaseType phase)
-        {
-            
-        }
+        protected virtual void OnPhaseExitInternal(in PhaseType phase) { }
 
         // ======================================================
         // BaseUIManager イベント

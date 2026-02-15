@@ -187,8 +187,11 @@ namespace WeaponSystem.Data
         /// プール生成時に一度だけ実行される
         /// </summary>
         /// <param name="transform">弾丸の Transform</param>
-        public void Initialize(Transform transform)
+        public void Initialize(in int tankId, in Transform transform)
         {
+            // 弾丸 ID を設定
+            BulletId = tankId;
+            
             Transform = transform;
 
             // 表示制御クラスを生成
@@ -255,7 +258,7 @@ namespace WeaponSystem.Data
         /// <param name="tankId">弾丸の所有者である戦車 ID</param>
         /// <param name="position">発射位置</param>
         /// <param name="direction">飛行方向</param>
-        public virtual void OnEnter(int tankId, Vector3 position, Vector3 direction)
+        public virtual void OnEnter(in Vector3 position, in Vector3 direction)
         {
             NextPosition = position;
             NextDirection = direction.normalized;
@@ -266,9 +269,6 @@ namespace WeaponSystem.Data
 
             // Transform の Y スケールの半分を地面接触時の最終高度に設定
             _minHeight = Transform.localScale.y * 0.5f;
-
-            // 弾丸 ID を設定
-            BulletId = tankId;
 
             // 弾丸移動方向を設定
             if (Transform != null)
