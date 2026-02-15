@@ -10,6 +10,7 @@ using System;
 using System.Diagnostics;
 using CollisionSystem.Calculator;
 using CollisionSystem.Interface;
+using WeaponSystem.Data;
 
 namespace CollisionSystem.Service
 {
@@ -73,13 +74,17 @@ namespace CollisionSystem.Service
             if (_contextsA != null)
             {
                 for (int i = 0; i < _contextsA.Length; i++)
+                {
                     _contextsA[i]?.UpdateOBB();
+                }
             }
 
             if (_contextsB != null)
             {
                 for (int i = 0; i < _contextsB.Length; i++)
+                {
                     _contextsB[i]?.UpdateOBB();
+                }
             }
         }
 
@@ -96,11 +101,15 @@ namespace CollisionSystem.Service
             // --------------------------------------------------
             // 動的 × 動的 判定ループ
             // --------------------------------------------------
+            // A と B が同じ配列なら重複防止のため i+1 からループ
+            bool sameArray = ReferenceEquals(_contextsA, _contextsB);
+
             for (int i = 0; i < _contextsA.Length; i++)
             {
                 TDynamicA a = _contextsA[i];
 
-                for (int j = i + 1; j < _contextsB.Length; j++)
+                int startJ = sameArray ? i + 1 : 0;
+                for (int j = startJ; j < _contextsB.Length; j++)
                 {
                     TDynamicB b = _contextsB[j];
 

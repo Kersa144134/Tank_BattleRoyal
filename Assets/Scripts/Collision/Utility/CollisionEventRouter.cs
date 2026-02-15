@@ -223,13 +223,13 @@ namespace CollisionSystem.Utility
         {
             BulletBase bullet = bulletContext.Bullet;
 
+            int tankId = tank.TankRootManager.TankId;
+
             // 発射元戦車は処理をスキップ
-            if (bullet.BulletId == tank.TankRootManager.TankId)
+            if (bullet.BulletId == tankId)
             {
                 return;
             }
-
-            int tankId = tank.TankRootManager.TankId;
 
             // すでにヒット済みならスキップ
             if (!_hitHistory.Add((bullet.BulletId, tankId)))

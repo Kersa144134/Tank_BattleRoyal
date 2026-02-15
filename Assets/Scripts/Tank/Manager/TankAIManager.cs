@@ -59,7 +59,7 @@ public sealed class TankAIManager
     private const float ROTATION_ANGLE_FULL = 180f;
 
     /// <summary>回転入力の角度減衰に使用する指数</summary>
-    private const float ROTATION_INPUT_EXPONENT = 0.5f;
+    private const float ROTATION_INPUT_EXPONENT = 0.25f;
 
     /// <summary>プレイヤーに近づきすぎた場合、前進を停止する距離</summary>
     private const float PLAYER_STOP_DISTANCE = 30f;

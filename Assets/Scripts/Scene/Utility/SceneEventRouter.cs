@@ -548,7 +548,10 @@ namespace SceneSystem.Utility
             {
             }
 
-            _context.MainUIManager?.NotifyItemAcquired(itemSlot.ItemData.Name, itemSlot.ItemData.Type);
+            if (tankRootManager is PlayerTankRootManager)
+            {
+                _context.MainUIManager?.NotifyItemAcquired(itemSlot.ItemData.Name, itemSlot.ItemData.Type);
+            }
         }
 
         // --------------------------------------------------
