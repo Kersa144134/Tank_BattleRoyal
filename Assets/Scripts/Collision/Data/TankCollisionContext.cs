@@ -8,11 +8,10 @@
 // ======================================================
 
 using UnityEngine;
-using CollisionSystem.Data;
 using CollisionSystem.Interface;
 using TankSystem.Manager;
 
-namespace TankSystem.Data
+namespace CollisionSystem.Data
 {
     /// <summary>
     /// 戦車 1 台分の衝突判定コンテキスト

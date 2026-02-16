@@ -11,8 +11,6 @@ using UnityEngine;
 using CollisionSystem.Calculator;
 using CollisionSystem.Data;
 using ItemSystem.Data;
-using ObstacleSystem.Data;
-using TankSystem.Data;
 using TankSystem.Manager;
 using WeaponSystem.Data;
 

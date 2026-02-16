@@ -9,8 +9,6 @@
 
 using UnityEngine;
 using CollisionSystem.Data;
-using ObstacleSystem.Data;
-using TankSystem.Data;
 using TankSystem.Manager;
 
 namespace WeaponSystem.Data

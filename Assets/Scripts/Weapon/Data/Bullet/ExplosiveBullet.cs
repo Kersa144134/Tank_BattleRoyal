@@ -10,8 +10,6 @@
 using System;
 using UnityEngine;
 using CollisionSystem.Data;
-using ObstacleSystem.Data;
-using TankSystem.Data;
 using WeaponSystem.Interface;
 
 namespace WeaponSystem.Data

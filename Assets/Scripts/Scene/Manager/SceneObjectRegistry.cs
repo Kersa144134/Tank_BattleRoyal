@@ -43,6 +43,10 @@ namespace SceneSystem.Manager
         [SerializeField]
         private Transform _spawnPointsRoot;
 
+        [Header("エリア")]
+        /// <summary>エリアの親 Transform</summary>
+        [SerializeField] private Transform _areaRoot;
+
         // ======================================================
         // コンポーネント参照
         // ======================================================
@@ -63,6 +67,9 @@ namespace SceneSystem.Manager
         /// <summary>障害物オブジェクトの Transform 配列</summary>
         private Transform[] _obstacles;
 
+        /// <summary>エリアオブジェクトの Transform 配列</summary>
+        private Transform[] _areas;
+
         /// <summary>ゲームの経過時間</summary>
         private float _elapsedTime;
 
@@ -81,6 +88,9 @@ namespace SceneSystem.Manager
 
         /// <summary>障害物 Transform 配列</summary>
         public Transform[] Obstacles => _obstacles;
+
+        /// <summary>エリア Transform 配列</summary>
+        public Transform[] Areas => _areas;
 
         /// <summary>生成ポイントの親 Transform</summary>
         public Transform SpawnPointsRoot => _spawnPointsRoot;
@@ -105,6 +115,7 @@ namespace SceneSystem.Manager
 
             InitializeTanks();
             InitializeObstacles();
+            InitializeAreas();
         }
 
         public void OnUpdate(in float unscaledDeltaTime, in float elapsedTime)
@@ -246,6 +257,26 @@ namespace SceneSystem.Manager
 
                 // 障害物管理クラスに登録
                 _obstacleManager.RegisterObstacle(_obstacles[i]);
+            }
+        }
+
+        /// <summary>
+        /// シーン内の障害物を親オブジェクトから取得して配列に格納
+        /// </summary>
+        private void InitializeAreas()
+        {
+            if (_areaRoot == null)
+            {
+                _areas = Array.Empty<Transform>();
+                return;
+            }
+
+            // 親オブジェクトの子すべてを取得
+            int count = _areaRoot.childCount;
+            _areas = new Transform[count];
+            for (int i = 0; i < count; i++)
+            {
+                _areas[i] = _areaRoot.GetChild(i);
             }
         }
     }

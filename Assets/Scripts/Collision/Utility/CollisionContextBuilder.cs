@@ -8,10 +8,9 @@
 
 using System.Collections.Generic;
 using UnityEngine;
+using CollisionSystem.Data;
 using ItemSystem.Data;
-using ObstacleSystem.Data;
 using SceneSystem.Manager;
-using TankSystem.Data;
 using TankSystem.Manager;
 using WeaponSystem.Data;
 
@@ -115,6 +114,37 @@ namespace CollisionSystem.Utility
             }
 
             return obstacleContexts.ToArray();
+        }
+
+        /// <summary>
+        /// エリア用コンテキスト一覧を生成する
+        /// </summary>
+        public ObstacleCollisionContext[] BuildAreaContexts()
+        {
+            // 可変長リストで一時的に格納
+            List<ObstacleCollisionContext> areaContexts = new List<ObstacleCollisionContext>();
+
+            if (_sceneRegistry?.Areas == null)
+            {
+                return areaContexts.ToArray();
+            }
+
+            for (int i = 0; i < _sceneRegistry.Areas.Length; i++)
+            {
+                Transform area = _sceneRegistry.Areas[i];
+
+                if (area == null)
+                {
+                    continue;
+                }
+
+                ObstacleCollisionContext context =
+                    _contextFactory.CreateObstacleContext(i, area);
+
+                areaContexts.Add(context);
+            }
+
+            return areaContexts.ToArray();
         }
 
         /// <summary>

@@ -7,10 +7,10 @@
 // ======================================================
 
 using UnityEngine;
-using CollisionSystem.Data;
 using CollisionSystem.Interface;
+using WeaponSystem.Data;
 
-namespace WeaponSystem.Data
+namespace CollisionSystem.Data
 {
     /// <summary>
     /// 弾丸 1 発分の衝突判定コンテキスト

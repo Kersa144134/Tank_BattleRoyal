@@ -7,13 +7,12 @@
 //            戦車、障害物、アイテムの静的・動的 OBB に対応
 // ======================================================
 
+using UnityEngine;
+using CollisionSystem.Data;
 using CollisionSystem.Interface;
 using ItemSystem.Data;
-using ObstacleSystem.Data;
 using SceneSystem.Manager;
-using TankSystem.Data;
 using TankSystem.Manager;
-using UnityEngine;
 using WeaponSystem.Data;
 
 namespace CollisionSystem.Utility

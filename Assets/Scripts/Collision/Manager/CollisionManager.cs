@@ -15,10 +15,8 @@ using CollisionSystem.Interface;
 using CollisionSystem.Service;
 using CollisionSystem.Utility;
 using ItemSystem.Data;
-using ObstacleSystem.Data;
 using SceneSystem.Interface;
 using SceneSystem.Manager;
-using TankSystem.Data;
 using TankSystem.Manager;
 using WeaponSystem.Data;
 

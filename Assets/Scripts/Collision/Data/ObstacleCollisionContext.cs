@@ -1,24 +1,22 @@
 // ======================================================
-// ItemCollisionContext.cs
+// ObstacleCollisionContext.cs
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-18
 // 更新日時 : 2025-12-18
-// 概要     : アイテム用の静的衝突コンテキスト
+// 概要     : 障害物用の静的衝突コンテキスト
 // ======================================================
 
-using CollisionSystem.Data;
-using CollisionSystem.Interface;
-using ItemSystem.Data;
-using TankSystem.Data;
 using UnityEngine;
+using CollisionSystem.Interface;
+using WeaponSystem.Interface;
 
-namespace ItemSystem.Data
+namespace CollisionSystem.Data
 {
     /// <summary>
-    /// アイテム 1 個分の衝突判定コンテキスト
+    /// 障害物 1 個分の衝突判定コンテキスト
     /// 静的物体として扱われ、移動予定座標は Transform から取得する
     /// </summary>
-    public sealed class ItemCollisionContext
+    public sealed class ObstacleCollisionContext
         : BaseCollisionContext,
         IStaticCollisionContext
     {
@@ -26,13 +24,9 @@ namespace ItemSystem.Data
         // 固有プロパティ
         // ======================================================
 
-        /// <summary>関連付けられたアイテム情報</summary>
-        public ItemSlot ItemSlot
-        {
-            get;
-            private set;
-        }
-
+        /// <summary>障害物を一意に識別する ID</summary>
+        public int ObstacleId { get; private set; }
+        
         // ======================================================
         // 抽象プロパティ
         // ======================================================
@@ -56,23 +50,26 @@ namespace ItemSystem.Data
         // ======================================================
 
         /// <summary>
-        /// アイテム用の衝突コンテキストを生成する
+        /// 障害物用の衝突コンテキストを生成する
         /// </summary>
-        /// <param name="item">アイテム情報（Transform やデータを含む）</param>
+        /// <param name="obstacleId">障害物 ID</param>
+        /// <param name="transform">障害物 Transform</param>
         /// <param name="obb">衝突判定用 OBB</param>
-        public ItemCollisionContext(
-            in ItemSlot item,
-            in IOBBData obb
+        /// <param name="damageable">障害物を管理するダメージ受付先</param>
+        public ObstacleCollisionContext(
+            in int obstacleId,
+            in Transform transform,
+            in IOBBData obb,
+            in IDamageable damageable
         )
             : base(
-                item.Transform,
+                transform,
                 obb,
                 MovementLockAxis.All,
-                null
+                damageable
             )
         {
-            // アイテム情報を保持
-            ItemSlot = item;
+            ObstacleId = obstacleId;
         }
     }
 }
