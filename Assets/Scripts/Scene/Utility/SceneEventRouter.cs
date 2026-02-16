@@ -411,6 +411,7 @@ namespace SceneSystem.Utility
             if (tankRootManager is PlayerTankRootManager)
             {
                 tankRootManager.EnergyManager.RefillFuelByArea();
+                tankRootManager.EnergyManager.RefillAmmoByArea();
             }
         }
 

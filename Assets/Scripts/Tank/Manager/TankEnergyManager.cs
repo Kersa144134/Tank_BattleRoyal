@@ -7,6 +7,7 @@
 // ======================================================
 
 using System;
+using UnityEngine;
 using TankSystem.Data;
 
 namespace TankSystem.Manager
@@ -37,6 +38,9 @@ namespace TankSystem.Manager
 
         /// <summary>弾薬が 0 以下かどうか</summary>
         private bool _isAmmoEmpty => _currentAmmo <= 0;
+
+        /// <summary>エリア侵入経過時間</summary>
+        private float _areaIntrusionTimer;
 
         // ======================================================
         // プロパティ
@@ -81,6 +85,11 @@ namespace TankSystem.Manager
         /// </summary>
         private const float REFILL_FUEL_VALUE_BY_AREA = 0.1f;
 
+        /// <summary>
+        /// エリア内で弾薬が回復するまでに必要な経過秒数の基準値
+        /// </summary>
+        private const float BASE_AREA_AMMO_REFILL_INTERVAL = 0.5f;
+
         // --------------------------------------------------
         // パラメーター
         // --------------------------------------------------
@@ -94,6 +103,11 @@ namespace TankSystem.Manager
         /// </summary>
         /// 
         private const int AMMO_MAX_MULTIPLIER = 1;
+
+        /// <summary>
+        /// エリア内で弾薬が回復するまでに必要な経過秒数の倍率加算量
+        /// </summary>
+        private const float AREA_AMMO_REFILL_INTERVAL_MULTIPLIER = 0.75f;
 
         // ======================================================
         // イベント
@@ -237,6 +251,37 @@ namespace TankSystem.Manager
         public void RefillFuelByArea()
         {
             RefillFuel(REFILL_FUEL_VALUE_BY_AREA);
+        }
+
+        /// <summary>
+        /// エリア侵入時の弾薬回復
+        /// </summary>
+        /// <param name="amount">回復量</param>
+        public void RefillAmmoByArea()
+        {
+            // 不正値の場合は処理なし
+            if (_currentAmmo < 0 || _currentAmmo >= _maxAmmo)
+            {
+                return;
+            }
+
+            // 経過時間を加算
+            _areaIntrusionTimer += Time.deltaTime;
+
+            // 回復インターバルを算出
+            float refillInterval = BASE_AREA_AMMO_REFILL_INTERVAL
+                + BASE_AREA_AMMO_REFILL_INTERVAL * AREA_AMMO_REFILL_INTERVAL_MULTIPLIER * (_currentAmmo - 1);
+
+            if (_areaIntrusionTimer < refillInterval)
+            {
+                return;
+            }
+
+            // タイマーをリセット
+            _areaIntrusionTimer = 0f;
+
+            // 弾薬を 1 つ補充
+            RefillAmmo();
         }
     }
 }
