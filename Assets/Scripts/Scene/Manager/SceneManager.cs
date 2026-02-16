@@ -92,7 +92,7 @@ namespace SceneSystem.Manager
         // ======================================================
 
         /// <summary>アプリケーション全体で固定する目標 FPS</summary>
-        private const int TARGET_FRAME_RATE = 120;
+        private const int TARGET_FRAME_RATE = 60;
         
         /// <summary>PhaseData を配置している Resources フォルダパス</summary>
         private const string PHASE_DATA_RESOURCES_PATH = "Phase";

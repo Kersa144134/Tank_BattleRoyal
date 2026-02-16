@@ -38,14 +38,14 @@ namespace SceneSystem.Manager
         /// <summary>障害物の親 Transform</summary>
         [SerializeField] private Transform _obstacleRoot;
 
+        [Header("エリア")]
+        /// <summary>エリアの親 Transform</summary>
+        [SerializeField] private Transform _areaRoot;
+
         [Header("アイテム")]
         /// <summary>生成ポイントの親 Transform</summary>
         [SerializeField]
         private Transform _spawnPointsRoot;
-
-        [Header("エリア")]
-        /// <summary>エリアの親 Transform</summary>
-        [SerializeField] private Transform _areaRoot;
 
         // ======================================================
         // コンポーネント参照

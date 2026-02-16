@@ -74,6 +74,9 @@ namespace CollisionSystem.Manager
         /// <summary>戦車と障害物の OBB 衝突判定を担当するサービス</summary>
         private VersusStaticCollisionService<TankCollisionContext, ObstacleCollisionContext> _tankVsObstacleService;
 
+        /// <summary>戦車とエリアの OBB 衝突判定を担当するサービス</summary>
+        private VersusStaticCollisionService<TankCollisionContext, AreaCollisionContext> _tankVsAreaService;
+
         /// <summary>戦車とアイテムの OBB 衝突判定を担当するサービス</summary>
         private VersusStaticCollisionService<TankCollisionContext, ItemCollisionContext> _tankVsItemService;
 
@@ -95,6 +98,9 @@ namespace CollisionSystem.Manager
 
         /// <summary>障害物コンテキスト配列</summary>
         private ObstacleCollisionContext[] _obstacles;
+
+        /// <summary>エリアコンテキスト配列</summary>
+        private AreaCollisionContext[] _areas;
 
         /// <summary>アイテムコンテキストの配列</summary>
         private ItemCollisionContext[] _items;
@@ -232,6 +238,9 @@ namespace CollisionSystem.Manager
                 }
             }
 
+            // エリア
+            _areas = _contextBuilder.BuildAreaContexts();
+
             // --------------------------------------------------
             // 各衝突判定サービス生成
             // --------------------------------------------------
@@ -240,9 +249,9 @@ namespace CollisionSystem.Manager
                 new VersusStaticCollisionService<TankCollisionContext, ObstacleCollisionContext>(
                     _boxCollisionCalculator
                 );
-            // 戦車同士の OBB 衝突判定
-            _tankVsTankService =
-                new VersusDynamicCollisionService<TankCollisionContext, TankCollisionContext>(
+            // 戦車とエリアの OBB 衝突判定
+            _tankVsAreaService =
+                new VersusStaticCollisionService<TankCollisionContext, AreaCollisionContext>(
                     _boxCollisionCalculator
                 );
             // 戦車とアイテムの OBB 衝突判定
@@ -255,6 +264,11 @@ namespace CollisionSystem.Manager
                 new VersusStaticCollisionService<BulletCollisionContext, ObstacleCollisionContext>(
                     _boxCollisionCalculator
                 );
+            // 戦車同士の OBB 衝突判定
+            _tankVsTankService =
+                new VersusDynamicCollisionService<TankCollisionContext, TankCollisionContext>(
+                    _boxCollisionCalculator
+                );
             // 弾丸と戦車の OBB 衝突判定
             _bulletVsTankService =
                 new VersusDynamicCollisionService<BulletCollisionContext, TankCollisionContext>(
@@ -263,18 +277,20 @@ namespace CollisionSystem.Manager
 
             // 各衝突判定サービスを登録
             _collisionServices.Add(_tankVsObstacleService);
-            _collisionServices.Add(_tankVsTankService);
+            _collisionServices.Add(_tankVsAreaService);
             _collisionServices.Add(_tankVsItemService);
             _collisionServices.Add(_bulletVsObstacleService);
+            _collisionServices.Add(_tankVsTankService);
             _collisionServices.Add(_bulletVsTankService);
 
             // --------------------------------------------------
             // イベント購読
             // --------------------------------------------------
             _tankVsObstacleService.OnStaticHit += _eventRouter.HandleTankHitObstacle;
-            _tankVsTankService.OnDynamicHit += _eventRouter.HandleTankHitTank;
+            _tankVsAreaService.OnStaticHit += _eventRouter.HandleTankHitArea;
             _tankVsItemService.OnStaticHit += _eventRouter.HandleTankHitItem;
             _bulletVsObstacleService.OnStaticHit += _eventRouter.HandleBulletHitObstacle;
+            _tankVsTankService.OnDynamicHit += _eventRouter.HandleTankHitTank;
             _bulletVsTankService.OnDynamicHit += _eventRouter.HandleBulletHitTank;
 
             // コンテキストを各戦車に送る
@@ -320,10 +336,9 @@ namespace CollisionSystem.Manager
             ExecuteCollisionService(_tankVsTankService, _tanks, _tanks);
 
             // --------------------------------------------------
-            // キャッシュ更新
+            // エリア
             // --------------------------------------------------
-            // UpdateTanks();
-            // UpdateObstacles();
+            ExecuteCollisionService(_tankVsAreaService, _tanks, _areas);
 
             // --------------------------------------------------
             // アイテム
@@ -343,9 +358,10 @@ namespace CollisionSystem.Manager
             // イベント購読解除
             // --------------------------------------------------
             _tankVsObstacleService.OnStaticHit -= _eventRouter.HandleTankHitObstacle;
-            _tankVsTankService.OnDynamicHit -= _eventRouter.HandleTankHitTank;
+            _tankVsAreaService.OnStaticHit -= _eventRouter.HandleTankHitArea;
             _tankVsItemService.OnStaticHit -= _eventRouter.HandleTankHitItem;
             _bulletVsObstacleService.OnStaticHit -= _eventRouter.HandleBulletHitObstacle;
+            _tankVsTankService.OnDynamicHit -= _eventRouter.HandleTankHitTank;
             _bulletVsTankService.OnDynamicHit -= _eventRouter.HandleBulletHitTank;
         }
 
@@ -805,6 +821,12 @@ namespace CollisionSystem.Manager
                     collisionService.PreUpdate(
                         contextsA as TankCollisionContext[],
                         contextsB as ObstacleCollisionContext[]
+                    );
+                    break;
+                case VersusStaticCollisionService<TankCollisionContext, AreaCollisionContext> collisionService:
+                    collisionService.PreUpdate(
+                        contextsA as TankCollisionContext[],
+                        contextsB as AreaCollisionContext[]
                     );
                     break;
 

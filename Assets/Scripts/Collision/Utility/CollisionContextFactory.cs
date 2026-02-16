@@ -114,6 +114,28 @@ namespace CollisionSystem.Utility
         }
 
         /// <summary>
+        /// 静的エリア用の衝突コンテキストを生成する
+        /// </summary>
+        /// <param name="areaTransform">エリア Transform</param>
+        /// <returns>生成された ObstacleCollisionContext</returns>
+        public AreaCollisionContext CreateAreaContext(in Transform areaTransform)
+        {
+            // 静的 OBB を生成する
+            IOBBData obb = _obbFactory.CreateStaticOBB(
+                areaTransform.position,
+                areaTransform.rotation,
+                Vector3.zero,
+                areaTransform.lossyScale
+            );
+
+            // AreaCollisionContext を構築して返却する
+            return new AreaCollisionContext(
+                areaTransform,
+                obb
+            );
+        }
+
+        /// <summary>
         /// アイテム用の衝突コンテキストを生成する
         /// </summary>
         /// <param name="item">対象の ItemSlot</param>

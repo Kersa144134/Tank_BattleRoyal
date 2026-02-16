@@ -14,8 +14,7 @@ using TankSystem.Manager;
 namespace CollisionSystem.Data
 {
     /// <summary>
-    /// 戦車 1 台分の衝突判定コンテキスト
-    /// 移動確定前の「予定状態」を基準として判定を行う
+    /// 戦車の衝突判定コンテキスト
     /// </summary>
     public sealed class TankCollisionContext
         : BaseCollisionContext,

@@ -36,11 +36,14 @@ namespace CollisionSystem.Utility
         // イベント
         // ======================================================
 
-        /// <summary>弾丸が衝突した際に通知されるイベント</summary>
-        public event Action<BulletBase, BaseCollisionContext> OnBulletHit;
+        /// <summary>戦車がエリアに侵入した際に通知されるイベント</summary>
+        public event Action<BaseTankRootManager> OnIntrusionArea;
 
         /// <summary>戦車がアイテムを取得した際に通知されるイベント</summary>
         public event Action<BaseTankRootManager, ItemSlot> OnItemGet;
+
+        /// <summary>弾丸が衝突した際に通知されるイベント</summary>
+        public event Action<BulletBase, BaseCollisionContext> OnBulletHit;
 
         // ======================================================
         // 定数
@@ -129,6 +132,34 @@ namespace CollisionSystem.Utility
         }
 
         /// <summary>
+        /// 戦車がエリアに接触した際の処理
+        /// エリア侵入イベントを通知
+        /// </summary>
+        /// <param name="context">戦車コンテキスト</param>
+        /// <param name="area">エリアコンテキスト</param>
+        public void HandleTankHitArea(
+            TankCollisionContext context,
+            AreaCollisionContext area
+        )
+        {
+            OnIntrusionArea?.Invoke(context.TankRootManager);
+        }
+
+        /// <summary>
+        /// 戦車がアイテムに接触した際の処理
+        /// アイテム取得イベントを通知
+        /// </summary>
+        /// <param name="context">戦車コンテキスト</param>
+        /// <param name="item">アイテムコンテキスト</param>
+        public void HandleTankHitItem(
+            TankCollisionContext context,
+            ItemCollisionContext item
+        )
+        {
+            OnItemGet?.Invoke(context.TankRootManager, item.ItemSlot);
+        }
+
+        /// <summary>
         /// 戦車同士が衝突した際の処理
         /// 押し戻し計算を行い OBB を更新
         /// </summary>
@@ -160,20 +191,6 @@ namespace CollisionSystem.Utility
             // OBB 更新
             contextA.UpdateOBB();
             contextB.UpdateOBB();
-        }
-
-        /// <summary>
-        /// 戦車がアイテムに接触した際の処理
-        /// アイテム取得イベントを通知
-        /// </summary>
-        /// <param name="context">戦車コンテキスト</param>
-        /// <param name="item">アイテムコンテキスト</param>
-        public void HandleTankHitItem(
-            TankCollisionContext context,
-            ItemCollisionContext item
-        )
-        {
-            OnItemGet?.Invoke(context.TankRootManager, item.ItemSlot);
         }
 
         // --------------------------------------------------

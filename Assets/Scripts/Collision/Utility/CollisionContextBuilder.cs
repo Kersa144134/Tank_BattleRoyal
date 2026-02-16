@@ -119,10 +119,10 @@ namespace CollisionSystem.Utility
         /// <summary>
         /// エリア用コンテキスト一覧を生成する
         /// </summary>
-        public ObstacleCollisionContext[] BuildAreaContexts()
+        public AreaCollisionContext[] BuildAreaContexts()
         {
             // 可変長リストで一時的に格納
-            List<ObstacleCollisionContext> areaContexts = new List<ObstacleCollisionContext>();
+            List<AreaCollisionContext> areaContexts = new List<AreaCollisionContext>();
 
             if (_sceneRegistry?.Areas == null)
             {
@@ -138,8 +138,8 @@ namespace CollisionSystem.Utility
                     continue;
                 }
 
-                ObstacleCollisionContext context =
-                    _contextFactory.CreateObstacleContext(i, area);
+                AreaCollisionContext context =
+                    _contextFactory.CreateAreaContext(area);
 
                 areaContexts.Add(context);
             }

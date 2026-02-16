@@ -76,6 +76,11 @@ namespace TankSystem.Manager
         /// </summary>
         private const float FUEL_CONSUMPTION_PER_ATTACK = 5.0f;
 
+        /// <summary>
+        /// エリア侵入時の燃料回復量
+        /// </summary>
+        private const float REFILL_FUEL_VALUE_BY_AREA = 0.1f;
+
         // --------------------------------------------------
         // パラメーター
         // --------------------------------------------------
@@ -223,6 +228,15 @@ namespace TankSystem.Manager
             }
 
             OnAmmoChanged?.Invoke();
+        }
+
+        /// <summary>
+        /// エリア侵入時の燃料回復
+        /// </summary>
+        /// <param name="amount">回復量</param>
+        public void RefillFuelByArea()
+        {
+            RefillFuel(REFILL_FUEL_VALUE_BY_AREA);
         }
     }
 }

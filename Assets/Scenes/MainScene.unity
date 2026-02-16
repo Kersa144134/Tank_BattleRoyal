@@ -2799,7 +2799,7 @@ MonoBehaviour:
   - PositionOffset: {x: 0, y: 10, z: -10}
     RotationOffset: {x: 30, y: 0, z: 0}
     IsRotationFixed: 0
-  - PositionOffset: {x: 0, y: 4, z: 12.5}
+  - PositionOffset: {x: 0, y: 4, z: 15}
     RotationOffset: {x: 15, y: 180, z: 0}
     IsRotationFixed: 0
 --- !u!4 &76211784
@@ -19655,7 +19655,7 @@ GameObject:
   m_Component:
   - component: {fileID: 604574357}
   m_Layer: 0
-  m_Name: Area
+  m_Name: Areas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -72590,6 +72590,7 @@ MonoBehaviour:
   - {fileID: 1677398399}
   - {fileID: 897362196}
   _obstacleRoot: {fileID: 1832899783}
+  _areaRoot: {fileID: 604574357}
   _spawnPointsRoot: {fileID: 1379793714}
 --- !u!4 &4287890187135628624
 Transform:

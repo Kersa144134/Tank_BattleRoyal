@@ -136,6 +136,7 @@ namespace SceneSystem.Utility
             if (_context.CollisionManager != null)
             {
                 _context.CollisionManager.EventRouter.OnBulletHit += HandleHitBullet;
+                _context.CollisionManager.EventRouter.OnIntrusionArea += HandleIntrusionArea;
                 _context.CollisionManager.EventRouter.OnItemGet += HandleGetItem;
             }
 
@@ -233,6 +234,7 @@ namespace SceneSystem.Utility
             if (_context.CollisionManager != null)
             {
                 _context.CollisionManager.EventRouter.OnBulletHit -= HandleHitBullet;
+                _context.CollisionManager.EventRouter.OnIntrusionArea -= HandleIntrusionArea;
                 _context.CollisionManager.EventRouter.OnItemGet -= HandleGetItem;
             }
 
@@ -393,8 +395,59 @@ namespace SceneSystem.Utility
                 target
             );
 
-            tank.EnergyManager.ConsumeFuel();
-            tank.EnergyManager.ConsumeAmmo();
+            if (tank is PlayerTankRootManager)
+            {
+                tank.EnergyManager.ConsumeFuel();
+                tank.EnergyManager.ConsumeAmmo();
+            }
+        }
+
+        /// <summary>
+        /// エリアに侵入した際の処理
+        /// </summary>
+        /// <param name="tankRootManager">エリアに侵入した戦車の RootManager</param>
+        private void HandleIntrusionArea(BaseTankRootManager tankRootManager)
+        {
+            if (tankRootManager is PlayerTankRootManager)
+            {
+                tankRootManager.EnergyManager.RefillFuelByArea();
+            }
+        }
+
+        /// <summary>
+        /// アイテムが取得された際の処理
+        /// </summary>
+        /// <param name="tankRootManager">アイテムを取得した戦車の RootManager</param>
+        /// <param name="itemSlot">取得されたアイテムスロット</param>
+        private void HandleGetItem(
+            BaseTankRootManager tankRootManager,
+            ItemSlot itemSlot
+        )
+        {
+            // 無効化
+            itemSlot.Deactivate();
+
+            // パラメーターアイテム
+            if (itemSlot.ItemData is ParamItemData param)
+            {
+                // 戦車のパラメーターを増減させる
+                tankRootManager?.IncreaseParameter(
+                    param.ParamType,
+                    param.Value
+                );
+            }
+
+            // 武装アイテム
+            if (itemSlot.ItemData is WeaponItemData weapon)
+            {
+            }
+
+            if (tankRootManager is PlayerTankRootManager)
+            {
+                _context.MainUIManager?.NotifyItemAcquired(itemSlot.ItemData.Name, itemSlot.ItemData.Type);
+
+                ScoreManager.Instance.AddFixedScore();
+            }
         }
 
         /// <summary>
@@ -543,42 +596,6 @@ namespace SceneSystem.Utility
 
             _context.SceneObjectRegistry?.UnregisterItem(item);
             _context.CollisionManager?.UnregisterItem(item);
-        }
-
-        /// <summary>
-        /// アイテムが取得された際の処理
-        /// </summary>
-        /// <param name="tankRootManager">アイテムを取得した戦車の RootManager</param>
-        /// <param name="itemSlot">取得されたアイテムスロット</param>
-        private void HandleGetItem(
-            BaseTankRootManager tankRootManager,
-            ItemSlot itemSlot
-        )
-        {
-            // 無効化
-            itemSlot.Deactivate();
-            
-            // パラメーターアイテム
-            if (itemSlot.ItemData is ParamItemData param)
-            {
-                // 戦車のパラメーターを増減させる
-                tankRootManager?.IncreaseParameter(
-                    param.ParamType,
-                    param.Value
-                );
-            }
-
-            // 武装アイテム
-            if (itemSlot.ItemData is WeaponItemData weapon)
-            {
-            }
-
-            if (tankRootManager is PlayerTankRootManager)
-            {
-                _context.MainUIManager?.NotifyItemAcquired(itemSlot.ItemData.Name, itemSlot.ItemData.Type);
-
-                ScoreManager.Instance.AddFixedScore();
-            }
         }
 
         // --------------------------------------------------

@@ -390,7 +390,10 @@ namespace TankSystem.Manager
                     NextRotation
                 );
 
-                _energyManager.ConsumeFuel(CurrentForwardSpeed * FUEL_CONSUMPTION_PER_SPEED);
+                if (this is PlayerTankRootManager)
+                {
+                    _energyManager.ConsumeFuel(CurrentForwardSpeed * FUEL_CONSUMPTION_PER_SPEED);
+                }
             }
         }
 

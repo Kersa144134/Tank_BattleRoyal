@@ -1,5 +1,5 @@
 // ======================================================
-// ItemCollisionContext.cs
+// AreaCollisionContext.cs
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-18
 // 更新日時 : 2025-12-18
@@ -8,28 +8,16 @@
 
 using UnityEngine;
 using CollisionSystem.Interface;
-using ItemSystem.Data;
 
 namespace CollisionSystem.Data
 {
     /// <summary>
-    /// アイテムの衝突判定コンテキスト
+    /// エリアの衝突判定コンテキスト
     /// </summary>
-    public sealed class ItemCollisionContext
+    public sealed class AreaCollisionContext
         : BaseCollisionContext,
         IStaticCollisionContext
     {
-        // ======================================================
-        // 固有プロパティ
-        // ======================================================
-
-        /// <summary>関連付けられたアイテム情報</summary>
-        public ItemSlot ItemSlot
-        {
-            get;
-            private set;
-        }
-
         // ======================================================
         // 抽象プロパティ
         // ======================================================
@@ -53,23 +41,21 @@ namespace CollisionSystem.Data
         // ======================================================
 
         /// <summary>
-        /// アイテム用の衝突コンテキストを生成する
+        /// エリア用の衝突コンテキストを生成する
         /// </summary>
-        /// <param name="item">アイテム情報（Transform やデータを含む）</param>
+        /// <param name="area">エリア Transform</param>
         /// <param name="obb">衝突判定用 OBB</param>
-        public ItemCollisionContext(
-            in ItemSlot item,
+        public AreaCollisionContext(
+            in Transform area,
             in IOBBData obb
         )
             : base(
-                item.Transform,
+                area,
                 obb,
                 MovementLockAxis.All,
                 null
             )
         {
-            // アイテム情報を保持
-            ItemSlot = item;
         }
     }
 }

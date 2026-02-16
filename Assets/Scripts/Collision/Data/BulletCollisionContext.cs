@@ -13,10 +13,7 @@ using WeaponSystem.Data;
 namespace CollisionSystem.Data
 {
     /// <summary>
-    /// 弾丸 1 発分の衝突判定コンテキスト
-    /// 
-    /// 戦車と異なり、移動ロック軸は持たず、
-    /// 毎フレームの移動予定位置を基準に衝突判定を行う
+    /// 弾丸の衝突判定コンテキスト
     /// </summary>
     public sealed class BulletCollisionContext
         : BaseCollisionContext,
