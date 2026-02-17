@@ -89,26 +89,5 @@ namespace CollisionSystem.Data
             // 弾丸参照を保持
             Bullet = bullet;
         }
-
-        // ======================================================
-        // パブリックメソッド
-        // ======================================================
-
-        /// <summary>
-        /// 弾丸用フレーム初期化処理
-        /// </summary>
-        public override void BeginFrame()
-        {
-            // Base 側の初期化のみ実行
-            base.BeginFrame();
-        }
-
-        /// <summary>
-        /// 弾丸用のフレーム確定処理
-        /// </summary>
-        public override void FinalizeLockAxis()
-        {
-            // 弾丸ではロック軸を確定する処理は存在しないため何もしない
-        }
     }
 }

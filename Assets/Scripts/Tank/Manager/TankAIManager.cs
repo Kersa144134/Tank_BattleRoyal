@@ -7,8 +7,9 @@
 //            索敵およびターゲット決定処理を担当する
 // ======================================================
 
-using TankSystem.Controller;
 using UnityEngine;
+using CollisionSystem.Data;
+using TankSystem.Controller;
 
 /// <summary>
 /// 戦車 AI 制御クラス
@@ -28,10 +29,10 @@ public sealed class TankAIManager
     /// GetClosestTarget が複数要素の Transform 配列を想定しているため、
     /// 単要素の配列として扱う
     /// </summary>
-    private Transform[] _player = new Transform[1];
+    private TankCollisionContext[] _player = new TankCollisionContext[1];
 
     /// <summary>ターゲット Transform 配列</summary>
-    private Transform[] _targets;
+    private BaseCollisionContext[] _targets;
 
     // ======================================================
     // 定数
@@ -82,41 +83,41 @@ public sealed class TankAIManager
     // ======================================================
 
     /// <summary>
-    /// 戦車（プレイヤー）とアイテムの Transform 配列を受け取り、
+    /// 戦車（プレイヤー）とアイテムのコンテキスト配列を受け取り、
     /// 内部ターゲット配列を構築する
     /// </summary>
-    /// <param name="tankTransforms">戦車 Transform 配列</param>
-    /// <param name="itemTransforms">アイテム Transform 配列</param>
+    /// <param name="tankContexts">戦車 Transform 配列</param>
+    /// <param name="itemContexts">アイテム Transform 配列</param>
     public void SetTargetData(
-        in Transform[] tankTransforms,
-        in Transform[] itemTransforms
+        in TankCollisionContext[] tankContexts,
+        in ItemCollisionContext[] itemContexts
     )
     {
-        if (tankTransforms == null || tankTransforms.Length == 0)
+        if (tankContexts == null || itemContexts.Length == 0)
         {
             return;
         }
 
-        _player[0] = tankTransforms[0];
+        _player[0] = tankContexts[0];
 
         // プレイヤー + アイテムの合計数
-        int targetCount = 1 + (itemTransforms != null ? itemTransforms.Length : 0);
+        int targetCount = 1 + (itemContexts != null ? itemContexts.Length : 0);
 
         // ターゲット配列を必要に応じて生成
         if (_targets == null || _targets.Length != targetCount)
         {
-            _targets = new Transform[targetCount];
+            _targets = new BaseCollisionContext[targetCount];
         }
 
         // プレイヤーを先頭にセット
         _targets[0] = _player[0];
 
         // アイテムを続けてコピー
-        if (itemTransforms != null)
+        if (itemContexts != null)
         {
-            for (int i = 0; i < itemTransforms.Length; i++)
+            for (int i = 0; i < itemContexts.Length; i++)
             {
-                _targets[i + 1] = itemTransforms[i];
+                _targets[i + 1] = itemContexts[i];
             }
         }
     }
@@ -202,7 +203,6 @@ public sealed class TankAIManager
 
         // プレイヤーを優先して最も近いターゲットを取得
         Transform result = _visibilityController.GetClosestTarget(
-            false,
             fovAngle,
             viewDistance,
             _targets,
@@ -250,7 +250,7 @@ public sealed class TankAIManager
         }
 
         // ターゲットがプレイヤーなら停止距離以下で停止
-        if (target == _player[0] && localTargetDir.magnitude <= PLAYER_STOP_DISTANCE)
+        if (target == _player[0].Transform && localTargetDir.magnitude <= PLAYER_STOP_DISTANCE)
         {
             return 0f;
         }

@@ -23,7 +23,7 @@ namespace CollisionSystem.Calculator
         /// <summary>
         /// OBB ìØémÇÃè’ìÀåvéZÇçsÇ§åvéZäÌ
         /// </summary>
-        private readonly BoundingBoxCollisionCalculator _boxCollisionCalculator;
+        private readonly CollisionCalculator _collisionCalculator;
 
         // ======================================================
         // íËêî
@@ -41,10 +41,10 @@ namespace CollisionSystem.Calculator
         /// </summary>
         /// <param name="calculator">OBB è’ìÀåvéZäÌ</param>
         public CollisionResolveCalculator(
-            in BoundingBoxCollisionCalculator calculator
+            in CollisionCalculator calculator
         )
         {
-            _boxCollisionCalculator = calculator;
+            _collisionCalculator = calculator;
         }
 
         // ======================================================
@@ -81,7 +81,7 @@ namespace CollisionSystem.Calculator
             MovementLockAxis lockAxisB = contextB.LockAxis;
 
             // âüÇµñﬂÇµé≤Ç∆ãóó£ÇéZèo
-            if (!_boxCollisionCalculator.TryGetPushOutAxisAndDistance(
+            if (!_collisionCalculator.TryGetPushOutAxisAndDistance(
                 contextA.OBB,
                 contextB.OBB,
                 out Vector3 resolveAxis,

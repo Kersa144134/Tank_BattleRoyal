@@ -2,14 +2,13 @@
 // TankVisibilityController.cs
 // 作成者   : 高橋一翔
 // 作成日   : 2025-12-22
-// 更新日   : 2026-01-30
+// 更新日   : 2026-02-18
 // 概要     : 戦車の視界判定とターゲット決定を担当するクラス
 // ======================================================
 
 using System;
-using System.Collections.Generic;
 using UnityEngine;
-using CollisionSystem.Interface;
+using CollisionSystem.Data;
 using TankSystem.Manager;
 using VisionSystem.Calculator;
 
@@ -24,49 +23,61 @@ namespace TankSystem.Controller
         // コンポーネント参照
         // ======================================================
 
-        /// <summary>視界計算ユースケース</summary>
+        /// <summary>視界判定計算クラス</summary>
         private readonly FieldOfViewCalculator _fieldOfViewCalculator;
 
         // ======================================================
         // フィールド
         // ======================================================
 
-        /// <summary>フレームカウンター</summary>
+        /// <summary>フレーム間隔カウンター</summary>
         private int _frameCounter;
 
-        /// <summary>取得したターゲット</summary>
+        /// <summary>現在取得した最短ターゲット</summary>
         private Transform _resultTarget;
 
-        /// <summary>自身Transform</summary>
+        /// <summary>戦車 Transform</summary>
         private readonly Transform _transform;
 
-        /// <summary>砲塔Transform</summary>
+        /// <summary>砲塔 Transform</summary>
         private readonly Transform _turretTransform;
 
-        /// <summary>遮蔽物OBB</summary>
-        private IOBBData[] _shieldOBBs = new IOBBData[0];
+        /// <summary>遮蔽物 OBB 配列</summary>
+        private BaseOBBData[] _shieldOBBs = new BaseOBBData[0];
 
-        /// <summary>現在ターゲット</summary>
+        /// <summary>キャッシュされた現在ターゲット</summary>
         private BaseTankRootManager _cachedTarget;
+
+        /// <summary>FieldOfViewCalculator に渡す参照配列</summary>
+        private Transform[] _visibleTargetsBuffer = new Transform[MAX_TARGETS];
 
         // ======================================================
         // 定数
         // ======================================================
 
+        /// <summary>視界判定対象の最大数</summary>
+        private const int MAX_TARGETS = 64;
+
         /// <summary>ターゲット更新フレーム間隔</summary>
         private const int TARGET_UPDATE_INTERVAL_FRAME = 30;
-        
+
         // ======================================================
         // イベント
         // ======================================================
 
-        /// <summary>ターゲットを見つけたときに通知するイベント</summary>
+        /// <summary>ターゲット取得時に通知されるイベント</summary>
         public event Action<BaseTankRootManager> OnTargetAcquired;
-        
+
         // ======================================================
         // コンストラクタ
         // ======================================================
 
+        /// <summary>
+        /// TankVisibilityController クラスのコンストラクタ
+        /// </summary>
+        /// <param name="fieldOfViewCalculator">視界計算ユースケース</param>
+        /// <param name="transform">戦車本体 Transform</param>
+        /// <param name="turretTransform">砲塔 Transform</param>
         public TankVisibilityController(
             in FieldOfViewCalculator fieldOfViewCalculator,
             in Transform transform,
@@ -80,12 +91,11 @@ namespace TankSystem.Controller
         // ======================================================
         // セッター
         // ======================================================
-
         /// <summary>
         /// 遮蔽物の OBB 配列を受け取る
         /// </summary>
         /// <param name="shieldOBBs">遮蔽物の OBB 配列</param>
-        public void SetObstacleData(in IOBBData[] shieldOBBs)
+        public void SetObstacleData(in BaseOBBData[] shieldOBBs)
         {
             _shieldOBBs = shieldOBBs;
         }
@@ -93,83 +103,80 @@ namespace TankSystem.Controller
         // ======================================================
         // パブリックメソッド
         // ======================================================
-
         /// <summary>
         /// 現在の最短ターゲット取得
         /// </summary>
-        /// <param name="changeIcon">アイコンを更新するかどうか</param>
         /// <param name="fovAngle">視野角（度）</param>
         /// <param name="viewDistance">最大索敵距離</param>
-        /// <param name="targetTransforms">対象 Transform 配列</param>
-        /// <param name="filterTargets">対象を限定する Transform 配列、null の場合は全ターゲットを対象とする</param>
+        /// <param name="targetContexts">対象コンテキスト配列</param>
+        /// <param name="filterTargets">優先ターゲット配列、null の場合は全ターゲット対象</param>
+        /// <returns>最短ターゲット Transform</returns>
         public Transform GetClosestTarget(
-            in bool changeIcon,
             in float fovAngle,
             in float viewDistance,
-            in Transform[] targetTransforms,
-            in Transform[] filterTargets = null)
+            in BaseCollisionContext[] targetContexts,
+            in BaseCollisionContext[] filterTargets = null)
         {
             // --------------------------------------------------
             // フレーム間隔制御
             // --------------------------------------------------
-            // カウンターが 0 以外なら処理なし
+            // カウンターが 0 以外の場合は処理をスキップ
             if (_frameCounter != 0)
             {
                 _frameCounter++;
 
-                // 指定フレーム数に到達したら 0 へ戻す
+                // 指定フレーム間隔に達したらカウンターを 0 に戻す
                 if (_frameCounter >= TARGET_UPDATE_INTERVAL_FRAME)
-                {
                     _frameCounter = 0;
-                }
 
+                // 前回計算したターゲットを返す
                 return _resultTarget;
             }
 
             _frameCounter++;
 
             // --------------------------------------------------
-            // 優先ターゲットを視界内から取得
+            // 対象配列の決定
             // --------------------------------------------------
-            Transform[] targets = (filterTargets != null && filterTargets.Length > 0)
+            // filterTargets が指定されていれば優先ターゲット配列、なければ全ターゲット配列を使用
+            BaseCollisionContext[] targets = (filterTargets != null && filterTargets.Length > 0)
                 ? filterTargets
-                : targetTransforms;
+                : targetContexts;
 
-            // 対象が存在しない場合は処理なし
             if (targets == null || targets.Length == 0)
             {
                 return null;
             }
 
+            // --------------------------------------------------
             // 視界内ターゲット取得
-            List<Transform> visibleTargets = _fieldOfViewCalculator.GetVisibleTargets(
+            // --------------------------------------------------
+            // 優先ターゲットで取得
+            int visibleCount = _fieldOfViewCalculator.GetVisibleTargets(
                 _turretTransform,
                 targets,
                 _shieldOBBs,
                 fovAngle,
-                viewDistance
-            );
+                viewDistance,
+                ref _visibleTargetsBuffer);
 
-            // --------------------------------------------------
-            // 優先ターゲットが視界にいなければ全体ターゲットで再取得
-            // --------------------------------------------------
-            if ((filterTargets != null && filterTargets.Length > 0) &&
-                (visibleTargets == null || visibleTargets.Count == 0))
+            // 優先ターゲットが視界に存在しない場合、全体ターゲットで再取得
+            if ((filterTargets != null && filterTargets.Length > 0) && visibleCount == 0)
             {
-                // 全ターゲットで再取得
-                visibleTargets = _fieldOfViewCalculator.GetVisibleTargets(
+                visibleCount = _fieldOfViewCalculator.GetVisibleTargets(
                     _turretTransform,
-                    targetTransforms,
+                    targetContexts,
                     _shieldOBBs,
                     fovAngle,
-                    viewDistance
-                );
+                    viewDistance,
+                    ref _visibleTargetsBuffer);
             }
 
             // --------------------------------------------------
-            // 最短ターゲットを取得
+            // 最短ターゲット選択
             // --------------------------------------------------
-            _resultTarget = SelectClosestTarget(changeIcon, visibleTargets);
+            // visibleCount の範囲内で最短距離のターゲットを選択
+            _resultTarget = SelectClosestTarget(_visibleTargetsBuffer, visibleCount);
 
             return _resultTarget;
         }
@@ -196,9 +203,6 @@ namespace TankSystem.Controller
                 newTarget.ChangeTargetIcon(true);
             }
 
-            // イベント発火
-            OnTargetAcquired?.Invoke(newTarget);
-
             // キャッシュターゲット更新
             _cachedTarget = newTarget;
         }
@@ -206,15 +210,15 @@ namespace TankSystem.Controller
         // ======================================================
         // プライベートメソッド
         // ======================================================
-
         /// <summary>
         /// 最短ターゲット選択
         /// </summary>
-        /// <param name="changeIcon">アイコンを更新するかどうか</param>
-        /// <param name="visibleTargets">対象 Transform リスト</param>
-        private Transform SelectClosestTarget(in bool changeIcon, in List<Transform> visibleTargets)
+        /// <param name="visibleTargets">視界内対象配列（固定バッファ）</param>
+        /// <param name="count">配列内有効要素数</param>
+        /// <returns>最短ターゲット Transform（存在しなければ null）</returns>
+        private Transform SelectClosestTarget(Transform[] visibleTargets, int count)
         {
-            if (visibleTargets == null || visibleTargets.Count == 0)
+            if (visibleTargets == null || count == 0)
             {
                 UpdateCachedTarget(null);
                 return null;
@@ -222,10 +226,11 @@ namespace TankSystem.Controller
 
             // 最初に見つかった有効なターゲットを取得
             Transform closest = null;
-            for (int i = 0; i < visibleTargets.Count; i++)
+            for (int i = 0; i < count; i++)
             {
                 Transform candidate = visibleTargets[i];
 
+                // 自身または砲塔を除外
                 if (candidate == null || candidate == _transform || candidate == _turretTransform)
                 {
                     continue;
@@ -236,18 +241,14 @@ namespace TankSystem.Controller
             }
 
             // アイコン更新
-            if (changeIcon && closest != null)
+            if (closest != null)
             {
                 BaseTankRootManager manager = closest.GetComponent<BaseTankRootManager>();
-                if (manager != null)
-                {
-                    UpdateCachedTarget(manager);
-                }
-                else
-                {
 
-                    UpdateCachedTarget(null);
-                }
+                UpdateCachedTarget(manager);
+
+                // イベント発火
+                OnTargetAcquired?.Invoke(manager);
             }
 
             return closest;

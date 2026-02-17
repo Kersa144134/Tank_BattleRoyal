@@ -42,7 +42,7 @@ namespace CollisionSystem.Manager
         // 計算関連
         // --------------------------------------------------
         /// <summary>OBB の衝突判定を計算するクラス</summary>
-        private readonly BoundingBoxCollisionCalculator _boxCollisionCalculator = new BoundingBoxCollisionCalculator();
+        private readonly CollisionCalculator _collisionCalculator = new CollisionCalculator();
 
         /// <summary>衝突解決量を計算するクラス</summary>
         private  CollisionResolveCalculator _collisionResolverCalculator;
@@ -108,12 +108,6 @@ namespace CollisionSystem.Manager
         /// <summary>弾丸コンテキストの配列</summary>
         private BulletCollisionContext[] _bullets;
 
-        /// <summary>戦車 Transform キャッシュ配列</summary>
-        private Transform[] _tankTransformsCache;
-
-        /// <summary>アイテム Transform  キャッシュ配列</summary>
-        private Transform[] _itemTransformsCache;
-
         /// <summary>障害物 OBB キャッシュ配列</summary>
         private BaseOBBData[] _obstacleOBBsCache;
 
@@ -127,39 +121,27 @@ namespace CollisionSystem.Manager
         // 辞書
         // ======================================================
 
-        /// <summary>
-        /// 戦車 ID と戦車コンテキストの対応を管理する辞書
-        /// </summary>
+        /// <summary>戦車 ID と戦車コンテキストの対応を管理する辞書</summary>
         private readonly Dictionary<int, TankCollisionContext> _tankContextMap
             = new Dictionary<int, TankCollisionContext>();
 
-        /// <summary>
-        /// 障害物 Transform と障害物コンテキストの対応を管理する辞書
-        /// </summary>
+        /// <summary>障害物 Transform と障害物コンテキストの対応を管理する辞書</summary>
         private readonly Dictionary<Transform, ObstacleCollisionContext> _obstacleContextMap
             = new Dictionary<Transform, ObstacleCollisionContext>();
 
-        /// <summary>
-        /// アイテムスロットとアイテムコンテキストの対応を管理する辞書
-        /// </summary>
+        /// <summary>アイテムスロットとアイテムコンテキストの対応を管理する辞書</summary>
         private readonly Dictionary<ItemSlot, ItemCollisionContext> _itemContextMap
             = new Dictionary<ItemSlot, ItemCollisionContext>();
 
-        /// <summary>
-        /// 弾丸インスタンスと弾丸コンテキストの対応を管理する辞書
-        /// </summary>
+        /// <summary>弾丸インスタンスと弾丸コンテキストの対応を管理する辞書</summary>
         private readonly Dictionary<BulletBase, BulletCollisionContext> _bulletContextMap
             = new Dictionary<BulletBase, BulletCollisionContext>();
 
-        /// <summary>
-        /// OBB と戦車コンテキストの対応を管理する辞書
-        /// </summary>
+        /// <summary>OBB と戦車コンテキストの対応を管理する辞書</summary>
         private readonly Dictionary<IOBBData, TankCollisionContext> _obbToTankMap
             = new Dictionary<IOBBData, TankCollisionContext>();
 
-        /// <summary>
-        /// OBB と障害物コンテキストの対応を管理する辞書
-        /// </summary>
+        /// <summary>OBB と障害物コンテキストの対応を管理する辞書</summary>
         private readonly Dictionary<IOBBData, ObstacleCollisionContext> _obbToObstacleMap
             = new Dictionary<IOBBData, ObstacleCollisionContext>();
 
@@ -201,7 +183,7 @@ namespace CollisionSystem.Manager
             // --------------------------------------------------
             _contextFactory = new CollisionContextFactory(_obbFactory, _sceneRegistry);
             _contextBuilder = new CollisionContextBuilder(_contextFactory, _sceneRegistry);
-            _collisionResolverCalculator = new CollisionResolveCalculator(_boxCollisionCalculator);
+            _collisionResolverCalculator = new CollisionResolveCalculator(_collisionCalculator);
             _eventRouter = new CollisionEventRouter(_collisionResolverCalculator);
 
             // --------------------------------------------------
@@ -247,32 +229,32 @@ namespace CollisionSystem.Manager
             // 戦車と障害物の OBB 衝突判定
             _tankVsObstacleService =
                 new VersusStaticCollisionService<TankCollisionContext, ObstacleCollisionContext>(
-                    _boxCollisionCalculator
+                    _collisionCalculator
                 );
             // 戦車とエリアの OBB 衝突判定
             _tankVsAreaService =
                 new VersusStaticCollisionService<TankCollisionContext, AreaCollisionContext>(
-                    _boxCollisionCalculator
+                    _collisionCalculator
                 );
             // 戦車とアイテムの OBB 衝突判定
             _tankVsItemService =
                 new VersusStaticCollisionService<TankCollisionContext, ItemCollisionContext>(
-                    _boxCollisionCalculator
+                    _collisionCalculator
                 );
             // 弾丸と障害物の OBB 衝突判定
             _bulletVsObstacleService =
                 new VersusStaticCollisionService<BulletCollisionContext, ObstacleCollisionContext>(
-                    _boxCollisionCalculator
+                    _collisionCalculator
                 );
             // 戦車同士の OBB 衝突判定
             _tankVsTankService =
                 new VersusDynamicCollisionService<TankCollisionContext, TankCollisionContext>(
-                    _boxCollisionCalculator
+                    _collisionCalculator
                 );
             // 弾丸と戦車の OBB 衝突判定
             _bulletVsTankService =
                 new VersusDynamicCollisionService<BulletCollisionContext, TankCollisionContext>(
-                    _boxCollisionCalculator
+                    _collisionCalculator
                 );
 
             // 各衝突判定サービスを登録
@@ -508,7 +490,7 @@ namespace CollisionSystem.Manager
 
             // 円と重なっている OBB を取得
             BaseOBBData[] overlappingOBBs =
-                _boxCollisionCalculator.GetOverlappingOBBsCircleHorizontal(
+                _collisionCalculator.GetOverlappingOBBsCircleHorizontal(
                     center,
                     radius,
                     _circleQueryOBBCache
@@ -551,28 +533,6 @@ namespace CollisionSystem.Manager
                 return;
             }
 
-            // 戦車 Transform 配列
-            if (_tankTransformsCache == null || _tankTransformsCache.Length != _tanks.Length)
-            {
-                _tankTransformsCache = new Transform[_tanks.Length];
-            }
-
-            for (int i = 0; i < _tanks.Length; i++)
-            {
-                _tankTransformsCache[i] = _tanks[i].TankRootManager.Transform;
-            }
-
-            // アイテム Transform 配列
-            if (_itemTransformsCache == null || _itemTransformsCache.Length != _items.Length)
-            {
-                _itemTransformsCache = new Transform[_items.Length];
-            }
-
-            for (int i = 0; i < _items.Length; i++)
-            {
-                _itemTransformsCache[i] = _items[i].Transform;
-            }
-
             // 障害物 OBB 配列
             if (_obstacleOBBsCache == null || _obstacleOBBsCache.Length != _obstacles.Length)
             {
@@ -590,7 +550,7 @@ namespace CollisionSystem.Manager
                 BaseTankRootManager tankManager = _tanks[i].TankRootManager;
                 if (tankManager == null) continue;
 
-                tankManager.SetTargetData(_tankTransformsCache, _itemTransformsCache);
+                tankManager.SetTargetData(_tanks, _items);
                 tankManager.SetObstacleData(_obstacleOBBsCache);
             }
         }
@@ -835,8 +795,7 @@ namespace CollisionSystem.Manager
                     collisionService.PreUpdate(
                         contextsA as TankCollisionContext[],
                         contextsB as ItemCollisionContext[]
-                    );
-                    break;
+                    ); break;
 
                 case VersusStaticCollisionService<BulletCollisionContext, ObstacleCollisionContext> collisionService:
                     collisionService.PreUpdate(
@@ -856,8 +815,7 @@ namespace CollisionSystem.Manager
                     collisionService.PreUpdate(
                         contextsA as BulletCollisionContext[],
                         contextsB as TankCollisionContext[]
-                    );
-                    break;
+                    ); break;
 
                 default:
                     break;

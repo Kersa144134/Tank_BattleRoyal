@@ -9,6 +9,7 @@
 
 using UnityEngine;
 using InputSystem.Data;
+using CollisionSystem.Data;
 
 namespace TankSystem.Manager
 {
@@ -106,18 +107,18 @@ namespace TankSystem.Manager
         }
 
         /// <summary>
-        /// ターゲット Transform 配列を送る
+        /// ターゲットコンテキスト配列を送る
         /// </summary>
-        /// <param name="tankTransforms">戦車 Transform 配列</param>
-        /// <param name="itemTransforms">アイテム Transform 配列</param>
+        /// <param name="tankContexts">戦車コンテキスト配列</param>
+        /// <param name="itemContexts">アイテムコンテキスト配列</param>
         public override void SetTargetData(
-            in Transform[] tankTransforms,
-            in Transform[] itemTransforms
+            in TankCollisionContext[] tankContexts,
+            in ItemCollisionContext[] itemContexts
         )
         {
-            Tanks = tankTransforms;
+            Tanks = tankContexts;
 
-            _tankAIManager.SetTargetData(tankTransforms, itemTransforms);
+            _tankAIManager.SetTargetData(tankContexts, itemContexts);
         }
 
         // ======================================================

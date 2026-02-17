@@ -16,7 +16,7 @@ namespace CollisionSystem.Calculator
     /// <summary>
     /// OBB 衝突処理のユースケースクラス
     /// </summary>
-    public sealed class BoundingBoxCollisionCalculator
+    public sealed class CollisionCalculator
     {
         // ======================================================
         // コンポーネント参照
@@ -25,7 +25,7 @@ namespace CollisionSystem.Calculator
         /// <summary>OBB 衝突計算器</summary>
         private readonly OBBCollisionCalculator _obbCollisionCalculator;
 
-        /// <summary>円 vs OBB 判定計算器</summary>
+        /// <summary>円 vs OBB 衝突計算器</summary>
         private readonly CircleOBBCollisionCalculator _circleOBBCollisionCalculator;
 
         /// <summary>汎用的な重なり量計算を担当する数学ユーティリティ</summary>
@@ -52,7 +52,7 @@ namespace CollisionSystem.Calculator
         /// <summary>
         /// OBB 衝突計算コンポーネントを注入して初期化する
         /// </summary>
-        public BoundingBoxCollisionCalculator()
+        public CollisionCalculator()
         {
             _overlapMath = new OverlapMath();
             _obbCollisionCalculator = new OBBCollisionCalculator(_overlapMath);

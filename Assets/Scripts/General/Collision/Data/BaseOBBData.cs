@@ -66,6 +66,16 @@ namespace CollisionSystem.Data
         }
 
         // --------------------------------------------------
+        // 距離比較用外接半径キャッシュ
+        // --------------------------------------------------
+        /// <summary>BroadPhase 用近似外接半径</summary>
+        public float BoundingRadius
+        {
+            get;
+            protected set;
+        }
+
+        // --------------------------------------------------
         // 射影計算用分離軸キャッシュ
         // --------------------------------------------------
         /// <summary>半サイズ適用後の右方向軸</summary>
@@ -84,13 +94,6 @@ namespace CollisionSystem.Data
 
         /// <summary>半サイズ適用後の前方向軸</summary>
         public Vector3 ScaledForward
-        {
-            get;
-            protected set;
-        }
-
-        /// <summary>BroadPhase 用近似外接半径</summary>
-        public float BoundingRadius
         {
             get;
             protected set;

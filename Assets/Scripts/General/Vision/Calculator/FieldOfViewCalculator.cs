@@ -2,30 +2,24 @@
 // FieldOfViewCalculator.cs
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-22
-// 更新日時 : 2025-12-22
-// 概要     : Transform ベースの視界判定ユースケースクラス
-//            二分探索を用いて距離順に視界内対象物を維持
+// 更新日時 : 2026-02-18
+// 概要     : 視界判定計算クラス
 // ======================================================
 
-using System.Collections.Generic;
 using UnityEngine;
-using CollisionSystem.Interface;
+using CollisionSystem.Data;
 using VisionSystem.Utility;
 
 namespace VisionSystem.Calculator
 {
     /// <summary>
-    /// 視界判定のユースケースクラス
-    /// 距離・角度・遮蔽物を考慮して視界内の対象物を判定する
+    /// 視界判定計算クラス
     /// </summary>
     public sealed class FieldOfViewCalculator
     {
         // ======================================================
         // コンポーネント参照
         // ======================================================
-
-        /// <summary>距離・角度判定用ユーティリティ</summary>
-        private readonly FOVMath _fovMath;
 
         /// <summary>遮蔽物判定用ユーティリティ</summary>
         private readonly LOSMath _losMath;
@@ -34,28 +28,32 @@ namespace VisionSystem.Calculator
         // フィールド
         // ======================================================
 
-        /// <summary>視界内にある対象物を格納するバッファ</summary>
-        private readonly List<Transform> _visibleTargetsBuffer;
+        /// <summary>視界内対象物を距離順で保持する固定配列</summary>
+        private readonly Transform[] _visibleTargetsArray = new Transform[MAX_TARGETS];
+
+        /// <summary>現在視界内に存在する対象の数</summary>
+        private int _visibleTargetCount;
 
         // ======================================================
         // 定数
         // ======================================================
 
-        /// <summary>視界判定で扱うターゲットの最大数</summary>
-        private const int MAX_TARGETS = 128;
+        /// <summary>視界判定対象の最大数</summary>
+        private const int MAX_TARGETS = 64;
+
+        /// <summary>線分交差判定用の小さな許容値（浮動小数点誤差対策）</summary>
+        private const float LINE_INTERSECTION_EPSILON = 0.0001f;
 
         // ======================================================
         // コンストラクタ
         // ======================================================
 
         /// <summary>
-        /// 視界判定計算クラスを生成する
+        /// FieldOfViewCalculator クラスを初期化
         /// </summary>
         public FieldOfViewCalculator()
         {
-            _fovMath = new FOVMath();
             _losMath = new LOSMath();
-            _visibleTargetsBuffer = new List<Transform>(MAX_TARGETS);
         }
 
         // ======================================================
@@ -66,59 +64,114 @@ namespace VisionSystem.Calculator
         /// 視界内にある対象物を取得
         /// </summary>
         /// <param name="origin">視界の中心 Transform</param>
-        /// <param name="targets">判定対象の Transform 配列</param>
+        /// <param name="targets">判定対象 BaseCollisionContext 配列</param>
         /// <param name="obstacles">遮蔽物 OBB 配列</param>
         /// <param name="fovAngle">視野角（全角）</param>
         /// <param name="viewDistance">視界距離</param>
-        /// <returns>距離順で遮蔽されていない視界内対象物リスト</returns>
-        public List<Transform> GetVisibleTargets(
-            Transform origin,
-            in Transform[] targets,
-            in IOBBData[] obstacles,
+        /// <param name="outArray">結果を書き込む配列</param>
+        /// <returns>視界内対象の数</returns>
+        public int GetVisibleTargets(
+            in Transform origin,
+            in BaseCollisionContext[] targets,
+            in BaseOBBData[] obstacles,
             in float fovAngle,
-            in float viewDistance
+            in float viewDistance,
+            ref Transform[] outArray
         )
         {
-            // バッファを再利用するため、リストの長さを調整
-            _visibleTargetsBuffer.Clear();
+            _visibleTargetCount = 0;
 
-            // --------------------------------------------------
-            // 判定ループ
-            // --------------------------------------------------
+            // 平方根回避のため二乗値を使用
+            float viewDistanceSqr = viewDistance * viewDistance;
+
+            // 内積判定用に cosθ bを事前計算
+            float halfFOVCos = Mathf.Cos(fovAngle * 0.5f * Mathf.Deg2Rad);
+
             for (int i = 0; i < targets.Length; i++)
             {
-                Transform target = targets[i];
+                BaseOBBData targetOBB = targets[i].OBB;
 
-                // 距離・角度判定
-                if (!_fovMath.IsInFOV(origin, target, fovAngle, viewDistance))
+                // --------------------------------------------------
+                // ブロードフェーズ
+                // 距離判定
+                // --------------------------------------------------
+                // 視界中心から対象 OBB 中心へのベクトルを算出
+                Vector3 toTarget = targetOBB.Center - origin.position;
+
+                // ベクトルの二乗長さを取得
+                float sqrDistance = toTarget.sqrMagnitude;
+
+                // 対象 OBB の半径を考慮した二乗距離
+                float radiusSqr = targetOBB.BoundingRadius * targetOBB.BoundingRadius;
+
+                // 視界距離 + OBB半径を超えている場合は視界外
+                if (sqrDistance > viewDistanceSqr + radiusSqr)
+                {
                     continue;
+                }
 
+                // --------------------------------------------------
+                // 視野角判定
+                // 内積
+                // --------------------------------------------------
+                // 正規化済み方向ベクトル
+                Vector3 dir = toTarget;
+                float magnitude = dir.sqrMagnitude;
+
+                // 正規化
+                if (magnitude > LINE_INTERSECTION_EPSILON)
+                {
+                    dir /= Mathf.Sqrt(magnitude);
+                }
+
+                // 内積を取得（cosθ）
+                float dot = Vector3.Dot(origin.forward, dir);
+
+                // 半視野角より外なら視界外
+                if (dot < halfFOVCos)
+                {
+                    continue;
+                }
+
+                // --------------------------------------------------
                 // 遮蔽物判定
+                // slab 法
+                // --------------------------------------------------
                 bool blocked = false;
+
                 for (int j = 0; j < obstacles.Length; j++)
                 {
-                    IOBBData obstacle = obstacles[j];
+                    BaseOBBData obstacle = obstacles[j];
 
-                    // 対象物自身は判定除外
-                    if (target.TryGetComponent<IOBBData>(out IOBBData targetOBB) && targetOBB == obstacle)
-                        continue;
-
-                    if (_losMath.IsLineIntersectOBB(origin.position, target.position, obstacle))
+                    // 対象自身は遮蔽判定から除外
+                    if (obstacle == targetOBB)
                     {
+                        continue;
+                    }
+
+                    // 原点から対象 OBB 中心への線分が障害物 OBB に交差するか判定
+                    if (_losMath.IsLineIntersectOBB(origin.position, targetOBB.Center, obstacle))
+                    {
+                        // 1 つでも遮蔽物があれば判定終了
                         blocked = true;
                         break;
                     }
                 }
 
+                // 遮蔽されていなければ距離順で挿入
                 if (!blocked)
                 {
-                    // 二分探索で距離順の挿入位置を決定
-                    int insertIndex = BinarySearchInsertIndex(origin.position, target);
-                    _visibleTargetsBuffer.Insert(insertIndex, target);
+                    InsertVisibleTarget(origin.position, targets[i].Transform, sqrDistance);
                 }
             }
 
-            return _visibleTargetsBuffer;
+            // 結果を呼び出し側配列に書き込み
+            for (int i = 0; i < _visibleTargetCount; i++)
+            {
+                outArray[i] = _visibleTargetsArray[i];
+            }
+
+            return _visibleTargetCount;
         }
 
         // ======================================================
@@ -126,32 +179,35 @@ namespace VisionSystem.Calculator
         // ======================================================
 
         /// <summary>
-        /// 二分探索を使用して距離順の挿入位置を決定
+        /// 二分探索で距離順に対象を挿入
         /// </summary>
-        /// <param name="originPos">原点位置</param>
-        /// <param name="target">挿入対象 Transform</param>
-        /// <returns>挿入すべきインデックス</returns>
-        private int BinarySearchInsertIndex(in Vector3 originPos, in Transform target)
+        private void InsertVisibleTarget(Vector3 originPos, Transform target, float targetSqrDistance)
         {
-            float targetDistSqr = (target.position - originPos).sqrMagnitude;
-
             int low = 0;
-            int high = _visibleTargetsBuffer.Count;
+            int high = _visibleTargetCount;
 
-            // 二分探索ループ
+            // 二分探索で挿入位置を決定
             while (low < high)
             {
                 int mid = (low + high) / 2;
-                float midDistSqr = (_visibleTargetsBuffer[mid].position - originPos).sqrMagnitude;
-
-                if (targetDistSqr < midDistSqr)
+                float midDistSqr = (_visibleTargetsArray[mid].position - originPos).sqrMagnitude;
+                if (targetSqrDistance < midDistSqr)
                     high = mid;
                 else
                     low = mid + 1;
             }
 
-            // low が挿入位置
-            return low;
+            int insertIndex = low;
+
+            // 配列内で後ろにシフト（固定配列なので GC は発生しない）
+            for (int k = _visibleTargetCount; k > insertIndex; k--)
+            {
+                _visibleTargetsArray[k] = _visibleTargetsArray[k - 1];
+            }
+
+            // 挿入
+            _visibleTargetsArray[insertIndex] = target;
+            _visibleTargetCount++;
         }
     }
 }

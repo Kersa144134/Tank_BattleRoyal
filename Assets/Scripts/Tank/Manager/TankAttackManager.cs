@@ -12,6 +12,7 @@ using InputSystem.Data;
 using TankSystem.Controller;
 using TankSystem.Data;
 using WeaponSystem.Data;
+using CollisionSystem.Data;
 
 namespace TankSystem.Manager
 {
@@ -135,7 +136,7 @@ namespace TankSystem.Manager
             in float unscaledDeltaTime,
             in ButtonState leftInput,
             in ButtonState rightInput,
-            in Transform[] tanks)
+            in BaseCollisionContext[] tanks)
         {
             // “ü—Í–³Œø–h~
             if (leftInput == null || rightInput == null)
@@ -145,7 +146,6 @@ namespace TankSystem.Manager
 
             // ƒ^[ƒQƒbƒgæ“¾ 
             Transform target = _visibilityController.GetClosestTarget(
-                true,
                 FOV_ANGLE,
                 VIEW_DISTANCE,
                 tanks

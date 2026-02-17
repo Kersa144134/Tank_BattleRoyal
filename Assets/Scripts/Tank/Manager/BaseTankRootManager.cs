@@ -9,7 +9,6 @@
 using System;
 using UnityEngine;
 using CollisionSystem.Data;
-using CollisionSystem.Interface;
 using InputSystem.Data;
 using InputSystem.Manager;
 using SceneSystem.Data;
@@ -135,10 +134,7 @@ namespace TankSystem.Manager
         public TankEnergyManager EnergyManager => _energyManager;
 
         /// <summary>戦車 Transform 配列</summary>
-        public Transform[] Tanks { get; set; }
-
-        /// <summary>自身の Transform</summary>
-        public Transform Transform => transform;
+        public TankCollisionContext[] Tanks { get; set; }
 
         /// <summary>弾丸発射ローカル位置</summary>
         public Transform FirePoint => _firePoint;
@@ -212,12 +208,13 @@ namespace TankSystem.Manager
         );
 
         /// <summary>
-        /// ターゲット Transform 配列を送る
+        /// ターゲットコンテキスト配列を送る
         /// </summary>
-        /// <param name="obstacleOBBs">遮蔽物 OBB 配列</param>
+        /// <param name="tankContexts">戦車コンテキスト配列</param>
+        /// <param name="itemContexts">アイテムコンテキスト配列</param>
         public abstract void SetTargetData(
-            in Transform[] tankTransforms,
-            in Transform[] itemTransforms
+            in TankCollisionContext[] tankContexts,
+            in ItemCollisionContext[] itemContexts
         );
 
         // ======================================================
@@ -228,7 +225,7 @@ namespace TankSystem.Manager
         /// 遮蔽物の OBB 配列を送る
         /// </summary>
         /// <param name="obstacleOBBs">遮蔽物 OBB 配列</param>
-        public void SetObstacleData(in IOBBData[] obstacleOBBs)
+        public void SetObstacleData(in BaseOBBData[] obstacleOBBs)
         {
             _visibilityController.SetObstacleData(obstacleOBBs);
         }
