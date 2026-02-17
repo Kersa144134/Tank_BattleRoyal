@@ -123,13 +123,18 @@ namespace CollisionSystem.Data
             in Quaternion rotation
         )
         {
-            // ワールド中心を更新する
-            Center = center;
+            // 前回の値と比較して変更がない場合はキャッシュ更新をスキップ
+            if (Center == center && Rotation == rotation)
+            {
+                // 変更なし -> UpdateCache 不要
+                return;
+            }
 
-            // ワールド回転を更新する
+            // ワールド中心および回転を更新
+            Center = center;
             Rotation = rotation;
 
-            // 軸および射影キャッシュを再計算する
+            // 軸および射影キャッシュを再計算
             UpdateCache();
         }
 
