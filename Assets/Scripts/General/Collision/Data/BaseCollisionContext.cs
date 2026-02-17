@@ -114,7 +114,7 @@ namespace CollisionSystem.Data
         public void UpdateOBB()
         {
             // OBB ‚Éƒ[ƒ‹ƒh Transform ‚ğ“¯Šú‚·‚é
-            OBB.SyncTransform(NextPosition, NextRotation);
+            // OBB.SyncTransform(NextPosition, NextRotation);
         }
 
         /// <summary>
