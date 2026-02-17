@@ -85,8 +85,8 @@ namespace CollisionSystem.Calculator
                 contextA.OBB,
                 contextB.OBB,
                 out Vector3 resolveAxis,
-                out float resolveDistance
-            ))
+                out float resolveDistance)
+            )
             {
                 return;
             }

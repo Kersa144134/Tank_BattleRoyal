@@ -68,7 +68,7 @@ namespace CollisionSystem.Data
         // --------------------------------------------------
         // 距離比較用外接半径キャッシュ
         // --------------------------------------------------
-        /// <summary>BroadPhase 用近似外接半径</summary>
+        /// <summary>距離比較用近似外接半径</summary>
         public float BoundingRadius
         {
             get;
@@ -152,8 +152,11 @@ namespace CollisionSystem.Data
             ScaledUp = AxisUp * HalfSize.y;
             ScaledForward = AxisForward * HalfSize.z;
 
-            // BroadPhase 用半径を取得
-            BoundingRadius = Mathf.Max(HalfSize.x, HalfSize.z);
+            // 外接球半径は半サイズの対角線を使用
+            float x = HalfSize.x;
+            float y = HalfSize.y;
+            float z = HalfSize.z;
+            BoundingRadius = Mathf.Sqrt(x * x + y * y + z * z);
         }
     }
 }
