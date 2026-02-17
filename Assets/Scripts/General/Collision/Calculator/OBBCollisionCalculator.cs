@@ -7,7 +7,7 @@
 // ======================================================
 
 using UnityEngine;
-using CollisionSystem.Interface;
+using CollisionSystem.Data;
 using CollisionSystem.Utility;
 
 namespace CollisionSystem.Calculator
@@ -21,31 +21,19 @@ namespace CollisionSystem.Calculator
         // コンポーネント参照
         // ======================================================
 
-        /// <summary>OBB の軸情報および射影計算を担当するユーティリティ</summary>
-        private readonly OBBMath _obbMath;
-
-        /// <summary>分離判定（重なり有無）を担当する数学ユーティリティ</summary>
-        private readonly SeparationMath _separationMath;
-
-        /// <summary>侵入量（押し戻し量）算出を担当する数学ユーティリティ</summary>
-        private readonly PenetrationMath _penetrationMath;
+        /// <summary>汎用的な重なり量計算を担当する数学ユーティリティ</summary>
+        private readonly OverlapMath _overlapMath;
 
         // ======================================================
         // コンストラクタ
         // ======================================================
 
         /// <summary>
-        /// 必要な数学コンポーネントを注入して初期化する
+        /// 必要な数学ユーティリティを注入して初期化する
         /// </summary>
-        public OBBCollisionCalculator(
-            in OBBMath obbMath,
-            in SeparationMath separationMath,
-            in PenetrationMath penetrationMath
-        )
+        public OBBCollisionCalculator(in OverlapMath overlapMath)
         {
-            _obbMath = obbMath;
-            _separationMath = separationMath;
-            _penetrationMath = penetrationMath;
+            _overlapMath = overlapMath;
         }
 
         // ======================================================
@@ -56,51 +44,43 @@ namespace CollisionSystem.Calculator
         /// Y 軸回転のみを考慮し、OBB 同士が水平面上で重なっているかを判定する
         /// </summary>
         public bool IsCollidingHorizontal(
-            in IOBBData a,
-            in IOBBData b
+            in BaseOBBData a,
+            in BaseOBBData b
         )
         {
-            // OBB A の水平軸を取得
-            _obbMath.GetAxes(
-                a,
-                out Vector3 aRight,
-                out _,
-                out Vector3 aForward
-            );
+            // A の水平軸を取得
+            Vector3 aRight = a.AxisRight;
+            Vector3 aForward = a.AxisForward;
 
-            // OBB B の水平軸を取得
-            _obbMath.GetAxes(
-                b,
-                out Vector3 bRight,
-                out _,
-                out Vector3 bForward
-            );
+            // B の水平軸を取得
+            Vector3 bRight = b.AxisRight;
+            Vector3 bForward = b.AxisForward;
 
-            // A 前方向軸で分離していないか判定
-            if (!_separationMath.IsOverlappingOnAxis(a, b, aForward))
+            // A 前方向軸で評価
+            if (!IsAxisOverlapping(a, b, aForward))
             {
                 return false;
             }
 
-            // A 右方向軸で分離していないか判定
-            if (!_separationMath.IsOverlappingOnAxis(a, b, aRight))
+            // A 右方向軸で評価
+            if (!IsAxisOverlapping(a, b, aRight))
             {
                 return false;
             }
 
-            // B 前方向軸で分離していないか判定
-            if (!_separationMath.IsOverlappingOnAxis(a, b, bForward))
+            // B 前方向軸で評価
+            if (!IsAxisOverlapping(a, b, bForward))
             {
                 return false;
             }
 
-            // B 右方向軸で分離していないか判定
-            if (!_separationMath.IsOverlappingOnAxis(a, b, bRight))
+            // B 右方向軸で評価
+            if (!IsAxisOverlapping(a, b, bRight))
             {
                 return false;
             }
 
-            // すべての軸で分離していなければ重なっている
+            // 全軸で分離していなければ衝突
             return true;
         }
 
@@ -108,57 +88,50 @@ namespace CollisionSystem.Calculator
         /// OBB 同士が重なった場合の水平押し戻し軸と距離を算出する
         /// </summary>
         public bool TryGetPushOutAxisAndDistance(
-            in IOBBData a,
-            in IOBBData b,
+            in BaseOBBData a,
+            in BaseOBBData b,
             out Vector3 axis,
             out float overlap
         )
         {
-            // 出力値を初期化
+            // 解決軸
             axis = Vector3.zero;
+            // 最小侵入量
             overlap = float.MaxValue;
 
-            // OBB A の水平軸を取得
-            _obbMath.GetAxes(
-                a,
-                out Vector3 aRight,
-                out _,
-                out Vector3 aForward
-            );
+            // A の水平軸を取得
+            Vector3 aRight = a.AxisRight;
+            Vector3 aForward = a.AxisForward;
 
-            // OBB B の水平軸を取得
-            _obbMath.GetAxes(
-                b,
-                out Vector3 bRight,
-                out _,
-                out Vector3 bForward
-            );
+            // B の水平軸を取得
+            Vector3 bRight = b.AxisRight;
+            Vector3 bForward = b.AxisForward;
 
-            // A 前方向軸で侵入量を評価
-            if (!TryEvaluateAxis(a, b, aForward, ref axis, ref overlap))
+            // A 前方向軸で評価
+            if (!TryUpdateMinimumOverlap(a, b, aForward, ref axis, ref overlap))
             {
                 return false;
             }
 
-            // A 右方向軸で侵入量を評価
-            if (!TryEvaluateAxis(a, b, aRight, ref axis, ref overlap))
+            // A 右方向軸で評価
+            if (!TryUpdateMinimumOverlap(a, b, aRight, ref axis, ref overlap))
             {
                 return false;
             }
 
-            // B 前方向軸で侵入量を評価
-            if (!TryEvaluateAxis(a, b, bForward, ref axis, ref overlap))
+            // B 前方向軸で評価
+            if (!TryUpdateMinimumOverlap(a, b, bForward, ref axis, ref overlap))
             {
                 return false;
             }
 
-            // B 右方向軸で侵入量を評価
-            if (!TryEvaluateAxis(a, b, bRight, ref axis, ref overlap))
+            // B 右方向軸で評価
+            if (!TryUpdateMinimumOverlap(a, b, bRight, ref axis, ref overlap))
             {
                 return false;
             }
 
-            // 有効な解決軸が算出されていれば成功
+            // 解決軸があれば返却
             return axis != Vector3.zero;
         }
 
@@ -167,35 +140,48 @@ namespace CollisionSystem.Calculator
         // ======================================================
 
         /// <summary>
-        /// 指定軸における侵入量を評価し、最小値を更新する
+        /// 指定軸で重なりが存在するかを判定する
         /// </summary>
-        private bool TryEvaluateAxis(
-            in IOBBData a,
-            in IOBBData b,
-            in Vector3 rawAxis,
+        private bool IsAxisOverlapping(
+            in BaseOBBData a,
+            in BaseOBBData b,
+            in Vector3 axis
+        )
+        {
+            // 指定軸上の重なり量を算出
+            float overlap =
+                _overlapMath.CalculateOBBOverlapOnAxis(a, b, axis);
+
+            // 重なりが正であれば衝突
+            return overlap > 0f;
+        }
+
+        /// <summary>
+        /// 指定軸の侵入量を評価し、最小値を更新する
+        /// </summary>
+        private bool TryUpdateMinimumOverlap(
+            in BaseOBBData a,
+            in BaseOBBData b,
+            in Vector3 axis,
             ref Vector3 bestAxis,
             ref float bestOverlap
         )
         {
-            // 判定軸を正規化
-            Vector3 testAxis = rawAxis.normalized;
+            // 指定軸上の侵入量を算出
+            float currentOverlap =
+                _overlapMath.CalculateOBBOverlapOnAxis(a, b, axis);
 
-            // 指定軸で侵入が発生していない場合は失敗
-            if (!_penetrationMath.TryCalculatePenetration(
-                    a,
-                    b,
-                    testAxis,
-                    out float currentPenetration
-                ))
+            // 分離している場合は衝突なし
+            if (currentOverlap <= 0f)
             {
                 return false;
             }
 
             // より小さい侵入量であれば更新
-            if (currentPenetration < bestOverlap)
+            if (currentOverlap < bestOverlap)
             {
-                bestOverlap = currentPenetration;
-                bestAxis = testAxis;
+                bestOverlap = currentOverlap;
+                bestAxis = axis;
             }
 
             return true;

@@ -148,16 +148,8 @@ namespace CameraSystem.Controller
         {
             Vector3 targetPos = _targetTransform.position;
 
-            if (target.IsRotationFixed)
-            {
-                // 回転固定の場合はワールド座標オフセットを直接加算
-                targetPos += target.PositionOffset;
-            }
-            else
-            {
-                // ターゲット回転に応じたローカルオフセットをワールド座標に変換して加算
-                targetPos += _targetTransform.TransformVector(target.PositionOffset);
-            }
+            // ターゲット回転に応じたローカルオフセットをワールド座標に変換して加算
+            targetPos += _targetTransform.TransformVector(target.PositionOffset);
 
             // 補間してカメラ位置に適用
             return Vector3.Lerp(_cameraTransform.position, targetPos, FOLLOW_SPEED * deltaTime);
@@ -170,26 +162,12 @@ namespace CameraSystem.Controller
         /// <returns>補間済みのカメラ追従回転</returns>
         private Quaternion CalculateFollowRotation(in float deltaTime, in CameraTarget target)
         {
-            Quaternion targetRotation;
-
-            if (target.IsRotationFixed)
-            {
-                // 回転固定の場合は前回の回転からオフセット角度まで補間
-                targetRotation = Quaternion.Slerp(
-                    _cameraTransform.rotation,
-                    Quaternion.Euler(target.RotationOffset),
-                    FOLLOW_SPEED * deltaTime
-                );
-            }
-            else
-            {
-                // ターゲット回転にオフセットを加え、前回の回転から補間
-                targetRotation = Quaternion.Slerp(
-                    _cameraTransform.rotation,
-                    _targetTransform.rotation * Quaternion.Euler(target.RotationOffset),
-                    FOLLOW_SPEED * deltaTime
-                );
-            }
+            // ターゲット回転にオフセットを加え、前回の回転から補間
+            Quaternion targetRotation = Quaternion.Slerp(
+                _cameraTransform.rotation,
+                _targetTransform.rotation * Quaternion.Euler(target.RotationOffset),
+                FOLLOW_SPEED * deltaTime
+            );
 
             return targetRotation;
         }

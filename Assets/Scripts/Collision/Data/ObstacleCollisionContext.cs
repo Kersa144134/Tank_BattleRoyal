@@ -59,7 +59,7 @@ namespace CollisionSystem.Data
         public ObstacleCollisionContext(
             in int obstacleId,
             in Transform transform,
-            in IOBBData obb,
+            in BaseOBBData obb,
             in IDamageable damageable
         )
             : base(

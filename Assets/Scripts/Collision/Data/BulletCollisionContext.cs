@@ -77,7 +77,7 @@ namespace CollisionSystem.Data
         /// <param name="obb">íeä€Ç…ëŒâûÇ∑ÇÈ OBB ÉfÅ[É^</param>
         public BulletCollisionContext(
             in BulletBase bullet,
-            in IOBBData obb
+            in BaseOBBData obb
         )
             : base(
                 bullet.Transform,

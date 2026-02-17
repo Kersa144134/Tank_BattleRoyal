@@ -6,6 +6,8 @@
 // 概要     : OBB を更新する動的衝突コンテキストの共通インターフェース
 // ======================================================
 
+using CollisionSystem.Data;
+
 namespace CollisionSystem.Interface
 {
     /// <summary>
@@ -20,7 +22,7 @@ namespace CollisionSystem.Interface
         /// <summary>
         /// 衝突判定に使用する OBB データ
         /// </summary>
-        IOBBData OBB { get; }
+        BaseOBBData OBB { get; }
 
         // ======================================================
         // メソッド

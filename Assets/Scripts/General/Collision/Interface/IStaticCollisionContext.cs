@@ -7,6 +7,8 @@
 // ======================================================
 
 
+using CollisionSystem.Data;
+
 namespace CollisionSystem.Interface
 {
     /// <summary>
@@ -21,6 +23,6 @@ namespace CollisionSystem.Interface
         /// <summary>
         /// 衝突判定に使用する固定 OBB データ
         /// </summary>
-        IOBBData OBB { get; }
+        BaseOBBData OBB { get; }
     }
 }

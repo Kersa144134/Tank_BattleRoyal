@@ -6,8 +6,8 @@
 // 概要     : OBB データ共通基底クラス
 // ======================================================
 
-using CollisionSystem.Interface;
 using UnityEngine;
+using CollisionSystem.Interface;
 
 namespace CollisionSystem.Data
 {
@@ -139,29 +139,18 @@ namespace CollisionSystem.Data
         /// </summary>
         protected void UpdateCache()
         {
-            // 回転を適用したワールド右軸を算出する
+            // 回転を適用したワールド軸を算出
             AxisRight = Rotation * Vector3.right;
-
-            // 回転を適用したワールド上軸を算出する
             AxisUp = Rotation * Vector3.up;
-
-            // 回転を適用したワールド前軸を算出する
             AxisForward = Rotation * Vector3.forward;
 
-            // X 半サイズを適用した右軸を算出する
+            // 半サイズを適用した軸を算出
             ScaledRight = AxisRight * HalfSize.x;
-
-            // Y 半サイズを適用した上軸を算出する
             ScaledUp = AxisUp * HalfSize.y;
-
-            // Z 半サイズを適用した前軸を算出する
             ScaledForward = AxisForward * HalfSize.z;
 
-            // XZ 平面上で最大の半サイズを取得する
-            float maxHalfSize = Mathf.Max(HalfSize.x, HalfSize.z);
-
-            // BroadPhase 用半径として保持する
-            BoundingRadius = maxHalfSize;
+            // BroadPhase 用半径を取得
+            BoundingRadius = Mathf.Max(HalfSize.x, HalfSize.z);
         }
     }
 }

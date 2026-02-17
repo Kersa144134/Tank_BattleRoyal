@@ -6,7 +6,6 @@
 // 概要     : 衝突解決計算で使用する共通コンテキスト基底クラス
 // ======================================================
 
-using CollisionSystem.Interface;
 using UnityEngine;
 using WeaponSystem.Interface;
 
@@ -33,7 +32,7 @@ namespace CollisionSystem.Data
         // ======================================================
 
         /// <summary>衝突判定に使用する OBB データ</summary>
-        public IOBBData OBB
+        public BaseOBBData OBB
         {
             get;
             protected set;
@@ -93,7 +92,7 @@ namespace CollisionSystem.Data
         /// <param name="damageable">ダメージ対象</param>
         protected BaseCollisionContext(
             Transform transform,
-            IOBBData obb,
+            BaseOBBData obb,
             MovementLockAxis lockAxis,
             IDamageable damageable
         )
@@ -114,7 +113,7 @@ namespace CollisionSystem.Data
         public void UpdateOBB()
         {
             // OBB にワールド Transform を同期する
-            // OBB.SyncTransform(NextPosition, NextRotation);
+            OBB.SyncTransform(NextPosition, NextRotation);
         }
 
         /// <summary>

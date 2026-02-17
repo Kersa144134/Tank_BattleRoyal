@@ -47,7 +47,7 @@ namespace CollisionSystem.Data
         /// <param name="obb">Õ“Ë”»’è—p OBB</param>
         public AreaCollisionContext(
             in Transform area,
-            in IOBBData obb
+            in BaseOBBData obb
         )
             : base(
                 area,

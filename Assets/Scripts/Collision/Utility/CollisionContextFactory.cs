@@ -4,12 +4,11 @@
 // 作成日時 : 2025-12-18
 // 更新日時 : 2025-12-18
 // 概要     : 衝突コンテキスト生成を統括するファクトリー
-//            戦車、障害物、アイテムの静的・動的 OBB に対応
+//            静的・動的 OBB に対応
 // ======================================================
 
 using UnityEngine;
 using CollisionSystem.Data;
-using CollisionSystem.Interface;
 using ItemSystem.Data;
 using SceneSystem.Manager;
 using TankSystem.Manager;
@@ -60,7 +59,7 @@ namespace CollisionSystem.Utility
         public TankCollisionContext CreateTankContext(in BaseTankRootManager tankRootManager)
         {
             // 動的 OBB を生成
-            IOBBData obb = _obbFactory.CreateDynamicOBB(tankRootManager.HitBoxCenter, tankRootManager.HitBoxScale);
+            BaseOBBData obb = _obbFactory.CreateDynamicOBB(tankRootManager.HitBoxCenter, tankRootManager.HitBoxScale);
 
             // TankCollisionContext を構築して返却
             return new TankCollisionContext(
@@ -79,7 +78,7 @@ namespace CollisionSystem.Utility
         )
         {
             // 動的 OBB を生成
-            IOBBData obb = _obbFactory.CreateDynamicOBB(Vector3.zero, bullet.Transform.lossyScale);
+            BaseOBBData obb = _obbFactory.CreateDynamicOBB(Vector3.zero, bullet.Transform.lossyScale);
 
             // BulletCollisionContext を構築して返却
             return new BulletCollisionContext(bullet, obb);
@@ -97,7 +96,7 @@ namespace CollisionSystem.Utility
         )
         {
             // 静的 OBB を生成する
-            IOBBData obb = _obbFactory.CreateStaticOBB(
+            BaseOBBData obb = _obbFactory.CreateStaticOBB(
                 obstacleTransform.position,
                 obstacleTransform.rotation,
                 Vector3.zero,
@@ -121,7 +120,7 @@ namespace CollisionSystem.Utility
         public AreaCollisionContext CreateAreaContext(in Transform areaTransform)
         {
             // 静的 OBB を生成する
-            IOBBData obb = _obbFactory.CreateStaticOBB(
+            BaseOBBData obb = _obbFactory.CreateStaticOBB(
                 areaTransform.position,
                 areaTransform.rotation,
                 Vector3.zero,
@@ -148,7 +147,7 @@ namespace CollisionSystem.Utility
             }
 
             // 静的 OBB を生成
-            IOBBData obb = _obbFactory.CreateStaticOBB(
+            BaseOBBData obb = _obbFactory.CreateStaticOBB(
                 item.Transform.position,
                 item.Transform.rotation,
                 Vector3.zero,

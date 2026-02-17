@@ -8,7 +8,7 @@
 
 using System.Collections.Generic;
 using UnityEngine;
-using CollisionSystem.Interface;
+using CollisionSystem.Data;
 using CollisionSystem.Utility;
 
 namespace CollisionSystem.Calculator
@@ -22,9 +22,6 @@ namespace CollisionSystem.Calculator
         // コンポーネント参照
         // ======================================================
 
-        /// <summary>OBB の軸情報および射影計算を担当するユーティリティ</summary>
-        private readonly OBBMath _obbMath;
-
         /// <summary>汎用的な重なり量計算を担当する数学ユーティリティ</summary>
         private readonly OverlapMath _overlapMath;
 
@@ -35,11 +32,8 @@ namespace CollisionSystem.Calculator
         /// <summary>
         /// 必要な数学ユーティリティを注入して初期化する
         /// </summary>
-        public CircleOBBCollisionCalculator(
-            in OBBMath obbMath,
-            in OverlapMath overlapMath)
+        public CircleOBBCollisionCalculator(in OverlapMath overlapMath)
         {
-            _obbMath = obbMath;
             _overlapMath = overlapMath;
         }
 
@@ -53,8 +47,8 @@ namespace CollisionSystem.Calculator
         public void CollectOverlappingHorizontal(
             in Vector3 circleCenter,
             in float circleRadius,
-            in IOBBData[] obbArray,
-            ref List<IOBBData> results
+            in BaseOBBData[] obbArray,
+            ref List<BaseOBBData> results
         )
         {
             // 結果リストが存在しない場合は処理不能
@@ -66,7 +60,7 @@ namespace CollisionSystem.Calculator
             // 前回結果をクリア
             results.Clear();
 
-            // 入力配列が存在しない場合は終了
+            // 入力配列が存在しない場合は処理なし
             if (obbArray == null)
             {
                 return;
@@ -76,7 +70,7 @@ namespace CollisionSystem.Calculator
             for (int index = 0; index < obbArray.Length; index++)
             {
                 // 現在対象 OBB を取得
-                IOBBData obb = obbArray[index];
+                BaseOBBData obb = obbArray[index];
 
                 if (obb == null)
                 {

@@ -104,7 +104,7 @@ namespace SceneSystem.Manager
         private void Awake()
         {
             // フレームレート固定
-            Application.targetFrameRate = TARGET_FRAME_RATE;
+            // Application.targetFrameRate = TARGET_FRAME_RATE;
 
             // 初期状態設定
             _currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;

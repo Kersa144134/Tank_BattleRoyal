@@ -115,10 +115,10 @@ namespace CollisionSystem.Manager
         private Transform[] _itemTransformsCache;
 
         /// <summary>障害物 OBB キャッシュ配列</summary>
-        private IOBBData[] _obstacleOBBsCache;
+        private BaseOBBData[] _obstacleOBBsCache;
 
         /// <summary>円判定用統合 OBB キャッシュ配列</summary>
-        private IOBBData[] _circleQueryOBBCache;
+        private BaseOBBData[] _circleQueryOBBCache;
 
         /// <summary>円判定で重なったコンテキストキャッシュリスト</summary>
         private readonly List<BaseCollisionContext> _overlapContextResults = new List<BaseCollisionContext>(DEFAULT_OVERLAP_LIST_CAPACITY);
@@ -507,7 +507,7 @@ namespace CollisionSystem.Manager
             RebuildCircleQueryOBBCache();
 
             // 円と重なっている OBB を取得
-            IOBBData[] overlappingOBBs =
+            BaseOBBData[] overlappingOBBs =
                 _boxCollisionCalculator.GetOverlappingOBBsCircleHorizontal(
                     center,
                     radius,
@@ -517,7 +517,7 @@ namespace CollisionSystem.Manager
             // OBB → Context 変換（戦車と障害物の両方を参照）
             for (int i = 0; i < overlappingOBBs.Length; i++)
             {
-                IOBBData obb = overlappingOBBs[i];
+                BaseOBBData obb = overlappingOBBs[i];
 
                 // 戦車マップ優先
                 if (_obbToTankMap.TryGetValue(obb, out TankCollisionContext tankContext))
@@ -576,7 +576,7 @@ namespace CollisionSystem.Manager
             // 障害物 OBB 配列
             if (_obstacleOBBsCache == null || _obstacleOBBsCache.Length != _obstacles.Length)
             {
-                _obstacleOBBsCache = new IOBBData[_obstacles.Length];
+                _obstacleOBBsCache = new BaseOBBData[_obstacles.Length];
             }
 
             for (int i = 0; i < _obstacles.Length; i++)
@@ -778,7 +778,7 @@ namespace CollisionSystem.Manager
             {
                 // 新規配列生成
                 _circleQueryOBBCache =
-                    new IOBBData[totalCount];
+                    new BaseOBBData[totalCount];
             }
 
             int index = 0;

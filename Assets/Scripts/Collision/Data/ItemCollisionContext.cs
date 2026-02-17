@@ -59,7 +59,7 @@ namespace CollisionSystem.Data
         /// <param name="obb">è’ìÀîªíËóp OBB</param>
         public ItemCollisionContext(
             in ItemSlot item,
-            in IOBBData obb
+            in BaseOBBData obb
         )
             : base(
                 item.Transform,

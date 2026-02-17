@@ -60,7 +60,7 @@ namespace CollisionSystem.Data
         /// <param name="tankRootManager">戦車ルート管理クラス</param>
         public TankCollisionContext(
             int tankId,
-            IOBBData obb,
+            BaseOBBData obb,
             BaseTankRootManager tankRootManager
         )
             : base(
