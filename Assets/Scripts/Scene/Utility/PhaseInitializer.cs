@@ -67,7 +67,7 @@ namespace SceneSystem.Manager
                     u != null && Array.Exists(targetTypes, tt => tt.IsAssignableFrom(u.GetType()))
                 );
 
-                // “à•”«‘‚É“o˜^
+                // «‘‚É“o˜^
                 _phaseUpdatablesMap[phaseData.Phase] = phaseUpdatables;
             }
         }

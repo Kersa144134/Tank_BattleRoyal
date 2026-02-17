@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using InputSystem.Manager;
 using SceneSystem.Data;
 using SceneSystem.Interface;
+using ScoreSystem.Manager;
 
 namespace SceneSystem.Controller
 {
@@ -98,6 +99,7 @@ namespace SceneSystem.Controller
             switch (phase)
             {
                 case PhaseType.Title:
+                    // 入力マッピング設定
                     if (InputManager.Instance?.GetCurrentMappingIndex() == INPUT_MAPPING_INGAME)
                     {
                         InputManager.Instance?.SetInputMapping(INPUT_MAPPING_OUTGAME);
@@ -105,10 +107,14 @@ namespace SceneSystem.Controller
                     break;
 
                 case PhaseType.Ready:
+                    // 入力マッピング設定
                     if (InputManager.Instance?.GetCurrentMappingIndex() == INPUT_MAPPING_OUTGAME)
                     {
                         InputManager.Instance?.SetInputMapping(INPUT_MAPPING_INGAME);
                     }
+
+                    // スコアリセット
+                    ScoreManager.Instance?.ResetScore();
                     break;
 
                 case PhaseType.Play:
@@ -118,7 +124,7 @@ namespace SceneSystem.Controller
                     break;
 
                 case PhaseType.Result:
-                    // 入力マッピングの設定
+                    // 入力マッピング設定
                     if (InputManager.Instance?.GetCurrentMappingIndex() == INPUT_MAPPING_INGAME)
                     {
                         InputManager.Instance?.SetInputMapping(INPUT_MAPPING_OUTGAME);
