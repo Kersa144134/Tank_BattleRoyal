@@ -180,6 +180,9 @@ namespace UISystem.Manager
         /// <summary>Hide アニメーション名</summary>
         private const string HIDE_ANIMATION_NAME = "Hide";
 
+        /// <summary>AmmoUp アニメーション名</summary>
+        private const string AMMO_UP_ANIMATION_NAME = "AmmoUp";
+
         /// <summary>攻撃時アニメーション名</summary>
         private const string FIRE_ANIMATION_NAME = "Fire";
 
@@ -308,9 +311,6 @@ namespace UISystem.Manager
                         _playerEnergyManager.MaxFuel,
                         _playerEnergyManager.CurrentFuel
                     );
-
-                // 初期弾薬値を表示
-                NotifyAmmoChanged();
             }
 
             // 弾丸アイコン UI が設定されているかを確認する
@@ -490,6 +490,9 @@ namespace UISystem.Manager
 
             // フォーマットを使用して UI に反映
             _ammoText.SetText(AMMO_FORMAT, currentAmmo, maxAmmo);
+
+            // アニメーションを再生
+            _playAnimator?.Play(AMMO_UP_ANIMATION_NAME, 0, 0f);
         }
 
         /// <summary>

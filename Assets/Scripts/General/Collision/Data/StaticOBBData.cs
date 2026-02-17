@@ -2,48 +2,35 @@
 // StaticOBBData.cs
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-16
-// 更新日時 : 2025-12-16
+// 更新日時 : 2026-02-17
 // 概要     : 静的オブジェクト用 OBB データ
 // ======================================================
 
 using UnityEngine;
-using CollisionSystem.Interface;
 
 namespace CollisionSystem.Data
 {
     /// <summary>
     /// 静的 OBB データ
+    /// 生成時に Transform を確定させる
     /// </summary>
-    public class StaticOBBData : IOBBData
+    public sealed class StaticOBBData : BaseOBBData
     {
-        // ======================================================
-        // プロパティ
-        // ======================================================
-
-        /// <summary>OBB の中心座標</summary>
-        public Vector3 Center { get; private set; }
-
-        /// <summary>OBB の半サイズ</summary>
-        public Vector3 HalfSize { get; private set; }
-
-        /// <summary>OBB の回転</summary>
-        public Quaternion Rotation { get; private set; }
-
         // ======================================================
         // コンストラクタ
         // ======================================================
 
-        /// <summary>
-        /// 静的 OBB データを初期化する
-        /// </summary>
-        /// <param name="center">中心座標（ワールド基準）</param>
-        /// <param name="halfSize">半サイズ（ローカル基準）</param>
-        /// <param name="rotation">回転（ワールド基準）</param>
-        public StaticOBBData(in Vector3 center, in Vector3 halfSize, in Quaternion rotation)
+        public StaticOBBData(
+            in Vector3 center,
+            in Vector3 halfSize,
+            in Quaternion rotation
+        )
         {
-            Center = center;
+            // 半サイズを設定する
             HalfSize = halfSize;
-            Rotation = rotation;
+
+            // 初期 Transform を同期する
+            SyncTransform(center, rotation);
         }
     }
 }

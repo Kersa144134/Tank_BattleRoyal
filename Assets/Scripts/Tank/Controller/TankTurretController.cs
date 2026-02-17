@@ -76,8 +76,6 @@ namespace TankSystem.Controller
 
             // ‰Šúó‘Ô‚Ìƒ[ƒJƒ‹ Y ‰ñ“]Šp‚ğ•Û
             _defaultLocalYAngle = _turretTransform.localEulerAngles.y;
-
-            UpdateTurretParameter(tankstatus);
         }
 
         // ======================================================

@@ -92,7 +92,7 @@ namespace SceneSystem.Manager
         // ======================================================
 
         /// <summary>アプリケーション全体で固定する目標 FPS</summary>
-        private const int TARGET_FRAME_RATE = 60;
+        private const int TARGET_FRAME_RATE = 120;
         
         /// <summary>PhaseData を配置している Resources フォルダパス</summary>
         private const string PHASE_DATA_RESOURCES_PATH = "Phase";
@@ -120,6 +120,7 @@ namespace SceneSystem.Manager
             _updatableCollector = new UpdatableCollector();
             IUpdatable[] allUpdatables = _updatableCollector.Collect(_components);
 
+            // Update 制御クラス初期化
             _phaseController = new PhaseController(_updateController);
             _updateManager = new UpdateManager(_updateController);
 

@@ -31,6 +31,12 @@ namespace TankSystem.Controller
         // フィールド
         // ======================================================
 
+        /// <summary>フレームカウンター</summary>
+        private int _frameCounter;
+
+        /// <summary>取得したターゲット</summary>
+        private Transform _resultTarget;
+
         /// <summary>自身Transform</summary>
         private readonly Transform _transform;
 
@@ -43,6 +49,13 @@ namespace TankSystem.Controller
         /// <summary>現在ターゲット</summary>
         private BaseTankRootManager _cachedTarget;
 
+        // ======================================================
+        // 定数
+        // ======================================================
+
+        /// <summary>ターゲット更新フレーム間隔</summary>
+        private const int TARGET_UPDATE_INTERVAL_FRAME = 30;
+        
         // ======================================================
         // イベント
         // ======================================================
@@ -96,9 +109,28 @@ namespace TankSystem.Controller
             in Transform[] targetTransforms,
             in Transform[] filterTargets = null)
         {
-            // ----------------------------
+            // --------------------------------------------------
+            // フレーム間隔制御
+            // --------------------------------------------------
+            // カウンターが 0 以外なら処理なし
+            if (_frameCounter != 0)
+            {
+                _frameCounter++;
+
+                // 指定フレーム数に到達したら 0 へ戻す
+                if (_frameCounter >= TARGET_UPDATE_INTERVAL_FRAME)
+                {
+                    _frameCounter = 0;
+                }
+
+                return _resultTarget;
+            }
+
+            _frameCounter++;
+
+            // --------------------------------------------------
             // 優先ターゲットを視界内から取得
-            // ----------------------------
+            // --------------------------------------------------
             Transform[] targets = (filterTargets != null && filterTargets.Length > 0)
                 ? filterTargets
                 : targetTransforms;
@@ -118,9 +150,9 @@ namespace TankSystem.Controller
                 viewDistance
             );
 
-            // ----------------------------
+            // --------------------------------------------------
             // 優先ターゲットが視界にいなければ全体ターゲットで再取得
-            // ----------------------------
+            // --------------------------------------------------
             if ((filterTargets != null && filterTargets.Length > 0) &&
                 (visibleTargets == null || visibleTargets.Count == 0))
             {
@@ -134,12 +166,12 @@ namespace TankSystem.Controller
                 );
             }
 
-            // ----------------------------
+            // --------------------------------------------------
             // 最短ターゲットを取得
-            // ----------------------------
-            Transform result = SelectClosestTarget(changeIcon, visibleTargets);
+            // --------------------------------------------------
+            _resultTarget = SelectClosestTarget(changeIcon, visibleTargets);
 
-            return result;
+            return _resultTarget;
         }
 
         /// <summary>

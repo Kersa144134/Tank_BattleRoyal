@@ -7,8 +7,8 @@
 //            BaseTankRootManager を継承し、入力処理をAI制御に差し替える
 // ======================================================
 
-using InputSystem.Data;
 using UnityEngine;
+using InputSystem.Data;
 
 namespace TankSystem.Manager
 {
@@ -32,6 +32,9 @@ namespace TankSystem.Manager
         /// <summary>無入力ボタン</summary>
         private readonly ButtonState _none = new ButtonState();
 
+        /// <summary>攻撃入力ボタン</summary>
+        private readonly ButtonState _attack = new ButtonState();
+
         /// <summary>ターゲットを発見しているかどうか</summary>
         private bool _hasTarget;
 
@@ -47,6 +50,7 @@ namespace TankSystem.Manager
             {
                 _tankAIManager = new TankAIManager(_visibilityController);
 
+                // イベント購読
                 _visibilityController.OnTargetAcquired += HandleAttackInput;
             }
         }
@@ -57,6 +61,7 @@ namespace TankSystem.Manager
 
             if (_visibilityController != null)
             {
+                // イベント購読解除
                 _visibilityController.OnTargetAcquired -= HandleAttackInput;
             }
         }
@@ -85,18 +90,19 @@ namespace TankSystem.Manager
             out ButtonState rightFire
         )
         {
-            // AI による移動入力計算を委譲
+            // AI による入力処理
+            leftStick = Vector2.zero;
             _tankAIManager.GetMovementInputTowardsTarget(transform, out leftStick);
+
+            leftFire = _attack;
+            leftFire.Update(_hasTarget);
+
+            // 以下は使用しない
             rightStick = Vector2.zero;
-
             turretRotation = 0f;
-
             inputModeChange = false;
             fireModeChange = false;
-
-            leftFire = _none;
             rightFire = _none;
-            rightFire.Update(_hasTarget);
         }
 
         /// <summary>
@@ -119,7 +125,7 @@ namespace TankSystem.Manager
         // ======================================================
 
         /// <summary>
-        /// ターゲット取得イベント受け取り
+        /// ターゲット取得の処理を行うイベントハンドラ
         /// </summary>
         /// <param name="target">ターゲット</param>
         private void HandleAttackInput(BaseTankRootManager target)

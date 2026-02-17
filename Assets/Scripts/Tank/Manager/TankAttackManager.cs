@@ -113,9 +113,6 @@ namespace TankSystem.Manager
         {
             // 視界コントローラー注入
             _visibilityController = visibilityController;
-
-            // 攻撃パラメーター初期化
-            UpdateAttackParameter(tankStatus);
         }
 
         // ======================================================

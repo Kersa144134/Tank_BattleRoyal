@@ -119,8 +119,6 @@ namespace TankSystem.Manager
             _trackController = trackController;
             _boundaryService = boundaryService;
 
-            UpdateMobilityParameters(tankStatus);
-
             // 操作対象の戦車 Transform を保持する
             _tankTransform = transform;
         }

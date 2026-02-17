@@ -113,10 +113,8 @@ namespace CollisionSystem.Data
         /// </summary>
         public void UpdateOBB()
         {
-            if (OBB is DynamicOBBData dynamicOBB)
-            {
-                dynamicOBB.Update(NextPosition, NextRotation);
-            }
+            // OBB ‚Éƒ[ƒ‹ƒh Transform ‚ğ“¯Šú‚·‚é
+            OBB.SyncTransform(NextPosition, NextRotation);
         }
 
         /// <summary>

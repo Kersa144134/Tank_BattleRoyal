@@ -321,6 +321,7 @@ namespace CollisionSystem.Manager
             // --------------------------------------------------
             // 戦車
             // --------------------------------------------------
+            // 戦車衝突チェック
             ExecuteCollisionService(_tankVsTankService, _tanks, _tanks);
 
             // 戦車衝突解決後に障害物衝突チェック

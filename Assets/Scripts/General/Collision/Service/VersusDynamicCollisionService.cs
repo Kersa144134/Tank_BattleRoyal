@@ -7,10 +7,8 @@
 // ======================================================
 
 using System;
-using System.Diagnostics;
 using CollisionSystem.Calculator;
 using CollisionSystem.Interface;
-using WeaponSystem.Data;
 
 namespace CollisionSystem.Service
 {

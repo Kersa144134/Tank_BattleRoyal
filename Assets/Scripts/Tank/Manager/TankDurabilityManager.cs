@@ -66,23 +66,6 @@ namespace TankSystem.Manager
         public event Action OnBroken;
 
         // ======================================================
-        // コンストラクタ
-        // ======================================================
-
-        /// <summary>
-        /// 耐久力管理クラスを生成する
-        /// </summary>
-        /// <param name="tankStatus">戦車のステータス</param>
-        public TankDurabilityManager(in TankStatus tankStatus)
-        {
-            // 初回はステータスから耐久最大値を算出
-            UpdateDurabilityParameter(tankStatus);
-            
-            // 初期耐久力を最大値に設定
-            _currentDurability = _maxDurability;
-        }
-
-        // ======================================================
         // パブリックメソッド
         // ======================================================
 

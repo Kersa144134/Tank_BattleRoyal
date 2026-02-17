@@ -42,23 +42,6 @@ namespace TankSystem.Manager
         private const float DEFENSE_MAX_VALUE_PER_STATUS = 9.0f;
 
         // ======================================================
-        // コンストラクタ
-        // ======================================================
-
-        /// <summary>
-        /// 防御力管理クラスを生成する
-        /// </summary>
-        /// <param name="tankStatus">戦車のステータス</param>
-        public TankDefenseManager(in TankStatus tankStatus)
-        {
-            // 初回はステータスから装甲最大値を算出
-            UpdateDefenseParameter(tankStatus);
-
-            // 初期装甲値は最大値に合わせる
-            _currentDefense = _maxDefense;
-        }
-
-        // ======================================================
         // パブリックメソッド
         // ======================================================
 

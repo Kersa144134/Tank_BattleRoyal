@@ -120,27 +120,26 @@ namespace TankSystem.Manager
         public event Action OnAmmoChanged;
 
         // ======================================================
-        // コンストラクタ
-        // ======================================================
-
-        /// <summary>
-        /// 戦車のエネルギー管理クラスを生成
-        /// </summary>
-        /// <param name="tankStatus">戦車ステータス</param>
-        public TankEnergyManager(in TankStatus tankStatus)
-        {
-            // 初回はステータスから燃料と弾薬の最大値を計算
-            UpdateEnergyParameter(tankStatus);
-
-            // 初期値を最大値に設定
-            _currentFuel = _maxFuel;
-            _currentAmmo = _maxAmmo;
-        }
-
-        // ======================================================
         // パブリックメソッド
         // ======================================================
 
+        /// <summary>
+        /// 戦車ステータスを元にパラメーターを初期化
+        /// </summary>
+        /// <param name="tankStatus">燃料・弾薬算出に使用する戦車ステータス</param>
+        public void InitialEnergyParameter(in TankStatus tankStatus)
+        {
+            // 最大値を計算
+            _maxFuel = BASE_FUEL_MAX_VALUE + tankStatus.Fuel * FUEL_MAX_MULTIPLIER;
+            _maxAmmo = BASE_AMMO_MAX_VALUE + tankStatus.Ammo * AMMO_MAX_MULTIPLIER;
+
+            _currentFuel = _maxFuel;
+            _currentAmmo = _maxAmmo;
+
+            OnFuelChanged?.Invoke();
+            OnAmmoChanged?.Invoke();
+        }
+        
         /// <summary>
         /// Fuel / Ammo ステータスを元に最大値を再計算
         /// </summary>

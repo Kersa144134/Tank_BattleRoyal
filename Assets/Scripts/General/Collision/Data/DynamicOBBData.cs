@@ -2,33 +2,26 @@
 // DynamicOBBData.cs
 // 作成者   : 高橋一翔
 // 作成日時 : 2025-12-16
-// 更新日時 : 2025-12-18
+// 更新日時 : 2026-02-17
 // 概要     : 動的オブジェクト用 OBB データ
 // ======================================================
 
 using UnityEngine;
-using CollisionSystem.Interface;
 
 namespace CollisionSystem.Data
 {
     /// <summary>
-    /// BaseCollisionContext の移動予定座標・回転を基準に OBB を更新する汎用動的 OBB
+    /// 動的 OBB データ
     /// </summary>
-    public class DynamicOBBData : IOBBData
+    public sealed class DynamicOBBData : BaseOBBData
     {
-        // ======================================================
-        // プロパティ
-        // ======================================================
-
-        public Vector3 Center { get; private set; }
-        public Vector3 HalfSize { get; private set; }
-        public Quaternion Rotation { get; private set; }
-
         // ======================================================
         // フィールド
         // ======================================================
 
-        /// <summary>ローカル中心オフセット</summary>
+        /// <summary>
+        /// Transform 原点からのローカル中心オフセット
+        /// </summary>
         private readonly Vector3 _localCenter;
 
         // ======================================================
@@ -40,10 +33,16 @@ namespace CollisionSystem.Data
             in Vector3 halfSize
         )
         {
+            // ローカル中心オフセットを保持する
             _localCenter = localCenter;
+
+            // 半サイズを設定する
             HalfSize = halfSize;
 
+            // 初期中心をゼロで初期化する
             Center = Vector3.zero;
+
+            // 初期回転を単位回転に設定する
             Rotation = Quaternion.identity;
         }
 
@@ -52,14 +51,21 @@ namespace CollisionSystem.Data
         // ======================================================
 
         /// <summary>
-        /// BaseCollisionContext の予定座標・回転を基準に毎フレーム OBB を更新
+        /// ワールド Transform を同期する
         /// </summary>
-        /// <param name="plannedPosition">基準となるワールド座標</param>
-        /// <param name="plannedRotation">基準となる回転</param>
-        public void Update(in Vector3 plannedPosition, in Quaternion plannedRotation)
+        public override void SyncTransform(
+            in Vector3 worldPosition,
+            in Quaternion worldRotation
+        )
         {
-            Center = plannedPosition + _localCenter;
-            Rotation = plannedRotation;
+            // 回転をローカル中心に適用する
+            Vector3 rotatedOffset = worldRotation * _localCenter;
+
+            // 回転補正済み中心を算出する
+            Vector3 worldCenter = worldPosition + rotatedOffset;
+
+            // 基底処理で中心と回転を設定する
+            SetTransform(worldCenter, worldRotation);
         }
     }
 }

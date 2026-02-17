@@ -67,10 +67,10 @@ namespace TankSystem.Manager
         // 防御力
         // --------------------------------------------------
         /// <summary>戦車の耐久力管理クラス</summary>
-        private TankDurabilityManager _durabilityManager;
-
+        private TankDurabilityManager _durabilityManager = new TankDurabilityManager();
+        
         /// <summary>戦車の防御力管理クラス</summary>
-        private TankDefenseManager _defenseManager;
+        private TankDefenseManager _defenseManager = new TankDefenseManager();
 
         // --------------------------------------------------
         // 機動力
@@ -85,7 +85,7 @@ namespace TankSystem.Manager
         // エネルギー
         // --------------------------------------------------
         /// <summary>戦車のエネルギー管理クラス</summary>
-        protected TankEnergyManager _energyManager;
+        protected TankEnergyManager _energyManager = new TankEnergyManager();
 
         // --------------------------------------------------
         // 視界
@@ -408,6 +408,9 @@ namespace TankSystem.Manager
             if (phase == PhaseType.Play)
             {
                 _isInGame = true;
+
+                _energyManager.InitialEnergyParameter(_tankStatus);
+                UpdateParameteres();
             }
         }
 
@@ -430,9 +433,6 @@ namespace TankSystem.Manager
             _attackManager = new TankAttackManager(_tankStatus, _visibilityController);
             _turretController = new TankTurretController(_tankStatus, _turret);
 
-            _defenseManager = new TankDefenseManager(_tankStatus);
-            _durabilityManager = new TankDurabilityManager(_tankStatus);
-
             _boundaryService = new TankMovementBoundaryService(MOVEMENT_ALLOWED_RADIUS);
             _mobilityManager = new TankMobilityManager(
                 _tankStatus,
@@ -440,8 +440,6 @@ namespace TankSystem.Manager
                 _boundaryService,
                 transform
             );
-
-            _energyManager = new TankEnergyManager(_tankStatus);
 
             _effectManager = new TankEffectManager(transform);
 
@@ -452,7 +450,7 @@ namespace TankSystem.Manager
 
         protected virtual void OnExitInternal()
         {
-            // イベント購読の解除
+            // イベント購読解除
             _attackManager.OnFireBullet -= HandleFireBullet;
             _durabilityManager.OnBroken -= HandleBroken;
         }
@@ -522,15 +520,11 @@ namespace TankSystem.Manager
                 return;
             }
 
+            // ステータス更新処理
             _tankStatus.IncreaseParameter(param, amount);
 
-            // パラメーター更新処理
-            _attackManager.UpdateAttackParameter(_tankStatus);
-            _energyManager.UpdateEnergyParameter(_tankStatus);
-            _defenseManager.UpdateDefenseParameter(_tankStatus);
-            _durabilityManager.UpdateDurabilityParameter(_tankStatus);
-            _mobilityManager.UpdateMobilityParameters(_tankStatus);
-            _turretController.UpdateTurretParameter(_tankStatus);
+            // マネージャー更新処理
+            UpdateParameteres();
 
             if (param == TankParam.Fuel && amount > 0)
             {
@@ -592,6 +586,26 @@ namespace TankSystem.Manager
             }
 
             NextPosition += resolveVector;
+        }
+
+        /// <summary>
+        /// 各マネージャークラスにパラメーターを反映
+        /// </summary>
+        public void UpdateParameteres()
+        {
+            // 破壊済みの場合は処理なし
+            if (_isBroken)
+            {
+                return;
+            }
+
+            // パラメーター更新処理
+            _attackManager.UpdateAttackParameter(_tankStatus);
+            _energyManager.UpdateEnergyParameter(_tankStatus);
+            _defenseManager.UpdateDefenseParameter(_tankStatus);
+            _durabilityManager.UpdateDurabilityParameter(_tankStatus);
+            _mobilityManager.UpdateMobilityParameters(_tankStatus);
+            _turretController.UpdateTurretParameter(_tankStatus);
         }
 
         // ======================================================
