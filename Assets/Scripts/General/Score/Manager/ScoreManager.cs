@@ -16,17 +16,28 @@ namespace ScoreSystem.Manager
     public sealed class ScoreManager : MonoBehaviour
     {
         // ======================================================
-        // フィールド
+        // シングルトン
         // ======================================================
 
         /// <summary>シングルトンインスタンス</summary>
         public static ScoreManager Instance { get; private set; }
 
+        // ======================================================
+        // フィールド
+        // ======================================================
+
         /// <summary>累計スコア</summary>
-        public int TotalScore { get; private set; }
+        private int _totalScore;
 
         /// <summary>累積加算用カウンター</summary>
         private int _cumulativeCount;
+
+        // ======================================================
+        // プロパティ
+        // ======================================================
+
+        /// <summary>累計スコア</summary>
+        public int TotalScore => _totalScore;
 
         // ======================================================
         // Unity イベント
@@ -45,7 +56,7 @@ namespace ScoreSystem.Manager
             DontDestroyOnLoad(gameObject);
 
             // 初期化
-            TotalScore = 0;
+            _totalScore = 0;
             _cumulativeCount = 0;
         }
 
@@ -60,7 +71,7 @@ namespace ScoreSystem.Manager
         /// <param name="score">加算する固定スコア</param>
         public void AddFixedScore(int score = 1)
         {
-            TotalScore += score;
+            _totalScore += score;
         }
 
         /// <summary>
@@ -73,7 +84,7 @@ namespace ScoreSystem.Manager
         {
             _cumulativeCount++;
             int scoreToAdd = _cumulativeCount * baseScore;
-            TotalScore += scoreToAdd;
+            _totalScore += scoreToAdd;
         }
 
         /// <summary>
@@ -82,7 +93,7 @@ namespace ScoreSystem.Manager
         /// </summary>
         public void ResetScore()
         {
-            TotalScore = 0;
+            _totalScore = 0;
             _cumulativeCount = 0;
         }
     }
