@@ -7,10 +7,11 @@
 //            BaseTankRootManager を継承し、入力処理をプレイヤー操作に差し替える
 // ======================================================
 
+using UnityEngine;
 using CollisionSystem.Data;
 using InputSystem.Data;
 using InputSystem.Manager;
-using UnityEngine;
+using SoundSystem.Manager;
 
 namespace TankSystem.Manager
 {
@@ -38,8 +39,21 @@ namespace TankSystem.Manager
         public TrackInputMode InputMode => _inputManager.InputMode;
 
         // ======================================================
+        // IUpdatable 派生イベント
+        // ======================================================
+
+        protected override void OnEnterInternal()
+        {
+            base.OnEnterInternal();
+
+            // リスナーセット
+            SoundManager.Instance?.SetListenerTransform(transform);
+        }
+        
+        // ======================================================
         // 抽象メソッド
         // ======================================================
+
 
         /// <summary>
         /// 毎フレーム呼び出される入力更新処理

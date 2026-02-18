@@ -14,6 +14,7 @@ using ItemSystem.Data;
 using SceneSystem.Data;
 using SceneSystem.Interface;
 using SceneSystem.Manager;
+using SoundSystem.Manager;
 using TankSystem.Manager;
 using UISystem.Controller;
 
@@ -575,6 +576,14 @@ namespace UISystem.Manager
         // アニメーションイベント
         // --------------------------------------------------
         /// <summary>
+        /// Ready フェーズ SE 開始時に呼ばれる処理
+        /// </summary>
+        public void ReadyPhaseSeStart()
+        {
+            SoundManager.Instance?.PlaySE(1);
+        }
+
+        /// <summary>
         /// Ready フェーズアニメーション開始時に呼ばれる処理
         /// </summary>
         public void ReadyPhaseAnimationStart()
@@ -601,6 +610,8 @@ namespace UISystem.Manager
         {
             _playAnimator?.Play(HIDE_ANIMATION_NAME, 0, 0f);
             _notPlayAnimator?.Play(FINISH_ANIMATION_NAME, 0, 0f);
+
+            SoundManager.Instance?.PlaySE(2);
         }
 
         /// <summary>

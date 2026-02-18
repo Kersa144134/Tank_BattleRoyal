@@ -15,6 +15,7 @@ using InputSystem.Manager;
 using ItemSystem.Data;
 using SceneSystem.Data;
 using ScoreSystem.Manager;
+using SoundSystem.Manager;
 using TankSystem.Manager;
 using WeaponSystem.Data;
 
@@ -329,6 +330,8 @@ namespace SceneSystem.Utility
         private void HandleFireModeChangeButtonPressed()
         {
             _context.MainUIManager?.UpdateBulletIcons();
+
+            SoundManager.Instance?.PlaySE(3);
         }
 
         /// <summary>
@@ -399,6 +402,8 @@ namespace SceneSystem.Utility
             {
                 tank.EnergyManager.ConsumeFuel();
                 tank.EnergyManager.ConsumeAmmo();
+
+                SoundManager.Instance?.PlaySE(4);
             }
         }
 
@@ -448,6 +453,15 @@ namespace SceneSystem.Utility
                 _context.MainUIManager?.NotifyItemAcquired(itemSlot.ItemData.Name, itemSlot.ItemData.Type);
 
                 ScoreManager.Instance.AddFixedScore();
+
+                if (itemSlot.ItemData.Type == ItemType.ParamIncrease)
+                {
+                    SoundManager.Instance?.PlaySE(6);
+                }
+                else if (itemSlot.ItemData.Type == ItemType.ParamDecrease)
+                {
+                    SoundManager.Instance?.PlaySE(7);
+                }
             }
         }
 
@@ -464,6 +478,12 @@ namespace SceneSystem.Utility
             if (TankId != 1)
             {
                 ScoreManager.Instance.AddCumulativeScore();
+
+                SoundManager.Instance?.PlaySE(9);
+            }
+            else
+            {
+                SoundManager.Instance?.PlaySE(8);
             }
         }
 
@@ -501,6 +521,8 @@ namespace SceneSystem.Utility
 
             _context.SceneObjectRegistry?.UnregisterBullet(bullet);
             _context.CollisionManager?.UnregisterBullet(bullet);
+
+            SoundManager.Instance?.PlaySE(5);
         }
 
         /// <summary>

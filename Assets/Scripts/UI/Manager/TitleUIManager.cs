@@ -7,9 +7,9 @@
 // ======================================================
 
 using System;
-using System.Diagnostics;
 using InputSystem.Manager;
 using SceneSystem.Interface;
+using SoundSystem.Manager;
 
 namespace UISystem.Manager
 {
@@ -72,6 +72,15 @@ namespace UISystem.Manager
         // --------------------------------------------------
         // アニメーションイベント
         // --------------------------------------------------
+        /// <summary>
+        /// Title フェーズ SE 開始時に呼ばれる処理
+        /// </summary>
+        public void TitlePhaseSeStart()
+        {
+            SoundManager.Instance?.PlaySE(0);
+            SoundManager.Instance?.PlayBGM(0);
+        }
+
         /// <summary>
         /// Title フェーズアニメーション開始時に呼ばれる処理
         /// </summary>
