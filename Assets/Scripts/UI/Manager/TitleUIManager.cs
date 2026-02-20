@@ -79,6 +79,7 @@ namespace UISystem.Manager
         {
             SoundManager.Instance?.PlaySE(0);
             SoundManager.Instance?.PlayBGM(0);
+            SoundManager.Instance?.FadeBGM(0, SoundManager.FadeType.FadeIn);
         }
 
         /// <summary>

@@ -7,9 +7,10 @@
 // ======================================================
 
 using System;
-using System.Diagnostics;
 using InputSystem.Manager;
 using SceneSystem.Interface;
+using SoundSystem.Manager;
+
 namespace UISystem.Manager
 {
     /// <summary>
@@ -88,6 +89,7 @@ namespace UISystem.Manager
         public void ResultPhaseAnimationFinish()
         {
             OnResultPhaseAnimationFinished?.Invoke();
+            SoundManager.Instance?.StopBGM();
         }
 
         /// <summary>

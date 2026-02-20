@@ -50,7 +50,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _bgmSets:
   - Source: {fileID: 9213288161320275737}
-    Clip: {fileID: 8300000, guid: e18d801b3e6637e48b91d8e444a9cba7, type: 3}
+    Clip: {fileID: 8300000, guid: d5530d083578ee5458842d11d8005955, type: 3}
   _fadeDuration: 2
   _lowPassTargetFrequency: 500
   _lowPassTransition: 2

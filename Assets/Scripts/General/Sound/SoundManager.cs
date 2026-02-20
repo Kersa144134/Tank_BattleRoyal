@@ -241,7 +241,7 @@ namespace SoundSystem.Manager
             if (_bgmSets == null || index < 0 || index >= _bgmSets.Length)
                 return;
 
-            var bgm = _bgmSets[index];
+            BgmSet bgm = _bgmSets[index];
 
             // Source や Clip が未設定なら再生なし
             if (bgm.Source == null || bgm.Clip == null)

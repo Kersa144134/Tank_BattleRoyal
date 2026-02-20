@@ -659,6 +659,8 @@ namespace UISystem.Manager
         public void FadeInAnimationStart()
         {
             _fade?.FadeIn(FADE_TIME);
+
+            SoundManager.Instance?.FadeBGM(0, SoundManager.FadeType.FadeOut);
         }
 
         /// <summary>
