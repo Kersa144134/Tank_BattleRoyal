@@ -75,7 +75,7 @@ namespace SoundSystem.Manager
         [SerializeField] private AudioClip[] _seClips;
 
         /// <summary>SE再生距離の最大値</summary>
-        [SerializeField] private float _seMaxDistance = 15f;
+        [SerializeField] private float _seMaxDistance = 100f;
 
         // ======================================================
         // フィールド
@@ -221,12 +221,25 @@ namespace SoundSystem.Manager
         // リスナー
         // --------------------------------------------------
         /// <summary>
-        /// サウンドリスナーの基準Transformを設定
+        /// サウンドリスナーの基準 Transform を設定
         /// </summary>
         /// <param name="listener">リスナーとなるTransform</param>
         public void SetListenerTransform(in Transform listener)
         {
+            if (_listenerTransform != null)
+            {
+                return;
+            }
+
             _listenerTransform = listener;
+        }
+
+        /// <summary>
+        /// サウンドリスナーの基準 Transform をリセット
+        /// </summary>
+        public void ResetListenerTransform()
+        {
+            _listenerTransform = null;
         }
 
         // --------------------------------------------------
@@ -346,22 +359,28 @@ namespace SoundSystem.Manager
                 return;
             }
 
-            // リスナー位置決定
-            Vector3 listenerPos = _listenerTransform != null ? _listenerTransform.position : Vector3.zero;
+            // 音発生位置なしの場合、最大音量で SE 再生
+            if (position == null)
+            {
+                _seSource.PlayOneShot(_seClips[index], 1f);
+                return;
+            }
 
-            // 発生位置決定
-            Vector3 sourcePos = position ?? listenerPos;
+            // リスナー位置取得
+            Vector3 listenerPos = _listenerTransform != null
+                ? _listenerTransform.position
+                : Vector3.zero;
 
-            // リスナーからの距離計算
-            float distance = Vector3.Distance(listenerPos, sourcePos);
+            // 距離計算
+            float distance = Vector3.Distance(listenerPos, position.Value);
 
-            // 最大距離を超える場合は再生しない
+            // 最大距離外は再生なし
             if (distance > _seMaxDistance)
             {
                 return;
             }
 
-            // 距離に応じて音量を線形補正
+            // 距離による音量補正
             float volume = 1f - (distance / _seMaxDistance);
 
             // SE 再生

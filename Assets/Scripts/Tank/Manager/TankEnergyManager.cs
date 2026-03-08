@@ -73,7 +73,7 @@ namespace TankSystem.Manager
         /// <summary>
         /// Ammo ステータスが 0 のときの弾薬最大値の基準値
         /// </summary>
-        private const int BASE_AMMO_MAX_VALUE = 10;
+        private const int BASE_AMMO_MAX_VALUE = 20;
 
         /// <summary>
         /// 攻撃 1 回あたりの燃料消費倍率
@@ -102,12 +102,12 @@ namespace TankSystem.Manager
         /// Ammo ステータス 1 あたりの弾薬最大値加算量
         /// </summary>
         /// 
-        private const int AMMO_MAX_MULTIPLIER = 1;
+        private const int AMMO_MAX_MULTIPLIER = 2;
 
         /// <summary>
         /// エリア内で弾薬が回復するまでに必要な経過秒数の倍率加算量
         /// </summary>
-        private const float AREA_AMMO_REFILL_INTERVAL_MULTIPLIER = 0.75f;
+        private const float AREA_AMMO_REFILL_INTERVAL_MULTIPLIER = 0.1f;
 
         // ======================================================
         // イベント
@@ -181,7 +181,7 @@ namespace TankSystem.Manager
         /// 弾薬を消費
         /// </summary>
         /// <param name="amount">消費量</param>
-        public void ConsumeAmmo(in int amount = AMMO_MAX_MULTIPLIER)
+        public void ConsumeAmmo(in int amount = 1)
         {
             if (amount <= 0 || _isAmmoEmpty)
             {
@@ -280,7 +280,7 @@ namespace TankSystem.Manager
             _areaIntrusionTimer = 0f;
 
             // 弾薬を 1 つ補充
-            RefillAmmo();
+            RefillAmmo(1);
         }
     }
 }

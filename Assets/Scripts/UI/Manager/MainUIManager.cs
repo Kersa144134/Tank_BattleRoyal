@@ -53,6 +53,10 @@ namespace UISystem.Manager
         // 弾丸アイコン
         // --------------------------------------------------
         [Header("弾丸アイコン")]
+        /// <summary>弾丸アイコン用アニメーター</summary>
+        [SerializeField]
+        private Animator _ammoAnimator;
+
         /// <summary>弾丸アイコン Image 配列</summary>
         [SerializeField]
         private Image[] _bulletIconImages;
@@ -247,7 +251,7 @@ namespace UISystem.Manager
         public event Action OnReadyPhaseAnimationFinished;
 
         /// <summary>Finish フェーズアニメーション終了時</summary>
-        public event Action<float> OnFinishPhaseAnimationFinished;
+        public event Action OnFinishPhaseAnimationFinished;
 
         /// <summary>撃破アニメーション開始時</summary>
         public event Action<float> OnFlashAnimationStarted;
@@ -493,7 +497,7 @@ namespace UISystem.Manager
             _ammoText.SetText(AMMO_FORMAT, currentAmmo, maxAmmo);
 
             // アニメーションを再生
-            _playAnimator?.Play(AMMO_UP_ANIMATION_NAME, 0, 0f);
+            _ammoAnimator?.Play(AMMO_UP_ANIMATION_NAME, 0, 0f);
         }
 
         /// <summary>
@@ -621,7 +625,7 @@ namespace UISystem.Manager
         {
             _fade.FadeIn(FADE_TIME);
 
-            OnFinishPhaseAnimationFinished?.Invoke(DEFAULT_TIME_SCALE);
+            OnFinishPhaseAnimationFinished?.Invoke();
         }
 
         /// <summary>

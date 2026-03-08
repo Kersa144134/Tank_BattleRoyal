@@ -239,7 +239,57 @@ namespace TankSystem.Manager
             OnEnterInternal();
         }
 
-        public virtual void OnUpdate(in float unscaledDeltaTime, in float elapsedTime)
+        public void OnUpdate(in float unscaledDeltaTime, in float elapsedTime)
+        {
+            OnUpdateInternal(unscaledDeltaTime, elapsedTime);
+        }
+
+        public void OnLateUpdate(in float unscaledDeltaTime)
+        {
+            OnLateUpdateInternal(unscaledDeltaTime);
+        }
+
+        public void OnExit()
+        {
+            OnExitInternal();
+        }
+
+        public void OnPhaseEnter(in PhaseType phase)
+        {
+            OnPhaseEnterInternal(phase);
+        }
+
+        public void OnPhaseExit(in PhaseType phase)
+        {
+            OnPhaseExitInternal(phase);
+        }
+
+        // ======================================================
+        // IUpdatable 派生イベント
+        // ======================================================
+
+        protected virtual void OnEnterInternal()
+        {
+            _visibilityController = new TankVisibilityController(_fieldOfViewCalculator, transform, _turret);
+            _attackManager = new TankAttackManager(_tankStatus, _visibilityController);
+            _turretController = new TankTurretController(_tankStatus, _turret);
+
+            _boundaryService = new TankMovementBoundaryService(MOVEMENT_ALLOWED_RADIUS);
+            _mobilityManager = new TankMobilityManager(
+                _tankStatus,
+                _trackController,
+                _boundaryService,
+                transform
+            );
+
+            _effectManager = new TankEffectManager(transform);
+
+            // イベント購読
+            _attackManager.OnFireBullet += HandleFireBullet;
+            _durabilityManager.OnBroken += HandleBroken;
+        }
+
+        protected virtual void OnUpdateInternal(in float unscaledDeltaTime, in float elapsedTime)
         {
             // 破壊済みの場合は処理なし
             if (_isBroken)
@@ -358,7 +408,7 @@ namespace TankSystem.Manager
             _effectManager.UpdateForceField(unscaledDeltaTime);
         }
 
-        public virtual void OnLateUpdate(in float unscaledDeltaTime)
+        protected virtual void OnLateUpdateInternal(in float unscaledDeltaTime)
         {
             // 破壊済みの場合は処理なし
             if (_isBroken)
@@ -394,62 +444,37 @@ namespace TankSystem.Manager
             }
         }
 
-        public virtual void OnExit()
+        protected virtual void OnExitInternal()
         {
-            OnEnterInternal();
+            // イベント購読解除
+            _attackManager.OnFireBullet -= HandleFireBullet;
+            _durabilityManager.OnBroken -= HandleBroken;
         }
 
-        public void OnPhaseEnter(in PhaseType phase)
+        protected virtual void OnPhaseEnterInternal(in PhaseType phase)
         {
             // Play フェーズ開始時にインゲーム状態
             if (phase == PhaseType.Play)
             {
                 _isInGame = true;
 
-                _energyManager.InitialEnergyParameter(_tankStatus);
                 UpdateParameteres();
             }
         }
 
-        public void OnPhaseExit(in PhaseType phase)
+        protected virtual void OnPhaseExitInternal(in PhaseType phase)
         {
+            // Ready フェーズ終了時にパラメーター初期化
+            if (phase == PhaseType.Ready)
+            {
+                _energyManager.InitialEnergyParameter(_tankStatus);
+            }
+            
             // Play フェーズ終了時にインゲーム状態解除
             if (phase == PhaseType.Play)
             {
                 _isInGame = false;
             }
-        }
-
-        // ======================================================
-        // IUpdatable 派生イベント
-        // ======================================================
-
-        protected virtual void OnEnterInternal()
-        {
-            _visibilityController = new TankVisibilityController(_fieldOfViewCalculator, transform, _turret);
-            _attackManager = new TankAttackManager(_tankStatus, _visibilityController);
-            _turretController = new TankTurretController(_tankStatus, _turret);
-
-            _boundaryService = new TankMovementBoundaryService(MOVEMENT_ALLOWED_RADIUS);
-            _mobilityManager = new TankMobilityManager(
-                _tankStatus,
-                _trackController,
-                _boundaryService,
-                transform
-            );
-
-            _effectManager = new TankEffectManager(transform);
-
-            // イベント購読
-            _attackManager.OnFireBullet += HandleFireBullet;
-            _durabilityManager.OnBroken += HandleBroken;
-        }
-
-        protected virtual void OnExitInternal()
-        {
-            // イベント購読解除
-            _attackManager.OnFireBullet -= HandleFireBullet;
-            _durabilityManager.OnBroken -= HandleBroken;
         }
 
         // ======================================================
@@ -462,12 +487,12 @@ namespace TankSystem.Manager
         /// <param name="damage">受けるダメージ量</param>
         public void TakeDamage(in Transform target, in float damage)
         {
-            // 破壊済みの場合は処理なし
-            if (_isBroken)
+            // インゲーム状態でない、または破壊済みの場合は処理なし
+            if (!_isInGame || _isBroken)
             {
                 return;
             }
-            
+
             // 防御力を考慮した軽減後ダメージを算出
             float reducedDamage = _defenseManager.CalculateReducedDamage(damage);
 
@@ -490,8 +515,8 @@ namespace TankSystem.Manager
         /// <param name="armorDamage">装甲へのダメージ量</param>
         public void TakeArmorDamage(in float armorDamage)
         {
-            // 破壊済みの場合は処理なし
-            if (_isBroken)
+            // インゲーム状態でない、または破壊済みの場合は処理なし
+            if (!_isInGame || _isBroken)
             {
                 return;
             }
@@ -511,8 +536,8 @@ namespace TankSystem.Manager
         /// <param name="amount">増加量</param>
         public void IncreaseParameter(in TankParam param, in int amount)
         {
-            // 破壊済みの場合は処理なし
-            if (_isBroken)
+            // インゲーム状態でない、または破壊済みの場合は処理なし
+            if (!_isInGame || _isBroken)
             {
                 return;
             }
@@ -543,9 +568,9 @@ namespace TankSystem.Manager
             {
                 return;
             }
-            
-            // 破壊済みの場合は処理なし
-            if (_isBroken)
+
+            // インゲーム状態でない、または破壊済みの場合は処理なし
+            if (!_isInGame || _isBroken)
             {
                 return;
             }
@@ -559,6 +584,12 @@ namespace TankSystem.Manager
         /// <param name="isActive">true で表示、false で非表示</param>
         public void ChangeTargetIcon(bool isActive)
         {
+            // インゲーム状態でない場合は処理なし
+            if (!_isInGame)
+            {
+                return;
+            }
+
             // 破壊済みの場合は強制非表示
             if (_isBroken)
             {
@@ -590,8 +621,8 @@ namespace TankSystem.Manager
         /// </summary>
         public void UpdateParameteres()
         {
-            // 破壊済みの場合は処理なし
-            if (_isBroken)
+            // インゲーム状態でない、または破壊済みの場合は処理なし
+            if (!_isInGame || _isBroken)
             {
                 return;
             }
@@ -606,7 +637,7 @@ namespace TankSystem.Manager
         }
 
         // ======================================================
-        // イベントハンドラ
+        // プライベートメソッド
         // ======================================================
 
         /// <summary>
@@ -617,8 +648,8 @@ namespace TankSystem.Manager
         /// <param name="target">弾丸の回転方向に指定するターゲット Transform</param>
         private void HandleFireBullet(BulletType type, Transform target = null)
         {
-            // 破壊済みの場合は処理なし
-            if (_isBroken)
+            // インゲーム状態でない、または破壊済みの場合は処理なし
+            if (!_isInGame || _isBroken)
             {
                 return;
             }
@@ -639,8 +670,8 @@ namespace TankSystem.Manager
         /// </summary>
         private void HandleBroken()
         {
-            // 破壊済みの場合は処理なし
-            if (_isBroken)
+            // インゲーム状態でない、または破壊済みの場合は処理なし
+            if (!_isInGame || _isBroken)
             {
                 return;
             }

@@ -522,7 +522,7 @@ namespace SceneSystem.Utility
             _context.SceneObjectRegistry?.UnregisterBullet(bullet);
             _context.CollisionManager?.UnregisterBullet(bullet);
 
-            SoundManager.Instance?.PlaySE(5);
+            SoundManager.Instance?.PlaySE(5, bullet.Transform.position);
         }
 
         /// <summary>
@@ -643,10 +643,8 @@ namespace SceneSystem.Utility
         /// <summary>
         /// Finish フェーズアニメーション終了時に呼ばれる処理
         /// </summary>
-        private void HandleFinishPhaseAnimationFinish(float timeScale)
+        private void HandleFinishPhaseAnimationFinish()
         {
-            _context.SceneObjectRegistry?.ChangeTimeScale(timeScale);
-
             OnPhaseChanged?.Invoke(PhaseType.Result);
         }
 

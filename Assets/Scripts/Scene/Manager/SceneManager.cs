@@ -129,7 +129,7 @@ namespace SceneSystem.Manager
 
             // Initializer を通じた参照初期化
             _initializer = new UpdatableInitializer(_updatableCollector);
-            UpdatableContext context = _initializer.Initialize(_components);
+            UpdatableContext context = _initializer.InitializeUpdatables(_components);
 
             // シーンイベント初期化
             _sceneEventRouter = new SceneEventRouter(context);
@@ -242,6 +242,8 @@ namespace SceneSystem.Manager
             {
                 return;
             }
+
+            _initializer.FinalizeUpdatables();
 
             // 現在シーンを更新
             _currentScene = sceneName;

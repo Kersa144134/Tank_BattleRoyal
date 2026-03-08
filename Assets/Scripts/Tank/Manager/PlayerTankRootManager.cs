@@ -12,6 +12,7 @@ using CollisionSystem.Data;
 using InputSystem.Data;
 using InputSystem.Manager;
 using SoundSystem.Manager;
+using SceneSystem.Data;
 
 namespace TankSystem.Manager
 {
@@ -42,18 +43,26 @@ namespace TankSystem.Manager
         // IUpdatable 派生イベント
         // ======================================================
 
-        protected override void OnEnterInternal()
+        protected override void OnExitInternal()
         {
-            base.OnEnterInternal();
+            base.OnExitInternal();
 
-            // リスナーセット
-            SoundManager.Instance?.SetListenerTransform(transform);
+            SoundManager.Instance?.ResetListenerTransform();
         }
-        
+
+        protected override void OnPhaseEnterInternal(in PhaseType phase)
+        {
+            base.OnPhaseEnterInternal(phase);
+
+            if (phase == PhaseType.Play)
+            {
+                SoundManager.Instance?.SetListenerTransform(transform);
+            }
+        }
+
         // ======================================================
         // 抽象メソッド
         // ======================================================
-
 
         /// <summary>
         /// 毎フレーム呼び出される入力更新処理

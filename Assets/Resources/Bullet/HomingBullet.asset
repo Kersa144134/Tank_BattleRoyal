@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: HomingBullet
   m_EditorClassIdentifier: 
   BulletType: 2
-  BulletSpeed: 1.5
-  Mass: 0.5
+  BulletSpeed: 2
+  Mass: 0.75
   ExplosiveRadius: 0
   PenetrationSpeed: 0
-  RotateSpeed: 45
+  RotateSpeed: 60
