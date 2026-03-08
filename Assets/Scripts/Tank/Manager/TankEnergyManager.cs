@@ -76,11 +76,6 @@ namespace TankSystem.Manager
         private const int BASE_AMMO_MAX_VALUE = 20;
 
         /// <summary>
-        /// UŒ‚ 1 ‰ñ‚ ‚½‚è‚Ì”R—¿Á”ï”{—¦
-        /// </summary>
-        private const float FUEL_CONSUMPTION_PER_ATTACK = 5.0f;
-
-        /// <summary>
         /// ƒGƒŠƒAN“ü‚Ì”R—¿‰ñ•œ—Ê
         /// </summary>
         private const float REFILL_FUEL_VALUE_BY_AREA = 0.1f;
@@ -153,13 +148,25 @@ namespace TankSystem.Manager
             // Å‘å’l‚ğŒvZ
             _maxFuel = BASE_FUEL_MAX_VALUE + tankStatus.Fuel * FUEL_MAX_MULTIPLIER;
             _maxAmmo = BASE_AMMO_MAX_VALUE + tankStatus.Ammo * AMMO_MAX_MULTIPLIER;
+
+            // ãŒÀ•â³
+            if (_currentFuel > _maxFuel)
+            {
+                _currentFuel = _maxFuel;
+                OnFuelChanged?.Invoke();
+            }
+            if (_currentAmmo > _maxAmmo)
+            {
+                _currentAmmo = _maxAmmo;
+                OnAmmoChanged?.Invoke();
+            }
         }
 
         /// <summary>
         /// ”R—¿‚ğÁ”ï
         /// </summary>
         /// <param name="amount">Á”ï—Ê</param>
-        public void ConsumeFuel(in float amount = FUEL_CONSUMPTION_PER_ATTACK)
+        public void ConsumeFuel(in float amount = 0f)
         {
             if (amount <= 0f || _isFuelEmpty)
             {

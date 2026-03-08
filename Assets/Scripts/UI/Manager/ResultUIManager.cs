@@ -89,7 +89,7 @@ namespace UISystem.Manager
         public void ResultPhaseAnimationFinish()
         {
             OnResultPhaseAnimationFinished?.Invoke();
-            SoundManager.Instance?.StopBGM();
+            SoundManager.Instance?.StopBGM(0);
         }
 
         /// <summary>

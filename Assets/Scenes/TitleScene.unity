@@ -300,6 +300,10 @@ PrefabInstance:
       propertyPath: '_seClips.Array.data[8]'
       value: 
       objectReference: {fileID: 8300000, guid: 4cc4ef29dc6f02a4c93995b88d2c3d94, type: 3}
+    - target: {fileID: 2919132603519446344, guid: 85c9c6f2a501c9a4081708535edb42eb, type: 3}
+      propertyPath: _bgmSets.Array.data[1].Clip
+      value: 
+      objectReference: {fileID: 8300000, guid: 19a95acfd1538014ba73ff6d7cd5d9ce, type: 3}
     - target: {fileID: 7033612596720962995, guid: 85c9c6f2a501c9a4081708535edb42eb, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0

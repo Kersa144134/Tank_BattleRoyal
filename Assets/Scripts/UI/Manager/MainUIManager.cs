@@ -14,6 +14,7 @@ using ItemSystem.Data;
 using SceneSystem.Data;
 using SceneSystem.Interface;
 using SceneSystem.Manager;
+using ScoreSystem.Manager;
 using SoundSystem.Manager;
 using TankSystem.Manager;
 using UISystem.Controller;
@@ -40,6 +41,14 @@ namespace UISystem.Manager
         /// </summary>
         [SerializeField]
         private Animator _cameraAnimator;
+
+        // --------------------------------------------------
+        // スコア
+        // --------------------------------------------------
+        [Header("スコア")]
+        /// <summary>スコアを表示するテキスト</summary>
+        [SerializeField]
+        private TextMeshProUGUI _scoreText;
 
         // --------------------------------------------------
         // タイマー
@@ -201,6 +210,14 @@ namespace UISystem.Manager
         private const string DESTROY_ANIMATION_NAME = "Destroy";
 
         // --------------------------------------------------
+        // スコア
+        // --------------------------------------------------
+        /// <summary>
+        /// スコア表示フォーマット（8桁）
+        /// </summary>
+        private const string SCORE_FORMAT = "SCORE {0:00000000}";
+
+        // --------------------------------------------------
         // タイマー
         // --------------------------------------------------
         /// <summary>
@@ -341,6 +358,12 @@ namespace UISystem.Manager
                         _logInsertDirection
                     );
             }
+
+            // スコア表示初期化
+            if (_scoreText != null)
+            {
+                _scoreText.SetText(SCORE_FORMAT, 0);
+            }
         }
 
         protected override void OnLateUpdateInternal(in float unscaledDeltaTime)
@@ -369,30 +392,40 @@ namespace UISystem.Manager
             _logRotationUIController?.Update(unscaledDeltaTime);
         }
 
-        // ======================================================
-        // IUpdatable 派生イベント
-        // ======================================================
-
         protected override void OnPhaseEnterInternal(in PhaseType phase)
         {
-            // Play フェーズ開始時にインゲーム状態
             if (phase == PhaseType.Play)
             {
+                // インゲーム状態
                 _isInGame = true;
             }
 
-            // Finish フェーズ開始時に Finish アニメーション再生
             if (phase == PhaseType.Finish)
             {
+                // Finish アニメーション再生、イベント購読解除
                 _effectAnimator?.Play(FINISH_ANIMATION_NAME, 0, 0f);
+
+                if (ScoreManager.Instance != null)
+                {
+                    // イベント購読解除
+                    ScoreManager.Instance.OnScoreChanged -= NotifyScoreChanged;
+                }
             }
         }
 
         protected override void OnPhaseExitInternal(in PhaseType phase)
         {
-            // Play フェーズ終了時にインゲーム状態解除
+            if (phase == PhaseType.Ready)
+            {
+                if (ScoreManager.Instance != null)
+                {
+                    // イベント購読
+                    ScoreManager.Instance.OnScoreChanged += NotifyScoreChanged;
+                }
+            }
             if (phase == PhaseType.Play)
             {
+                // インゲーム状態解除
                 _isInGame = false;
             }
         }
@@ -400,6 +433,27 @@ namespace UISystem.Manager
         // ======================================================
         // パブリックメソッド
         // ======================================================
+
+        /// <summary>
+        /// スコア変更時の処理を行う
+        /// </summary>
+        /// <param name="score">加算されるスコア値</param>
+        public void NotifyScoreChanged(int score)
+        {
+            if (_scoreText == null)
+            {
+                return;
+            }
+
+            // 現在スコア取得
+            int totalScore = ScoreManager.Instance?.TotalScore ?? 0;
+
+            // 8桁上限でクランプ
+            totalScore = Mathf.Clamp(totalScore, 0, ScoreManager.SCORE_MAX);
+
+            // フォーマットを使用して UI に反映
+            _scoreText.SetText(SCORE_FORMAT, totalScore);
+        }
 
         /// <summary>
         /// 経過時間と制限時間から残り時間を計算し、UI に表示する

@@ -61,7 +61,7 @@ namespace UISystem.Controller
         private const float LINE_SPACING_Y = 100.0f;
 
         /// <summary>ログ表示の基準X座標</summary>
-        private const float LOG_BASE_POSITION_X = -10.0f;
+        private const float LOG_BASE_POSITION_X = 10.0f;
 
         /// <summary>ログ表示1行目の基準Y座標</summary>
         private const float LOG_BASE_FIRST_POSITION_Y = -50.0f;

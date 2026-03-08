@@ -73,13 +73,27 @@ namespace UISystem.Manager
         // アニメーションイベント
         // --------------------------------------------------
         /// <summary>
+        /// Title フェーズ開始時に呼ばれる処理
+        /// </summary>
+        public void TitlePhaseStart()
+        {
+            SoundManager.Instance?.PlayBGM(1);
+            SoundManager.Instance?.SetBGMVolume(1, 0f);
+            SoundManager.Instance?.FadeBGM(1, SoundManager.FadeType.FadeIn);
+        }
+        
+        /// <summary>
         /// Title フェーズ SE 開始時に呼ばれる処理
         /// </summary>
         public void TitlePhaseSeStart()
         {
             SoundManager.Instance?.PlaySE(0);
+
             SoundManager.Instance?.PlayBGM(0);
+            SoundManager.Instance?.SetBGMVolume(0, 0f);
             SoundManager.Instance?.FadeBGM(0, SoundManager.FadeType.FadeIn);
+
+            SoundManager.Instance?.FadeBGM(1, SoundManager.FadeType.FadeOut);
         }
 
         /// <summary>

@@ -165,7 +165,10 @@ namespace TankSystem.Manager
         private const float MOVEMENT_ALLOWED_RADIUS = 315f;
 
         /// <summary>ˆÚ“®‘¬“x 1 ‚ ‚½‚è‚Ì”R—¿Á”ï”{—¦</summary>
-        private const float FUEL_CONSUMPTION_PER_SPEED = 0.001f;
+        private const float FUEL_CONSUMPTION_PER_SPEED = 0.0005f;
+
+        /// <summary>UŒ‚ 1 ‰ñ‚ ‚½‚è‚Ì”R—¿Á”ï”{—¦</summary>
+        public const float FUEL_CONSUMPTION_PER_ATTACK = 1.0f;
 
         // ======================================================
         // ƒCƒxƒ“ƒg

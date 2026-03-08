@@ -84,8 +84,8 @@ namespace SoundSystem.Manager
         /// <summary>SE に使用するサウンドリスナー基準 Transform</summary>
         private Transform _listenerTransform;
         
-        /// <summary>BGM オーディオソースにアタッチされた AudioLowPassFilter</summary>
-        private AudioLowPassFilter _lowPassFilter;
+        /// <summary>BGM オーディオソースにアタッチされた AudioLowPassFilter 配列</summary>
+        private AudioLowPassFilter[] _lowPassFilters;
 
         /// <summary>BGMセットごとのフェード中フラグ</summary>
         private bool[] _isFadingArray;
@@ -124,7 +124,6 @@ namespace SoundSystem.Manager
 
         private void Awake()
         {
-            // シングルトン制御
             if (Instance != null && Instance != this)
             {
                 Destroy(gameObject);
@@ -134,10 +133,20 @@ namespace SoundSystem.Manager
             Instance = this;
             DontDestroyOnLoad(gameObject);
 
-            // 最初の BGM セットの AudioSource からローパスフィルター取得
-            if (_bgmSets != null && _bgmSets.Length > 0 && _bgmSets[0].Source != null)
+            // LowPassFilter 配列初期化
+            if (_bgmSets != null && _bgmSets.Length > 0)
             {
-                _lowPassFilter = _bgmSets[0].Source.GetComponent<AudioLowPassFilter>();
+                _lowPassFilters = new AudioLowPassFilter[_bgmSets.Length];
+
+                for (int i = 0; i < _bgmSets.Length; i++)
+                {
+                    if (_bgmSets[i].Source == null)
+                    {
+                        continue;
+                    }
+
+                    _lowPassFilters[i] = _bgmSets[i].Source.GetComponent<AudioLowPassFilter>();
+                }
             }
 
             // BGM セット数に応じてフェード管理配列を初期化
@@ -158,7 +167,7 @@ namespace SoundSystem.Manager
                 return;
             }
 
-            // ==================================================
+            // --------------------------------------------------
             // BGM フェード更新
             // 各 BGM セットごとに個別の値を適用
             // --------------------------------------------------
@@ -192,20 +201,35 @@ namespace SoundSystem.Manager
 
             // --------------------------------------------------
             // ローパス補間更新
-            // 単一フィルターで全 BGM に同じ値を適用
+            // 全 BGM に同じローパス値を適用
             // --------------------------------------------------
-            if (_isLowPassActive && _lowPassFilter != null)
+            if (_isLowPassActive && _lowPassFilters != null)
             {
                 // 経過時間を加算
                 _lowPassElapsed += Time.deltaTime;
 
-                // 0〜1の補間係数に変換
-                float t = Mathf.Clamp01(_lowPassElapsed / _lowPassTransition);
+                // 補間係数
+                float t = (_lowPassTransition > 0f)
+                    ? Mathf.Clamp01(_lowPassElapsed / _lowPassTransition)
+                    : 1f;
 
-                // ローパス周波数補間
-                _lowPassFilter.cutoffFrequency = Mathf.Lerp(_lowPassStartFreq, _lowPassTargetFreq, t);
+                // 補間値計算
+                float cutoff = Mathf.Lerp(_lowPassStartFreq, _lowPassTargetFreq, t);
 
-                // 補間完了時にフラグを解除
+                // 全フィルターに適用
+                for (int i = 0; i < _lowPassFilters.Length; i++)
+                {
+                    AudioLowPassFilter filter = _lowPassFilters[i];
+
+                    if (filter == null)
+                    {
+                        continue;
+                    }
+
+                    filter.cutoffFrequency = cutoff;
+                }
+
+                // 補間完了
                 if (t >= 1f)
                 {
                     _isLowPassActive = false;
@@ -226,11 +250,6 @@ namespace SoundSystem.Manager
         /// <param name="listener">リスナーとなるTransform</param>
         public void SetListenerTransform(in Transform listener)
         {
-            if (_listenerTransform != null)
-            {
-                return;
-            }
-
             _listenerTransform = listener;
         }
 
@@ -252,13 +271,17 @@ namespace SoundSystem.Manager
         public void PlayBGM(in int index)
         {
             if (_bgmSets == null || index < 0 || index >= _bgmSets.Length)
+            {
                 return;
+            }
 
             BgmSet bgm = _bgmSets[index];
 
             // Source や Clip が未設定なら再生なし
             if (bgm.Source == null || bgm.Clip == null)
+            {
                 return;
+            }
 
             // Clip を設定して再生
             bgm.Source.clip = bgm.Clip;
@@ -323,18 +346,45 @@ namespace SoundSystem.Manager
         }
 
         /// <summary>
+        /// 指定インデックスの BGM ボリュームを設定
+        /// </summary>
+        /// <param name="index">BgmSets 配列のインデックス</param>
+        /// <param name="volume">指定する音量ボリューム</param>
+        public void SetBGMVolume(in int index, in float volume)
+        {
+            if (_bgmSets == null || index < 0 || index >= _bgmSets.Length)
+            {
+                return;
+            }
+
+            BgmSet bgm = _bgmSets[index];
+
+            // Source が未設定なら再生なし
+            if (bgm.Source == null)
+            {
+                return;
+            }
+
+            // ボリュームを設定
+            bgm.Source.volume = volume;
+        }
+
+        /// <summary>
         /// ローパスフィルター ON / OFF
         /// </summary>
         /// <param name="enable">ON なら true、OFF なら false</param>
         public void SetBgmLowPass(in bool enable)
         {
-            if (_lowPassFilter == null)
+            if (_lowPassFilters == null)
             {
                 return;
             }
 
             // 補間開始値を現在の周波数で設定
-            _lowPassStartFreq = _lowPassFilter.cutoffFrequency;
+            if (_lowPassFilters.Length > 0 && _lowPassFilters[0] != null)
+            {
+                _lowPassStartFreq = _lowPassFilters[0].cutoffFrequency;
+            }
 
             // 補間目標値を設定
             _lowPassTargetFreq = enable ? _lowPassTargetFrequency : MAX_LOW_PASS_FREQUENCY;
@@ -354,7 +404,7 @@ namespace SoundSystem.Manager
         /// <param name="position">音発生位置、null ならリスナー位置扱い</param>
         public void PlaySE(in int index, in Vector3? position = null)
         {
-            if (_seClips == null || index < 0 || index >= _seClips.Length)
+            if (_seSource == null || _seClips == null || index < 0 || index >= _seClips.Length)
             {
                 return;
             }

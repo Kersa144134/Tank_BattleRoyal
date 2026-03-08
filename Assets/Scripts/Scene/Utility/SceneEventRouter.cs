@@ -43,6 +43,13 @@ namespace SceneSystem.Utility
         private readonly List<BaseCollisionContext> _overlapResults = new List<BaseCollisionContext>();
 
         // ======================================================
+        // 定数
+        // ======================================================
+
+        /// <summary>戦車撃破時の加算スコア</summary>
+        private const int DEFEAT_TANK_SCORE = 100;
+
+        // ======================================================
         // イベント
         // ======================================================
 
@@ -400,7 +407,7 @@ namespace SceneSystem.Utility
 
             if (tank is PlayerTankRootManager)
             {
-                tank.EnergyManager.ConsumeFuel();
+                tank.EnergyManager.ConsumeFuel(BaseTankRootManager.FUEL_CONSUMPTION_PER_ATTACK);
                 tank.EnergyManager.ConsumeAmmo();
 
                 SoundManager.Instance?.PlaySE(4);
@@ -410,13 +417,13 @@ namespace SceneSystem.Utility
         /// <summary>
         /// エリアに侵入した際の処理
         /// </summary>
-        /// <param name="tankRootManager">エリアに侵入した戦車の RootManager</param>
-        private void HandleIntrusionArea(BaseTankRootManager tankRootManager)
+        /// <param name="tank">エリアに侵入した戦車の RootManager</param>
+        private void HandleIntrusionArea(BaseTankRootManager tank)
         {
-            if (tankRootManager is PlayerTankRootManager)
+            if (tank is PlayerTankRootManager)
             {
-                tankRootManager.EnergyManager.RefillFuelByArea();
-                tankRootManager.EnergyManager.RefillAmmoByArea();
+                tank.EnergyManager.RefillFuelByArea();
+                tank.EnergyManager.RefillAmmoByArea();
             }
         }
 
@@ -452,7 +459,7 @@ namespace SceneSystem.Utility
             {
                 _context.MainUIManager?.NotifyItemAcquired(itemSlot.ItemData.Name, itemSlot.ItemData.Type);
 
-                ScoreManager.Instance.AddFixedScore();
+                ScoreManager.Instance?.AddFixedScore(10);
 
                 if (itemSlot.ItemData.Type == ItemType.ParamIncrease)
                 {
@@ -477,7 +484,7 @@ namespace SceneSystem.Utility
             // プレイヤー戦車 ID の場合は処理なし
             if (TankId != 1)
             {
-                ScoreManager.Instance.AddCumulativeScore();
+                ScoreManager.Instance?.AddCumulativeScore(DEFEAT_TANK_SCORE);
 
                 SoundManager.Instance?.PlaySE(9);
             }

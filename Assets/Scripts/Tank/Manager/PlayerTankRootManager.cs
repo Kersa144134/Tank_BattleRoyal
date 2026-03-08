@@ -50,11 +50,11 @@ namespace TankSystem.Manager
             SoundManager.Instance?.ResetListenerTransform();
         }
 
-        protected override void OnPhaseEnterInternal(in PhaseType phase)
+        protected override void OnPhaseExitInternal(in PhaseType phase)
         {
-            base.OnPhaseEnterInternal(phase);
+            base.OnPhaseExitInternal(phase);
 
-            if (phase == PhaseType.Play)
+            if (phase == PhaseType.Ready)
             {
                 SoundManager.Instance?.SetListenerTransform(transform);
             }
