@@ -50,7 +50,7 @@ namespace VisionSystem.Utility
 
             // --------------------------------------------------
             // 各軸交差判定
-            // slab 法
+            // スラブ
             // --------------------------------------------------
             Vector3 axis0 = obb.AxisRight;
             Vector3 axis1 = obb.AxisUp;

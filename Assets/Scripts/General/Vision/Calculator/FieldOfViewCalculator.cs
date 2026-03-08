@@ -22,7 +22,7 @@ namespace VisionSystem.Calculator
         // ======================================================
 
         /// <summary>遮蔽物判定用ユーティリティ</summary>
-        private readonly LOSMath _losMath;
+        private LOSMath _losMath = new LOSMath();
 
         // ======================================================
         // フィールド
@@ -43,18 +43,6 @@ namespace VisionSystem.Calculator
 
         /// <summary>線分交差判定用の小さな許容値（浮動小数点誤差対策）</summary>
         private const float LINE_INTERSECTION_EPSILON = 0.0001f;
-
-        // ======================================================
-        // コンストラクタ
-        // ======================================================
-
-        /// <summary>
-        /// FieldOfViewCalculator クラスを初期化
-        /// </summary>
-        public FieldOfViewCalculator()
-        {
-            _losMath = new LOSMath();
-        }
 
         // ======================================================
         // パブリックメソッド
@@ -124,7 +112,7 @@ namespace VisionSystem.Calculator
                     dir /= Mathf.Sqrt(magnitude);
                 }
 
-                // 内積を取得（cosθ）
+                // 内積を取得
                 float dot = Vector3.Dot(origin.forward, dir);
 
                 // 半視野角より外なら視界外
@@ -135,7 +123,7 @@ namespace VisionSystem.Calculator
 
                 // --------------------------------------------------
                 // 遮蔽物判定
-                // slab 法
+                // スラブ
                 // --------------------------------------------------
                 bool blocked = false;
 
@@ -199,7 +187,7 @@ namespace VisionSystem.Calculator
 
             int insertIndex = low;
 
-            // 配列内で後ろにシフト（固定配列なので GC は発生しない）
+            // 配列内で後ろにシフト
             for (int k = _visibleTargetCount; k > insertIndex; k--)
             {
                 _visibleTargetsArray[k] = _visibleTargetsArray[k - 1];
