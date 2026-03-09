@@ -8,6 +8,8 @@
 
 using System;
 using UnityEngine;
+using ScoreSystem.Data;
+using ScoreSystem.Service;
 
 namespace ScoreSystem.Manager
 {
@@ -24,14 +26,24 @@ namespace ScoreSystem.Manager
         public static ScoreManager Instance { get; private set; }
 
         // ======================================================
+        // コンポーネント参照
+        // ======================================================
+
+        /// <summary>スコア計算サービス</summary>
+        private ScoreCalculationService _calculationService;
+
+        /// <summary>アイテム取得スコア</summary>
+        private ScoreData _itemScore = new ScoreData();
+
+        /// <summary>戦車撃破スコア</summary>
+        private ScoreData _tankScore = new ScoreData();
+
+        // ======================================================
         // フィールド
         // ======================================================
 
         /// <summary>累計スコア</summary>
         private int _totalScore;
-
-        /// <summary>累積加算用カウンター</summary>
-        private int _cumulativeCount;
 
         // ======================================================
         // プロパティ
@@ -46,6 +58,12 @@ namespace ScoreSystem.Manager
 
         /// <summary>スコア最大値</summary>
         public const int SCORE_MAX = 99999999;
+
+        /// <summary>アイテム取得時のスコア加算量</summary>
+        private const int ITEM_SCORE = 10;
+
+        /// <summary>戦車撃破時のスコア加算量</summary>
+        private const int TANK_SCORE = 100;
 
         // ======================================================
         // イベント
@@ -72,9 +90,15 @@ namespace ScoreSystem.Manager
             Instance = this;
             DontDestroyOnLoad(gameObject);
 
+            _calculationService = new ScoreCalculationService(SCORE_MAX);
+
             // 初期化
             _totalScore = 0;
-            _cumulativeCount = 0;
+        }
+
+        private void Update()
+        {
+            if (Input.GetKeyDown(KeyCode.Backspace)) AddTankScore();
         }
 
         // ======================================================
@@ -82,81 +106,27 @@ namespace ScoreSystem.Manager
         // ======================================================
 
         /// <summary>
-        /// 固定値をスコアに加算する
+        /// アイテム取得スコア加算
         /// </summary>
-        /// <param name="score">加算する固定スコア</param>
-        public void AddFixedScore(int score = 1)
+        public void AddItemScore()
         {
-            if (score == 0)
-            {
-                return;
-            }
+            // サービスでスコア加算量を計算する
+            int delta = _calculationService.AddFixedScore(ref _itemScore, ITEM_SCORE);
 
-            // 加算前スコア保存
-            int previousScore = _totalScore;
-
-            // スコア加算
-            _totalScore += score;
-
-            // カンスト処理
-            if (_totalScore > SCORE_MAX)
-            {
-                _totalScore = SCORE_MAX;
-            }
-
-            // スコア変動量
-            int delta = _totalScore - previousScore;
-
-            // 変動量が 0 の場合は通知なし
-            if (delta == 0)
-            {
-                return;
-            }
-
-            // スコア変動通知
-            OnScoreChanged?.Invoke(delta);
+            // 総スコアへ反映し通知する
+            ApplyScore(delta);
         }
 
         /// <summary>
-        /// 累積加算を行う
+        /// 敵戦車撃破スコア加算
         /// </summary>
-        /// <param name="baseScore">加算する基準値</param>
-        public void AddCumulativeScore(int baseScore = 1)
+        public void AddTankScore()
         {
-            if (baseScore == 0)
-            {
-                return;
-            }
+            // サービスで累積スコア加算量を計算する
+            int delta = _calculationService.AddCumulativeScore(ref _tankScore, TANK_SCORE);
 
-            // 加算前スコア保存
-            int previousScore = _totalScore;
-
-            // 累積カウント増加
-            _cumulativeCount++;
-
-            // 加算量計算
-            int scoreToAdd = _cumulativeCount * baseScore;
-
-            // スコア加算
-            _totalScore += scoreToAdd;
-
-            // カンスト処理
-            if (_totalScore > SCORE_MAX)
-            {
-                _totalScore = SCORE_MAX;
-            }
-
-            // スコア変動量
-            int delta = _totalScore - previousScore;
-
-            // 変動量が 0 の場合は通知なし
-            if (delta == 0)
-            {
-                return;
-            }
-
-            // スコア変動通知
-            OnScoreChanged?.Invoke(delta);
+            // 総スコアへ反映し通知する
+            ApplyScore(delta);
         }
 
         /// <summary>
@@ -165,11 +135,47 @@ namespace ScoreSystem.Manager
         /// </summary>
         public void ResetScore()
         {
+            // スコア初期化
             _totalScore = 0;
-            _cumulativeCount = 0;
+            _calculationService.ResetScore(ref _itemScore);
+            _calculationService.ResetScore(ref _tankScore);
+
+            // スコアリセット通知
+            OnScoreChanged?.Invoke(0);
+        }
+
+        // ======================================================
+        // プライベートメソッド
+        // ======================================================
+
+        /// <summary>
+        /// スコア加算を総スコアへ反映し通知する
+        /// </summary>
+        /// <param name="delta">加算スコア量</param>
+        private void ApplyScore(int delta)
+        {
+            if (delta == 0)
+            {
+                return;
+            }
+
+            // 加算前スコアを保持
+            int previousScore = _totalScore;
+
+            // 総スコアへ加算
+            _totalScore += delta;
+
+            // 上限補正
+            if (_totalScore > SCORE_MAX)
+            {
+                _totalScore = SCORE_MAX;
+            }
+
+            // 増加量を算出
+            int appliedDelta = _totalScore - previousScore;
 
             // スコア変動通知
-            OnScoreChanged?.Invoke(0);
+            OnScoreChanged?.Invoke(appliedDelta);
         }
     }
 }

@@ -43,13 +43,6 @@ namespace SceneSystem.Utility
         private readonly List<BaseCollisionContext> _overlapResults = new List<BaseCollisionContext>();
 
         // ======================================================
-        // 定数
-        // ======================================================
-
-        /// <summary>戦車撃破時の加算スコア</summary>
-        private const int DEFEAT_TANK_SCORE = 100;
-
-        // ======================================================
         // イベント
         // ======================================================
 
@@ -457,7 +450,7 @@ namespace SceneSystem.Utility
                     {
                         SoundManager.Instance?.PlaySE(6);
 
-                        ScoreManager.Instance?.AddFixedScore(10);
+                        ScoreManager.Instance?.AddItemScore();
                     }
                     else if (itemSlot.ItemData.Type == ItemType.ParamDecrease)
                     {
@@ -484,7 +477,7 @@ namespace SceneSystem.Utility
             // プレイヤー戦車 ID の場合は処理なし
             if (TankId != 1)
             {
-                ScoreManager.Instance?.AddCumulativeScore(DEFEAT_TANK_SCORE);
+                ScoreManager.Instance?.AddTankScore();
 
                 SoundManager.Instance?.PlaySE(9);
             }

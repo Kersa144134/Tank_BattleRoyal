@@ -68967,6 +68967,22 @@ PrefabInstance:
       propertyPath: m_Name
       value: TankSmoke
       objectReference: {fileID: 0}
+    - target: {fileID: 6690431446851246011, guid: 81dec176af769d346bce25e39515a758, type: 3}
+      propertyPath: InitialModule.startColor.maxColor.a
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6690431446851246011, guid: 81dec176af769d346bce25e39515a758, type: 3}
+      propertyPath: InitialModule.startColor.maxColor.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6690431446851246011, guid: 81dec176af769d346bce25e39515a758, type: 3}
+      propertyPath: InitialModule.startColor.maxColor.g
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6690431446851246011, guid: 81dec176af769d346bce25e39515a758, type: 3}
+      propertyPath: InitialModule.startColor.maxColor.r
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
