@@ -18,6 +18,7 @@ using ScoreSystem.Manager;
 using SoundSystem.Manager;
 using TankSystem.Manager;
 using UISystem.Controller;
+using UISystem.Service;
 
 namespace UISystem.Manager
 {
@@ -156,6 +157,15 @@ namespace UISystem.Manager
         /// <summary>燃料値値バー横幅 UI コントローラー</summary>
         private ValueBarWidthUIController _fuelBarWidthUIController;
 
+        /// <summary>スコア表示フォーマットサービス</summary>
+        private TextFormatService _scoreFormatService;
+
+        /// <summary>タイム表示フォーマットサービス</summary>
+        private TextFormatService _timeFormatService;
+
+        /// <summary>弾薬表示フォーマットサービス</summary>
+        private TextFormatService _ammoFormatService;
+
         // --------------------------------------------------
         // データ参照
         // --------------------------------------------------
@@ -213,9 +223,14 @@ namespace UISystem.Manager
         // スコア
         // --------------------------------------------------
         /// <summary>
-        /// スコア表示フォーマット（8桁）
+        /// スコア表示フォーマット
         /// </summary>
-        private const string SCORE_FORMAT = "SCORE {0:00000000}";
+        private const string SCORE_FORMAT = "SCORE {0}";
+
+        /// <summary>
+        /// スコア表示桁数
+        /// </summary>
+        private static readonly int[] SCORE_DIGITS = { 8 };
 
         // --------------------------------------------------
         // タイマー
@@ -223,7 +238,12 @@ namespace UISystem.Manager
         /// <summary>
         /// 制限時間表示フォーマット
         /// </summary>
-        private const string LIMIT_TIME_FORMAT = "{0:00}:{1:00}";
+        private const string LIMIT_TIME_FORMAT = "{0}:{1}";
+
+        /// <summary>
+        /// 制限時間表示桁数
+        /// </summary>
+        private static readonly int[] LIMIT_TIME_DIGITS = { 2, 2 };
 
         // --------------------------------------------------
         // 弾薬
@@ -232,6 +252,11 @@ namespace UISystem.Manager
         /// 弾薬表示フォーマット
         /// </summary>
         private const string AMMO_FORMAT = "{0} / {1}";
+
+        /// <summary>
+        /// 弾薬表示桁数
+        /// </summary>
+        private static readonly int[] AMMO_DIGITS = { 2, 2 };
 
         // --------------------------------------------------
         // ログ
@@ -305,7 +330,6 @@ namespace UISystem.Manager
 
             BaseTankRootManager playerTankRootManager = _sceneRegistry.Tanks[0].GetComponent<BaseTankRootManager>();
 
-            // プレイヤー耐久値 UI が使用可能かを確認する
             if (playerTankRootManager != null)
             {
                 // プレイヤーパラメーター管理クラスを取得する
@@ -335,7 +359,6 @@ namespace UISystem.Manager
                     );
             }
 
-            // 弾丸アイコン UI が設定されているかを確認する
             if (_bulletIconImages != null)
             {
                 // 弾丸スロット回転制御クラスを生成する
@@ -347,7 +370,6 @@ namespace UISystem.Manager
                     );
             }
 
-            // ログ UI が設定されているかを確認する
             if (_logTexts != null)
             {
                 // ログ回転制御クラスを生成する
@@ -359,10 +381,25 @@ namespace UISystem.Manager
                     );
             }
 
-            // スコア表示初期化
             if (_scoreText != null)
             {
-                _scoreText.SetText(SCORE_FORMAT, 0);
+                // スコア表示フォーマットクラスを生成する
+                _scoreFormatService = new TextFormatService(_scoreText, SCORE_FORMAT, SCORE_DIGITS);
+
+                // スコア表示初期化
+                _scoreFormatService.SetNumberText(0);
+            }
+
+            if (_limitTimeText != null)
+            {
+                // 制限時間表示フォーマットクラスを生成する
+                _timeFormatService = new TextFormatService(_limitTimeText, LIMIT_TIME_FORMAT, LIMIT_TIME_DIGITS);
+            }
+
+            if (_ammoText != null)
+            {
+                // 弾薬表示フォーマットクラスを生成する
+                _ammoFormatService = new TextFormatService(_ammoText, AMMO_FORMAT, AMMO_DIGITS);
             }
         }
 
@@ -435,27 +472,6 @@ namespace UISystem.Manager
         // ======================================================
 
         /// <summary>
-        /// スコア変更時の処理を行う
-        /// </summary>
-        /// <param name="score">加算されるスコア値</param>
-        public void NotifyScoreChanged(int score)
-        {
-            if (_scoreText == null)
-            {
-                return;
-            }
-
-            // 現在スコア取得
-            int totalScore = ScoreManager.Instance?.TotalScore ?? 0;
-
-            // 8桁上限でクランプ
-            totalScore = Mathf.Clamp(totalScore, 0, ScoreManager.SCORE_MAX);
-
-            // フォーマットを使用して UI に反映
-            _scoreText.SetText(SCORE_FORMAT, totalScore);
-        }
-
-        /// <summary>
         /// 経過時間と制限時間から残り時間を計算し、UI に表示する
         /// </summary>
         /// <param name="elapsedTime">現在までの経過時間（秒）</param>
@@ -495,7 +511,7 @@ namespace UISystem.Manager
             int seconds = totalSeconds % 60;
 
             // フォーマットを使用して UI に反映
-            _limitTimeText.SetText(LIMIT_TIME_FORMAT, minutes, seconds);
+            _timeFormatService.SetNumberText(new int[] { minutes, seconds });
         }
 
         /// <summary>
@@ -548,7 +564,7 @@ namespace UISystem.Manager
             int maxAmmo = _playerEnergyManager.MaxAmmo;
 
             // フォーマットを使用して UI に反映
-            _ammoText.SetText(AMMO_FORMAT, currentAmmo, maxAmmo);
+            _ammoFormatService.SetNumberText(new int[] { currentAmmo, maxAmmo });
 
             // アニメーションを再生
             _ammoAnimator?.Play(AMMO_UP_ANIMATION_NAME, 0, 0f);
@@ -735,6 +751,28 @@ namespace UISystem.Manager
         public void VolumeDieEffectStart()
         {
             _volumeAnimator?.Play(DIE_ANIMATION_NAME, 0, 0f);
+        }
+
+        // ======================================================
+        // プライベートメソッド
+        // ======================================================
+
+        /// <summary>
+        /// スコア変更時の処理を行う
+        /// </summary>
+        /// <param name="score">加算されるスコア値</param>
+        private void NotifyScoreChanged(int score)
+        {
+            if (_scoreText == null)
+            {
+                return;
+            }
+
+            // 現在スコア取得
+            int totalScore = ScoreManager.Instance?.TotalScore ?? 0;
+
+            // フォーマットを使用して UI に反映
+            _scoreFormatService.SetNumberText(totalScore);
         }
     }
 }

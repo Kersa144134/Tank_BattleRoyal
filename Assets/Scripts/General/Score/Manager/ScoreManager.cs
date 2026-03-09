@@ -63,7 +63,10 @@ namespace ScoreSystem.Manager
         private const int ITEM_SCORE = 10;
 
         /// <summary>戦車撃破時のスコア加算量</summary>
-        private const int TANK_SCORE = 100;
+        private const int TANK_SCORE = 1000;
+
+        /// <summary>アイテムボーナス指数係数</summary>
+        private const double ITEM_BONUS_EXPONENT = 1.5;
 
         // ======================================================
         // イベント
@@ -96,11 +99,6 @@ namespace ScoreSystem.Manager
             _totalScore = 0;
         }
 
-        private void Update()
-        {
-            if (Input.GetKeyDown(KeyCode.Backspace)) AddTankScore();
-        }
-
         // ======================================================
         // パブリックメソッド
         // ======================================================
@@ -115,6 +113,44 @@ namespace ScoreSystem.Manager
 
             // 総スコアへ反映し通知する
             ApplyScore(delta);
+        }
+
+        /// <summary>
+        /// アイテム取得ボーナススコア加算
+        /// アイテム取得回数に応じたボーナススコアを加算する
+        /// </summary>
+        public void AddItemBonusScore()
+        {
+            int count = _itemScore.AddCount;
+
+            if (count <= 0)
+            {
+                return;
+            }
+
+            // 加算前のスコア保存
+            int previousScore = _totalScore;
+
+            // ボーナス係数計算
+            int multiplier = (int)Math.Pow(count, ITEM_BONUS_EXPONENT);
+
+            // ボーナススコア算出
+            int bonusScore = ITEM_SCORE * multiplier;
+
+            // 総スコアへ加算
+            _totalScore += bonusScore;
+
+            // スコア上限補正
+            if (_totalScore > SCORE_MAX)
+            {
+                _totalScore = SCORE_MAX;
+            }
+
+            // 実際の増加量算出
+            int delta = _totalScore - previousScore;
+
+            // スコア変動通知
+            OnScoreChanged?.Invoke(delta);
         }
 
         /// <summary>

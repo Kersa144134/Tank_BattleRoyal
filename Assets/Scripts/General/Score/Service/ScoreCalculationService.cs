@@ -57,6 +57,9 @@ namespace ScoreSystem.Service
             // 加算前スコアを保持
             int previousScore = scoreData.TotalScore;
 
+            // スコア加算カウンターを増加
+            scoreData.AddCount++;
+
             // 指定された固定スコアを累計スコアへ加算する
             scoreData.TotalScore += score;
 
@@ -89,11 +92,11 @@ namespace ScoreSystem.Service
             // 加算前スコアを保持
             int previousScore = scoreData.TotalScore;
 
-            // 累積スコア計算用のカウンターを増加させる
-            scoreData.CumulativeCount++;
+            // スコア加算カウンターを増加
+            scoreData.AddCount++;
 
-            // 累積カウントと基準スコアから今回の加算量を算出する
-            int scoreToAdd = scoreData.CumulativeCount * baseScore;
+            // 加算カウントと基準スコアから今回の加算量を算出する
+            int scoreToAdd = scoreData.AddCount * baseScore;
 
             // 算出したスコアを累計スコアへ加算する
             scoreData.TotalScore += scoreToAdd;
@@ -118,7 +121,7 @@ namespace ScoreSystem.Service
         public void ResetScore(ref ScoreData scoreData)
         {
             scoreData.TotalScore = 0;
-            scoreData.CumulativeCount = 0;
+            scoreData.AddCount = 0;
         }
     }
 }

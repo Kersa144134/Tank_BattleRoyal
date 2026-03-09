@@ -23,8 +23,8 @@ namespace ScoreSystem.Data
         public int TotalScore;
 
         /// <summary>
-        /// 累積加算カウンター
+        /// 加算回数
         /// </summary>
-        public int CumulativeCount;
+        public int AddCount;
     }
 }
