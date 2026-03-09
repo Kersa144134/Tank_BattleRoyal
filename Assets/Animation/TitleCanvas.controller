@@ -6,7 +6,7 @@ AnimatorController:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: TitleVolume
+  m_Name: TitleCanvas
   serializedVersion: 5
   m_AnimatorParameters: []
   m_AnimatorLayers:
@@ -42,7 +42,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: bc5895ca65dd7704c830fc5a62c86c3d, type: 2}
+  m_Motion: {fileID: 7400000, guid: f73dc05730cce48428c41b52587e1c9e, type: 2}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 

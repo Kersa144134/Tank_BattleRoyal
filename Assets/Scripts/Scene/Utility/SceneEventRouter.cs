@@ -448,27 +448,27 @@ namespace SceneSystem.Utility
                     param.ParamType,
                     param.Value
                 );
+
+                if (tankRootManager is PlayerTankRootManager)
+                {
+                    _context.MainUIManager?.NotifyItemAcquired(itemSlot.ItemData.Name, itemSlot.ItemData.Type);
+
+                    if (itemSlot.ItemData.Type == ItemType.ParamIncrease)
+                    {
+                        SoundManager.Instance?.PlaySE(6);
+
+                        ScoreManager.Instance?.AddFixedScore(10);
+                    }
+                    else if (itemSlot.ItemData.Type == ItemType.ParamDecrease)
+                    {
+                        SoundManager.Instance?.PlaySE(7);
+                    }
+                }
             }
 
             // ïêëïÉAÉCÉeÉÄ
             if (itemSlot.ItemData is WeaponItemData weapon)
             {
-            }
-
-            if (tankRootManager is PlayerTankRootManager)
-            {
-                _context.MainUIManager?.NotifyItemAcquired(itemSlot.ItemData.Name, itemSlot.ItemData.Type);
-
-                ScoreManager.Instance?.AddFixedScore(10);
-
-                if (itemSlot.ItemData.Type == ItemType.ParamIncrease)
-                {
-                    SoundManager.Instance?.PlaySE(6);
-                }
-                else if (itemSlot.ItemData.Type == ItemType.ParamDecrease)
-                {
-                    SoundManager.Instance?.PlaySE(7);
-                }
             }
         }
 

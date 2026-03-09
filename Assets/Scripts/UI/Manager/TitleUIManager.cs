@@ -37,7 +37,7 @@ namespace UISystem.Manager
         // ======================================================
 
         /// <summary>タイトル終了アニメーション名</summary>
-        private const string End_ANIMATION_NAME = "End";
+        private const string END_ANIMATION_NAME = "End";
 
         // ======================================================
         // イベント
@@ -61,7 +61,7 @@ namespace UISystem.Manager
 
             if (InputManager.Instance.ButtonA.Down)
             {
-                _effectAnimator?.Play(End_ANIMATION_NAME, 0, 0f);
+                _effectAnimator?.Play(END_ANIMATION_NAME, 0, 0f);
             }
         }
 
@@ -94,6 +94,9 @@ namespace UISystem.Manager
             SoundManager.Instance?.FadeBGM(0, SoundManager.FadeType.FadeIn);
 
             SoundManager.Instance?.FadeBGM(1, SoundManager.FadeType.FadeOut);
+
+            _notPlayAnimator?.Play(END_ANIMATION_NAME, 0, 0f);
+            _volumeAnimator?.Play(END_ANIMATION_NAME, 0, 0f);
         }
 
         /// <summary>
