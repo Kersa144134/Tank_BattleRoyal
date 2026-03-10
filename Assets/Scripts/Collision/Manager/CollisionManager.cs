@@ -550,7 +550,7 @@ namespace CollisionSystem.Manager
                 BaseTankRootManager tankManager = _tanks[i].TankRootManager;
                 if (tankManager == null) continue;
 
-                tankManager.SetTargetData(_tanks, _items);
+                tankManager.SetTargetData(_tanks, _obstacles, _items);
                 tankManager.SetObstacleData(_obstacleOBBsCache);
             }
         }

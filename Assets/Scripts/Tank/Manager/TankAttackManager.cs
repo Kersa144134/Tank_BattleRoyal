@@ -157,16 +157,15 @@ namespace TankSystem.Manager
                 ref _currentTarget,
                 true
             );
-
             if (_currentTarget == null)
             {
                 _visibilityController.TryGetClosestTarget(
-                FOV_ANGLE,
-                VIEW_DISTANCE,
-                tanks,
-                ref _currentTarget,
-                true
-            );
+                    FOV_ANGLE,
+                    VIEW_DISTANCE,
+                    tanks,
+                    ref _currentTarget,
+                    true
+                );
             }
 
             // クールタイム中

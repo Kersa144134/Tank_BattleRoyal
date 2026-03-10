@@ -698,8 +698,9 @@ namespace TankSystem.Manager
             // ターゲットアイコンを非表示
             ChangeTargetIcon(false);
 
-            // ターゲットアイコン削除
+            // ターゲットキャッシュ削除
             _visibilityController.UpdateTankIcon(null);
+            _visibilityController.UpdateObstacleMaterial(null);
 
             // 爆発エフェクト再生
             _effectManager.PlayExplosion();

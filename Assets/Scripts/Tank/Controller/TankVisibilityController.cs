@@ -6,11 +6,12 @@
 // 概要     : 戦車の視界判定とターゲット決定を担当するクラス
 // ======================================================
 
+using CollisionSystem.Data;
 using System;
 using System.Collections.Generic;
-using UnityEngine;
-using CollisionSystem.Data;
 using TankSystem.Manager;
+using Unity.VisualScripting;
+using UnityEngine;
 using VisionSystem.Calculator;
 
 namespace TankSystem.Controller
@@ -45,7 +46,10 @@ namespace TankSystem.Controller
             = new BaseCollisionContext[MAX_TARGETS];
 
         /// <summary>ターゲット中の戦車</summary>
-        private BaseTankRootManager _cachedTargetTank;
+        private BaseTankRootManager _cachedTargetTankRootManager;
+
+        /// <summary>ターゲット中の障害物マテリアル</summary>
+        private Material _cachedTargetObstacleMaterial;
 
         /// <summary>最後に視界更新を行ったフレーム</summary>
         private int _lastUpdateFrame = -1;
@@ -68,6 +72,12 @@ namespace TankSystem.Controller
 
         /// <summary>ターゲット更新フレーム間隔</summary>
         private const int TARGET_UPDATE_INTERVAL_FRAME = 60;
+
+        /// <summary>エミッションONカラー</summary>
+        private static readonly Color EMISSION_ON_COLOR = new Color(1f, 0.5f, 0f);
+
+        /// <summary>エミッションOFFカラー</summary>
+        private static readonly Color EMISSION_OFF_COLOR = Color.black;
 
         // ======================================================
         // イベント
@@ -167,6 +177,7 @@ namespace TankSystem.Controller
             if (targetContexts == null || targetContexts.Length == 0)
             {
                 UpdateTankIcon(null);
+                UpdateObstacleMaterial(null);
                 return false;
             }
 
@@ -184,6 +195,9 @@ namespace TankSystem.Controller
             if (visibleCount == 0)
             {
                 UpdateTankIcon(null);
+                UpdateObstacleMaterial(null);
+                resultTarget = null;
+
                 return false;
             }
 
@@ -193,8 +207,11 @@ namespace TankSystem.Controller
 
             if (closestTarget != null)
             {
-                // 呼び出し元へ結果ターゲットを返す
                 resultTarget = closestTarget.Transform;
+            }
+            else
+            {
+                resultTarget = null;
             }
 
             return true;
@@ -206,7 +223,7 @@ namespace TankSystem.Controller
         public void UpdateTankIcon(in BaseTankRootManager newTarget)
         {
             // 同一ターゲットの場合は処理なし
-            if (_cachedTargetTank == newTarget)
+            if (_cachedTargetTankRootManager == newTarget)
             {
                 return;
             }
@@ -214,9 +231,9 @@ namespace TankSystem.Controller
             if (newTarget != null)
             {
                 // 旧ターゲットが存在する場合はアイコンを非表示
-                if (_cachedTargetTank != null)
+                if (_cachedTargetTankRootManager != null)
                 {
-                    _cachedTargetTank.ChangeTargetIcon(false);
+                    _cachedTargetTankRootManager.ChangeTargetIcon(false);
                 }
 
                 // 新ターゲットのアイコンを表示
@@ -225,14 +242,41 @@ namespace TankSystem.Controller
             else
             {
                 // ターゲット解除時は旧ターゲットのアイコンを非表示
-                if (_cachedTargetTank != null)
+                if (_cachedTargetTankRootManager != null)
                 {
-                    _cachedTargetTank.ChangeTargetIcon(false);
+                    _cachedTargetTankRootManager.ChangeTargetIcon(false);
                 }
             }
 
-            // ターゲットキャッシュを更新
-            _cachedTargetTank = newTarget;
+            // キャッシュ更新
+            _cachedTargetTankRootManager = newTarget;
+        }
+
+        /// <summary>
+        /// 障害物マテリアルのハイライト更新
+        /// </summary>
+        public void UpdateObstacleMaterial(in Material newMaterial)
+        {
+            // 同一マテリアルなら更新不要
+            if (_cachedTargetObstacleMaterial == newMaterial)
+            {
+                return;
+            }
+
+            // 旧マテリアルが存在する場合はエミッション OFF
+            if (_cachedTargetObstacleMaterial != null)
+            {
+                SetEmission(_cachedTargetObstacleMaterial, false);
+            }
+
+            // 新マテリアルが存在する場合はエミッション ON
+            if (newMaterial != null)
+            {
+                SetEmission(newMaterial, true);
+            }
+
+            // キャッシュ更新
+            _cachedTargetObstacleMaterial = newMaterial;
         }
 
         // ======================================================
@@ -251,6 +295,7 @@ namespace TankSystem.Controller
             if (visibleTargets == null || count == 0)
             {
                 UpdateTankIcon(null);
+                UpdateObstacleMaterial(null);
                 return null;
             }
 
@@ -278,14 +323,31 @@ namespace TankSystem.Controller
             // アイコン更新フラグが true かつ、最短ターゲットが存在する場合
             if (switchIcon)
             {
-                // Transform から BaseTankRootManager をキャッシュ取得
-                BaseTankRootManager manager = GetTankManager(closest);
+                if (closest is TankCollisionContext tank)
+                {
+                    // TankCollisionContext から BaseTankRootManager を取得
+                    BaseTankRootManager manager = GetTankManager(tank);
 
-                // ターゲットキャッシュ更新
-                UpdateTankIcon(manager);
+                    // ターゲット戦車アイコン更新
+                    UpdateTankIcon(manager);
 
-                // ターゲット取得イベントを通知
-                OnTargetAcquired?.Invoke(manager);
+                    // ターゲット取得イベントを通知
+                    OnTargetAcquired?.Invoke(manager);
+
+                    // ターゲット障害物マテリアル更新
+                    UpdateObstacleMaterial(null);
+                }
+                else if (closest is ObstacleCollisionContext obstacle)
+                {
+                    // TankCollisionContext からマテリアルを取得
+                    Material mat = GetObstacleMaterial(obstacle);
+
+                    // ターゲット障害物マテリアル更新
+                    UpdateObstacleMaterial(mat);
+
+                    // ターゲット戦車アイコン更新
+                    UpdateTankIcon(null);
+                }
             }
 
             // 最終的なターゲット Transform を返す
@@ -295,7 +357,7 @@ namespace TankSystem.Controller
         /// <summary>
         /// Transform から BaseTankRootManager を取得
         /// </summary>
-        private BaseTankRootManager GetTankManager(BaseCollisionContext target)
+        private BaseTankRootManager GetTankManager(in TankCollisionContext target)
         {
             if (target == null)
             {
@@ -308,6 +370,48 @@ namespace TankSystem.Controller
             }
 
             return tank.TankRootManager;
+        }
+
+        /// <summary>
+        /// 障害物のマテリアル取得
+        /// </summary>
+        private Material GetObstacleMaterial(ObstacleCollisionContext target)
+        {
+            if (target == null)
+            {
+                return null;
+            }
+
+            Renderer renderer = target.Transform.GetComponent<Renderer>();
+
+            if (renderer == null)
+            {
+                return null;
+            }
+
+            return renderer.material;
+        }
+
+        /// <summary>
+        /// マテリアルのエミッション状態を変更
+        /// </summary>
+        private void SetEmission(in Material material, in bool isEnable)
+        {
+            if (material == null)
+            {
+                return;
+            }
+
+            if (isEnable)
+            {
+                material.EnableKeyword("_EMISSION");
+                material.SetColor("_EmissionColor", EMISSION_ON_COLOR);
+            }
+            else
+            {
+                material.SetColor("_EmissionColor", EMISSION_OFF_COLOR);
+                material.DisableKeyword("_EMISSION");
+            }
         }
     }
 }

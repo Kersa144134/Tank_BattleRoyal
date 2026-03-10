@@ -110,13 +110,16 @@ namespace TankSystem.Manager
         /// ターゲットコンテキスト配列を送る
         /// </summary>
         /// <param name="tankContexts">戦車コンテキスト配列</param>
+        /// <param name="obstacleContexts">障害物コンテキスト配列</param>
         /// <param name="itemContexts">アイテムコンテキスト配列</param>
         public override void SetTargetData(
             in TankCollisionContext[] tankContexts,
+            in ObstacleCollisionContext[] obstacleContexts,
             in ItemCollisionContext[] itemContexts
         )
         {
             Tanks = tankContexts;
+            Obstacles = obstacleContexts;
 
             _tankAIManager.SetTargetData(tankContexts, itemContexts);
         }
