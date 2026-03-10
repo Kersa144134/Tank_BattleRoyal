@@ -49,7 +49,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _bgmSets:
   - Source: {fileID: 8672976314568272832}
-    Clip: {fileID: 8300000, guid: d5530d083578ee5458842d11d8005955, type: 3}
+    Clip: {fileID: 8300000, guid: 453938bb41839484aa54e1e4ac803fa3, type: 3}
   - Source: {fileID: 6744767326852611610}
     Clip: {fileID: 8300000, guid: 19a95acfd1538014ba73ff6d7cd5d9ce, type: 3}
   _fadeDuration: 2

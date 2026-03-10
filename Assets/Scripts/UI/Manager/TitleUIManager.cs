@@ -85,8 +85,7 @@ namespace UISystem.Manager
             SoundManager.Instance?.PlaySE(0);
 
             SoundManager.Instance?.PlayBGM(0);
-            SoundManager.Instance?.SetBGMVolume(0, 0f);
-            SoundManager.Instance?.FadeBGM(0, SoundManager.FadeType.FadeIn);
+            SoundManager.Instance?.SetBGMVolume(0, 1f);
 
             SoundManager.Instance?.FadeBGM(1, SoundManager.FadeType.FadeOut);
 
