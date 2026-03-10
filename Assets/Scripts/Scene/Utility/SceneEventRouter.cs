@@ -549,6 +549,11 @@ namespace SceneSystem.Utility
             _context.SceneObjectRegistry?.UnregisterBullet(bullet);
             _context.CollisionManager?.UnregisterBullet(bullet);
 
+            if (bullet is ExplosiveBullet)
+            {
+                _context.MainUIManager?.NotifyExplodeBullet();
+            }
+
             SoundManager.Instance?.PlaySE(5, bullet.Transform.position);
         }
 

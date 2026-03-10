@@ -662,6 +662,14 @@ namespace UISystem.Manager
         }
 
         /// <summary>
+        /// 弾丸爆発時の処理を行う
+        /// </summary>
+        public void NotifyExplodeBullet()
+        {
+            _cameraAnimator?.Play(FIRE_ANIMATION_NAME, 0, 0f);
+        }
+
+        /// <summary>
         /// アイテム獲得時のログ表示を行う
         /// </summary>
         /// <param name="itemName">獲得したアイテム名</param>
