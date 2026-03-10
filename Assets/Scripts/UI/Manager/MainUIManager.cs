@@ -8,6 +8,7 @@
 
 using System;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.UI;
 using TMPro;
 using ItemSystem.Data;
@@ -34,14 +35,26 @@ namespace UISystem.Manager
         [Header("===== メインシーン固有インスペクタ ===================================")]
 
         // --------------------------------------------------
-        // 画面アニメーション
+        // 画面演出
         // --------------------------------------------------
-        [Header("画面アニメーション")]
+        [Header("画面演出")]
         /// <summary>
         /// カメラ用アニメーター
         /// </summary>
         [SerializeField]
         private Animator _cameraAnimator;
+
+        /// <summary>
+        /// ダメージ演出ボリューム用アニメーター
+        /// </summary>
+        [SerializeField]
+        private Animator _damageVolumeAnimator;
+
+        /// <summary>
+        /// 危険表示用ボリューム
+        /// </summary>
+        [SerializeField]
+        private Volume _warningVolume;
 
         // --------------------------------------------------
         // スコア
@@ -95,6 +108,14 @@ namespace UISystem.Manager
         [SerializeField]
         private Image _diffDurabilityBarImage;
 
+        /// <summary>最小値時の耐久値バーの色</summary>
+        [SerializeField]
+        private Color _minDurabilityBarColor;
+
+        /// <summary>最大値時の耐久値バーの色</summary>
+        [SerializeField]
+        private Color _maxDurabilityBarColor;
+
         // --------------------------------------------------
         // 燃料値バー
         // --------------------------------------------------
@@ -110,6 +131,14 @@ namespace UISystem.Manager
         /// <summary>差分燃料値を表すバー Image</summary>
         [SerializeField]
         private Image _diffFuelBarImage;
+
+        /// <summary>最小値時の燃料値バーの色</summary>
+        [SerializeField]
+        private Color _minFuelBarColor;
+
+        /// <summary>最大値時の燃料値バーの色</summary>
+        [SerializeField]
+        private Color _maxFuelBarColor;
 
         // --------------------------------------------------
         // 弾薬値
@@ -139,9 +168,6 @@ namespace UISystem.Manager
         // コンポーネント参照
         // ======================================================
 
-        /// <summary>シーン上オブジェクトの Transform を一元管理するレジストリー</summary>
-        private SceneObjectRegistry _sceneRegistry;
-
         // --------------------------------------------------
         // UI
         // --------------------------------------------------
@@ -169,6 +195,9 @@ namespace UISystem.Manager
         // --------------------------------------------------
         // データ参照
         // --------------------------------------------------
+        /// <summary>シーン上オブジェクトの Transform を一元管理するレジストリー</summary>
+        private SceneObjectRegistry _sceneRegistry;
+
         /// <summary>プレイヤー戦車の耐久力管理マネージャー</summary>
         private TankDurabilityManager _playerDurabilityManager;
 
@@ -184,6 +213,9 @@ namespace UISystem.Manager
 
         /// <summary>直前に表示した残り秒数を保持する</summary>
         private int _previousDisplayTotalSeconds = -1;
+
+        /// <summary>警告ボリュームの目標 Weight</summary>
+        private float _warningTargetWeight;
 
         // ======================================================
         // 定数
@@ -212,6 +244,9 @@ namespace UISystem.Manager
 
         /// <summary>エフェクト発火時アニメーション名</summary>
         private const string FLASH_ANIMATION_NAME = "Flash";
+
+        /// <summary>ダメージ時アニメーション名</summary>
+        private const string DAMAGE_ANIMATION_NAME = "Damage";
 
         /// <summary>死亡アニメーション名</summary>
         private const string DIE_ANIMATION_NAME = "Die";
@@ -244,6 +279,24 @@ namespace UISystem.Manager
         /// 制限時間表示桁数
         /// </summary>
         private static readonly int[] LIMIT_TIME_DIGITS = { 2, 2 };
+
+        // --------------------------------------------------
+        // 画面演出
+        // --------------------------------------------------
+        /// <summary>
+        /// 警告演出が開始する耐久値
+        /// </summary>
+        private const float WARNING_START_DURABILITY = 50f;
+
+        /// <summary>
+        /// 警告演出が最大になる耐久値
+        /// </summary>
+        private const float WARNING_MAX_DURABILITY = 30f;
+
+        /// <summary>
+        /// 警告ボリューム補間速度
+        /// </summary>
+        private const float WARNING_WEIGHT_SPEED_MULTIPLIER = 0.5f;
 
         // --------------------------------------------------
         // 弾薬
@@ -344,6 +397,8 @@ namespace UISystem.Manager
                         _maxDurabilityBarImage,
                         _currentDurabilityBarImage,
                         _diffDurabilityBarImage,
+                        _minDurabilityBarColor,
+                        _maxDurabilityBarColor,
                         _playerDurabilityManager.MaxDurability,
                         _playerDurabilityManager.CurrentDurability
                     );
@@ -354,6 +409,8 @@ namespace UISystem.Manager
                         _maxFuelBarImage,
                         _currentFuelBarImage,
                         _diffFuelBarImage,
+                        _minFuelBarColor,
+                        _maxFuelBarColor,
                         _playerEnergyManager.MaxFuel,
                         _playerEnergyManager.CurrentFuel
                     );
@@ -427,6 +484,22 @@ namespace UISystem.Manager
 
             // ログ UI を更新する
             _logRotationUIController?.Update(unscaledDeltaTime);
+
+            // 警告演出を更新する
+            if (_warningVolume != null)
+            {
+                float currentWeight =
+                    _warningVolume.weight;
+
+                float nextWeight =
+                    Mathf.MoveTowards(
+                        currentWeight,
+                        _warningTargetWeight,
+                        WARNING_WEIGHT_SPEED_MULTIPLIER * unscaledDeltaTime);
+
+                _warningVolume.weight =
+                    nextWeight;
+            }
         }
 
         protected override void OnPhaseEnterInternal(in PhaseType phase)
@@ -528,6 +601,8 @@ namespace UISystem.Manager
                 _playerDurabilityManager.MaxDurability,
                 _playerDurabilityManager.CurrentDurability
             );
+
+            UpdateWarningVolume(_playerDurabilityManager.CurrentDurability);
         }
 
         /// <summary>
@@ -608,6 +683,14 @@ namespace UISystem.Manager
 
             // ログ表示
             _logRotationUIController?.AddLog(logMessage);
+        }
+
+        /// <summary>
+        /// 被ダメージ時の処理を行う
+        /// </summary>
+        public void NotifyDamaged()
+        {
+            _damageVolumeAnimator?.Play(DAMAGE_ANIMATION_NAME, 0, 0f);
         }
 
         /// <summary>
@@ -773,6 +856,26 @@ namespace UISystem.Manager
 
             // フォーマットを使用して UI に反映
             _scoreFormatService.SetNumberText(totalScore);
+        }
+
+        /// <summary>
+        /// 耐久値に応じて警告エフェクトの Weight を更新する
+        /// </summary>
+        private void UpdateWarningVolume(
+            float currentDurability)
+        {
+            if (_warningVolume == null)
+            {
+                return;
+            }
+
+            float ratio =
+                Mathf.InverseLerp(
+                    WARNING_START_DURABILITY,
+                    WARNING_MAX_DURABILITY,
+                    currentDurability);
+
+            _warningTargetWeight = Mathf.Clamp01(ratio);
         }
     }
 }

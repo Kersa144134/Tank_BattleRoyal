@@ -52,6 +52,12 @@ namespace UISystem.Controller
         /// <summary>差分バー</summary>
         private readonly Image _diffBar;
 
+        /// <summary>最小値時のバー色</summary>
+        private readonly Color _minColor;
+
+        /// <summary>最大値時のバー色</summary>
+        private readonly Color _maxColor;
+
         // ======================================================
         // 状態管理フィールド
         // ======================================================
@@ -73,6 +79,8 @@ namespace UISystem.Controller
             in Image maxBar,
             in Image currentBar,
             in Image diffBar,
+            in Color minColor,
+            in Color maxColor,
             in float initialMaxValue,
             in float initialCurrentValue)
         {
@@ -80,6 +88,10 @@ namespace UISystem.Controller
             _maxBar = maxBar;
             _currentBar = currentBar;
             _diffBar = diffBar;
+
+            // 色設定を保持する
+            _minColor = minColor;
+            _maxColor = maxColor;
 
             // 初期値を内部状態として保持する
             _currentMaxValue = initialMaxValue;
@@ -110,7 +122,6 @@ namespace UISystem.Controller
             // --------------------------------------------------
             // 最大値バー
             // --------------------------------------------------
-
             // 最大値バーの目標 Width を算出する
             float targetMaxWidth =
                 _currentMaxValue * WIDTH_PER_VALUE;
@@ -131,7 +142,6 @@ namespace UISystem.Controller
             // --------------------------------------------------
             // 現在値バー
             // --------------------------------------------------
-
             // 現在値バーの目標 Width を算出する
             float targetCurrentWidth =
                 _currentValue * WIDTH_PER_VALUE;
@@ -185,7 +195,6 @@ namespace UISystem.Controller
             // --------------------------------------------------
             // 差分バー
             // --------------------------------------------------
-
             // 差分バーの現在 Width を取得する
             float currentDiffWidth =
                 _diffBar.rectTransform.sizeDelta.x;
@@ -228,7 +237,6 @@ namespace UISystem.Controller
             // --------------------------------------------------
             // 最大値による制限処理
             // --------------------------------------------------
-
             // 現在値バーが最大値バーを超えないよう制限する
             nextCurrentWidth =
                 Mathf.Min(
@@ -244,14 +252,38 @@ namespace UISystem.Controller
             // --------------------------------------------------
             // RectTransform 反映
             // --------------------------------------------------
-
             SetWidth(_maxBar, nextMaxWidth);
             SetWidth(_currentBar, nextCurrentWidth);
             SetWidth(_diffBar, nextDiffWidth);
+
+            // --------------------------------------------------
+            // カラー更新
+            // --------------------------------------------------
+            // 最大値が 0 の場合の除算防止
+            if (_currentMaxValue <= 0f)
+            {
+                return;
+            }
+
+            // 現在値割合を算出する
+            float ratio =
+                Mathf.Clamp01(
+                    _currentValue / _currentMaxValue);
+
+            // 最小色～最大色で補間する
+            Color interpolatedColor =
+                Color.Lerp(
+                    _minColor,
+                    _maxColor,
+                    ratio);
+
+            // 現在値バーにカラーを反映する
+            _currentBar.color =
+                interpolatedColor;
         }
 
         // ======================================================
-        // 共通補間処理
+        // プライベートメソッド
         // ======================================================
 
         /// <summary>
@@ -295,10 +327,6 @@ namespace UISystem.Controller
                     target,
                     step);
         }
-
-        // ======================================================
-        // 共通処理
-        // ======================================================
 
         /// <summary>
         /// Image の横幅のみを更新する

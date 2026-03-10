@@ -126,6 +126,9 @@ namespace WeaponSystem.Data
         // --------------------------------------------------
         // 基準値
         // --------------------------------------------------
+        /// <summary>プレイヤー弾丸の ID</summary>
+        public const int PLAYER_BULLET_ID = 1;
+
         /// <summary>基準となる弾速倍率</summary>
         private const float BASE_BULLET_SPEED_MULTIPLIER = 100f;
 
@@ -136,13 +139,16 @@ namespace WeaponSystem.Data
         private const float BASE_BULLET_DRAG = 75f;
 
         /// <summary>基準となる弾丸高度の補間指数</summary>
-        public const float BASE_BULLET_HEIGHT_INTERPOLATION_EXPONENT = 1.5f;
+        protected const float BASE_BULLET_HEIGHT_INTERPOLATION_EXPONENT = 1.5f;
 
-        /// <summary>基準となる弾丸のダメージ</summary>
-        public const float BASE_BULLET_DAMAGE = 10f;
+        /// <summary>基準となるプレイヤー弾丸のダメージ</summary>
+        protected const float BASE_PLAYER_BULLET_DAMAGE = 10f;
+
+        /// <summary>基準となるエネミー弾丸のダメージ</summary>
+        protected const float BASE_ENEMY_BULLET_DAMAGE = 5f;
 
         /// <summary>基準となる弾丸のダメージ倍率</summary>
-        public const float BASE_BULLET_DAMAGE_MULTIPLIER = 0.01f;
+        protected const float BASE_BULLET_DAMAGE_MULTIPLIER = 0.01f;
 
         /// <summary>弾速計算時の質量影響基準値</summary>
         private const float BASE_MASS_INFLUENCE = 1.0f;
@@ -151,7 +157,7 @@ namespace WeaponSystem.Data
         private const float SPEED_DAMAGE_POWER = 1.5f;
 
         /// <summary>弾丸の質量によるダメージへの増幅係数</summary>
-        public const float MASS_DAMAGE_POWER = 1.25f;
+        protected const float MASS_DAMAGE_POWER = 1.25f;
 
         // --------------------------------------------------
         // パラメーター
@@ -400,8 +406,18 @@ namespace WeaponSystem.Data
             float massFactor =
                 Mathf.Pow(Mass, MASS_DAMAGE_POWER);
 
+            // 使用する基準ダメージを決定
+            float baseDamage =
+                _bulletId == PLAYER_BULLET_ID
+                    ? BASE_PLAYER_BULLET_DAMAGE
+                    : BASE_ENEMY_BULLET_DAMAGE;
+
             // 最終ダメージ算出
-            float damage = BASE_BULLET_DAMAGE + speedFactor * massFactor * BASE_BULLET_DAMAGE_MULTIPLIER;
+            float damage =
+                baseDamage +
+                speedFactor *
+                massFactor *
+                BASE_BULLET_DAMAGE_MULTIPLIER;
 
             // ダメージ適用
             _damageTarget.TakeDamage(_damageTargetTransform, damage);

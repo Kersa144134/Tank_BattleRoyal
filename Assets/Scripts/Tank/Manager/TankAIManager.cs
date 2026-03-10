@@ -25,14 +25,17 @@ public sealed class TankAIManager
     private readonly TankVisibilityController _visibilityController;
 
     /// <summary>
-    /// プレイヤー戦車 Transform
+    /// プレイヤー戦車コンテキスト
     /// GetClosestTarget が複数要素の Transform 配列を想定しているため、
     /// 単要素の配列として扱う
     /// </summary>
     private TankCollisionContext[] _player = new TankCollisionContext[1];
 
-    /// <summary>ターゲット Transform 配列</summary>
-    private BaseCollisionContext[] _targets;
+    /// <summary>アイテムコンテキスト配列</summary>
+    private BaseCollisionContext[] _items;
+
+    /// <summary>現在のターゲット Transform</summary>
+    private Transform _currentTarget;
 
     // ======================================================
     // 定数
@@ -41,11 +44,17 @@ public sealed class TankAIManager
     // --------------------------------------------------
     // 視界関連
     // --------------------------------------------------
-    /// <summary>視界判定に使用する視野角（度）</summary>
-    private const float FOV_ANGLE = 180f;
+    /// <summary>対プレイヤー視界判定に使用する視野角（度）</summary>
+    private const float PLAYER_FOV_ANGLE = 120f;
 
-    /// <summary>視界判定に使用する最大索敵距離</summary>
-    private const float VIEW_DISTANCE = 100f;
+    /// <summary>対プレイヤー視界判定に使用する最大索敵距離</summary>
+    private const float PLAYER_VIEW_DISTANCE = 80f;
+
+    /// <summary>対アイテム視界判定に使用する視野角（度）</summary>
+    private const float ITEM_FOV_ANGLE = 360f;
+
+    /// <summary>対アイテム視界判定に使用する最大索敵距離</summary>
+    private const float ITEM_VIEW_DISTANCE = 150f;
 
     // --------------------------------------------------
     // 移動関連
@@ -99,27 +108,7 @@ public sealed class TankAIManager
         }
 
         _player[0] = tankContexts[0];
-
-        // プレイヤー + アイテムの合計数
-        int targetCount = 1 + (itemContexts != null ? itemContexts.Length : 0);
-
-        // ターゲット配列を必要に応じて生成
-        if (_targets == null || _targets.Length != targetCount)
-        {
-            _targets = new BaseCollisionContext[targetCount];
-        }
-
-        // プレイヤーを先頭にセット
-        _targets[0] = _player[0];
-
-        // アイテムを続けてコピー
-        if (itemContexts != null)
-        {
-            for (int i = 0; i < itemContexts.Length; i++)
-            {
-                _targets[i + 1] = itemContexts[i];
-            }
-        }
+        _items = itemContexts;
     }
 
     // ======================================================
@@ -167,49 +156,79 @@ public sealed class TankAIManager
         out Transform target,
         out Vector3 localTargetDir)
     {
-        // ターゲットを取得
-        target = GetPlayerTarget(FOV_ANGLE, VIEW_DISTANCE);
+        // --------------------------------------------------
+        // ターゲット決定
+        // --------------------------------------------------
+        // プレイヤーを優先して探索
+        bool found =
+            GetTarget(
+                PLAYER_FOV_ANGLE,
+                PLAYER_VIEW_DISTANCE,
+                _player,
+                ref _currentTarget);
 
-        if (target == null)
+        // プレイヤーが見つからない場合のみアイテム探索
+        if (!found)
         {
+            GetTarget(
+                ITEM_FOV_ANGLE,
+                ITEM_VIEW_DISTANCE,
+                _items,
+                ref _currentTarget);
+        }
+
+        if (_currentTarget == null)
+        {
+            target = null;
             localTargetDir = Vector3.zero;
             return false;
         }
 
-        // ターゲットまでのベクトル計算
-        Vector3 toTarget = target.position - currentTransform.position;
+        // 出力ターゲット設定
+        target = _currentTarget;
 
-        // 自身のローカル座標系に変換
-        localTargetDir = currentTransform.InverseTransformDirection(toTarget);
+        // --------------------------------------------------
+        // ターゲット方向計算
+        // --------------------------------------------------
+        // ターゲットまでのベクトル計算
+        Vector3 toTarget =
+            target.position - currentTransform.position;
+
+        // ローカル座標へ変換
+        localTargetDir =
+            currentTransform.InverseTransformDirection(toTarget);
 
         return true;
     }
 
     /// <summary>
-    /// プレイヤーを対象としてターゲットを取得する
+    /// 指定配列を対象としてターゲットを取得する
     /// </summary>
     /// <param name="fovAngle">視野角（度）</param>
     /// <param name="viewDistance">最大索敵距離</param>
-    /// <returns>現在の最優先ターゲット Transform</returns>
-    private Transform GetPlayerTarget(
+    /// <param name="targets">ターゲット対象の配列</param>
+    /// <param name="resultTarget">結果ターゲット</param>
+    /// <returns>更新成功した場合 true</returns>
+    private bool GetTarget(
         in float fovAngle,
-        in float viewDistance)
+        in float viewDistance,
+        in BaseCollisionContext[] targets,
+        ref Transform resultTarget)
     {
-        // 視界制御クラスやターゲット配列が未初期化の場合は null を返す
-        if (_visibilityController == null || _targets == null || _targets.Length == 0)
+        if (_visibilityController == null ||
+            targets == null ||
+            targets.Length == 0)
         {
-            return null;
+            return false;
         }
 
         // プレイヤーを優先して最も近いターゲットを取得
-        Transform result = _visibilityController.GetClosestTarget(
+        return _visibilityController.TryGetClosestTarget(
             fovAngle,
             viewDistance,
-            _targets,
-            _player
+            targets,
+            ref resultTarget
         );
-
-        return result;
     }
 
     /// <summary>

@@ -58,6 +58,12 @@ namespace TankSystem.Manager
         /// <summary>右攻撃ボタン入力経過時間（未押下時は -1）</summary>
         private float _rightInputTimer = -1f;
 
+        // --------------------------------------------------
+        // 視界関連
+        // --------------------------------------------------
+        /// <summary>現在のターゲット Transform</summary>
+        private Transform _currentTarget;
+
         // ======================================================
         // 定数
         // ======================================================
@@ -138,17 +144,17 @@ namespace TankSystem.Manager
             in ButtonState rightInput,
             in BaseCollisionContext[] tanks)
         {
-            // 入力無効防止
             if (leftInput == null || rightInput == null)
             {
                 return;
             }
 
             // ターゲット取得 
-            Transform target = _visibilityController.GetClosestTarget(
+            _visibilityController.TryGetClosestTarget(
                 FOV_ANGLE,
                 VIEW_DISTANCE,
-                tanks
+                tanks,
+                ref _currentTarget
             );
 
             // クールタイム中
@@ -196,7 +202,7 @@ namespace TankSystem.Manager
             {
                 if (Mathf.Abs(_leftInputTimer - _rightInputTimer) <= INPUT_DECISION_DELAY)
                 {
-                    FireSpecial(target);
+                    FireSpecial(_currentTarget);
 
                     ResetInputTimers();
 
@@ -209,7 +215,7 @@ namespace TankSystem.Manager
             // 左入力攻撃
             if (_leftInputTimer >= 0f && _leftInputTimer > INPUT_DECISION_DELAY)
             {
-                FireCurrentBullet(target);
+                FireCurrentBullet(_currentTarget);
 
                 ResetInputTimers();
 
@@ -219,7 +225,7 @@ namespace TankSystem.Manager
             // 右入力攻撃
             if (_rightInputTimer >= 0f && _rightInputTimer > INPUT_DECISION_DELAY)
             {
-                FireCurrentBullet(target);
+                FireCurrentBullet(_currentTarget);
 
                 ResetInputTimers();
 

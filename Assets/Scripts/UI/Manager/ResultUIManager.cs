@@ -9,7 +9,11 @@
 using System;
 using InputSystem.Manager;
 using SceneSystem.Interface;
+using ScoreSystem.Manager;
 using SoundSystem.Manager;
+using TMPro;
+using UISystem.Service;
+using UnityEngine;
 
 namespace UISystem.Manager
 {
@@ -22,20 +26,37 @@ namespace UISystem.Manager
         // インスペクタ設定
         // ======================================================
 
-        // [Header("タイトルシーン固有インスペクタ")]
+        [Header("リザルトシーン固有インスペクタ")]
+
+        [Header("スコア")]
+        /// <summary>スコアを表示するテキスト</summary>
+        [SerializeField]
+        private TextMeshProUGUI _scoreText;
 
         // ======================================================
         // コンポーネント参照
         // ======================================================
 
-        // ======================================================
-        // フィールド
-        // ======================================================
+        /// <summary>スコア表示フォーマットサービス</summary>
+        private TextFormatService _scoreFormatService;
 
         // ======================================================
         // 定数
         // ======================================================
 
+        // --------------------------------------------------
+        // スコア
+        // --------------------------------------------------
+        // <summary>
+        /// スコア表示フォーマット
+        /// </summary>
+        private const string SCORE_FORMAT = "SCORE {0}";
+
+        /// <summary>
+        /// スコア表示桁数
+        /// </summary>
+        private static readonly int[] SCORE_DIGITS = { 8 };
+        
         // --------------------------------------------------
         // アニメーション名
         // --------------------------------------------------
@@ -56,6 +77,15 @@ namespace UISystem.Manager
         protected override void OnEnterInternal()
         {
             base.OnEnterInternal();
+            
+            if (_scoreText != null)
+            {
+                // スコア表示フォーマットクラスを生成する
+                _scoreFormatService = new TextFormatService(_scoreText, SCORE_FORMAT, SCORE_DIGITS);
+
+                // スコア表示
+                NotifyScoreChanged(ScoreManager.Instance.TotalScore);
+            }
         }
 
         protected override void OnLateUpdateInternal(in float unscaledDeltaTime)
@@ -98,6 +128,28 @@ namespace UISystem.Manager
         public void FadeInAnimationStart()
         {
             _fade?.FadeIn(FADE_TIME);
+        }
+
+        // ======================================================
+        // プライベートメソッド
+        // ======================================================
+
+        /// <summary>
+        /// スコア変更時の処理を行う
+        /// </summary>
+        /// <param name="score">加算されるスコア値</param>
+        private void NotifyScoreChanged(int score)
+        {
+            if (_scoreText == null)
+            {
+                return;
+            }
+
+            // 現在スコア取得
+            int totalScore = ScoreManager.Instance?.TotalScore ?? 0;
+
+            // フォーマットを使用して UI に反映
+            _scoreFormatService.SetNumberText(totalScore);
         }
     }
 }

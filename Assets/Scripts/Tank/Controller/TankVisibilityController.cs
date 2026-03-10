@@ -30,12 +30,6 @@ namespace TankSystem.Controller
         // フィールド
         // ======================================================
 
-        /// <summary>フレーム間隔カウンター</summary>
-        private int _frameCounter;
-
-        /// <summary>現在取得した最短ターゲット</summary>
-        private Transform _resultTarget;
-
         /// <summary>戦車 Transform</summary>
         private readonly Transform _transform;
 
@@ -59,7 +53,7 @@ namespace TankSystem.Controller
         private const int MAX_TARGETS = 64;
 
         /// <summary>ターゲット更新フレーム間隔</summary>
-        private const int TARGET_UPDATE_INTERVAL_FRAME = 30;
+        private const int TARGET_UPDATE_INTERVAL_FRAME = 60;
 
         // ======================================================
         // イベント
@@ -103,82 +97,60 @@ namespace TankSystem.Controller
         // ======================================================
         // パブリックメソッド
         // ======================================================
+
         /// <summary>
         /// 現在の最短ターゲット取得
         /// </summary>
         /// <param name="fovAngle">視野角（度）</param>
         /// <param name="viewDistance">最大索敵距離</param>
         /// <param name="targetContexts">対象コンテキスト配列</param>
-        /// <param name="filterTargets">優先ターゲット配列、null の場合は全ターゲット対象</param>
-        /// <returns>最短ターゲット Transform</returns>
-        public Transform GetClosestTarget(
+        /// <param name="resultTarget">結果ターゲット</param>
+        /// <returns>更新成功した場合 true</returns>
+        public bool TryGetClosestTarget(
             in float fovAngle,
             in float viewDistance,
             in BaseCollisionContext[] targetContexts,
-            in BaseCollisionContext[] filterTargets = null)
+            ref Transform resultTarget)
         {
-            // --------------------------------------------------
-            // フレーム間隔制御
-            // --------------------------------------------------
-            // カウンターが 0 以外の場合は処理をスキップ
-            if (_frameCounter != 0)
+            // 現在フレーム取得
+            int currentFrame = Time.frameCount;
+
+            // 指定フレーム間隔以外では処理しない
+            if (currentFrame % TARGET_UPDATE_INTERVAL_FRAME != 0)
             {
-                _frameCounter++;
-
-                // 指定フレーム間隔に達したらカウンターを 0 に戻す
-                if (_frameCounter >= TARGET_UPDATE_INTERVAL_FRAME)
-                    _frameCounter = 0;
-
-                // 前回計算したターゲットを返す
-                return _resultTarget;
+                return false;
             }
 
-            _frameCounter++;
-
-            // --------------------------------------------------
-            // 対象配列の決定
-            // --------------------------------------------------
-            // filterTargets が指定されていれば優先ターゲット配列、なければ全ターゲット配列を使用
-            BaseCollisionContext[] targets = (filterTargets != null && filterTargets.Length > 0)
-                ? filterTargets
-                : targetContexts;
-
-            if (targets == null || targets.Length == 0)
+            // 対象存在チェック
+            if (targetContexts == null || targetContexts.Length == 0)
             {
-                return null;
+                return false;
             }
 
-            // --------------------------------------------------
             // 視界内ターゲット取得
-            // --------------------------------------------------
-            // 優先ターゲットで取得
-            int visibleCount = _fieldOfViewCalculator.GetVisibleTargets(
-                _turretTransform,
-                targets,
-                _shieldOBBs,
-                fovAngle,
-                viewDistance,
-                ref _visibleTargetsBuffer);
-
-            // 優先ターゲットが視界に存在しない場合、全体ターゲットで再取得
-            if ((filterTargets != null && filterTargets.Length > 0) && visibleCount == 0)
-            {
-                visibleCount = _fieldOfViewCalculator.GetVisibleTargets(
+            int visibleCount =
+                _fieldOfViewCalculator.GetVisibleTargets(
                     _turretTransform,
                     targetContexts,
                     _shieldOBBs,
                     fovAngle,
                     viewDistance,
                     ref _visibleTargetsBuffer);
+
+            // 視界内に存在しない場合
+            if (visibleCount == 0)
+            {
+                return false;
             }
 
-            // --------------------------------------------------
-            // 最短ターゲット選択
-            // --------------------------------------------------
-            // visibleCount の範囲内で最短距離のターゲットを選択
-            _resultTarget = SelectClosestTarget(_visibleTargetsBuffer, visibleCount);
+            // 最短距離ターゲット取得
+            Transform closestTarget =
+                SelectClosestTarget(_visibleTargetsBuffer, visibleCount);
 
-            return _resultTarget;
+            // 結果更新
+            resultTarget = closestTarget;
+
+            return true;
         }
 
         /// <summary>

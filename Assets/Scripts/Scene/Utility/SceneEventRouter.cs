@@ -94,8 +94,10 @@ namespace SceneSystem.Utility
                 _context.PlayerTank.OnFireModeChangeButtonPressed += HandleFireModeChangeButtonPressed;
                 _context.PlayerTank.OnFireBullet += HandleFireBullet;
                 _context.PlayerTank.DurabilityManager.OnDurabilityChanged += HandleDurabilityChanged;
+                _context.PlayerTank.DurabilityManager.OnDamaged += HandleDamaged;
                 _context.PlayerTank.EnergyManager.OnFuelChanged += HandleFuelChanged;
                 _context.PlayerTank.EnergyManager.OnAmmoChanged += HandleAmmoChanged;
+                _context.PlayerTank.EnergyManager.OnFuelEmptied += HandleFuelEmptied;
                 _context.PlayerTank.OnBroken += HandleBroken;
             }
 
@@ -195,6 +197,7 @@ namespace SceneSystem.Utility
                 _context.PlayerTank.DurabilityManager.OnDurabilityChanged -= HandleDurabilityChanged;
                 _context.PlayerTank.EnergyManager.OnFuelChanged -= HandleFuelChanged;
                 _context.PlayerTank.EnergyManager.OnAmmoChanged -= HandleAmmoChanged;
+                _context.PlayerTank.EnergyManager.OnFuelEmptied -= HandleFuelEmptied;
                 _context.PlayerTank.OnBroken -= HandleBroken;
             }
 
@@ -343,6 +346,14 @@ namespace SceneSystem.Utility
         }
 
         /// <summary>
+        /// 被ダメージ時の処理を行うハンドラ
+        /// </summary>
+        private void HandleDamaged()
+        {
+            _context.MainUIManager?.NotifyDamaged();
+        }
+
+        /// <summary>
         /// 燃料値変更時の処理を行うハンドラ
         /// </summary>
         private void HandleFuelChanged()
@@ -356,6 +367,15 @@ namespace SceneSystem.Utility
         private void HandleAmmoChanged()
         {
             _context.MainUIManager?.NotifyAmmoChanged();
+        }
+
+        /// <summary>
+        /// 燃料が空になった時の処理を行うハンドラ
+        /// </summary>
+        private void HandleFuelEmptied()
+        {
+            // 強制的にゲーム終了
+            OnPhaseChanged?.Invoke(PhaseType.Finish);
         }
 
         // --------------------------------------------------
@@ -504,7 +524,11 @@ namespace SceneSystem.Utility
 
             _context.SceneObjectRegistry?.RegisterBullet(bullet);
             _context.CollisionManager?.RegisterBullet(bullet);
-            _context.MainUIManager?.NotifyFireBullet();
+
+            if (bullet.BulletId == BulletBase.PLAYER_BULLET_ID)
+            {
+                _context.MainUIManager?.NotifyFireBullet();
+            }
         }
 
         /// <summary>

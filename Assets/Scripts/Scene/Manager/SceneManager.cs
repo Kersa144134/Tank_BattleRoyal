@@ -11,6 +11,7 @@ using SceneSystem.Controller;
 using SceneSystem.Data;
 using SceneSystem.Interface;
 using SceneSystem.Utility;
+using ScoreSystem.Manager;
 
 namespace SceneSystem.Manager
 {
@@ -136,6 +137,9 @@ namespace SceneSystem.Manager
             _sceneEventRouter.Subscribe();
             _phaseManager.OnOptionButtonPressed += HandleOptionButtonPressed;
             _sceneEventRouter.OnPhaseChanged += SetTargetPhase;
+
+            // スコアリセット処理
+            ScoreManager.Instance?.ResetScore();
         }
 
         private void Update()
@@ -213,6 +217,9 @@ namespace SceneSystem.Manager
             _sceneEventRouter.Dispose();
             _phaseManager.OnOptionButtonPressed -= HandleOptionButtonPressed;
             _sceneEventRouter.OnPhaseChanged -= SetTargetPhase;
+
+            // リザルト前のスコア最終計算
+            ScoreManager.Instance?.AddItemBonusScore();
         }
 
         // ======================================================

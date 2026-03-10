@@ -69,11 +69,16 @@ namespace VisionSystem.Calculator
         {
             _visibleTargetCount = 0;
 
-            // 平方根回避のため二乗値を使用
+            // 平方根計算を回避するため視界距離の二乗値を算出
             float viewDistanceSqr = viewDistance * viewDistance;
 
-            // 内積判定用に cosθ bを事前計算
-            float halfFOVCos = Mathf.Cos(fovAngle * 0.5f * Mathf.Deg2Rad);
+            // 360度視界かどうかを判定
+            bool isFullView = fovAngle >= 360f;
+
+            // 視野角判定用の cosθ を事前計算
+            float halfFOVCos = isFullView
+                ? -1f
+                : Mathf.Cos( fovAngle * 0.5f * Mathf.Deg2Rad);
 
             for (int i = 0; i < targets.Length; i++)
             {
@@ -89,10 +94,12 @@ namespace VisionSystem.Calculator
                 // ベクトルの二乗長さを取得
                 float sqrDistance = toTarget.sqrMagnitude;
 
-                // 対象 OBB の半径を考慮した二乗距離
-                float radiusSqr = targetOBB.BoundingRadius * targetOBB.BoundingRadius;
+                // 対象 OBB の半径の二乗値を算出
+                float radiusSqr =
+                    targetOBB.BoundingRadius *
+                    targetOBB.BoundingRadius;
 
-                // 視界距離 + OBB半径を超えている場合は視界外
+                // 視界距離 + OBB半径を超えている場合は視界外とする
                 if (sqrDistance > viewDistanceSqr + radiusSqr)
                 {
                     continue;
@@ -100,31 +107,37 @@ namespace VisionSystem.Calculator
 
                 // --------------------------------------------------
                 // 視野角判定
-                // 内積
                 // --------------------------------------------------
-                // 正規化済み方向ベクトル
-                Vector3 dir = toTarget;
-                float magnitude = dir.sqrMagnitude;
-
-                // 正規化
-                if (magnitude > LINE_INTERSECTION_EPSILON)
+                // 360度視界の場合は角度判定をスキップ
+                if (!isFullView)
                 {
-                    dir /= Mathf.Sqrt(magnitude);
-                }
+                    // 正規化用ベクトルをコピー
+                    Vector3 dir = toTarget;
 
-                // 内積を取得
-                float dot = Vector3.Dot(origin.forward, dir);
+                    // ベクトル長さの二乗を取得
+                    float magnitude = dir.sqrMagnitude;
 
-                // 半視野角より外なら視界外
-                if (dot < halfFOVCos)
-                {
-                    continue;
+                    // ゼロ除算回避のため十分な長さがある場合のみ正規化
+                    if (magnitude > LINE_INTERSECTION_EPSILON)
+                    {
+                        // 平方根で正規化
+                        dir /=  Mathf.Sqrt(magnitude);
+                    }
+
+                    // 視線方向との内積を取得
+                    float dot = Vector3.Dot( origin.forward, dir);
+
+                    // 半視野角より外側の場合は視界外と判定
+                    if (dot < halfFOVCos)
+                    {
+                        continue;
+                    }
                 }
 
                 // --------------------------------------------------
                 // 遮蔽物判定
-                // スラブ
                 // --------------------------------------------------
+                // 遮蔽フラグを初期化
                 bool blocked = false;
 
                 for (int j = 0; j < obstacles.Length; j++)
@@ -137,23 +150,34 @@ namespace VisionSystem.Calculator
                         continue;
                     }
 
-                    // 原点から対象 OBB 中心への線分が障害物 OBB に交差するか判定
-                    if (_losMath.IsLineIntersectOBB(origin.position, targetOBB.Center, obstacle))
+                    // 原点から対象中心への線分が障害物に交差するか
+                    if (_losMath.IsLineIntersectOBB(
+                        origin.position,
+                        targetOBB.Center,
+                        obstacle))
                     {
-                        // 1 つでも遮蔽物があれば判定終了
+                        // 1つでも遮蔽物があれば遮蔽状態と判定
                         blocked = true;
+
                         break;
                     }
                 }
 
-                // 遮蔽されていなければ距離順で挿入
+                // --------------------------------------------------
+                // 距離順登録
+                // --------------------------------------------------
+                // 遮蔽されていない場合のみ登録
                 if (!blocked)
                 {
-                    InsertVisibleTarget(origin.position, targets[i].Transform, sqrDistance);
+                    // 距離順で配列に挿入
+                    InsertVisibleTarget(
+                        origin.position,
+                        targets[i].Transform,
+                        sqrDistance);
                 }
             }
 
-            // 結果を呼び出し側配列に書き込み
+            // 内部配列の内容を呼び出し側配列へコピーする
             for (int i = 0; i < _visibleTargetCount; i++)
             {
                 outArray[i] = _visibleTargetsArray[i];

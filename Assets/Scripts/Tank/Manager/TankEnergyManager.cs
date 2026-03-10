@@ -114,6 +114,9 @@ namespace TankSystem.Manager
         /// <summary>弾薬が変更された瞬間に発火するイベント</summary>
         public event Action OnAmmoChanged;
 
+        /// <summary>燃料が空になった瞬間に発火するイベント</summary>
+        public event Action OnFuelEmptied;
+
         // ======================================================
         // パブリックメソッド
         // ======================================================
@@ -179,6 +182,10 @@ namespace TankSystem.Manager
             if (_currentFuel < 0f)
             {
                 _currentFuel = 0f;
+
+                // 燃料が空になった時の専用通知
+                OnFuelEmptied?.Invoke();
+                return;
             }
 
             OnFuelChanged?.Invoke();

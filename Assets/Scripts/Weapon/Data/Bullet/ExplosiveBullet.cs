@@ -115,9 +115,19 @@ namespace WeaponSystem.Data
                 // 質量が高いほど、ダメージへの影響が段階的に大きくなるよう補正する
                 float massFactor =
                     Mathf.Pow(Mass, MASS_DAMAGE_POWER);
+                
+                // 使用する基準ダメージを決定
+                float baseDamage =
+                    _bulletId == PLAYER_BULLET_ID
+                        ? BASE_PLAYER_BULLET_DAMAGE
+                        : BASE_ENEMY_BULLET_DAMAGE;
 
                 // 最終ダメージ算出
-                float damage = BASE_BULLET_DAMAGE + massFactor * BASE_BULLET_DAMAGE_MULTIPLIER;
+                float damage =
+                    baseDamage +
+                    massFactor *
+                    BASE_BULLET_DAMAGE_MULTIPLIER;
+
 
                 // ダメージ適用
                 damageable.TakeDamage(damageableTransform, damage);

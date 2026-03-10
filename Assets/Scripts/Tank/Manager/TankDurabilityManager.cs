@@ -61,7 +61,10 @@ namespace TankSystem.Manager
 
         /// <summary>耐久力が変更された瞬間に発火するイベント</summary>
         public event Action OnDurabilityChanged;
-        
+
+        /// <summary>被ダメージ時に発火するイベント</summary>
+        public event Action OnDamaged;
+
         /// <summary>耐久力が 0 になった際に発火するイベント</summary>
         public event Action OnBroken;
 
@@ -135,7 +138,9 @@ namespace TankSystem.Manager
 
             // 耐久力変更イベント発火
             OnDurabilityChanged?.Invoke();
-            
+
+            OnDamaged?.Invoke();
+
             // 耐久力が 0 になった場合
             if (_isBroken)
             {
