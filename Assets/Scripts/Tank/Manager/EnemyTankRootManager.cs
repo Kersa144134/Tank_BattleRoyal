@@ -121,6 +121,7 @@ namespace TankSystem.Manager
             Tanks = tankContexts;
             Obstacles = obstacleContexts;
 
+            _visibilityController.SetObstacleOBB(Obstacles);
             _tankAIManager.SetTargetData(tankContexts, itemContexts);
         }
 

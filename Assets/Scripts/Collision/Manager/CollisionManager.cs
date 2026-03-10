@@ -533,17 +533,6 @@ namespace CollisionSystem.Manager
                 return;
             }
 
-            // 障害物 OBB 配列
-            if (_obstacleOBBsCache == null || _obstacleOBBsCache.Length != _obstacles.Length)
-            {
-                _obstacleOBBsCache = new BaseOBBData[_obstacles.Length];
-            }
-
-            for (int i = 0; i < _obstacles.Length; i++)
-            {
-                _obstacleOBBsCache[i] = _obstacles[i].OBB;
-            }
-
             // 各戦車へセット
             for (int i = 0; i < _tanks.Length; i++)
             {
@@ -551,7 +540,6 @@ namespace CollisionSystem.Manager
                 if (tankManager == null) continue;
 
                 tankManager.SetTargetData(_tanks, _obstacles, _items);
-                tankManager.SetObstacleData(_obstacleOBBsCache);
             }
         }
 

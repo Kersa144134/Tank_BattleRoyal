@@ -229,19 +229,6 @@ namespace TankSystem.Manager
         );
 
         // ======================================================
-        // セッター
-        // ======================================================
-
-        /// <summary>
-        /// 遮蔽物の OBB 配列を送る
-        /// </summary>
-        /// <param name="obstacleOBBs">遮蔽物 OBB 配列</param>
-        public void SetObstacleData(in BaseOBBData[] obstacleOBBs)
-        {
-            _visibilityController.SetObstacleData(obstacleOBBs);
-        }
-
-        // ======================================================
         // IUpdatable イベント
         // ======================================================
 
@@ -401,7 +388,7 @@ namespace TankSystem.Manager
             // 弾薬が 0 以上
             if (_energyManager.CurrentAmmo > 0)
             {
-                _attackManager.UpdateAttack(unscaledDeltaTime, leftFire, rightFire, Tanks);
+                _attackManager.UpdateAttack(unscaledDeltaTime, leftFire, rightFire, Tanks, Obstacles);
             }
 
             // 砲塔スケール

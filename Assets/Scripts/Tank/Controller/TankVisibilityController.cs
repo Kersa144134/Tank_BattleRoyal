@@ -6,12 +6,10 @@
 // 概要     : 戦車の視界判定とターゲット決定を担当するクラス
 // ======================================================
 
-using CollisionSystem.Data;
 using System;
-using System.Collections.Generic;
-using TankSystem.Manager;
-using Unity.VisualScripting;
 using UnityEngine;
+using CollisionSystem.Data;
+using TankSystem.Manager;
 using VisionSystem.Calculator;
 
 namespace TankSystem.Controller
@@ -39,7 +37,7 @@ namespace TankSystem.Controller
         private readonly Transform _turretTransform;
 
         /// <summary>遮蔽物 OBB 配列</summary>
-        private BaseOBBData[] _shieldOBBs = new BaseOBBData[0];
+        private BaseOBBData[] _obstacleOBBs;
 
         /// <summary>FieldOfViewCalculator に渡す参照配列</summary>
         private BaseCollisionContext[] _visibleTargetsBuffer
@@ -74,7 +72,7 @@ namespace TankSystem.Controller
         private const int TARGET_UPDATE_INTERVAL_FRAME = 60;
 
         /// <summary>エミッションONカラー</summary>
-        private static readonly Color EMISSION_ON_COLOR = new Color(1f, 0.5f, 0f);
+        private static readonly Color EMISSION_ON_COLOR = new Color(0.125f, 0f, 0f);
 
         /// <summary>エミッションOFFカラー</summary>
         private static readonly Color EMISSION_OFF_COLOR = Color.black;
@@ -119,11 +117,19 @@ namespace TankSystem.Controller
         // ======================================================
 
         /// <summary>
-        /// 遮蔽物の OBB 配列を受け取る
+        /// 遮蔽物の OBB 配列を生成
         /// </summary>
-        public void SetObstacleData(in BaseOBBData[] shieldOBBs)
+        public void SetObstacleOBB(in BaseCollisionContext[] obstacleOBBs)
         {
-            _shieldOBBs = shieldOBBs;
+            if (obstacleOBBs == null || obstacleOBBs.Length > 0)
+            {
+                _obstacleOBBs = new BaseOBBData[obstacleOBBs.Length];
+            }
+
+            for (int i = 0; i < _obstacleOBBs.Length; i++)
+            {
+                _obstacleOBBs[i] = obstacleOBBs[i].OBB;
+            }
         }
 
         // ======================================================
@@ -186,7 +192,7 @@ namespace TankSystem.Controller
                 _fieldOfViewCalculator.GetVisibleTargets(
                     _turretTransform,
                     targetContexts,
-                    _shieldOBBs,
+                    _obstacleOBBs,
                     fovAngle,
                     viewDistance,
                     ref _visibleTargetsBuffer);
@@ -247,6 +253,9 @@ namespace TankSystem.Controller
                     _cachedTargetTankRootManager.ChangeTargetIcon(false);
                 }
             }
+
+            // ターゲット取得イベントを通知
+            OnTargetAcquired?.Invoke(newTarget);
 
             // キャッシュ更新
             _cachedTargetTankRootManager = newTarget;
@@ -331,9 +340,6 @@ namespace TankSystem.Controller
                     // ターゲット戦車アイコン更新
                     UpdateTankIcon(manager);
 
-                    // ターゲット取得イベントを通知
-                    OnTargetAcquired?.Invoke(manager);
-
                     // ターゲット障害物マテリアル更新
                     UpdateObstacleMaterial(null);
                 }
@@ -342,11 +348,11 @@ namespace TankSystem.Controller
                     // TankCollisionContext からマテリアルを取得
                     Material mat = GetObstacleMaterial(obstacle);
 
-                    // ターゲット障害物マテリアル更新
-                    UpdateObstacleMaterial(mat);
-
                     // ターゲット戦車アイコン更新
                     UpdateTankIcon(null);
+
+                    // ターゲット障害物マテリアル更新
+                    UpdateObstacleMaterial(mat);
                 }
             }
 
@@ -378,6 +384,11 @@ namespace TankSystem.Controller
         private Material GetObstacleMaterial(ObstacleCollisionContext target)
         {
             if (target == null)
+            {
+                return null;
+            }
+
+            if (!target.Transform.CompareTag("Breakable"))
             {
                 return null;
             }
