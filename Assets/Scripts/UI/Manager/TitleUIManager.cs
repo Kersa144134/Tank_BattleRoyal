@@ -50,11 +50,6 @@ namespace UISystem.Manager
         // IUpdatable îhê∂ÉCÉxÉìÉg
         // ======================================================
 
-        protected override void OnEnterInternal()
-        {
-            base.OnEnterInternal();
-        }
-
         protected override void OnLateUpdateInternal(in float unscaledDeltaTime)
         {
             base.OnLateUpdateInternal(unscaledDeltaTime);

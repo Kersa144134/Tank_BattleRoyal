@@ -195,6 +195,7 @@ namespace SceneSystem.Utility
                 _context.PlayerTank.OnFireModeChangeButtonPressed -= HandleFireModeChangeButtonPressed;
                 _context.PlayerTank.OnFireBullet -= HandleFireBullet;
                 _context.PlayerTank.DurabilityManager.OnDurabilityChanged -= HandleDurabilityChanged;
+                _context.PlayerTank.DurabilityManager.OnDamaged -= HandleDamaged;
                 _context.PlayerTank.EnergyManager.OnFuelChanged -= HandleFuelChanged;
                 _context.PlayerTank.EnergyManager.OnAmmoChanged -= HandleAmmoChanged;
                 _context.PlayerTank.EnergyManager.OnFuelEmptied -= HandleFuelEmptied;
@@ -351,6 +352,8 @@ namespace SceneSystem.Utility
         private void HandleDamaged()
         {
             _context.MainUIManager?.NotifyDamaged();
+
+            SoundManager.Instance?.PlaySE(9);
         }
 
         /// <summary>
@@ -499,7 +502,7 @@ namespace SceneSystem.Utility
             {
                 ScoreManager.Instance?.AddTankScore();
 
-                SoundManager.Instance?.PlaySE(9);
+                SoundManager.Instance?.PlaySE(10);
             }
             else
             {

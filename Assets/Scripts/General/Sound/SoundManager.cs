@@ -177,6 +177,7 @@ namespace SoundSystem.Manager
             for (int i = 0; i < _bgmSets.Length; i++)
             {
                 BgmSet bgm = _bgmSets[i];
+
                 if (bgm.Source == null)
                 {
                     continue;
@@ -362,13 +363,12 @@ namespace SoundSystem.Manager
 
             BgmSet bgm = _bgmSets[index];
 
-            // Source が未設定なら再生なし
+            // Source が未設定なら処理なし
             if (bgm.Source == null)
             {
                 return;
             }
 
-            // ボリュームを設定
             bgm.Source.volume = volume;
         }
 

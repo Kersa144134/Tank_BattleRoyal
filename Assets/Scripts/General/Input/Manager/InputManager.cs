@@ -9,7 +9,6 @@
 
 using UnityEngine;
 using InputSystem.Data;
-using SceneSystem.Interface;
 
 namespace InputSystem.Manager
 {

@@ -93,10 +93,10 @@ namespace TankSystem.Manager
         // 視界関連
         // --------------------------------------------------
         /// <summary>視界判定に使用する視野角（度）</summary>
-        private const float FOV_ANGLE = 30f;
+        private const float FOV_ANGLE = 20f;
         
         /// <summary>視界判定に使用する最大索敵距離</summary>
-        private const float VIEW_DISTANCE = 100f;
+        private const float VIEW_DISTANCE = 80f;
 
         // ======================================================
         // イベント
@@ -154,8 +154,20 @@ namespace TankSystem.Manager
                 FOV_ANGLE,
                 VIEW_DISTANCE,
                 tanks,
-                ref _currentTarget
+                ref _currentTarget,
+                true
             );
+
+            if (_currentTarget == null)
+            {
+                _visibilityController.TryGetClosestTarget(
+                FOV_ANGLE,
+                VIEW_DISTANCE,
+                tanks,
+                ref _currentTarget,
+                true
+            );
+            }
 
             // クールタイム中
             if (_cooldownTime > 0f)

@@ -229,10 +229,7 @@ namespace UISystem.Manager
         protected virtual void OnEnterInternal()
         {
             // エフェクト用 Animator を取得する
-            if (_effectAnimator != null)
-            {
-                _effectAnimator = GetComponent<Animator>();
-            }
+            _effectAnimator = GetComponent<Animator>();
 
             // 2 値化ポストプロセス制御クラスを生成する
             _binarizationPostProcessController =

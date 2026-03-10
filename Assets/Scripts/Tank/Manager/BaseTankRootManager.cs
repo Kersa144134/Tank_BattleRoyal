@@ -136,6 +136,9 @@ namespace TankSystem.Manager
         /// <summary>戦車 Transform 配列</summary>
         public TankCollisionContext[] Tanks { get; set; }
 
+        /// <summary>戦車 Transform 配列</summary>
+        public ObstacleCollisionContext[] Obstacles { get; set; }
+
         /// <summary>弾丸発射ローカル位置</summary>
         public Transform FirePoint => _firePoint;
 
@@ -217,9 +220,11 @@ namespace TankSystem.Manager
         /// ターゲットコンテキスト配列を送る
         /// </summary>
         /// <param name="tankContexts">戦車コンテキスト配列</param>
+        /// <param name="obstacleContexts">障害物コンテキスト配列</param>
         /// <param name="itemContexts">アイテムコンテキスト配列</param>
         public abstract void SetTargetData(
             in TankCollisionContext[] tankContexts,
+            in ObstacleCollisionContext[] obstacleContexts,
             in ItemCollisionContext[] itemContexts
         );
 
@@ -693,8 +698,8 @@ namespace TankSystem.Manager
             // ターゲットアイコンを非表示
             ChangeTargetIcon(false);
 
-            // ターゲットキャッシュ削除
-            _visibilityController.UpdateCachedTarget(null);
+            // ターゲットアイコン削除
+            _visibilityController.UpdateTankIcon(null);
 
             // 爆発エフェクト再生
             _effectManager.PlayExplosion();

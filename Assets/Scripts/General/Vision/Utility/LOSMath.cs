@@ -2,8 +2,9 @@
 // LOSMath.cs
 // 作成者 : 高橋一翔
 // 作成日時 : 2025-12-22
-// 更新日時 : 2026-02-18
-// 概要 : 線分と OBB の交差判定を担当するユーティリティクラス
+// 更新日時 : 2026-03-10
+// 概要 : 線分と OBB の交差判定ユーティリティ
+//        XZ 平面のみで遮蔽物判定を行う
 // ======================================================
 
 using UnityEngine;
@@ -12,103 +13,88 @@ using CollisionSystem.Data;
 namespace VisionSystem.Utility
 {
     /// <summary>
-    /// 視線（Line of Sight）計算用ユーティリティ
-    /// 線分が OBB に交差するか判定
-    /// キャッシュ済み軸・半サイズを使用して高速化
+    /// 視線（Line of Sight）計算ユーティリティ
+    /// スラブ法を使用した線分と OBB の交差判定を実行する
     /// </summary>
     public sealed class LOSMath
     {
-        // ======================================================
-        // 定数
-        // ======================================================
-
-        /// <summary>OBB の軸数</summary>
-        private const int OBB_AXIS_COUNT = 3;
-        
         // ======================================================
         // パブリックメソッド
         // ======================================================
 
         /// <summary>
-        /// 線分と回転付き OBB が交差しているかを判定
+        /// 線分と OBB の交差判定
         /// </summary>
         /// <param name="start">線分開始位置（ワールド座標）</param>
         /// <param name="end">線分終了位置（ワールド座標）</param>
-        /// <param name="obb">判定対象 OBBData</param>
-        /// <returns>線分が OBB に交差していれば true</returns>
+        /// <param name="obb">判定対象 OBB データ</param>
+        /// <returns>線分が OBB に交差している場合 true</returns>
         public bool IsLineIntersectOBB(
             in Vector3 start,
             in Vector3 end,
-            in BaseOBBData obb
-        )
+            in BaseOBBData obb)
         {
+            // 線分パラメータ範囲
             float tMin = 0f;
             float tMax = 1f;
 
-            // 線分ベクトル算出
+            // 線分方向ベクトル
             Vector3 lineDir = end - start;
 
-            // --------------------------------------------------
-            // 各軸交差判定
-            // スラブ
-            // --------------------------------------------------
-            Vector3 axis0 = obb.AxisRight;
-            Vector3 axis1 = obb.AxisUp;
-            Vector3 axis2 = obb.AxisForward;
+            // OBB中心から線分開始点へのベクトル
+            Vector3 startToCenter = start - obb.Center;
 
-            float half0 = obb.HalfSize.x;
-            float half1 = obb.HalfSize.y;
-            float half2 = obb.HalfSize.z;
-
-            // 各軸判定
-            for (int i = 0; i < OBB_AXIS_COUNT; i++)
+            // --------------------------------------------------
+            // Axis X（OBB ローカル右方向）
+            // --------------------------------------------------
             {
-                Vector3 axis;
-                float halfSize;
+                // OBB のローカル X 軸
+                Vector3 axis = obb.AxisRight;
 
-                // 軸・半サイズを選択
-                if (i == 0) { axis = axis0; halfSize = half0; }
-                else if (i == 1) { axis = axis1; halfSize = half1; }
-                else { axis = axis2; halfSize = half2; }
+                // OBB 半サイズ（X方向）
+                float half = obb.HalfSize.x;
 
-                // 線分の開始ベクトルを OBB 軸方向に射影
-                float projStart = Vector3.Dot(start - obb.Center, axis);
+                // 線分開始点を OBB 軸へ射影
+                float projStart = Vector3.Dot(startToCenter, axis);
 
-                // 線分の終了ベクトルを OBB 軸方向に射影
-                float projEnd = Vector3.Dot(end - obb.Center, axis);
+                // 線分方向を OBB 軸へ射影
+                float projDir = Vector3.Dot(lineDir, axis);
 
-                // 線分方向を算出
-                float dir = projEnd - projStart;
-
-                // 軸に平行か判定
-                if (Mathf.Abs(dir) < Mathf.Epsilon)
+                // 線分がこの軸に平行か判定
+                if (Mathf.Abs(projDir) < Mathf.Epsilon)
                 {
-                    // 平行で軸外にある場合は交差なし
-                    if (projStart < -halfSize || projStart > halfSize)
+                    // 平行かつ OBB 範囲外にある場合、交差なし
+                    if (projStart < -half || projStart > half)
                     {
                         return false;
                     }
                 }
                 else
                 {
-                    // t パラメータ範囲を計算
-                    float ood = 1.0f / dir;
-                    float t1 = (-halfSize - projStart) * ood;
-                    float t2 = (halfSize - projStart) * ood;
+                    // 線分とスラブ面の交差パラメータ
+                    float ood = 1f / projDir;
+                    float t1 = (-half - projStart) * ood;
+                    float t2 = (half - projStart) * ood;
 
-                    // t1 < t2 に補正
+                    // 小さい値を t1 に補正
                     if (t1 > t2)
                     {
-                        float tmp = t1;
+                        float temp = t1;
                         t1 = t2;
-                        t2 = tmp;
+                        t2 = temp;
                     }
 
-                    // 線分の交差範囲を更新
-                    tMin = Mathf.Max(tMin, t1);
-                    tMax = Mathf.Min(tMax, t2);
+                    // 交差範囲更新
+                    if (t1 > tMin)
+                    {
+                        tMin = t1;
+                    }
+                    if (t2 < tMax)
+                    {
+                        tMax = t2;
+                    }
 
-                    // tMin > tMax なら交差なし
+                    // 交差範囲が消失した場合、交差なし
                     if (tMin > tMax)
                     {
                         return false;
@@ -116,7 +102,65 @@ namespace VisionSystem.Utility
                 }
             }
 
-            // 全軸で交差範囲が存在すれば OBB に交差
+            // --------------------------------------------------
+            // Axis Z（OBB ローカル前方向）
+            // --------------------------------------------------
+            {
+                // OBB のローカル Z 軸
+                Vector3 axis = obb.AxisForward;
+
+                // OBB 半サイズ（Z方向）
+                float half = obb.HalfSize.z;
+
+                // 線分開始点を OBB 軸へ射影
+                float projStart = Vector3.Dot(startToCenter, axis);
+
+                // 線分方向を OBB 軸へ射影
+                float projDir = Vector3.Dot(lineDir, axis);
+
+                // 線分がこの軸に平行か判定
+                if (Mathf.Abs(projDir) < Mathf.Epsilon)
+                {
+                    // 平行かつ OBB 範囲外にある場合、交差なし
+                    if (projStart < -half || projStart > half)
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    // 線分とスラブ面の交差パラメータ
+                    float ood = 1f / projDir;
+                    float t1 = (-half - projStart) * ood;
+                    float t2 = (half - projStart) * ood;
+
+                    // 小さい値を t1 に補正
+                    if (t1 > t2)
+                    {
+                        float temp = t1;
+                        t1 = t2;
+                        t2 = temp;
+                    }
+
+                    // 交差範囲更新
+                    if (t1 > tMin)
+                    {
+                        tMin = t1;
+                    }
+                    if (t2 < tMax)
+                    {
+                        tMax = t2;
+                    }
+
+                    // 交差範囲が消失した場合、交差なし
+                    if (tMin > tMax)
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            // XZ 平面で交差範囲が存在
             return true;
         }
     }
