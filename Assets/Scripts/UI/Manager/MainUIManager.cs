@@ -738,11 +738,11 @@ namespace UISystem.Manager
         }
 
         /// <summary>
-        /// フラッシュアニメーションのボリュームエフェクト開始時に呼ばれる処理
+        /// 撃破アニメーションのボリュームエフェクト開始時に呼ばれる処理
         /// </summary>
         public void VolumeFlashEffectStart()
         {
-            _volumeAnimator?.Play(FLASH_ANIMATION_NAME, 0, 0f);
+            _volumeAnimator?.Play(DESTROY_ANIMATION_NAME, 0, 0f);
         }
 
         /// <summary>

@@ -28528,7 +28528,7 @@ GameObject:
   - component: {fileID: 868244463}
   - component: {fileID: 868244465}
   m_Layer: 0
-  m_Name: MainVolume
+  m_Name: FlashVolume
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

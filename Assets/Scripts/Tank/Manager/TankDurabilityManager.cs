@@ -47,13 +47,13 @@ namespace TankSystem.Manager
         // 基準値
         // --------------------------------------------------
         /// <summary>耐久ステータス 0 のときの基準耐久最大値</summary>
-        private const float BASE_DURABILITY_MAX_VALUE = 40.0f;
+        private const float BASE_DURABILITY_MAX_VALUE = 50.0f;
 
         // --------------------------------------------------
         // パラメーター
         // --------------------------------------------------
         /// <summary>耐久ステータス 1 あたりの耐久最大値加算量</summary>
-        private const float DURABILITY_MAX_VALUE_PER_STATUS = 8f;
+        private const float DURABILITY_MAX_VALUE_PER_STATUS = 7.5f;
 
         // ======================================================
         // イベント

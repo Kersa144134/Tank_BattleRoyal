@@ -134,14 +134,15 @@ namespace SceneSystem.Manager
 
         public void OnPhaseEnter(in PhaseType phase)
         {
-            if (phase == PhaseType.Ready || phase == PhaseType.Result)
-            {
-                ChangeTimeScale(DEFAULT_TIME_SCALE);
-            }
             if (phase == PhaseType.Finish)
             {
                 ChangeTimeScale(FINISH_PHASE_TIME_SCALE);
             }
+        }
+
+        public void OnExit()
+        {
+            ChangeTimeScale(DEFAULT_TIME_SCALE);
         }
 
         // ======================================================

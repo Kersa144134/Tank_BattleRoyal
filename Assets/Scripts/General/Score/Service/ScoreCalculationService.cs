@@ -1,5 +1,5 @@
 // ======================================================
-// ScoreCalculationService.cs
+// ScoreCalculateService.cs
 // 作成者   : 高橋一翔
 // 作成日時 : 2026-03-09
 // 更新日時 : 2026-03-09
@@ -13,7 +13,7 @@ namespace ScoreSystem.Service
     /// <summary>
     /// スコア計算サービス
     /// </summary>
-    public sealed class ScoreCalculationService
+    public sealed class ScoreCalculateService
     {
         // ======================================================
         // フィールド
@@ -29,10 +29,10 @@ namespace ScoreSystem.Service
         // ======================================================
 
         /// <summary>
-        /// ScoreCalculationService を生成する
+        /// ScoreCalculateService を生成する
         /// </summary>
         /// <param name="scoreMax">スコア最大値</param>
-        public ScoreCalculationService(int scoreMax)
+        public ScoreCalculateService(int scoreMax)
         {
             _scoreMax = scoreMax;
         }

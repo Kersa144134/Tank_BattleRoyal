@@ -78,25 +78,37 @@ namespace TankSystem.Manager
         // 基準値
         // --------------------------------------------------
         /// <summary>基準となる機動倍率</summary>
-        private const float BASE_MOBILITY_MULTIPLIER = 15.0f;
+        private const float BASE_MOBILITY_MULTIPLIER = 20.0f;
 
         /// <summary>基準となる前進加減速倍率</summary>
-        private const float BASE_FORWARD_ACCELERATION_MULTIPLIER = 5.0f;
+        private const float BASE_FORWARD_ACCELERATION_MULTIPLIER = 10.0f;
 
         /// <summary>基準となる旋回加減速倍率</summary>
-        private const float BASE_TURN_ACCELERATION_MULTIPLIER = 80.0f;
+        private const float BASE_TURN_ACCELERATION_MULTIPLIER = 160.0f;
+
+        /// <summary>基準となる倍率の下限値</summary>
+        private const float BASE_MULTIPLIER_LOWER_LIMIT = 0.25f;
 
         // --------------------------------------------------
         // パラメーター
         // --------------------------------------------------
         /// <summary>馬力 1 あたりの機動倍率加算値</summary>
-        private const float HORSEPOWER_MULTIPLIER = 1.75f;
+        private const float HORSEPOWER_MULTIPLIER = 2.0f;
 
         /// <summary>変速 1 あたりの前進倍率加算値</summary>
-        private const float TRANSMISSION_FORWARD_ACCELERATION_MULTIPLIER = 4.75f;
+        private const float TRANSMISSION_FORWARD_ACCELERATION_MULTIPLIER = 4.5f;
 
         /// <summary>変速 1 あたりの旋回倍率加算値</summary>
-        private const float TRANSMISSION_TURN_ACCELERATION_MULTIPLIER = 76.0f;
+        private const float TRANSMISSION_TURN_ACCELERATION_MULTIPLIER = 72.0f;
+
+        /// <summary>重量 1 あたりの機動倍率減算値</summary>
+        private const float WEIGHT_MOBILITY_MULTIPLIER = 0.05f;
+
+        /// <summary>重量 1 あたりの前進倍率減算値</summary>
+        private const float WEIGHT_FORWARD_ACCELERATION_MULTIPLIER = 0.1f;
+
+        /// <summary>重量 1 あたりの旋回倍率減算値</summary>
+        private const float WEIGHT_TURN_ACCELERATION_MULTIPLIER = 1.6f;
 
         // ======================================================
         // コンストラクタ
@@ -134,20 +146,29 @@ namespace TankSystem.Manager
         /// <param name="tankStatus">機動力算出に使用する戦車ステータス情報</param>
         public void UpdateMobilityParameters(in TankStatus tankStatus)
         {
-            // 最高速度・旋回速度に影響する機動倍率を算出
-            _mobilityMultiplier =
+            // 機動倍率計算
+            _mobilityMultiplier = Mathf.Max(
+                BASE_MOBILITY_MULTIPLIER * BASE_MULTIPLIER_LOWER_LIMIT,
                 BASE_MOBILITY_MULTIPLIER
-                + tankStatus.HorsePower * HORSEPOWER_MULTIPLIER;
+                + tankStatus.HorsePower * HORSEPOWER_MULTIPLIER
+                - tankStatus.Weight * WEIGHT_MOBILITY_MULTIPLIER
+            );
 
-            // 前進加減速性能に影響する倍率を算出
-            _forwardAccelerationMultiplier =
+            // 前進加減速倍率計算
+            _forwardAccelerationMultiplier = Mathf.Max(
+                BASE_FORWARD_ACCELERATION_MULTIPLIER * BASE_MULTIPLIER_LOWER_LIMIT,
                 BASE_FORWARD_ACCELERATION_MULTIPLIER
-                + tankStatus.Transmission * TRANSMISSION_FORWARD_ACCELERATION_MULTIPLIER;
+                + tankStatus.Transmission * TRANSMISSION_FORWARD_ACCELERATION_MULTIPLIER
+                - tankStatus.Weight * WEIGHT_FORWARD_ACCELERATION_MULTIPLIER
+            );
 
-            // 旋回加減速性能に影響する倍率を算出
-            _turnAccelerationMultiplier =
+            // 旋回加減速倍率計算
+            _turnAccelerationMultiplier = Mathf.Max(
+                BASE_TURN_ACCELERATION_MULTIPLIER * BASE_MULTIPLIER_LOWER_LIMIT,
                 BASE_TURN_ACCELERATION_MULTIPLIER
-                + tankStatus.Transmission * TRANSMISSION_TURN_ACCELERATION_MULTIPLIER;
+                + tankStatus.Transmission * TRANSMISSION_TURN_ACCELERATION_MULTIPLIER
+                - tankStatus.Weight * WEIGHT_TURN_ACCELERATION_MULTIPLIER
+            );
         }
 
         /// <summary>
@@ -264,8 +285,8 @@ namespace TankSystem.Manager
         /// キャタピラ入力から前進・旋回の目標値を算出する
         /// </summary>
         /// <param name="inputMode">キャタピラ入力モード</param>
-        /// <param name="leftInput">左スティック入力値</param>
-        /// <param name="rightInput">右スティック入力値</param>
+        /// <param name="leftStick">左スティック入力値</param>
+        /// <param name="rightStick">右スティック入力値</param>
         /// <param name="targetForward">算出された前進・後退の目標値</param>
         /// <param name="targetTurn">算出された旋回の目標値</param>
         private void CalculateTargetMovement(

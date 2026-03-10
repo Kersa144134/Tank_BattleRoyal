@@ -74,8 +74,11 @@ namespace SoundSystem.Manager
         /// <summary>SE クリップリスト</summary>
         [SerializeField] private AudioClip[] _seClips;
 
+        /// <summary>SE再生距離の最小値</summary>
+        [SerializeField] private float _seMinDistance = 5f;
+
         /// <summary>SE再生距離の最大値</summary>
-        [SerializeField] private float _seMaxDistance = 100f;
+        [SerializeField] private float _seMaxDistance = 80f;
 
         // ======================================================
         // フィールド
@@ -309,13 +312,12 @@ namespace SoundSystem.Manager
             }
             else
             {
-                // インデックスチェック
                 if (index < 0 || index >= _bgmSets.Length)
                 {
                     return;
                 }
 
-                // 指定BGM停止
+                // 指定 BGM 停止
                 _bgmSets[index].Source?.Stop();
             }
         }
@@ -331,6 +333,7 @@ namespace SoundSystem.Manager
             {
                 return;
             }
+
             BgmSet bgm = _bgmSets[index];
 
             if (bgm.Source == null)
@@ -404,12 +407,18 @@ namespace SoundSystem.Manager
         /// <param name="position">音発生位置、null ならリスナー位置扱い</param>
         public void PlaySE(in int index, in Vector3? position = null)
         {
-            if (_seSource == null || _seClips == null || index < 0 || index >= _seClips.Length)
+            if (_seSource == null || _seClips == null)
             {
                 return;
             }
 
-            // 音発生位置なしの場合、最大音量で SE 再生
+            // インデックス範囲外なら処理なし
+            if (index < 0 || index >= _seClips.Length)
+            {
+                return;
+            }
+
+            // 音発生位置が未指定の場合は最大音量で再生
             if (position == null)
             {
                 _seSource.PlayOneShot(_seClips[index], 1f);
@@ -421,20 +430,52 @@ namespace SoundSystem.Manager
                 ? _listenerTransform.position
                 : Vector3.zero;
 
-            // 距離計算
+            // リスナーと音発生位置の距離計算
             float distance = Vector3.Distance(listenerPos, position.Value);
 
-            // 最大距離外は再生なし
+            // 最大距離外は再生しない
             if (distance > _seMaxDistance)
             {
                 return;
             }
 
-            // 距離による音量補正
-            float volume = 1f - (distance / _seMaxDistance);
+            // 距離に応じた音量取得
+            float volume = CalculateSEVolume(distance);
 
             // SE 再生
             _seSource.PlayOneShot(_seClips[index], volume);
+        }
+
+        // ======================================================
+        // プライベートメソッド
+        // ======================================================
+
+        /// <summary>
+        /// 距離から SE 音量を算出
+        /// </summary>
+        /// <param name="distance">リスナーとの距離</param>
+        /// <returns>再生音量（0～1）</returns>
+        private float CalculateSEVolume(in float distance)
+        {
+            // 最小距離以内は最大音量
+            if (distance <= _seMinDistance)
+            {
+                return 1f;
+            }
+
+            // 最大距離以上は無音
+            if (distance >= _seMaxDistance)
+            {
+                return 0f;
+            }
+
+            // _seMinDistance ～ _seMaxDistance を 0 ～ 1 に正規化
+            float normalized = Mathf.InverseLerp(_seMinDistance, _seMaxDistance, distance);
+
+            // 距離が遠くなるほど音量が下がるように反転
+            float volume = 1f - normalized;
+
+            return volume;
         }
     }
 }

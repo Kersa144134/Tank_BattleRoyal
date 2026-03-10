@@ -167,6 +167,9 @@ namespace TankSystem.Manager
         /// <summary>ˆÚ“®‘¬“x 1 ‚ ‚½‚è‚Ì”R—¿Á”ï”{—¦</summary>
         private const float FUEL_CONSUMPTION_PER_SPEED = 0.001f;
 
+        /// <summary>d—Ê 1 ‚ ‚½‚è‚Ì”R—¿Á”ï”{—¦</summary>
+        private const float WEIGHT_CONSUMPTION_PER_SPEED = 0.00001f;
+
         /// <summary>UŒ‚ 1 ‰ñ‚ ‚½‚è‚Ì”R—¿Á”ï”{—¦</summary>
         public const float FUEL_CONSUMPTION_PER_ATTACK = 1.0f;
 
@@ -442,7 +445,9 @@ namespace TankSystem.Manager
 
                 if (this is PlayerTankRootManager)
                 {
-                    _energyManager.ConsumeFuel(CurrentForwardSpeed * FUEL_CONSUMPTION_PER_SPEED);
+                    _energyManager.ConsumeFuel(
+                        CurrentForwardSpeed * FUEL_CONSUMPTION_PER_SPEED
+                        + CurrentForwardSpeed * WEIGHT_CONSUMPTION_PER_SPEED);
                 }
             }
         }

@@ -15,11 +15,11 @@ namespace TankSystem.Data
     /// <summary>
     /// 戦車のゲーム中に変動するパラメーターを管理するクラス
     /// </summary>
-    [System.Serializable]
+    [Serializable]
     public class TankStatus
     {
         // ======================================================
-        // パラメーター
+        // インスペクタ設定
         // ======================================================
 
         // --------------------------------------------------
@@ -73,6 +73,10 @@ namespace TankSystem.Data
         /// <summary>装填　攻撃間隔</summary>
         [SerializeField, Range(MIN_PARAMETER_VALUE, MAX_PARAMETER_VALUE), Tooltip("装填　攻撃間隔")]
         private int _reloadTime;
+
+        // ======================================================
+        // フィールド
+        // ======================================================
 
         // ======================================================
         // プロパティ
@@ -153,15 +157,72 @@ namespace TankSystem.Data
             private set => _reloadTime = Mathf.Clamp(value, MIN_PARAMETER_VALUE, MAX_PARAMETER_VALUE);
         }
 
+        // --------------------------------------------------
+        // 内部パラメーター
+        // --------------------------------------------------
+        /// <summary>戦車本体の重量</summary>
+        public float Weight
+        {
+            get
+            {
+                return BASE_WEIGHT
+                    + (_fuel * FUEL_WEIGHT)
+                    + (_ammo * AMMO_WEIGHT)
+                    + (_durability * DURABILITY_WEIGHT)
+                    + (_armor * ARMOR_WEIGHT)
+                    + (_horsePower * HORSEPOWER_WEIGHT)
+                    + (_transmission * TRANSMISSION_WEIGHT)
+                    + (_barrel * BARREL_WEIGHT)
+                    + (_projectileMass * PROJECTILE_MASS_WEIGHT)
+                    + (_reloadTime * RELOAD_TIME_WEIGHT);
+            }
+        }
+
         // ======================================================
         // 定数
         // ======================================================
 
+        // --------------------------------------------------
+        // パラメーター
+        // --------------------------------------------------
         /// <summary>パラメーター最小値</summary>
         private const int MIN_PARAMETER_VALUE = 0;
 
         /// <summary>パラメーター最大値</summary>
         private const int MAX_PARAMETER_VALUE = 20;
+
+        // --------------------------------------------------
+        // 重量
+        // --------------------------------------------------
+        /// 戦車の基準重量
+        private const float BASE_WEIGHT = 50f;
+
+        /// 燃料 1 あたりの重量
+        private const float FUEL_WEIGHT = 1.0f;
+
+        /// 弾薬 1 あたりの重量
+        private const float AMMO_WEIGHT = 1.0f;
+
+        /// 耐久 1 あたりの重量
+        private const float DURABILITY_WEIGHT = 1.5f;
+
+        /// 装甲 1 あたりの重量
+        private const float ARMOR_WEIGHT = 1.5f;
+
+        /// 馬力 1 あたりの重量
+        private const float HORSEPOWER_WEIGHT = 0.5f;
+
+        /// 変速 1 あたりの重量
+        private const float TRANSMISSION_WEIGHT = 0.5f;
+
+        /// 砲身 1 あたりの重量
+        private const float BARREL_WEIGHT = 2.0f;
+
+        /// 質量 1 あたりの重量
+        private const float PROJECTILE_MASS_WEIGHT = 2.5f;
+
+        /// 装填 1 あたりの重量
+        private const float RELOAD_TIME_WEIGHT = 2.0f;
 
         // ======================================================
         // 辞書
@@ -175,7 +236,7 @@ namespace TankSystem.Data
         // ======================================================
 
         /// <summary>
-        /// 全パラメーターを初期値0で初期化
+        /// 全パラメーターを初期値 0 で初期化
         /// </summary>
         public TankStatus()
         {
@@ -189,7 +250,7 @@ namespace TankSystem.Data
             _projectileMass = 0;
             _reloadTime = 0;
 
-            // TankParam とパラメーター更新を紐付ける
+            // TankParam とパラメーター更新を紐付け
             _paramMap = new Dictionary<TankParam, Action<int>>
             {
                 { TankParam.Fuel,           amount => Fuel += amount },
@@ -205,7 +266,7 @@ namespace TankSystem.Data
         }
 
         // ======================================================
-        // パラメーター増加処理
+        // パブリックメソッド
         // ======================================================
 
         /// <summary>

@@ -30,7 +30,7 @@ namespace ScoreSystem.Manager
         // ======================================================
 
         /// <summary>スコア計算サービス</summary>
-        private ScoreCalculationService _calculationService;
+        private ScoreCalculateService _calculateService;
 
         /// <summary>アイテム取得スコア</summary>
         private ScoreData _itemScore = new ScoreData();
@@ -93,7 +93,7 @@ namespace ScoreSystem.Manager
             Instance = this;
             DontDestroyOnLoad(gameObject);
 
-            _calculationService = new ScoreCalculationService(SCORE_MAX);
+            _calculateService = new ScoreCalculateService(SCORE_MAX);
 
             // 初期化
             _totalScore = 0;
@@ -109,7 +109,7 @@ namespace ScoreSystem.Manager
         public void AddItemScore()
         {
             // サービスでスコア加算量を計算する
-            int delta = _calculationService.AddFixedScore(ref _itemScore, ITEM_SCORE);
+            int delta = _calculateService.AddFixedScore(ref _itemScore, ITEM_SCORE);
 
             // 総スコアへ反映し通知する
             ApplyScore(delta);
@@ -159,7 +159,7 @@ namespace ScoreSystem.Manager
         public void AddTankScore()
         {
             // サービスで累積スコア加算量を計算する
-            int delta = _calculationService.AddCumulativeScore(ref _tankScore, TANK_SCORE);
+            int delta = _calculateService.AddCumulativeScore(ref _tankScore, TANK_SCORE);
 
             // 総スコアへ反映し通知する
             ApplyScore(delta);
@@ -173,8 +173,8 @@ namespace ScoreSystem.Manager
         {
             // スコア初期化
             _totalScore = 0;
-            _calculationService.ResetScore(ref _itemScore);
-            _calculationService.ResetScore(ref _tankScore);
+            _calculateService.ResetScore(ref _itemScore);
+            _calculateService.ResetScore(ref _tankScore);
 
             // スコアリセット通知
             OnScoreChanged?.Invoke(0);
