@@ -21,13 +21,6 @@ namespace CollisionSystem.Data
           IDynamicCollisionContext
     {
         // ======================================================
-        // フィールド
-        // ======================================================
-
-        /// <summary>OBB 重複更新防止用フラグ</summary>
-        private bool _isUpdated;
-
-        // ======================================================
         // 固有プロパティ
         // ======================================================
 
@@ -91,35 +84,17 @@ namespace CollisionSystem.Data
         /// </summary>
         public override void BeginFrame()
         {
+            // Base 側の初期化処理を実行する
             base.BeginFrame();
 
-            // OBB 更新フラグをリセットする
-            _isUpdated = false;
-
+            // TankRootManager が存在しない場合は何もしない
             if (TankRootManager == null)
             {
                 return;
             }
 
-            // ロック軸を Context に反映
+            // Tank 側で管理されているロック軸を Context に反映する
             LockAxis = TankRootManager.CurrentFrameLockAxis;
-        }
-
-        /// <summary>
-        /// OBB を最新の予定座標・回転に更新する
-        /// </summary>
-        public override void UpdateOBB()
-        {
-            // 更新済みなら処理なし
-            if (_isUpdated)
-            {
-                return;
-            }
-
-            base.UpdateOBB();
-
-            // フラグ更新
-            _isUpdated = true;
         }
 
         /// <summary>
@@ -139,14 +114,6 @@ namespace CollisionSystem.Data
 
             // 現フレーム確定済みの LockAxis を Tank 側に反映する
             TankRootManager.CurrentFrameLockAxis = LockAxis;
-        }
-
-        /// <summary>
-        /// OBB 更新フラグを解除する
-        /// </summary>
-        public void ResetOBBUpdate()
-        {
-            _isUpdated = false;
         }
     }
 }

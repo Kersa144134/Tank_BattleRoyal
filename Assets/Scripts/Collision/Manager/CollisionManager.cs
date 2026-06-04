@@ -8,7 +8,6 @@
 
 using System;
 using System.Collections.Generic;
-using Cysharp.Threading.Tasks;
 using UnityEngine;
 using CollisionSystem.Calculator;
 using CollisionSystem.Data;
@@ -108,6 +107,9 @@ namespace CollisionSystem.Manager
 
         /// <summary>弾丸コンテキストの配列</summary>
         private BulletCollisionContext[] _bullets;
+
+        /// <summary>障害物 OBB キャッシュ配列</summary>
+        private BaseOBBData[] _obstacleOBBsCache;
 
         /// <summary>円判定用統合 OBB キャッシュ配列</summary>
         private BaseOBBData[] _circleQueryOBBCache;
@@ -287,8 +289,50 @@ namespace CollisionSystem.Manager
                 _tanks[i].BeginFrame();
             }
 
-            // 非同期パイプライン起動
-            _ = RunCollisionPipelineAsync();
+            // --------------------------------------------------
+            // 障害物
+            // --------------------------------------------------
+            ExecuteCollisionService(_tankVsObstacleService, _tanks, _obstacles);
+
+            // 障害物による LockAxis を確定
+            for (int i = 0; i < _tanks.Length; i++)
+            {
+                _tanks[i].FinalizeLockAxis();
+            }
+
+            // --------------------------------------------------
+            // 戦車
+            // --------------------------------------------------
+            // 戦車衝突チェック
+            ExecuteCollisionService(_tankVsTankService, _tanks, _tanks);
+
+            // 戦車衝突解決後に障害物衝突チェック
+            ExecuteCollisionService(_tankVsObstacleService, _tanks, _obstacles);
+
+            // 再度 LockAxis を確定
+            for (int i = 0; i < _tanks.Length; i++)
+            {
+                _tanks[i].FinalizeLockAxis();
+            }
+
+            // 再び戦車衝突チェック
+            ExecuteCollisionService(_tankVsTankService, _tanks, _tanks);
+
+            // --------------------------------------------------
+            // エリア
+            // --------------------------------------------------
+            ExecuteCollisionService(_tankVsAreaService, _tanks, _areas);
+
+            // --------------------------------------------------
+            // アイテム
+            // --------------------------------------------------
+            ExecuteCollisionService(_tankVsItemService, _tanks, _items);
+
+            // --------------------------------------------------
+            // 弾丸
+            // --------------------------------------------------
+            ExecuteCollisionService(_bulletVsObstacleService, _bullets, _obstacles);
+            ExecuteCollisionService(_bulletVsTankService, _bullets, _tanks);
         }
 
         public void OnExit()
@@ -702,61 +746,13 @@ namespace CollisionSystem.Manager
             }
         }
 
-        private async UniTask RunCollisionPipelineAsync()
-        {
-            // --------------------------------------------------
-            // 障害物
-            // --------------------------------------------------
-            await ExecuteCollisionServiceAsync(_tankVsObstacleService, _tanks, _obstacles);
-
-            // 障害物による LockAxis を確定
-            for (int i = 0; i < _tanks.Length; i++)
-            {
-                _tanks[i].FinalizeLockAxis();
-            }
-
-            // --------------------------------------------------
-            // 戦車
-            // --------------------------------------------------
-            // 戦車衝突チェック
-            await ExecuteCollisionServiceAsync(_tankVsTankService, _tanks, _tanks);
-
-            // 戦車衝突解決後に障害物衝突チェック
-            await ExecuteCollisionServiceAsync(_tankVsObstacleService, _tanks, _obstacles);
-
-            // 再度 LockAxis を確定
-            for (int i = 0; i < _tanks.Length; i++)
-            {
-                _tanks[i].FinalizeLockAxis();
-            }
-
-            // 再び戦車衝突チェック
-            await ExecuteCollisionServiceAsync(_tankVsTankService, _tanks, _tanks);
-
-            // --------------------------------------------------
-            // エリア
-            // --------------------------------------------------
-            await ExecuteCollisionServiceAsync(_tankVsAreaService, _tanks, _areas);
-
-            // --------------------------------------------------
-            // アイテム
-            // --------------------------------------------------
-            await ExecuteCollisionServiceAsync(_tankVsItemService, _tanks, _items);
-
-            // --------------------------------------------------
-            // 弾丸
-            // --------------------------------------------------
-            await ExecuteCollisionServiceAsync(_bulletVsObstacleService, _bullets, _obstacles);
-            await ExecuteCollisionServiceAsync(_bulletVsTankService, _bullets, _tanks);
-        }
-
         /// <summary>
         /// 指定された衝突判定サービスを 1 フェーズ分実行する
         /// </summary>
         /// <param name="service">実行対象の衝突判定サービス</param>
         /// <param name="contextsA">コンテキストA配列</param>
         /// <param name="contextsB">コンテキストB配列</param>
-        private async UniTask ExecuteCollisionServiceAsync(
+        private void ExecuteCollisionService(
             ICollisionService service,
             BaseCollisionContext[] contextsA,
             BaseCollisionContext[] contextsB = null
@@ -767,64 +763,54 @@ namespace CollisionSystem.Manager
                 return;
             }
 
-            // --------------------------------------------------
-            // PreUpdate
-            // --------------------------------------------------
-            await UniTask.RunOnThreadPool(() =>
+            // PreUpdate にコンテキストを渡す
+            switch (service)
             {
-                switch (service)
-                {
-                    case VersusStaticCollisionService<TankCollisionContext, ObstacleCollisionContext> collisionService:
-                        collisionService.PreUpdate(
-                            contextsA as TankCollisionContext[],
-                            contextsB as ObstacleCollisionContext[]
-                        );
-                        break;
+                case VersusStaticCollisionService<TankCollisionContext, ObstacleCollisionContext> collisionService:
+                    collisionService.PreUpdate(
+                        contextsA as TankCollisionContext[],
+                        contextsB as ObstacleCollisionContext[]
+                    );
+                    break;
+                case VersusStaticCollisionService<TankCollisionContext, AreaCollisionContext> collisionService:
+                    collisionService.PreUpdate(
+                        contextsA as TankCollisionContext[],
+                        contextsB as AreaCollisionContext[]
+                    );
+                    break;
 
-                    case VersusStaticCollisionService<TankCollisionContext, AreaCollisionContext> collisionService:
-                        collisionService.PreUpdate(
-                            contextsA as TankCollisionContext[],
-                            contextsB as AreaCollisionContext[]
-                        );
-                        break;
+                case VersusStaticCollisionService<TankCollisionContext, ItemCollisionContext> collisionService:
+                    collisionService.PreUpdate(
+                        contextsA as TankCollisionContext[],
+                        contextsB as ItemCollisionContext[]
+                    ); break;
 
-                    case VersusStaticCollisionService<TankCollisionContext, ItemCollisionContext> collisionService:
-                        collisionService.PreUpdate(
-                            contextsA as TankCollisionContext[],
-                            contextsB as ItemCollisionContext[]
-                        );
-                        break;
+                case VersusStaticCollisionService<BulletCollisionContext, ObstacleCollisionContext> collisionService:
+                    collisionService.PreUpdate(
+                        contextsA as BulletCollisionContext[],
+                        contextsB as ObstacleCollisionContext[]
+                    );
+                    break;
 
-                    case VersusStaticCollisionService<BulletCollisionContext, ObstacleCollisionContext> collisionService:
-                        collisionService.PreUpdate(
-                            contextsA as BulletCollisionContext[],
-                            contextsB as ObstacleCollisionContext[]
-                        );
-                        break;
+                case VersusDynamicCollisionService<TankCollisionContext, TankCollisionContext> collisionService:
+                    collisionService.PreUpdate(
+                        contextsA as TankCollisionContext[],
+                        contextsB as TankCollisionContext[]
+                    );
+                    break;
 
-                    case VersusDynamicCollisionService<TankCollisionContext, TankCollisionContext> collisionService:
-                        collisionService.PreUpdate(
-                            contextsA as TankCollisionContext[],
-                            contextsB as TankCollisionContext[]
-                        );
-                        break;
+                case VersusDynamicCollisionService<BulletCollisionContext, TankCollisionContext> collisionService:
+                    collisionService.PreUpdate(
+                        contextsA as BulletCollisionContext[],
+                        contextsB as TankCollisionContext[]
+                    ); break;
 
-                    case VersusDynamicCollisionService<BulletCollisionContext, TankCollisionContext> collisionService:
-                        collisionService.PreUpdate(
-                            contextsA as BulletCollisionContext[],
-                            contextsB as TankCollisionContext[]
-                        );
-                        break;
-                }
-            });
+                default:
+                    break;
+            }
 
-            // --------------------------------------------------
-            // Execute
-            // --------------------------------------------------
-            await UniTask.RunOnThreadPool(() =>
-            {
-                service.Execute();
-            });
+            // 衝突判定および解決処理を実行
+            service.Execute();
         }
     }
 }

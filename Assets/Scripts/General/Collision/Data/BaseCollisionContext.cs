@@ -108,6 +108,15 @@ namespace CollisionSystem.Data
         // ======================================================
 
         /// <summary>
+        /// OBB を最新の予定座標・回転に更新する
+        /// </summary>
+        public void UpdateOBB()
+        {
+            // OBB にワールド Transform を同期する
+            OBB.SyncTransform(NextPosition, NextRotation);
+        }
+
+        /// <summary>
         /// フレーム開始時に内部状態を初期化する
         /// </summary>
         public virtual void BeginFrame()
@@ -117,15 +126,6 @@ namespace CollisionSystem.Data
 
             // このフレームで衝突解決が行われたかを初期化する
             IsResolvedThisFrame = false;
-        }
-
-        /// <summary>
-        /// OBB を最新の予定座標・回転に更新する
-        /// </summary>
-        public virtual void UpdateOBB()
-        {
-            // OBB にワールド Transform を同期する
-            OBB.SyncTransform(NextPosition, NextRotation);
         }
 
         /// <summary>

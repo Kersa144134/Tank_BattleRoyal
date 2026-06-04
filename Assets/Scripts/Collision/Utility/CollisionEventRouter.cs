@@ -127,8 +127,8 @@ namespace CollisionSystem.Utility
             // --------------------------------------------------
             context.TankRootManager.ApplyCollisionResolve(resolveVectorA);
 
-            // OBB 更新フラグを解除
-            context.ResetOBBUpdate();
+            // OBB を押し戻し位置に更新
+            context.UpdateOBB();
         }
 
         /// <summary>
