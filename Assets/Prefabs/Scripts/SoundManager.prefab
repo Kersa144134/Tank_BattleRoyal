@@ -69,7 +69,7 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 31a6ad109c588084793fb1540bbaacb4, type: 3}
   - {fileID: 8300000, guid: 24c1380eadab12149b26d85b57d56a05, type: 3}
   _seMinDistance: 5
-  _seMaxDistance: 80
+  _seMaxDistance: 100
 --- !u!1 &4184035165812601744
 GameObject:
   m_ObjectHideFlags: 0
